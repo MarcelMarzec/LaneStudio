@@ -7,7 +7,7 @@ import type { osmWay } from '../../osm/way';
 import { isLaneRoad } from '../core/roads';
 import {
     metricFrame, sub, add, scale, rightNormal, len, unit,
-    pointAlong, slicePolyline, offsetPolyline, cumulativeLengths, polylineLength, type MetricFrame
+    pointAlong, slicePolyline, offsetPolyline, cumulativeLengths, polylineLength, pointInPolygon, type MetricFrame
 } from './frame';
 import { laneLayout, type LaneLayout, type RoadsideKind } from './layout';
 import { parseTurn, parseConnectivity, type LaneDirection } from '../model';
@@ -97,9 +97,52 @@ export interface WayVisual {
     end: number;
     taperStart: Taper | null;
     taperEnd: Taper | null;
+    /**
+     * Shifts that fit the road into a mapped carriageway area, as (distance along the way, shift)
+     * points in order; between points the shift is interpolated, beyond them it fades out.
+     */
+    fit?: [number, number][];
 }
 
 const noVisual: WayVisual = { start: 0, end: 0, taperStart: null, taperEnd: null };
+
+// a shift needed at a join holds this far along the way, then fades out over `offsetFade`, in metres
+const offsetHold = 30;
+const offsetFade = 50;
+
+const smooth = (x: number) => {
+    const r = Math.max(0, Math.min(1, x));
+    return r * r * (3 - 2 * r);
+};
+
+/** The drawing-only sideways shift of a way at distance `s` along it */
+export function visualShift(visual: WayVisual, s: number, total: number): number {
+    let shift: number;
+    if (total >= 2 * (offsetHold + offsetFade)) {
+        // long ways: each end's shift holds near its join, then fades, so the middle is not moved
+        const weight = (d: number) => 1 - smooth((d - offsetHold) / offsetFade);
+        shift = visual.start * weight(s) + visual.end * weight(total - s);
+    } else {
+        // short ways: change from one end's shift to the other's over the middle
+        const ramp = Math.min(total, taperLength * 2);
+        shift = visual.start + (visual.end - visual.start) * (ramp > 0 ? smooth((s - (total - ramp) / 2) / ramp) : 0);
+    }
+
+    const fit = visual.fit;
+    if (fit?.length) {
+        const first = fit[0];
+        const last = fit[fit.length - 1];
+        if (s <= first[0]) shift += first[1] * (1 - smooth((first[0] - s) / taperLength));
+        else if (s >= last[0]) shift += last[1] * (1 - smooth((s - last[0]) / taperLength));
+        else {
+            const i = fit.findIndex(p => p[0] >= s);
+            const [s0, v0] = fit[i - 1];
+            const [s1, v1] = fit[i];
+            shift += v0 + (v1 - v0) * (s1 > s0 ? (s - s0) / (s1 - s0) : 0);
+        }
+    }
+    return shift;
+}
 
 
 /* Per-entity caches. iD entities are immutable, so an unchanged entity means unchanged input. */
@@ -128,12 +171,7 @@ function lineLocs(way: osmWay, graph: coreGraph): Vec2[] {
  */
 export function edgesAt(layout: LaneLayout, visual: WayVisual, s: number, total: number): number[] {
     const t = total > 0 ? s / total : 0;
-    // a drawing shift holds near each join and changes over the middle of the way
-    const ramp = Math.min(total, taperLength * 2);
-    const r = ramp > 0 ? Math.max(0, Math.min(1, (s - (total - ramp) / 2) / ramp)) : t;
-    const eased = r * r * (3 - 2 * r);
-    const shift = layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * t +
-        visual.start + (visual.end - visual.start) * eased;
+    const shift = layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * t + visualShift(visual, s, total);
     const edges = layout.edges.slice();
     const n = layout.lanes.length;
 
@@ -413,7 +451,7 @@ function continuationPairs(graph: coreGraph, up: Arm, down: Arm, nodeID: string,
  * so the lanes that carry on line up, and which lane tapers where lanes are added or dropped.
  */
 function alignAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>) {
-    const arms = armsAt(node, graph, new Map());
+    const arms = armsAt(node, graph, visuals);
     const pair = arms.length === 2 ? [0, 1] : throughPair(arms);
     if (!pair) return;
     const a = arms[pair[0]];
@@ -426,7 +464,8 @@ function alignAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual
     if (count(a) === count(b) && a.layout.total === b.layout.total) return;
     const reference = count(a) >= count(b) ? a : b;
     const moved = reference === a ? b : a;
-    if (hasPlacement(moved.way)) return;
+    // a way fitted into its mapped area is where the area says
+    if (hasPlacement(moved.way) || visuals.get(moved.way.id)?.fit) return;
 
     let delta: number | null = null;
     for (const [up, down] of [[a, b], [b, a]] as const) {
@@ -702,7 +741,8 @@ const junctionCache = new WeakMap<osmNode, { deps: unknown[]; signature: string;
 function visualSignature(ways: osmWay[], visuals: Map<string, WayVisual>): string {
     return ways.map(w => {
         const v = visuals.get(w.id);
-        return v ? `${w.id}:${v.start.toFixed(2)}:${v.end.toFixed(2)}:${v.taperStart?.lane ?? ''}:${v.taperEnd?.lane ?? ''}` : '';
+        return v ? `${w.id}:${v.start.toFixed(2)}:${v.end.toFixed(2)}:${v.taperStart?.lane ?? ''}:${v.taperEnd?.lane ?? ''}` +
+            `:${v.fit ? v.fit.map(p => `${p[0].toFixed(0)}/${p[1].toFixed(2)}`).join(',') : ''}` : '';
     }).join('|');
 }
 
@@ -780,6 +820,75 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
 
     junctionCache.set(node, { deps, signature, result });
     return result;
+}
+
+
+/* ---------- fitting roads into mapped carriageway areas ---------- */
+
+const fitCache = new WeakMap<osmWay, { deps: unknown[]; fit: [number, number][] | undefined }>();
+
+/**
+ * Where a mapped carriageway area (`area:highway=primary` etc.) covers a road, the sideways shift
+ * that centres the road's lanes in it, sampled along the way. Undefined when no area covers the
+ * road, or it already sits in the middle.
+ */
+function fitToAreas(way: osmWay, graph: coreGraph, areas: osmWay[]): [number, number][] | undefined {
+    if (!areas.length || hasPlacement(way)) return undefined;
+    const extent = way.extent(graph);
+    const near = areas.filter(area => area.extent(graph).intersects(extent));
+    if (!near.length) return undefined;
+
+    const deps: unknown[] = [...way.nodes.map(id => graph.entity(id)), ...near.flatMap(area => [area, ...area.nodes.map(id => graph.entity(id))])];
+    const cached = fitCache.get(way);
+    if (cached && cached.deps.length === deps.length && cached.deps.every((d, i) => d === deps[i])) return cached.fit;
+
+    const layout = cachedLayout(way, graph);
+    const frame = metricFrame((graph.entity(way.first()) as osmNode).loc);
+    const points = lineLocs(way, graph).map(frame.toMetres);
+    const total = polylineLength(points);
+    const polygons = near.map(area => lineLocs(area, graph).map(frame.toMetres));
+    const bandWidth = layout.total;
+
+    const samples: [number, number][] = [];
+    const step = Math.max(4, total / 150);
+    for (let s = Math.min(2, total / 2); s < total; s += step) {
+        const at = pointAlong(points, s);
+        const normal = rightNormal(at.direction);
+        const polygon = polygons.find(poly => pointInPolygon(at.point, poly));
+        if (!polygon) continue;
+        // the area's edges straight across the road from this point
+        let left = -Infinity;
+        let right = Infinity;
+        for (let i = 0; i < polygon.length - 1; i++) {
+            const a = polygon[i];
+            const e = sub(polygon[i + 1], a);
+            const denom = normal[0] * e[1] - normal[1] * e[0];
+            if (Math.abs(denom) < 1e-9) continue;
+            const d = sub(a, at.point);
+            const t = (d[0] * e[1] - d[1] * e[0]) / denom;          // along the normal
+            const u = (d[0] * normal[1] - d[1] * normal[0]) / denom; // along the edge
+            if (u < 0 || u > 1) continue;
+            if (t >= 0) right = Math.min(right, t);
+            else left = Math.max(left, t);
+        }
+        if (!Number.isFinite(left) || !Number.isFinite(right)) continue;
+        const width = right - left;
+        // an area much narrower or wider than the road is not its carriageway (a plaza, a car park)
+        if (width < bandWidth * 0.6 || width > bandWidth * 2.5) continue;
+        const t = total > 0 ? s / total : 0;
+        const shift = layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * t;
+        const bandCentre = (layout.edges[0] + layout.edges[layout.edges.length - 1]) / 2 + shift;
+        samples.push([s, (left + right) / 2 - bandCentre]);
+    }
+
+    // a running median irons out kinks where the area's outline has corners
+    const smoothed: [number, number][] = samples.map(([sAt], i) => {
+        const window = samples.slice(Math.max(0, i - 2), i + 3).map(p => p[1]).sort((a, b) => a - b);
+        return [sAt, window[Math.floor(window.length / 2)]];
+    });
+    const fit = smoothed.length && smoothed.some(p => Math.abs(p[1]) > 0.3) ? smoothed : undefined;
+    fitCache.set(way, { deps, fit });
+    return fit;
 }
 
 
@@ -954,13 +1063,15 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
 const pieceCache = new WeakMap<osmWay, { nodes: osmNode[]; signature: string; pieces: RoadPiece[] }>();
 
 export interface RoadGeometry {
+    /** drawing-only shifts and tapers per way id, for markings that should move with their road */
+    visuals: Map<string, WayVisual>;
     pieces: RoadPiece[];
     junctions: JunctionArea[];
     connections: JunctionConnection[];
 }
 
 /** Lane geometry for a set of roads, reusing everything whose inputs have not changed */
-export function roadGeometry(ways: osmWay[], graph: coreGraph): RoadGeometry {
+export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas: osmWay[] = []): RoadGeometry {
     const pieces: RoadPiece[] = [];
     const junctions = new Map<string, JunctionArea>();
     const connections = new Map<string, JunctionConnection[]>();
@@ -980,8 +1091,14 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph): RoadGeometry {
         return count;
     };
 
-    // 1. which nodes join roads, and the drawing-only shifts and tapers that line their lanes up
+    // 0. roads fitted into mapped carriageway areas
     const visuals = new Map<string, WayVisual>();
+    for (const way of ways) {
+        const fit = fitToAreas(way, graph, carriagewayAreas);
+        if (fit) visuals.set(way.id, { ...noVisual, fit });
+    }
+
+    // 1. which nodes join roads, and the drawing-only shifts and tapers that line their lanes up
     const joinNodes = new Map<string, number>();
     for (const way of ways) {
         way.nodes.forEach((id, i) => {
@@ -1036,7 +1153,7 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph): RoadGeometry {
         pieces.push(...built);
     }
 
-    return { pieces, junctions: [...junctions.values()], connections: [...connections.values()].flat() };
+    return { visuals, pieces, junctions: [...junctions.values()], connections: [...connections.values()].flat() };
 }
 
 // exported for tests

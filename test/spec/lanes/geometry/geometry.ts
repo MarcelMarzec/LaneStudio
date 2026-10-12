@@ -1,6 +1,6 @@
 import { offsetPolyline, metricFrame, polylineLength } from '../../../../modules/lanes/geometry/frame';
 import { laneLayout, parseWidth } from '../../../../modules/lanes/geometry/layout';
-import { roadGeometry, _test } from '../../../../modules/lanes/geometry/road_geometry';
+import { roadGeometry, visualShift, _test } from '../../../../modules/lanes/geometry/road_geometry';
 
 // a T-junction near Berlin (right-hand traffic); 1 m ≈ 1/111320° of latitude
 const m = 1 / 111320;
@@ -299,6 +299,59 @@ describe('roadGeometry at joins and junctions', () => {
         expect(short.short).toBe(true);
         expect(pieces.find(p => p.wayID === 'w1')!.short).toBe(false);
         expect(short.arrows).toHaveLength(2);
+    });
+});
+
+
+describe('drawing shifts', () => {
+    it('holds a join shift near the join, then fades it out along a long way', () => {
+        const visual = { start: 2, end: 0, taperStart: null, taperEnd: null };
+        expect(visualShift(visual, 0, 1000)).toBeCloseTo(2);
+        expect(visualShift(visual, 25, 1000)).toBeCloseTo(2);
+        expect(visualShift(visual, 55, 1000)).toBeGreaterThan(0.5);
+        expect(visualShift(visual, 90, 1000)).toBeCloseTo(0);
+        expect(visualShift(visual, 500, 1000)).toBeCloseTo(0);
+        // on a short way it changes over the middle instead
+        expect(visualShift(visual, 0, 60)).toBeCloseTo(2);
+        expect(visualShift(visual, 60, 60)).toBeCloseTo(0);
+    });
+
+    it('fits a road into a mapped carriageway area, and moves its stop line with it', async () => {
+        const { streetGeometry } = await import('../../../../modules/lanes/geometry/street');
+        // a 2-lane road (7 m) whose mapped carriageway area lies 2 m north of the way
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-100, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(0, 0), tags: { highway: 'stop', direction: 'forward' } }),
+            new iD.osmNode({ id: 'n3', loc: at(100, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: { highway: 'primary', lanes: '2', 'width:lanes': '3.5|3.5' } }),
+            new iD.osmNode({ id: 'n11', loc: at(-60, -1.5) }),
+            new iD.osmNode({ id: 'n12', loc: at(60, -1.5) }),
+            new iD.osmNode({ id: 'n13', loc: at(60, 5.5) }),
+            new iD.osmNode({ id: 'n14', loc: at(-60, 5.5) }),
+            new iD.osmWay({ id: 'w2', nodes: ['n11', 'n12', 'n13', 'n14', 'n11'], tags: { 'area:highway': 'primary' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const frame = metricFrame(origin);
+        const { pieces, visuals } = roadGeometry([graph.entity('w1')], graph, [graph.entity('w2')]);
+        const piece = pieces[0];
+        // in the middle of the area the kerbs are at the area's edges
+        const mid = (line: [number, number][]) => frame.toMetres(line[Math.floor(line.length / 2)])[1];
+        const atMiddle = (k: number) => {
+            const ys = piece.boundaries[k].map(p => frame.toMetres(p)).filter(p => Math.abs(p[0]) < 1).map(p => p[1]);
+            return ys.length ? ys[0] : mid(piece.boundaries[k]);
+        };
+        expect(atMiddle(0)).toBeCloseTo(5.5, 0);
+        expect(atMiddle(2)).toBeCloseTo(-1.5, 0);
+        // far beyond the area the road is back on its way
+        expect(frame.toMetres(piece.boundaries[0][0])[1]).toBeCloseTo(3.5, 0);
+
+        const street = streetGeometry(entities.map(e => graph.entity(e.id)), graph, visuals);
+        const stop = street.markings.find(m => m.kind === 'stop_line')!;
+        const ys = stop.points.map(p => frame.toMetres(p)[1]).sort((a, b) => a - b);
+        // the forward lane is the south one: from the area's south edge to its middle
+        expect(ys[0]).toBeCloseTo(-1.5, 0);
+        expect(ys[1]).toBeCloseTo(2, 0);
     });
 });
 

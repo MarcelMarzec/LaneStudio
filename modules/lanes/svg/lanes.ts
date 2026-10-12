@@ -21,7 +21,7 @@ import { offsetFromWay } from '../geometry/measure';
 import { svgLaneDefs, turnArrowSymbol } from './defs';
 import { drawStreet, drawParking, drawRoadMarkings, joinPaths } from './street';
 import { actionConnectLanes, connectionNode } from '../actions/connect_lanes';
-import { streetGeometry } from '../geometry/street';
+import { streetGeometry, isCarriagewayArea } from '../geometry/street';
 import { parkingGeometry } from '../geometry/parking';
 import { roadMarkingGeometry } from '../geometry/road_marking';
 import { isStreetParking, surfaceGroup } from '../model/street_features';
@@ -60,8 +60,18 @@ function dividerClass(left: LaneInfo, right: LaneInfo, layoutMarkings: boolean):
 /** Whether most of a road piece lies inside one of the given areas */
 function insideAreas(piece: RoadPiece, areas: AreaShape[]): boolean {
     const centre = piece.centres[Math.floor(piece.centres.length / 2)] ?? [];
-    const samples = [...centre, piece.middle];
-    if (!samples.length) return false;
+    if (centre.length < 2) return false;
+    // evenly along the road, so a long road that only passes through an area keeps its own surface
+    const lengths = centre.slice(1).map((p, i) => Math.hypot(p[0] - centre[i][0], p[1] - centre[i][1]));
+    const total = lengths.reduce((a, b) => a + b, 0);
+    const samples: Vec2[] = [];
+    for (let k = 0; k < 20; k++) {
+        let d = total * (k + 0.5) / 20;
+        let i = 0;
+        while (i < lengths.length - 1 && d > lengths[i]) d -= lengths[i++];
+        const f = lengths[i] ? d / lengths[i] : 0;
+        samples.push([centre[i][0] + (centre[i + 1][0] - centre[i][0]) * f, centre[i][1] + (centre[i + 1][1] - centre[i][1]) * f]);
+    }
     return areas.some(area => samples.filter(p => pointInPolygon(p, area.polygon)).length >= samples.length * 0.6);
 }
 
@@ -124,7 +134,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const visible = context.history().intersects(map.extent())
             .filter(entity => !features.isHidden(entity, graph, entity.geometry(graph)));
         const ways = visible.filter(isLaneRoad);
-        const { pieces, junctions, connections } = roadGeometry(ways, graph);
+        const carriagewayAreas = visible.filter(isCarriagewayArea) as osmWay[];
+        const { visuals, pieces, junctions, connections } = roadGeometry(ways, graph, carriagewayAreas);
         const selected = new Set(context.selectedIDs());
         const corridor = context.mode()?.id === 'select' ? state.corridor() : new Set<string>();
         const group = groups();
@@ -134,7 +145,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         markSurface(true);
 
         /* footways, mapped areas and kerbs, road markings on nodes */
-        const street = streetGeometry(visible, graph);
+        const street = streetGeometry(visible, graph, visuals);
         // roads lying inside a road mapped as an area: the area is their surface, so they draw
         // no carriageway, kerbs, roadside or general lane fill of their own
         const roadAreas = street.areas.filter(a => a.kind === 'carriageway');

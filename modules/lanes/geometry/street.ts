@@ -5,11 +5,11 @@ import type { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
 import { isLaneRoad, laneRoadHighways } from '../core/roads';
 import {
-    metricFrame, sub, add, scale, unit, rightNormal, pointAlong,
+    metricFrame, sub, add, scale, unit, dot, rightNormal, pointAlong,
     offsetPolyline, cumulativeLengths, polylineLength, type MetricFrame
 } from './frame';
 import { parseWidth, type LaneLayout } from './layout';
-import { cachedLayout } from './road_geometry';
+import { cachedLayout, edgesAt, visualShift, type WayVisual } from './road_geometry';
 import { isTrafficIsland, islandSurface, surfaceGroup, type SurfaceGroup } from '../model/street_features';
 
 /*
@@ -138,7 +138,7 @@ function locs(way: osmWay, graph: coreGraph): Vec2[] {
 
 /* ---------- footways and paths ---------- */
 
-const pathCache = new WeakMap<osmWay, { nodes: OsmEntity[]; shape: PathShape }>();
+const pathCache = new WeakMap<osmWay, { nodes: OsmEntity[]; stretch: [number, number]; shape: PathShape }>();
 
 export function isTrueWidthPath(entity: OsmEntity): boolean {
     if (entity.type !== 'way') return false;
@@ -146,16 +146,52 @@ export function isTrueWidthPath(entity: OsmEntity): boolean {
     return (way.tags.highway ?? '') in pathWidths && !way.isArea() && way.nodes.length > 1;
 }
 
-function pathShape(way: osmWay, graph: coreGraph): PathShape {
-    const nodes = way.nodes.map(id => graph.entity(id));
-    const cached = pathCache.get(way);
-    if (cached && cached.nodes.every((n, i) => n === nodes[i]) && cached.nodes.length === nodes.length) return cached.shape;
+/**
+ * How far a crossing path must reach past its own ends to still cover the road it crosses where
+ * that road is drawn shifted sideways: [extra at the start, extra at the end], in metres.
+ */
+function crossingStretch(way: osmWay, graph: coreGraph, points: Vec2[], frame: MetricFrame, visuals?: Map<string, WayVisual>): [number, number] {
+    if (!visuals?.size || points.length < 2) return [0, 0];
+    const dir = unit(sub(points[points.length - 1], points[0]));
+    let atStart = 0;
+    let atEnd = 0;
+    for (const id of way.nodes) {
+        const node = graph.entity(id) as osmNode;
+        for (const road of graph.parentWays(node)) {
+            const visual = visuals.get(road.id);
+            if (!visual || !isLaneRoad(road)) continue;
+            const roadWay = road as osmWay;
+            const i = roadWay.nodes.indexOf(id);
+            const roadPoints = locs(roadWay, graph).map(frame.toMetres);
+            const cumulative = cumulativeLengths(roadPoints);
+            const shift = visualShift(visual, cumulative[i], cumulative[cumulative.length - 1]);
+            const ahead = roadPoints[Math.min(roadPoints.length - 1, i + 1)];
+            const behind = roadPoints[Math.max(0, i - 1)];
+            const along = dot(scale(rightNormal(unit(sub(ahead, behind))), shift), dir);
+            if (along > 0) atEnd = Math.max(atEnd, along);
+            else atStart = Math.max(atStart, -along);
+        }
+    }
+    return [atStart, atEnd];
+}
 
+function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisual>): PathShape {
+    const nodes = way.nodes.map(id => graph.entity(id));
     const tags = way.tags;
+    const frame = metricFrame((nodes[0] as osmNode).loc);
+    let points = locs(way, graph).map(frame.toMetres);
+    const stretch: [number, number] = isCrossingPath(tags) ? crossingStretch(way, graph, points, frame, visuals) : [0, 0];
+    const cached = pathCache.get(way);
+    if (cached && cached.nodes.every((n, i) => n === nodes[i]) && cached.nodes.length === nodes.length &&
+        cached.stretch[0] === stretch[0] && cached.stretch[1] === stretch[1]) return cached.shape;
+
+    if (stretch[0] || stretch[1]) {
+        const first = unit(sub(points[1], points[0]));
+        const last = unit(sub(points[points.length - 1], points[points.length - 2]));
+        points = [sub(points[0], scale(first, stretch[0])), ...points.slice(1, -1), add(points[points.length - 1], scale(last, stretch[1]))];
+    }
     const tagged = parseWidth(tags.width) ?? parseWidth(tags.est_width);
     const width = tagged ?? pathWidths[tags.highway!];
-    const frame = metricFrame((nodes[0] as osmNode).loc);
-    const points = locs(way, graph).map(frame.toMetres);
     const left = offsetPolyline(points, points.map(() => -width / 2));
     const right = offsetPolyline(points, points.map(() => width / 2));
     const kind = pathKind(tags);
@@ -199,7 +235,7 @@ function pathShape(way: osmWay, graph: coreGraph): PathShape {
         surface: surfaceGroup(tags.surface), use, divider, footHalf,
         polygon: [...left, ...right.reverse()].map(frame.toLoc)
     };
-    pathCache.set(way, { nodes, shape });
+    pathCache.set(way, { nodes, stretch, shape });
     return shape;
 }
 
@@ -223,6 +259,12 @@ function areaKind(tags: Tags): AreaKind | null {
 }
 
 
+/** A mapped area that is a road's carriageway, which roads inside it are fitted to */
+export function isCarriagewayArea(entity: OsmEntity): boolean {
+    return entity.type === 'way' && (entity as osmWay).isClosed() && areaKind(entity.tags) === 'carriageway';
+}
+
+
 /* ---------- markings on road nodes ---------- */
 
 interface CrossSection {
@@ -238,7 +280,7 @@ interface CrossSection {
 }
 
 /** The road's lanes across the road at one of its nodes */
-function crossSection(way: osmWay, nodeIndex: number, graph: coreGraph): CrossSection {
+function crossSection(way: osmWay, nodeIndex: number, graph: coreGraph, visuals?: Map<string, WayVisual>): CrossSection {
     const node = graph.entity(way.nodes[nodeIndex]) as osmNode;
     const frame = metricFrame(node.loc);
     const points = locs(way, graph).map(frame.toMetres);
@@ -248,12 +290,12 @@ function crossSection(way: osmWay, nodeIndex: number, graph: coreGraph): CrossSe
     const layout = cachedLayout(way, graph);
     const cumulative = cumulativeLengths(points);
     const total = cumulative[cumulative.length - 1];
-    const t = total ? cumulative[nodeIndex] / total : 0;
-    const shift = layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * t;
-    return {
-        frame, direction, normal: rightNormal(direction), layout, way, nodeIndex,
-        edges: layout.edges.map(e => e + shift)
-    };
+    // the road as drawn: placement, and any drawing-only shift that lines it up or fits it to its area
+    const visual = visuals?.get(way.id);
+    const edges = visual
+        ? edgesAt(layout, visual, cumulative[nodeIndex], total)
+        : layout.edges.map(e => e + layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * (total ? cumulative[nodeIndex] / total : 0));
+    return { frame, direction, normal: rightNormal(direction), layout, way, nodeIndex, edges };
 }
 
 /** A rectangle along the road from `a` to `b` metres (travel direction) and across from `left` to `right` */
@@ -286,7 +328,7 @@ function approachDirections(tags: Tags, cs: CrossSection): ('forward' | 'backwar
 }
 
 
-function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry) {
+function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visuals?: Map<string, WayVisual>) {
     const tags = node.tags;
     const parents = graph.parentWays(node);
     const road = parents.find(isLaneRoad) as osmWay | undefined;
@@ -303,7 +345,7 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry) {
         return;
     }
 
-    const cs = crossSection(road, road.nodes.indexOf(node.id), graph);
+    const cs = crossSection(road, road.nodes.indexOf(node.id), graph, visuals);
     const left = cs.edges[0];
     const right = cs.edges[cs.edges.length - 1];
     const highway = tags.highway;
@@ -387,7 +429,7 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry) {
 
 
 /** Footways, areas, kerbs and road markings among `entities` (usually everything in view) */
-export function streetGeometry(entities: OsmEntity[], graph: coreGraph): StreetGeometry {
+export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?: Map<string, WayVisual>): StreetGeometry {
     const out: StreetGeometry = { paths: [], areas: [], kerbs: [], markings: [], symbols: [] };
 
     for (const entity of entities) {
@@ -395,7 +437,7 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph): StreetG
             const way = entity as osmWay;
             const tags = way.tags;
             if (isTrueWidthPath(way)) {
-                out.paths.push(pathShape(way, graph));
+                out.paths.push(pathShape(way, graph, visuals));
             } else if (way.isClosed() && way.nodes.length > 3) {
                 const kind = areaKind(tags);
                 if (kind) out.areas.push({ id: way.id, kind, polygon: locs(way, graph), surface: kind === 'island' ? islandSurface(tags) : surfaceGroup(tags.surface) });
@@ -404,7 +446,7 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph): StreetG
                 out.kerbs.push({ id: way.id, kerb: tags.kerb ?? 'raised', line: locs(way, graph) });
             }
         } else if (entity.type === 'node' && Object.keys(entity.tags).length) {
-            nodeMarkings(entity as osmNode, graph, out);
+            nodeMarkings(entity as osmNode, graph, out, visuals);
         }
     }
 
