@@ -5,27 +5,27 @@
 
 /* carriageway and lanes stay see-through, so painted lines on the imagery can be traced */
 .ideditor.lane-studio .lanes-layer .carriageway {
-    fill: rgba(40, 44, 52, 0.35);
+    fill: rgb(40, 44, 52); --lanes-a: 0.35;
     stroke: none;
 }
 .ideditor.lane-studio .lanes-layer .carriageway.selected {
-    fill: rgba(40, 44, 52, 0.5);
+    fill: rgb(40, 44, 52); --lanes-a: 0.5;
 }
 .ideditor.lane-studio .lanes-layer .junction-area {
-    fill: rgba(40, 44, 52, 0.35);
+    fill: rgb(40, 44, 52); --lanes-a: 0.35;
     stroke: none;
 }
 
 .ideditor.lane-studio .lanes-layer .lane {
     stroke: none;
-    fill: rgba(90, 96, 106, 0.3);
+    fill: rgb(90, 96, 106); --lanes-a: 0.3;
 }
-.ideditor.lane-studio .lanes-layer .lane-bus        { fill: rgba(204, 51, 51, 0.55); }
+.ideditor.lane-studio .lanes-layer .lane-bus        { fill: rgb(204, 51, 51); --lanes-a: 0.55; }
 .ideditor.lane-studio .lanes-layer .lane-psv,
-.ideditor.lane-studio .lanes-layer .lane-taxi       { fill: rgba(230, 160, 30, 0.55); }
+.ideditor.lane-studio .lanes-layer .lane-taxi       { fill: rgb(230, 160, 30); --lanes-a: 0.55; }
 .ideditor.lane-studio .lanes-layer .lane-hov        { fill: url(#lanes-hov); }
-.ideditor.lane-studio .lanes-layer .lane-bicycle    { fill: rgba(40, 150, 90, 0.55); }
-.ideditor.lane-studio .lanes-layer .lane-pedestrian { fill: rgba(220, 205, 170, 0.6); }
+.ideditor.lane-studio .lanes-layer .lane-bicycle    { fill: rgb(40, 150, 90); --lanes-a: 0.55; }
+.ideditor.lane-studio .lanes-layer .lane-pedestrian { fill: rgb(220, 205, 170); --lanes-a: 0.6; }
 .ideditor.lane-studio .lanes-layer .lane-restricted { fill: url(#lanes-hatch); }
 
 #lanes-hov .hov-back      { fill: rgba(90, 96, 106, 0.35); }
@@ -224,11 +224,12 @@
     pointer-events: none;
 }
 
-/* settings: lane surface opacity */
-.ideditor.lane-studio .lanes-layer .lanes-carriageway,
-.ideditor.lane-studio .lanes-layer .lanes-junctions,
-.ideditor.lane-studio .lanes-layer .lanes-lanes {
-    opacity: var(--lanes-surface-opacity, 1);
+/* settings: lane surface opacity. Each surface sets its default transparency as --lanes-a;
+   the setting (in --lanes-low and --lanes-high, see core/lane_settings.ts) scales it to 0% or 100% */
+.ideditor.lane-studio .lanes-layer .carriageway,
+.ideditor.lane-studio .lanes-layer .junction-area,
+.ideditor.lane-studio .lanes-layer .lane {
+    fill-opacity: calc(var(--lanes-a, 1) * var(--lanes-low, 1) + (1 - var(--lanes-a, 1)) * var(--lanes-high, 0));
 }
 
 /* settings: hide iD's own drawing of what Lane Studio draws (touch targets stay, so it can still be clicked) */
@@ -239,4 +240,40 @@
 /* street-side parking points on a road are shown by the road's parking strip */
 .ideditor.lane-studio .surface.lanes-visible .layer-osm .lanes-redundant {
     display: none;
+}
+
+/* iD's hover and select behaviours add .hover and .selected to everything carrying the feature's id,
+   so roads, paths, areas and markings drawn here light up even when iD's own lines are hidden */
+.ideditor.lane-studio .lanes-layer .carriageway.hover,
+.ideditor.lane-studio .lanes-layer .street-path.hover,
+.ideditor.lane-studio .lanes-layer .street-area.hover,
+.ideditor.lane-studio .lanes-layer .street-parking.hover,
+.ideditor.lane-studio .lanes-layer .road-marking-area.hover {
+    stroke: rgba(255, 238, 0, 0.75);
+    stroke-width: 2.5;
+}
+.ideditor.lane-studio .lanes-layer .road-marking-line.hover {
+    stroke: #ffee00 !important;
+}
+.ideditor.lane-studio .lanes-layer .street-path.selected,
+.ideditor.lane-studio .lanes-layer .street-area.selected,
+.ideditor.lane-studio .lanes-layer .street-parking.selected,
+.ideditor.lane-studio .lanes-layer .road-marking-area.selected {
+    stroke: #f6634f;
+    stroke-width: 2.5;
+}
+.ideditor.lane-studio .lanes-layer .carriageway.selected {
+    stroke: rgba(246, 99, 79, 0.8);
+    stroke-width: 2;
+}
+
+/* iD's one-way markers on roads drawn here: replaced by arrows on the lanes */
+.ideditor.lane-studio .surface.lanes-visible .layer-osm .lanes-drawn-oneway {
+    display: none;
+}
+
+/* one-way direction arrows on lanes: small and faint, so they never compete with turn arrows */
+.ideditor.lane-studio .lanes-layer .travel-arrow {
+    color: #fff;
+    opacity: 0.55;
 }

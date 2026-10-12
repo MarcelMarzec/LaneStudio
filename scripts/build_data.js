@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { styleText } from 'node:util';
 import shell from 'shelljs';
 import { load as loadYaml } from 'js-yaml';
+import { writeLanesStrings } from './build_lanes_strings.js';
 import { pull } from 'es-toolkit/compat';
 import dotenv from 'dotenv';
 import cldrTerritoryInfo from 'cldr-core/supplemental/territoryInfo.json' with { type: 'json' };
@@ -246,12 +247,6 @@ function writeEnJson() {
 
 
 // Lane Studio strings live in their own localizer scope (`_lanes.*`), English only for now
-function writeLanesStrings() {
-  const strings = loadYaml(fs.readFileSync('data/lanes.yaml', 'utf8'));
-  shell.mkdir('-p', 'dist/locales/lanes');
-  fs.writeFileSync('dist/locales/lanes/en.min.json', JSON.stringify(strings));
-  fs.writeFileSync('dist/locales/lanes/index.min.json', JSON.stringify({ en: { rtl: false, pct: 1 } }));
-}
 
 
 function writeFaIcons(faIcons) {

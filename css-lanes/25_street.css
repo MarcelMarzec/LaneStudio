@@ -143,39 +143,43 @@
     letter-spacing: 0.05em;
 }
 
-/* surfaces (surface=*) on mapped areas, paths, carriageways and general lanes; islands have their own colours */
+/* surfaces (surface=*) on mapped areas, paths, carriageways and general lanes; islands have their own colours.
+   Colours are solid with their transparency in --lanes-a, which the lane surface opacity setting scales
+   on carriageways and lanes */
+.ideditor.lane-studio .lanes-layer .street-area,
+.ideditor.lane-studio .lanes-layer .street-path { fill-opacity: var(--lanes-a, 1); }
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-asphalt,
-.ideditor.lane-studio .lanes-layer .street-path.surface-asphalt     { fill: rgba(60, 64, 72, 0.55); }
+.ideditor.lane-studio .lanes-layer .street-path.surface-asphalt     { fill: rgb(60, 64, 72); --lanes-a: 0.55; }
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-concrete,
 .ideditor.lane-studio .lanes-layer .street-path.surface-concrete,
 .ideditor.lane-studio .lanes-layer .carriageway.surface-concrete,
-.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-concrete { fill: rgba(170, 170, 165, 0.45); }
+.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-concrete { fill: rgb(170, 170, 165); --lanes-a: 0.45; }
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-paving,
 .ideditor.lane-studio .lanes-layer .street-path.surface-paving,
 .ideditor.lane-studio .lanes-layer .carriageway.surface-paving,
-.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-paving   { fill: url(#lanes-texture-paving); }
+.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-paving   { fill: url(#lanes-texture-paving); --lanes-a: 0.6; }
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-sett,
 .ideditor.lane-studio .lanes-layer .street-path.surface-sett,
 .ideditor.lane-studio .lanes-layer .carriageway.surface-sett,
-.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-sett     { fill: url(#lanes-texture-sett); }
+.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-sett     { fill: url(#lanes-texture-sett); --lanes-a: 0.6; }
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-gravel,
 .ideditor.lane-studio .lanes-layer .street-path.surface-gravel,
 .ideditor.lane-studio .lanes-layer .carriageway.surface-gravel,
-.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-gravel   { fill: url(#lanes-texture-gravel); }
+.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-gravel   { fill: url(#lanes-texture-gravel); --lanes-a: 0.6; }
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-unpaved,
 .ideditor.lane-studio .lanes-layer .street-path.surface-unpaved,
 .ideditor.lane-studio .lanes-layer .carriageway.surface-unpaved,
-.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-unpaved  { fill: rgba(150, 115, 75, 0.5); }
+.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-unpaved  { fill: rgb(150, 115, 75); --lanes-a: 0.5; }
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-grass,
 .ideditor.lane-studio .lanes-layer .street-path.surface-grass,
 .ideditor.lane-studio .lanes-layer .carriageway.surface-grass,
-.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-grass    { fill: rgba(110, 165, 80, 0.5); }
+.ideditor.lane-studio .lanes-layer .lane.lane-general.surface-grass    { fill: rgb(110, 165, 80); --lanes-a: 0.5; }
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-wood,
 .ideditor.lane-studio .lanes-layer .street-path.surface-wood,
-.ideditor.lane-studio .lanes-layer .carriageway.surface-wood           { fill: rgba(160, 115, 70, 0.55); }
+.ideditor.lane-studio .lanes-layer .carriageway.surface-wood           { fill: rgb(160, 115, 70); --lanes-a: 0.55; }
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-metal,
 .ideditor.lane-studio .lanes-layer .street-path.surface-metal,
-.ideditor.lane-studio .lanes-layer .carriageway.surface-metal          { fill: rgba(140, 150, 160, 0.55); }
+.ideditor.lane-studio .lanes-layer .carriageway.surface-metal          { fill: rgb(140, 150, 160); --lanes-a: 0.55; }
 
 /* foot and cycle paths: shared ones are striped with both colours, segregated ones split by a line */
 .ideditor.lane-studio .lanes-layer .street-path.use-shared:not([class*='surface-']) { fill: url(#lanes-shared-path); }

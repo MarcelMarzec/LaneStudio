@@ -7,13 +7,24 @@ import type { MarkingColour, StrokeStyle } from '../model/street_features';
 
 type Group = d3.Selection<SVGGElement>;
 
+/**
+ * A class list that keeps the `hover` and `selected` classes iD's hover and select behaviours put on
+ * elements carrying a feature's id, as redraws here happen while a feature is hovered or selected
+ */
+export function withIdState(element: Element, className: string): string {
+    const list = element.classList;
+    return className +
+        (list.contains('hover') ? ' hover' : '') +
+        (list.contains('selected') && !/\bselected\b/.test(className) ? ' selected' : '');
+}
+
 /** Draws `data` as `<path>`s in `group`, keyed, with a class and path data per item */
 export function joinPaths<T>(group: Group, data: T[], key: (d: T) => string, className: (d: T) => string, d: (d: T) => string) {
     const paths = group.selectAll<SVGPathElement, T>('path').data(data, key);
     paths.exit().remove();
     paths.enter().append('path')
         .merge(paths)
-        .attr('class', className)
+        .attr('class', function(datum) { return withIdState(this, className(datum)); })
         .attr('d', d);
 }
 
@@ -56,17 +67,17 @@ export function drawStreet(
     const symbols = zoom >= zooms.labels;
 
     joinPaths(group('areas'), street.areas.filter(a => a.kind !== 'island'), d => d.id,
-        d => `street-area street-area-${d.kind}` + (d.surface ? ` surface-${d.surface}` : ''), d => path(d.polygon, true));
+        d => `street-area street-area-${d.kind} ${d.id}` + (d.surface ? ` surface-${d.surface}` : ''), d => path(d.polygon, true));
 
     joinPaths(group('islands'), street.areas.filter(a => a.kind === 'island'), d => d.id,
-        d => `street-area street-area-island surface-${d.surface ?? 'concrete'}`, d => path(d.polygon, true));
+        d => `street-area street-area-island ${d.id} surface-${d.surface ?? 'concrete'}`, d => path(d.polygon, true));
 
     // paths by kind, surface and use; segregated foot and cycle paths get a line down the middle
     const sidePaths = street.paths.filter(p => p.kind !== 'crossing');
     const pathShapes = sidePaths.flatMap(p => [
         {
             key: p.id, d: path(p.polygon, true),
-            cls: `street-path street-path-${p.kind}` + (p.assumed ? ' assumed' : '') +
+            cls: `street-path street-path-${p.kind} ${p.id}` + (p.assumed ? ' assumed' : '') +
                 (p.surface ? ` surface-${p.surface}` : '') + (p.use ? ` use-${p.use}` : '')
         },
         ...(p.footHalf ? [{ key: `${p.id}-foot`, cls: 'street-path-foot-half', d: path(p.footHalf, true) }] : []),
@@ -77,7 +88,7 @@ export function drawStreet(
     // crossings sit on top of the road they cross
     const crossings = street.paths.filter(p => p.kind === 'crossing');
     const crossingShapes = crossings.flatMap(c => [
-        { key: c.id, cls: `street-path street-path-crossing markings-${c.markings}` + (c.assumed ? ' assumed' : ''), d: path(c.polygon, true) },
+        { key: c.id, cls: `street-path street-path-crossing ${c.id} markings-${c.markings}` + (c.assumed ? ' assumed' : ''), d: path(c.polygon, true) },
         ...(!markings ? [] : c.marks.map((m, i) => ({
             key: `${c.id}-m${i}`,
             cls: c.markings === 'zebra' ? 'marking marking-zebra_bar' : `marking marking-crossing_line ${c.markings}`,
@@ -135,7 +146,7 @@ export function drawParking(group: Group, parking: ParkingShape[], projection: P
     const path = pathFor(projection);
     const shapes = parking.flatMap(p => [
         ...(p.connector ? [{ key: `${p.id}-c`, cls: 'street-parking-connector', d: path(p.connector, true) }] : []),
-        { key: p.id, cls: 'street-parking', d: path(p.polygon, true) },
+        { key: p.id, cls: `street-parking ${p.id}`, d: path(p.polygon, true) },
         ...(!markings ? [] : p.bays.map((bay, i) => ({ key: `${p.id}-b${i}`, cls: 'street-parking-bay', d: path(bay, false) })))
     ]);
     joinPaths(group, shapes, d => d.key, d => d.cls, d => d.d);
@@ -171,8 +182,8 @@ export function drawRoadMarkings(group: Group, data: RoadMarkings, projection: P
         .data(data.areas, d => d.key);
     areas.exit().remove();
     areas.enter().append('path')
-        .attr('class', 'road-marking-area')
         .merge(areas)
+        .attr('class', function(d) { return withIdState(this, `road-marking-area ${d.id}`); })
         .attr('d', d => path(d.polygon, true))
         .attr('stroke', d => markingColourValues[d.style.colour])
         .attr('stroke-width', d => px(d.style.width))
@@ -188,9 +199,9 @@ export function drawRoadMarkings(group: Group, data: RoadMarkings, projection: P
         .data(data.lines, d => d.key);
     lines.exit().remove();
     lines.enter().append('path')
-        .attr('class', 'road-marking-line')
         .attr('fill', 'none')
         .merge(lines)
+        .attr('class', function(d) { return withIdState(this, `road-marking-line ${d.id}`); })
         .attr('d', d => path(d.line, false))
         .attr('stroke', d => markingColourValues[d.style.colour])
         .attr('stroke-width', d => px(d.style.width))

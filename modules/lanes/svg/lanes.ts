@@ -19,7 +19,7 @@ import { laneTools } from '../core/lane_tools';
 import { laneLayout } from '../geometry/layout';
 import { offsetFromWay } from '../geometry/measure';
 import { svgLaneDefs, turnArrowSymbol } from './defs';
-import { drawStreet, drawParking, drawRoadMarkings, joinPaths } from './street';
+import { drawStreet, drawParking, drawRoadMarkings, joinPaths, withIdState } from './street';
 import { actionConnectLanes, connectionNode } from '../actions/connect_lanes';
 import { streetGeometry, isCarriagewayArea } from '../geometry/street';
 import { parkingGeometry } from '../geometry/parking';
@@ -177,11 +177,14 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         carriageways.exit().remove();
         carriageways.enter().append('path')
             .merge(carriageways)
-            .attr('class', d => 'carriageway' +
-                (d.layout.assumed ? ' assumed' : '') +
-                (surfaceOf(d) ? ` surface-${surfaceOf(d)}` : '') +
-                (selected.has(d.wayID) ? ' selected' : '') +
-                (corridor.has(d.wayID) && !selected.has(d.wayID) ? ' corridor' : ''))
+            // the way id as a class: iD's hover and select behaviours highlight everything with it
+            .attr('class', function(d) {
+                return withIdState(this, `carriageway ${d.wayID}` +
+                    (d.layout.assumed ? ' assumed' : '') +
+                    (surfaceOf(d) ? ` surface-${surfaceOf(d)}` : '') +
+                    (selected.has(d.wayID) ? ' selected' : '') +
+                    (corridor.has(d.wayID) && !selected.has(d.wayID) ? ' corridor' : ''));
+            })
             .attr('d', d => path(d.carriageway, true));
 
 
@@ -278,12 +281,24 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 };
             }).filter(d => d.href);
         }));
+        // one-way roads: small direction arrows, about 2 m long (turn arrows are up to 5 m)
+        const travelData = !markings ? [] : shown.flatMap(piece => piece.travel.map((mark, m) => {
+            const lane = piece.layout.lanes[mark.lane];
+            const { p, pxPerMetre, angle } = screenMark(mark);
+            const k = Math.min(lane.width * 0.55, 2) * pxPerMetre / 20;
+            return {
+                key: `${pieceKey(piece)}-t${m}`,
+                href: '#lanes-arrow-travel',
+                transform: `translate(${p[0].toFixed(1)},${p[1].toFixed(1)}) rotate(${(angle + 90).toFixed(1)}) scale(${k.toFixed(3)})`
+            };
+        }));
+        arrowData.push(...travelData);
         const arrows = group('arrows').selectAll<SVGUseElement, typeof arrowData[number]>('use')
             .data(arrowData, d => d.key);
         arrows.exit().remove();
         arrows.enter().append('use')
-            .attr('class', 'turn-arrow')
             .merge(arrows)
+            .attr('class', d => (d.href === '#lanes-arrow-travel' ? 'travel-arrow' : 'turn-arrow'))
             .attr('href', d => d.href)
             .attr('transform', d => d.transform);
 
@@ -390,6 +405,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .classed('lanes-drawn-feature', d => !!d && drawnNodes.has(d.id))
             // street-side parking mapped as a point on a road is already shown by the road's parking strip
             .classed('lanes-redundant', d => !!d && isStreetParking(d.tags) && graph.parentWays(d).some(isLaneRoad));
+        // iD's one-way markers on the way line are replaced by arrows on the lanes themselves
+        surface.selectAll<SVGPathElement, { id: string }>('.layer-osm .onewaygroup path')
+            .classed('lanes-drawn-oneway', d => !!d && drawn.has(d.id));
     }
 
 

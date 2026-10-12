@@ -51,7 +51,7 @@ import { uiPanePreferences } from './panes/preferences';
 // extra panes added by apps built on iD (e.g. Lane Studio); none in iD itself
 var _extraPaneFactories = [];
 
-/** Registers an extra map pane, shown after iD's own panes; call before the UI is built */
+/** Registers an extra map pane, shown before iD's own panes; call before the UI is built */
 export function uiInitAddPane(factory) {
     _extraPaneFactories.push(factory);
 }
@@ -229,12 +229,12 @@ export function uiInit(context) {
             .attr('class', 'map-panes');
 
         var uiPanes = [
+            ..._extraPaneFactories.map(factory => factory(context)),
             uiPaneBackground(context),
             uiPaneMapData(context),
             uiPaneIssues(context),
             uiPanePreferences(context),
-            uiPaneHelp(context),
-            ..._extraPaneFactories.map(factory => factory(context))
+            uiPaneHelp(context)
         ];
 
         uiPanes.forEach(function(pane) {

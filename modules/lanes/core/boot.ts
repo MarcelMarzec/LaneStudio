@@ -44,7 +44,7 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
     uiEntityEditorAddSection(uiSectionMarkings);
     uiEntityEditorAddSection(uiSectionStreetFeature);
 
-    // Lane Studio's settings pane, after iD's own panes
+    // Lane Studio's settings pane, first in the pane bar
     uiInitAddPane(uiPaneLaneStudio);
 
     context.container().classed('lane-studio', true);

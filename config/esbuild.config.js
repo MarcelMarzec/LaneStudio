@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { parseArgs } from 'node:util';
 import envs from './envs.js';
 import browserslistToEsbuild from 'browserslist-to-esbuild';
+import { writeLanesStrings, watchLanesStrings } from '../scripts/build_lanes_strings.js';
 
 let args = parseArgs({options: {
   watch: { type: 'boolean' },
@@ -26,7 +27,11 @@ const context = await esbuild.context({
   treeShaking: false,
 });
 
+// Lane Studio's strings are built with the code that reads them
+writeLanesStrings();
+
 if (args.watch) {
+  watchLanesStrings();
   await context.watch();
 } else {
   const build = await context.rebuild();

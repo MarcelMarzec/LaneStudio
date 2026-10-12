@@ -18,6 +18,9 @@ const maxClearance = 30;
 const taperLength = 25;
 // Ways shorter than this are hard to see and get highlighted, in metres
 export const shortWayLength = 8;
+// one-way direction arrows: spacing along a lane, and how far they keep from junctions, in metres
+const travelSpacing = 45;
+const travelClearance = 15;
 
 
 /** One drawable stretch of a road between junctions, everything in lon/lat */
@@ -41,6 +44,8 @@ export interface RoadPiece {
     lineSides: [Vec2[], Vec2[]][];
     /** where turn arrows go: a point on a lane and a point 1 m further in its direction of travel */
     arrows: LaneMark[];
+    /** small arrows showing the direction of travel on one-way roads, clear of turn arrows and junctions */
+    travel: LaneMark[];
     /** where lane labels go, one per lane in the middle of the piece */
     labels: LaneMark[];
     roadside: { side: 'left' | 'right'; kind: RoadsideKind; assumed: boolean; polygon: Vec2[] }[];
@@ -1040,6 +1045,39 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             }
         });
 
+        // one-way roads: small direction arrows spread along each lane, clear of the piece ends
+        // (junctions) and of the lane's turn arrows
+        const travel: LaneMark[] = [];
+        if (layout.model.oneway && pieceLength > 2 * travelClearance) {
+            layout.lanes.forEach((lane, i) => {
+                const against = lane.ref.direction === 'backward';
+                // how far along the lane its turn arrows are
+                const cumulative = cumulativeLengths(centres[i]);
+                const busy = arrows.filter(m => m.lane === i).map(m => {
+                    const p = frame.toMetres(m.loc);
+                    let best = 0;
+                    let nearest = Infinity;
+                    centres[i].forEach((c, k) => {
+                        const d = Math.hypot(c[0] - p[0], c[1] - p[1]);
+                        if (d < nearest) {
+                            nearest = d;
+                            best = cumulative[k];
+                        }
+                    });
+                    return best;
+                });
+                const count = Math.max(1, Math.floor((pieceLength - 2 * travelClearance) / travelSpacing) + 1);
+                const span = pieceLength - 2 * travelClearance;
+                for (let k = 0; k < count; k++) {
+                    const dist = travelClearance + (count === 1 ? span / 2 : span * k / (count - 1));
+                    if (busy.some(b => Math.abs(b - dist) < 12)) continue;
+                    const at = pointAlong(centres[i], dist);
+                    const direction = against ? scale(at.direction, -1) : at.direction;
+                    travel.push({ lane: i, loc: frame.toLoc(at.point), ahead: frame.toLoc(add(at.point, direction)) });
+                }
+            });
+        }
+
         const roadside: RoadPiece['roadside'] = [];
         for (const side of ['left', 'right'] as const) {
             const sign = side === 'left' ? -1 : 1;
@@ -1066,6 +1104,7 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             lines: lines.map(l => toLocs(frame, l)),
             lineSides: lineSides.map(([l, r]) => [toLocs(frame, l), toLocs(frame, r)]),
             arrows,
+            travel,
             labels,
             roadside,
             length: pieceLength,

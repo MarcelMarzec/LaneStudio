@@ -45,6 +45,12 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
             .attr('fill', 'currentColor').attr('stroke', 'none');
     }
 
+    // direction of travel on one-way roads: slimmer than turn arrows, drawn smaller and fainter
+    const travel = defs.append('symbol').attr('id', 'lanes-arrow-travel').attr('overflow', 'visible');
+    travel.append('path').attr('d', 'M0 9V-3')
+        .attr('fill', 'none').attr('stroke', 'currentColor').attr('stroke-width', 1.4).attr('stroke-linecap', 'round');
+    travel.append('path').attr('d', 'M-3.2 -2L0 -9.5L3.2 -2Z').attr('fill', 'currentColor');
+
     // give-way triangle painted on the road: its base faces the line ahead, its tip the driver
     defs.append('symbol').attr('id', 'lanes-giveway').attr('overflow', 'visible')
         .append('path').attr('d', 'M-7 -10L7 -10L0 10Z')
@@ -86,15 +92,15 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
         p.append('rect').attr('width', size).attr('height', size).attr('fill', back);
         return p;
     };
-    texture('paving', 12, 'rgba(200, 185, 160, 0.6)')
+    texture('paving', 12, 'rgb(200, 185, 160)')
         .append('path').attr('d', 'M0 0.5H12M0 6.5H12M0.5 0V6M6.5 6V12')
-        .attr('fill', 'none').attr('stroke', 'rgba(90, 80, 65, 0.45)').attr('stroke-width', 1);
-    texture('sett', 6, 'rgba(120, 110, 100, 0.6)')
+        .attr('fill', 'none').attr('stroke', 'rgb(140, 125, 100)').attr('stroke-width', 1);
+    texture('sett', 6, 'rgb(120, 110, 100)')
         .append('path').attr('d', 'M0 0.5H6M0 3.5H6M0.5 0V3M3.5 3V6')
-        .attr('fill', 'none').attr('stroke', 'rgba(40, 35, 30, 0.5)').attr('stroke-width', 0.8);
-    const gravel = texture('gravel', 9, 'rgba(170, 160, 140, 0.55)');
+        .attr('fill', 'none').attr('stroke', 'rgb(70, 62, 55)').attr('stroke-width', 0.8);
+    const gravel = texture('gravel', 9, 'rgb(170, 160, 140)');
     for (const [cx, cy, r] of [[2, 2, 0.9], [6.5, 3.5, 0.7], [4, 7, 0.8], [8, 8, 0.6]]) {
-        gravel.append('circle').attr('cx', cx).attr('cy', cy).attr('r', r).attr('fill', 'rgba(90, 80, 65, 0.55)');
+        gravel.append('circle').attr('cx', cx).attr('cy', cy).attr('r', r).attr('fill', 'rgb(120, 108, 90)');
     }
 
     // shared foot and cycle paths: footway and cycleway colours in diagonal bands
