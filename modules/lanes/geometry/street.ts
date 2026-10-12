@@ -428,14 +428,26 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
         }
     }
 
-    if (highway === 'stop' || highway === 'give_way' || highway === 'traffic_signals') {
+    // signals, stop or give way tagged on a junction node itself: the lines go on the approaches, at the
+    // edge of the junction, not across the middle of it
+    const roads = parents.filter(isLaneRoad) as osmWay[];
+    const armCount = roads.reduce((n, w) => {
+        const i = w.nodes.indexOf(node.id);
+        return n + (i > 0 ? 1 : 0) + (i < w.nodes.length - 1 ? 1 : 0);
+    }, 0);
+    const atJunction = armCount >= 3;
+    if (highway === 'traffic_signals' && atJunction) junctionSignalLines(node, roads, graph, out, visuals);
+
+    if (highway === 'stop' || highway === 'give_way' || (highway === 'traffic_signals' && !atJunction)) {
         const kind: MarkingKind = highway === 'stop' ? 'stop_line' : highway === 'give_way' ? 'give_way_line' : 'signal_line';
+        // at a junction node, the line stands back by half the width of the widest other road
+        const back = atJunction ? junctionClearance(node, road, graph) : 0;
         for (const direction of approachDirections(tags, cs)) {
             const range = approachRange(cs, direction);
             if (!range) continue;
             // the line faces traffic coming towards the node
             const travel = direction === 'forward' ? cs.direction : scale(cs.direction, -1);
-            const at = (along: number, across: number) => cs.frame.toLoc(add(scale(travel, along), scale(cs.normal, across)));
+            const at = (along: number, across: number) => cs.frame.toLoc(add(scale(travel, along - back), scale(cs.normal, across)));
             out.markings.push({ key: `${node.id}-${kind}-${direction}`, kind, nodeID: node.id, closed: false, points: [at(0, range[0]), at(0, range[1])] });
 
             // painted STOP or give-way triangles on each approach lane, a few metres before the line
@@ -535,6 +547,34 @@ function barrierMarkings(node: osmNode, cs: CrossSection, out: StreetGeometry) {
             key: `${node.id}-barrier`, kind: 'barrier_line', nodeID: node.id, closed: false, variant: barrier,
             points: [scale(cs.normal, left), scale(cs.normal, right)].map(cs.frame.toLoc)
         });
+    }
+}
+
+/** How far back from a junction node its approach lines stand: half the widest other road, plus 1 m */
+function junctionClearance(node: osmNode, approach: osmWay, graph: coreGraph): number {
+    const others = graph.parentWays(node).filter(w => w.id !== approach.id && isLaneRoad(w)) as osmWay[];
+    const widest = Math.max(0, ...others.map(w => cachedLayout(w, graph).total));
+    return widest / 2 + 1;
+}
+
+/** Traffic signals on a junction node: a stop line on every road approaching it, at the junction's edge */
+function junctionSignalLines(node: osmNode, roads: osmWay[], graph: coreGraph, out: StreetGeometry, visuals?: Map<string, WayVisual>) {
+    for (const way of roads) {
+        const i = way.nodes.indexOf(node.id);
+        const arm = crossSection(way, i, graph, visuals);
+        const back = junctionClearance(node, way, graph);
+        for (const side of [1, -1]) {
+            if ((side > 0 && i === way.nodes.length - 1) || (side < 0 && i === 0)) continue;
+            // traffic on the arm leaving along the way approaches against it
+            const range = approachRange(arm, side > 0 ? 'backward' : 'forward');
+            if (!range) continue;
+            const dir = scale(arm.direction, side);
+            const at = (across: number) => arm.frame.toLoc(add(scale(dir, back), scale(arm.normal, across)));
+            out.markings.push({
+                key: `${node.id}-signal_line-${way.id}-${side}`, kind: 'signal_line', nodeID: node.id, closed: false,
+                points: [at(range[0]), at(range[1])]
+            });
+        }
     }
 }
 
