@@ -362,6 +362,29 @@ function continuationPairs(graph: coreGraph, up: Arm, down: Arm, nodeID: string,
     if (!going.length) return [];
     if (going.length === downCount) return going.map((from, to) => ({ from, to, optional: false }));
 
+    // fewer lanes ahead and some lanes marked to merge: the merging lanes are the ones that end,
+    // and the through or unmarked lanes carry straight on
+    if (downCount < going.length) {
+        const isMerge = (i: number) => turns[i].includes('merge_to_left') || turns[i].includes('merge_to_right');
+        const merging = going.filter(isMerge);
+        const staying = going.filter(i => !isMerge(i));
+        if (merging.length && staying.length) {
+            // the staying lanes line up on the side away from the merging lanes
+            const pairs = zipLanes(staying, downCount, merging.some(i => i > Math.max(...staying)));
+            const targetOf = new Map(pairs.map(p => [p.from, p.to]));
+            for (const i of merging) {
+                // a lane merges into the nearest staying lane on the side its arrow points to
+                const toLeft = turns[i].includes('merge_to_left');
+                const candidates = staying.filter(j => (toLeft ? j < i : j > i));
+                const into = toLeft ? Math.max(...candidates, -1) : Math.min(...candidates, Infinity);
+                const fallback = toLeft ? Math.min(...staying) : Math.max(...staying);
+                const target = targetOf.get(Number.isFinite(into) && into >= 0 ? into : fallback);
+                if (target !== undefined) pairs.push({ from: i, to: target, optional: false, merges: true });
+            }
+            return pairs;
+        }
+    }
+
     let alignLeft: boolean;
     const turning = upLanes.map((_, i) => i).filter(i => !going.includes(i));
     if (turning.length) {

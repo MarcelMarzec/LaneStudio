@@ -173,6 +173,31 @@ describe('roadGeometry at joins and junctions', () => {
         expect(Math.abs(y(before.boundaries[3][0]) - y(before.boundaries[2][0]))).toBeCloseTo(3, 1);
     });
 
+    it('ends the lane marked to merge, keeping the through lane straight on', () => {
+        // left-hand traffic (as in the UK): the right lane merges left into the through lane
+        const uk = (dx: number, dy: number): [number, number] => [-0.1 + dx * mx, 53.1 + dy * m];
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: uk(-100, 0) }),
+            new iD.osmNode({ id: 'n2', loc: uk(0, 0) }),
+            new iD.osmNode({ id: 'n3', loc: uk(100, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags: { highway: 'primary', oneway: 'yes', lanes: '2', 'width:lanes': '3|3', 'turn:lanes': 'through|merge_to_left' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n2', 'n3'], tags: { highway: 'primary', oneway: 'yes', lanes: '1', width: '3' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const ukFrame = metricFrame(uk(0, 0));
+        const yUk = (loc: [number, number]) => ukFrame.toMetres(loc)[1];
+        const { pieces } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
+        const before = pieces.find(p => p.wayID === 'w1')!;
+        const after = pieces.find(p => p.wayID === 'w2')!;
+        const end = (line: [number, number][]) => line[line.length - 1];
+        // the single lane ahead lines up with the left (through) lane, 1.5 m left (north) of the way
+        expect(yUk(after.centres[0][0])).toBeCloseTo(yUk(end(before.centres[0])), 1);
+        expect(yUk(after.centres[0][0])).toBeCloseTo(1.5, 1);
+        // the merging right lane tapers away to nothing at the join
+        expect(yUk(end(before.boundaries[2]))).toBeCloseTo(yUk(end(before.boundaries[1])), 1);
+    });
+
     it('does not move a road that has placement tags', () => {
         const graph = laneDrop(
             { highway: 'primary', oneway: 'yes', lanes: '3', 'width:lanes': '3|3|3' },
