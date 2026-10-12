@@ -76,6 +76,37 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
         pattern('dots', 8).append('circle').attr('cx', 4).attr('cy', 4).attr('r', 1.6).attr('fill', colour);
     }
 
+    // surface textures seen from above: paving slabs, setts, gravel
+    const texture = (name: string, size: number, back: string) => {
+        const p = defs.append('pattern')
+            .attr('id', `lanes-texture-${name}`)
+            .attr('patternUnits', 'userSpaceOnUse')
+            .attr('width', size)
+            .attr('height', size);
+        p.append('rect').attr('width', size).attr('height', size).attr('fill', back);
+        return p;
+    };
+    texture('paving', 12, 'rgba(200, 185, 160, 0.6)')
+        .append('path').attr('d', 'M0 0.5H12M0 6.5H12M0.5 0V6M6.5 6V12')
+        .attr('fill', 'none').attr('stroke', 'rgba(90, 80, 65, 0.45)').attr('stroke-width', 1);
+    texture('sett', 6, 'rgba(120, 110, 100, 0.6)')
+        .append('path').attr('d', 'M0 0.5H6M0 3.5H6M0.5 0V3M3.5 3V6')
+        .attr('fill', 'none').attr('stroke', 'rgba(40, 35, 30, 0.5)').attr('stroke-width', 0.8);
+    const gravel = texture('gravel', 9, 'rgba(170, 160, 140, 0.55)');
+    for (const [cx, cy, r] of [[2, 2, 0.9], [6.5, 3.5, 0.7], [4, 7, 0.8], [8, 8, 0.6]]) {
+        gravel.append('circle').attr('cx', cx).attr('cy', cy).attr('r', r).attr('fill', 'rgba(90, 80, 65, 0.55)');
+    }
+
+    // shared foot and cycle paths: footway and cycleway colours in diagonal bands
+    const shared = defs.append('pattern')
+        .attr('id', 'lanes-shared-path')
+        .attr('patternUnits', 'userSpaceOnUse')
+        .attr('width', 12)
+        .attr('height', 12)
+        .attr('patternTransform', 'rotate(45)');
+    shared.append('rect').attr('width', 6).attr('height', 12).attr('fill', 'rgba(225, 215, 195, 0.6)');
+    shared.append('rect').attr('x', 6).attr('width', 6).attr('height', 12).attr('fill', 'rgba(40, 150, 90, 0.5)');
+
     // hatching for unknown or restricted space
     const hatch = defs.append('pattern')
         .attr('id', 'lanes-hatch')

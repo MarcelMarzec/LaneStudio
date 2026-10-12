@@ -56,14 +56,23 @@ export function drawStreet(
     const symbols = zoom >= zooms.labels;
 
     joinPaths(group('areas'), street.areas.filter(a => a.kind !== 'island'), d => d.id,
-        d => `street-area street-area-${d.kind}`, d => path(d.polygon, true));
+        d => `street-area street-area-${d.kind}` + (d.surface ? ` surface-${d.surface}` : ''), d => path(d.polygon, true));
 
     joinPaths(group('islands'), street.areas.filter(a => a.kind === 'island'), d => d.id,
         d => `street-area street-area-island surface-${d.surface ?? 'concrete'}`, d => path(d.polygon, true));
 
+    // paths by kind, surface and use; segregated foot and cycle paths get a line down the middle
     const sidePaths = street.paths.filter(p => p.kind !== 'crossing');
-    joinPaths(group('paths'), sidePaths, d => d.id,
-        d => `street-path street-path-${d.kind}` + (d.assumed ? ' assumed' : ''), d => path(d.polygon, true));
+    const pathShapes = sidePaths.flatMap(p => [
+        {
+            key: p.id, d: path(p.polygon, true),
+            cls: `street-path street-path-${p.kind}` + (p.assumed ? ' assumed' : '') +
+                (p.surface ? ` surface-${p.surface}` : '') + (p.use ? ` use-${p.use}` : '')
+        },
+        ...(p.footHalf ? [{ key: `${p.id}-foot`, cls: 'street-path-foot-half', d: path(p.footHalf, true) }] : []),
+        ...(p.divider && markings ? [{ key: `${p.id}-divider`, cls: 'street-path-divider', d: path(p.divider, false) }] : [])
+    ]);
+    joinPaths(group('paths'), pathShapes, d => d.key, d => d.cls, d => d.d);
 
     // crossings sit on top of the road they cross
     const crossings = street.paths.filter(p => p.kind === 'crossing');

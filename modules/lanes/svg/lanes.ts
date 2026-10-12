@@ -24,8 +24,11 @@ import { actionConnectLanes, connectionNode } from '../actions/connect_lanes';
 import { streetGeometry } from '../geometry/street';
 import { parkingGeometry } from '../geometry/parking';
 import { roadMarkingGeometry } from '../geometry/road_marking';
-import { isStreetParking } from '../model/street_features';
-import type { OsmEntity } from '../../osm';
+import { isStreetParking, surfaceGroup } from '../model/street_features';
+import { pointInPolygon } from '../geometry/frame';
+import type { AreaShape } from '../geometry/street';
+import type { osmNode } from '../../osm/node';
+import type { NodeId, OsmEntity } from '../../osm';
 
 /** Zoom levels where each level of detail appears (see the plan's zoom rules) */
 export const laneZooms = {
@@ -51,6 +54,15 @@ function dividerClass(left: LaneInfo, right: LaneInfo, layoutMarkings: boolean):
     if (!leftCrosses && !rightCrosses) return 'solid';
     // the solid line sits on the side of the lane that may not cross
     return leftCrosses ? 'solid-right' : 'solid-left';
+}
+
+
+/** Whether most of a road piece lies inside one of the given areas */
+function insideAreas(piece: RoadPiece, areas: AreaShape[]): boolean {
+    const centre = piece.centres[Math.floor(piece.centres.length / 2)] ?? [];
+    const samples = [...centre, piece.middle];
+    if (!samples.length) return false;
+    return areas.some(area => samples.filter(p => pointInPolygon(p, area.polygon)).length >= samples.length * 0.6);
 }
 
 
@@ -123,6 +135,11 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* footways, mapped areas and kerbs, road markings on nodes */
         const street = streetGeometry(visible, graph);
+        // roads lying inside a road mapped as an area: the area is their surface, so they draw
+        // no carriageway, kerbs, roadside or general lane fill of their own
+        const roadAreas = street.areas.filter(a => a.kind === 'carriageway');
+        const inArea = new Set<RoadPiece>(roadAreas.length ? pieces.filter(piece => insideAreas(piece, roadAreas)) : []);
+        const surfaceOf = (piece: RoadPiece) => surfaceGroup((graph.hasEntity(piece.wayID) as osmWay | undefined)?.tags.surface);
         const parking = parkingGeometry(visible, graph);
         const roadMarkings = markings ? roadMarkingGeometry(visible, graph) : { lines: [], areas: [], texts: [] };
         drawStreet(group, street, projection, zoom, laneZooms);
@@ -131,7 +148,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* roadside strips */
-        const strips = pieces.flatMap(piece => piece.roadside.map((strip, i) => ({ ...strip, key: `${pieceKey(piece)}-${i}` })));
+        const strips = pieces.filter(piece => !inArea.has(piece)).flatMap(piece => piece.roadside.map((strip, i) => ({ ...strip, key: `${pieceKey(piece)}-${i}` })));
         const stripPaths = group('roadside').selectAll<SVGPathElement, typeof strips[number]>('path')
             .data(strips, d => d.key);
         stripPaths.exit().remove();
@@ -143,12 +160,13 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* carriageways */
         const carriageways = group('carriageway').selectAll<SVGPathElement, RoadPiece>('path')
-            .data(pieces, pieceKey);
+            .data(pieces.filter(piece => !inArea.has(piece)), pieceKey);
         carriageways.exit().remove();
         carriageways.enter().append('path')
             .merge(carriageways)
             .attr('class', d => 'carriageway' +
                 (d.layout.assumed ? ' assumed' : '') +
+                (surfaceOf(d) ? ` surface-${surfaceOf(d)}` : '') +
                 (selected.has(d.wayID) ? ' selected' : '') +
                 (corridor.has(d.wayID) && !selected.has(d.wayID) ? ' corridor' : ''))
             .attr('d', d => path(d.carriageway, true));
@@ -156,7 +174,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* junction areas */
         const areas = group('junctions').selectAll<SVGPathElement, typeof junctions[number]>('path')
-            .data(junctions, d => d.nodeID);
+            .data(roadAreas.length ? junctions.filter(j => {
+                const node = graph.hasEntity(j.nodeID as NodeId) as osmNode | undefined;
+                return !node || !roadAreas.some(a => pointInPolygon(node.loc, a.polygon));
+            }) : junctions, d => d.nodeID);
         areas.exit().remove();
         areas.enter().append('path')
             .attr('class', 'junction-area')
@@ -165,13 +186,17 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* lane ribbons */
-        const laneData = pieces.flatMap(piece => piece.layout.lanes.map((lane, i) => ({ piece, lane, i })));
+        const laneData = pieces.flatMap(piece => piece.layout.lanes.map((lane, i) => ({ piece, lane, i })))
+            .filter(d => !(inArea.has(d.piece) && d.lane.kind === 'general'));
         const ribbons = group('lanes').selectAll<SVGPathElement, typeof laneData[number]>('path')
             .data(laneData, d => `${pieceKey(d.piece)}-${d.i}`);
         ribbons.exit().remove();
         ribbons.enter().append('path')
             .merge(ribbons)
-            .attr('class', d => `lane lane-${d.lane.kind} lane-${d.lane.ref.direction}`)
+            .attr('class', d => {
+                const surface = surfaceGroup(d.lane.values['surface:lanes']) ?? surfaceOf(d.piece);
+                return `lane lane-${d.lane.kind} lane-${d.lane.ref.direction}` + (surface ? ` surface-${surface}` : '');
+            })
             .attr('d', d => path(d.piece.lanes[d.i], true));
 
 
@@ -205,7 +230,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* kerbs */
-        const kerbData = pieces.flatMap(piece => [
+        const kerbData = pieces.filter(piece => !inArea.has(piece)).flatMap(piece => [
             { key: `${pieceKey(piece)}-l`, line: piece.lines[0], assumed: piece.layout.assumed },
             { key: `${pieceKey(piece)}-r`, line: piece.lines[piece.lines.length - 1], assumed: piece.layout.assumed }
         ]);

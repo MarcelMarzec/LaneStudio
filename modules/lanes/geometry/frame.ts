@@ -98,3 +98,15 @@ export function cumulativeLengths(points: Vec2[]): number[] {
     for (let i = 1; i < points.length; i++) result.push(result[i - 1] + len(sub(points[i], points[i - 1])));
     return result;
 }
+
+
+/** Whether a point lies inside a polygon (ring of points, closed or not), in any planar coordinates */
+export function pointInPolygon(p: Vec2, polygon: Vec2[]): boolean {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const [xi, yi] = polygon[i];
+        const [xj, yj] = polygon[j];
+        if ((yi > p[1]) !== (yj > p[1]) && p[0] < (xj - xi) * (p[1] - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+}

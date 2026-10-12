@@ -3,14 +3,14 @@ import type { Vec2 } from '../../geo/vector';
 import type { OsmEntity } from '../../osm';
 import type { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
-import { isLaneRoad } from '../core/roads';
+import { isLaneRoad, laneRoadHighways } from '../core/roads';
 import {
     metricFrame, sub, add, scale, unit, rightNormal, pointAlong,
     offsetPolyline, cumulativeLengths, polylineLength, type MetricFrame
 } from './frame';
 import { parseWidth, type LaneLayout } from './layout';
 import { cachedLayout } from './road_geometry';
-import { isTrafficIsland, islandSurface, type IslandSurface } from '../model/street_features';
+import { isTrafficIsland, islandSurface, surfaceGroup, type SurfaceGroup } from '../model/street_features';
 
 /*
  * Everything on and beside the road that is not a lane: footways and paths at their real width,
@@ -32,6 +32,14 @@ export interface PathShape {
     kind: PathKind;
     polygon: Vec2[];
     assumed: boolean;
+    /** what the path is surfaced with, when tagged */
+    surface?: SurfaceGroup;
+    /** foot and cycle traffic: `segregated` paths are split down the middle, `shared` ones are mixed */
+    use?: 'segregated' | 'shared';
+    /** the line between the foot and cycle halves of a segregated path */
+    divider?: Vec2[];
+    /** the foot half of a segregated path (the rest is the cycle half) */
+    footHalf?: Vec2[];
     /** crossing paths only */
     markings?: CrossingMarkings;
     /** zebra bars or edge lines for crossings */
@@ -44,8 +52,8 @@ export interface AreaShape {
     id: string;
     kind: AreaKind;
     polygon: Vec2[];
-    /** traffic islands: what they are covered with */
-    surface?: IslandSurface;
+    /** what the area is covered with (always set for traffic islands, which default to concrete) */
+    surface?: SurfaceGroup;
 }
 
 export interface KerbLine {
@@ -171,8 +179,24 @@ function pathShape(way: osmWay, graph: coreGraph): PathShape {
         }
     }
 
+    // foot and cycle traffic together: split down the middle when segregated
+    const foot = tags.foot === 'designated' || tags.highway === 'footway';
+    const bike = tags.bicycle === 'designated' || tags.highway === 'cycleway';
+    let use: PathShape['use'];
+    let divider: Vec2[] | undefined;
+    let footHalf: Vec2[] | undefined;
+    if (foot && bike && kind !== 'crossing') {
+        use = tags.segregated === 'yes' ? 'segregated' : 'shared';
+        if (use === 'segregated') {
+            // OSM does not say which side is which; the foot half is drawn on the left
+            divider = points.map(frame.toLoc);
+            footHalf = [...left, ...points.slice().reverse()].map(frame.toLoc);
+        }
+    }
+
     const shape: PathShape = {
         id: way.id, kind, assumed: tagged === undefined, markings, marks,
+        surface: surfaceGroup(tags.surface), use, divider, footHalf,
         polygon: [...left, ...right.reverse()].map(frame.toLoc)
     };
     pathCache.set(way, { nodes, shape });
@@ -191,6 +215,8 @@ function areaKind(tags: Tags): AreaKind | null {
         if (value === 'emergency' || value === 'verge') return 'other';
         return 'carriageway';
     }
+    // a road mapped as an area (area=yes + highway=service etc.) is the road's surface
+    if (tags.area === 'yes' && laneRoadHighways.has(tags.highway ?? '')) return 'carriageway';
     if (tags.highway === 'pedestrian' && (tags.area === 'yes')) return 'pavement';
     if ((tags.highway === 'footway' || tags.highway === 'path') && tags.area === 'yes') return 'pavement';
     return null;
@@ -372,7 +398,7 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph): StreetG
                 out.paths.push(pathShape(way, graph));
             } else if (way.isClosed() && way.nodes.length > 3) {
                 const kind = areaKind(tags);
-                if (kind) out.areas.push({ id: way.id, kind, polygon: locs(way, graph), surface: kind === 'island' ? islandSurface(tags) : undefined });
+                if (kind) out.areas.push({ id: way.id, kind, polygon: locs(way, graph), surface: kind === 'island' ? islandSurface(tags) : surfaceGroup(tags.surface) });
             }
             if (tags.barrier === 'kerb') {
                 out.kerbs.push({ id: way.id, kerb: tags.kerb ?? 'raised', line: locs(way, graph) });

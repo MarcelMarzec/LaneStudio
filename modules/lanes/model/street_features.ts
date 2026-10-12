@@ -12,17 +12,30 @@ export function isTrafficIsland(tags: Tags): boolean {
     return tags.traffic_calming === 'island' && tags.area === 'yes';
 }
 
-export type IslandSurface = 'grass' | 'paving' | 'sett' | 'asphalt' | 'concrete';
+/** Surfaces grouped by how they look from above */
+export type SurfaceGroup = 'asphalt' | 'concrete' | 'paving' | 'sett' | 'gravel' | 'unpaved' | 'grass' | 'wood' | 'metal';
+
+/** How a `surface=*` value looks, or undefined when it is not tagged or not known */
+export function surfaceGroup(value: string | undefined): SurfaceGroup | undefined {
+    if (!value) return undefined;
+    if (['asphalt', 'chipseal', 'tarmac', 'paved', 'rubber', 'tartan'].includes(value)) return 'asphalt';
+    if (value === 'concrete' || value === 'concrete:lanes' || value === 'cement') return 'concrete';
+    if (['paving_stones', 'paved_stones', 'bricks', 'brick', 'concrete:plates', 'paving_stones:lanes'].includes(value)) return 'paving';
+    if (['sett', 'cobblestone', 'unhewn_cobblestone', 'cobblestone:flattened', 'stone'].includes(value)) return 'sett';
+    if (['gravel', 'fine_gravel', 'compacted', 'pebblestone', 'rock', 'shells'].includes(value)) return 'gravel';
+    if (['dirt', 'earth', 'ground', 'mud', 'sand', 'soil', 'unpaved', 'woodchips', 'clay'].includes(value)) return 'unpaved';
+    if (value === 'grass' || value === 'grass_paver' || value === 'artificial_turf') return 'grass';
+    if (value === 'wood') return 'wood';
+    if (value === 'metal' || value === 'metal_grid') return 'metal';
+    return undefined;
+}
+
+export type IslandSurface = SurfaceGroup;
 
 /** What an island is covered with, for its colour; untagged islands are concrete */
 export function islandSurface(tags: Tags): IslandSurface {
-    const surface = tags.surface ?? '';
-    if (tags.landuse === 'grass' || tags.landcover === 'grass' || tags.natural === 'grassland' ||
-        ['grass', 'dirt', 'earth', 'ground', 'soil', 'grass_paver'].includes(surface)) return 'grass';
-    if (['paving_stones', 'paved_stones', 'bricks', 'brick', 'concrete:plates'].includes(surface)) return 'paving';
-    if (['sett', 'cobblestone', 'unhewn_cobblestone', 'cobblestone:flattened', 'stone'].includes(surface)) return 'sett';
-    if (surface === 'asphalt' || surface === 'chipseal' || surface === 'tarmac') return 'asphalt';
-    return 'concrete';
+    if (tags.landuse === 'grass' || tags.landcover === 'grass' || tags.natural === 'grassland') return 'grass';
+    return surfaceGroup(tags.surface) ?? 'concrete';
 }
 
 

@@ -1,4 +1,5 @@
-import { isTrafficIsland, islandSurface, roadMarkingStyle, isStreetParking } from '../../../../modules/lanes/model/street_features';
+import { isTrafficIsland, islandSurface, roadMarkingStyle, isStreetParking, surfaceGroup } from '../../../../modules/lanes/model/street_features';
+import { streetGeometry } from '../../../../modules/lanes/geometry/street';
 import { parkingGeometry } from '../../../../modules/lanes/geometry/parking';
 import { roadMarkingGeometry } from '../../../../modules/lanes/geometry/road_marking';
 import { metricFrame } from '../../../../modules/lanes/geometry/frame';
@@ -35,6 +36,17 @@ describe('street feature tags', () => {
         expect(roadMarkingStyle({ road_marking: 'give_way', width: '0.5', dasharray: '0.6,0.3' })).toMatchObject({ lines: ['dashed'], width: 0.5, dash: [0.6, 0.3] });
         expect(roadMarkingStyle({ road_marking: 'restriction' }).pattern).toBe('hatch');
         expect(roadMarkingStyle({ road_marking: 'restriction', pattern: 'crosshatch' }).pattern).toBe('crosshatch');
+    });
+
+    it('groups surfaces by how they look', () => {
+        expect(surfaceGroup('asphalt')).toBe('asphalt');
+        expect(surfaceGroup('paving_stones')).toBe('paving');
+        expect(surfaceGroup('cobblestone')).toBe('sett');
+        expect(surfaceGroup('fine_gravel')).toBe('gravel');
+        expect(surfaceGroup('dirt')).toBe('unpaved');
+        expect(surfaceGroup('grass_paver')).toBe('grass');
+        expect(surfaceGroup(undefined)).toBeUndefined();
+        expect(surfaceGroup('lava')).toBeUndefined();
     });
 
     it('recognises street parking', () => {
@@ -102,5 +114,31 @@ describe('roadMarkingGeometry', () => {
         expect(out.lines.map(l => frame.toMetres(l.line[0])[1])).toEqual([expect.closeTo(0.15, 2), expect.closeTo(-0.15, 2)]);
         expect(out.areas.map(a => [a.id, a.style.pattern, a.polygon.length])).toEqual([['w2', 'crosshatch', 3]]);
         expect(out.texts.map(t => t.text)).toEqual(['SLOW']);
+    });
+});
+
+
+describe('streetGeometry surfaces and paths', () => {
+    it('draws a road mapped as an area as carriageway, and splits segregated foot and cycle paths', () => {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(20, 0) }),
+            new iD.osmNode({ id: 'n3', loc: at(20, 30) }),
+            new iD.osmNode({ id: 'n4', loc: at(0, 30) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3', 'n4', 'n1'], tags: { highway: 'service', area: 'yes', surface: 'concrete' } }),
+            new iD.osmNode({ id: 'n5', loc: at(0, 50) }),
+            new iD.osmNode({ id: 'n6', loc: at(40, 50) }),
+            new iD.osmWay({ id: 'w2', nodes: ['n5', 'n6'], tags: { highway: 'cycleway', foot: 'designated', segregated: 'yes', surface: 'asphalt' } }),
+            new iD.osmNode({ id: 'n7', loc: at(0, 60) }),
+            new iD.osmNode({ id: 'n8', loc: at(40, 60) }),
+            new iD.osmWay({ id: 'w3', nodes: ['n7', 'n8'], tags: { highway: 'path', foot: 'designated', bicycle: 'designated' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const street = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
+        expect(street.areas.map(a => [a.id, a.kind, a.surface])).toEqual([['w1', 'carriageway', 'concrete']]);
+        const segregated = street.paths.find(p => p.id === 'w2')!;
+        expect([segregated.use, segregated.surface, !!segregated.footHalf, !!segregated.divider]).toEqual(['segregated', 'asphalt', true, true]);
+        expect(street.paths.find(p => p.id === 'w3')!.use).toBe('shared');
     });
 });
