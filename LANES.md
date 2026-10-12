@@ -50,6 +50,11 @@ text and give-way triangles from zoom 19.
 | Markings | Click a road to place a crossing, stop or give way sign, traffic signals, traffic calming or a mini-roundabout |
 | Connect | Click the lane traffic comes from, then the lane on the next road; creates a `type=connectivity` relation (click the same pair again to remove it) |
 
+Esc, clicking empty map or selecting nothing returns to Select.
+
+Lane fields in the inspector work like iD's own fields: type or pick from the suggestions (speeds in
+the country's units, access and surface values, widths, destinations used on nearby roads).
+
 **Look ahead**: the roads the selected road leads on to (highlighted on the map), the exits at its
 end with a suggested turn and the exit's sign text (written to the selected lanes only when you
 click Turn or Destination), and "Copy lanes to the next road" (lane counts and lane tags, not turn
@@ -70,13 +75,37 @@ restrictions against the six a standard turbo roundabout needs.
 give way, traffic signals, traffic calming, mini-roundabout), crossing markings, signals and refuge
 island, the direction a sign applies to, all-way stop, and the kind of traffic calming.
 
+**Islands, road markings and street parking** (sidebar section when one is selected):
+
+- traffic islands (`area:highway=traffic_island`, `highway=traffic_island`, or
+  `traffic_calming=island` + `area=yes`): surface and kerb. Islands are coloured by `surface`
+  (`landuse=grass` counts as grass); untagged ones are drawn as concrete.
+- `road_marking=*`: the marking, `stroke` (or `stroke:left` and `stroke:right`), `pattern`, `width`,
+  `dasharray`, `colour`, and `inscription` for painted text on a node.
+- street parking (`amenity=parking` with `parking=street_side|lane|layby|on_kerb|half_on_kerb`):
+  where, direction, spaces, surface, and which road it is joined to.
+
 **What is drawn**: lanes by type (bus, PSV, taxi, HOV, bicycle, pedestrian, no access), kerbs,
 lane lines, turn arrows, labels; junctions; pavements and cycle and parking strips from road tags,
 with unknown sides hatched; footways, paths, cycleways, steps and pedestrian streets at their real
 width; crossing ways with zebra bars or lines; `area:highway=*` areas, pedestrian areas and traffic
 islands; mapped kerbs styled by kerb height; crossings, stop and give way lines, signals, traffic
-calming and mini-roundabouts on road nodes; and lane connections. Everything else is drawn by iD as
-usual.
+calming and mini-roundabouts on road nodes; `road_marking=*` lines, areas and text; street parking
+with its bays and a layby joining it to the road; and lane connections. Everything else is drawn by
+iD as usual.
+
+**Junctions** (drawing only; no tags are written):
+
+- The main road through a junction (the roundabout ring, or the road that carries on with the same
+  ref, name or class) runs through; side roads stop at its kerb, and its kerbs and lane lines stop
+  where they join.
+- Where one road continues another, the lanes that carry on line up: the road with fewer lanes is
+  shifted (unless it has `placement` tags), an added or dropped outer lane tapers over 25 m, and a
+  one-way slip road starts where the lane leading into it ends. Which lanes carry on comes from a
+  `type=connectivity` relation, else from `turn:lanes`.
+- Dashed guide lines carry each lane through the junction box to the lanes it leads to, from its turn
+  arrows and the exit angles; connectivity relations are drawn as solid blue curves instead.
+- Roads shorter than 8 m get an outline and a marker you can click.
 
 **Issues**: the "Lane tags" rule in iD's Issues pane checks lane tags everywhere on the map (value
 counts, lane counts, unknown turn values, deprecated values, `hov=lane`, `destination` on two-way
@@ -121,10 +150,10 @@ page for Lane Studio that names its `created_by` value, and list it on the wiki'
 | Part | Where |
 | --- | --- |
 | Entry point and boot | `modules/lanes/index.ts`, `modules/lanes/core/boot.ts`, `lanes.html` |
-| Lane model (parse, edit, write `*:lanes` tags), lane types, markings, connectivity | `modules/lanes/model/` |
+| Lane model (parse, edit, write `*:lanes` tags), lane types, markings, connectivity, street feature tags | `modules/lanes/model/` |
 | Actions (lanes, markings, copy, connect), each one undo step | `modules/lanes/actions/` |
 | Selected lanes, tools, keyboard, roadside detection | `modules/lanes/core/` |
-| Geometry in metres: lanes, junctions, street features, connections | `modules/lanes/geometry/` |
+| Geometry in metres: lanes, junctions and lane connections, street features, road markings, parking | `modules/lanes/geometry/` |
 | Look-ahead corridor, roundabouts | `modules/lanes/osm/` |
 | Map drawing and click targets | `modules/lanes/svg/` |
 | Sidebar sections and welcome screen | `modules/lanes/ui/` |
