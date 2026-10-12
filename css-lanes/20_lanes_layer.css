@@ -1,0 +1,89 @@
+/* The lanes map layer: drawn under iD's data, never takes clicks itself */
+.ideditor.lane-studio .lanes-layer {
+    pointer-events: none;
+}
+
+/* carriageway and lanes stay see-through, so painted lines on the imagery can be traced */
+.ideditor.lane-studio .lanes-layer .carriageway {
+    fill: rgba(40, 44, 52, 0.35);
+    stroke: none;
+}
+.ideditor.lane-studio .lanes-layer .carriageway.selected {
+    fill: rgba(40, 44, 52, 0.5);
+}
+.ideditor.lane-studio .lanes-layer .junction-area {
+    fill: rgba(40, 44, 52, 0.35);
+    stroke: none;
+}
+
+.ideditor.lane-studio .lanes-layer .lane {
+    stroke: none;
+    fill: rgba(90, 96, 106, 0.3);
+}
+.ideditor.lane-studio .lanes-layer .lane-bus        { fill: rgba(204, 51, 51, 0.55); }
+.ideditor.lane-studio .lanes-layer .lane-psv,
+.ideditor.lane-studio .lanes-layer .lane-taxi       { fill: rgba(230, 160, 30, 0.55); }
+.ideditor.lane-studio .lanes-layer .lane-hov        { fill: url(#lanes-hov); }
+.ideditor.lane-studio .lanes-layer .lane-bicycle    { fill: rgba(40, 150, 90, 0.55); }
+.ideditor.lane-studio .lanes-layer .lane-pedestrian { fill: rgba(220, 205, 170, 0.6); }
+.ideditor.lane-studio .lanes-layer .lane-restricted { fill: url(#lanes-hatch); }
+
+#lanes-hov .hov-back      { fill: rgba(90, 96, 106, 0.35); }
+#lanes-hov .hov-diamond   { fill: none; stroke: rgba(255, 255, 255, 0.8); stroke-width: 1; }
+#lanes-hatch .hatch-back  { fill: rgba(90, 96, 106, 0.2); }
+#lanes-hatch .hatch-line  { stroke: rgba(255, 255, 255, 0.55); stroke-width: 1.5; }
+
+/* lane markings: dash patterns differ as well as colour, so colour is never the only cue */
+.ideditor.lane-studio .lanes-layer .divider {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 1.5;
+    stroke-opacity: 0.9;
+}
+.ideditor.lane-studio .lanes-layer .divider.dashed  { stroke-dasharray: 8, 8; }
+.ideditor.lane-studio .lanes-layer .divider.unknown { stroke-opacity: 0.5; }
+.ideditor.lane-studio .lanes-layer .divider.double  { stroke-width: 1.25; }
+.ideditor.lane-studio .lanes-layer .divider.double.dashed { stroke-dasharray: 6, 6; }
+.ideditor.lane-studio .lanes-layer .divider.centre  { stroke: #ffd84d; }
+
+.ideditor.lane-studio .lanes-layer .kerb {
+    fill: none;
+    stroke: #e6e6e6;
+    stroke-width: 1.5;
+}
+.ideditor.lane-studio .lanes-layer .kerb.assumed {
+    stroke-dasharray: 4, 4;
+    stroke-opacity: 0.7;
+}
+
+/* roadside strips outside the kerb */
+.ideditor.lane-studio .lanes-layer .roadside { stroke: none; }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk         { fill: rgba(225, 215, 195, 0.55); }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk.assumed { fill: rgba(225, 215, 195, 0.4); }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk_unknown { fill: url(#lanes-hatch); opacity: 0.6; }
+.ideditor.lane-studio .lanes-layer .roadside-cycle_lane       { fill: rgba(40, 150, 90, 0.45); }
+.ideditor.lane-studio .lanes-layer .roadside-cycle_track      { fill: rgba(40, 150, 90, 0.6); }
+
+/* turn arrows: white (set on the symbols) with a dark edge, readable on light and dark imagery */
+.ideditor.lane-studio .lanes-layer .turn-arrow {
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
+}
+
+.ideditor.lane-studio .lanes-layer .lane-label {
+    fill: #fff;
+    paint-order: stroke;
+    stroke: rgba(0, 0, 0, 0.75);
+    stroke-width: 3px;
+    font-weight: 600;
+}
+
+/* where lanes are drawn, iD's own road line becomes a thin centre line you can still click and drag */
+.ideditor.lane-studio .surface.lanes-visible .layer-osm path.line.stroke.lanes-drawn {
+    stroke-width: 2px !important;
+    stroke-opacity: 0.85;
+    stroke-dasharray: none;
+}
+.ideditor.lane-studio .surface.lanes-visible .layer-osm path.line.casing.lanes-drawn {
+    stroke-width: 4px !important;
+    stroke: rgba(0, 0, 0, 0.35);
+}

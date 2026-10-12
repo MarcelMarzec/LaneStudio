@@ -1,0 +1,9 @@
+# English strings for Lane Studio, read as `t('_lanes.<key>')`.
+en:
+  app:
+    name: Lane Studio
+  lanes:
+    count:
+      one: "{n} lane"
+      other: "{n} lanes"
+    assumed: Lane count assumed from the road type

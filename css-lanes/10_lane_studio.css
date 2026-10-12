@@ -1,0 +1,11 @@
+/*
+ * Lane Studio shell. Selectors start with `.ideditor.lane-studio` because both classes sit on
+ * the same container (the CSS build prefixes every other selector with `.ideditor `).
+ */
+
+/* a road editor: no point, area or note buttons */
+.ideditor.lane-studio .top-toolbar button.add-point,
+.ideditor.lane-studio .top-toolbar button.add-area,
+.ideditor.lane-studio .top-toolbar button.add-note {
+    display: none;
+}
