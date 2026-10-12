@@ -69,8 +69,11 @@ export function laneState(context: iD.Context): LaneState {
         corridor: () => _corridor,
 
         setCorridor(ids) {
-            const next = new Set(ids);
-            if (next.size === _corridor.size && ids.every(id => _corridor.has(id))) return;
+            // only while one road is selected: a sidebar render during deselection must not bring it back
+            const selectedIDs = context.selectedIDs();
+            const active = context.mode()?.id === 'select' && selectedIDs.length === 1;
+            const next = new Set(active ? ids : []);
+            if (next.size === _corridor.size && [...next].every(id => _corridor.has(id))) return;
             _corridor = next;
             dispatch.call('corridor', state);
         },

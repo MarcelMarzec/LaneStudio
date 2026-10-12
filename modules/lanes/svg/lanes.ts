@@ -112,7 +112,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const ways = visible.filter(isLaneRoad);
         const { pieces, junctions, connections } = roadGeometry(ways, graph);
         const selected = new Set(context.selectedIDs());
-        const corridor = state.corridor();
+        const corridor = context.mode()?.id === 'select' ? state.corridor() : new Set<string>();
         const group = groups();
         const markings = zoom >= laneZooms.markings;
         const labels = zoom >= laneZooms.labels;
