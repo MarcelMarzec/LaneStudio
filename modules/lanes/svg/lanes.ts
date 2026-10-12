@@ -108,7 +108,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'roadside', 'parking', 'paths', 'carriageway', 'junctions', 'node-surfaces', 'lanes', 'islands', 'dividers', 'kerbs',
+                'areas', 'roadside', 'parking', 'paths', 'carriageway', 'lanes', 'junctions', 'node-surfaces', 'islands', 'dividers', 'kerbs',
                 'kerb-lines', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'labels', 'symbols', 'short', 'selection', 'connect-from',
                 'targets', 'short-targets', 'divider-targets'
             ])
@@ -198,7 +198,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         areas.enter().append('path')
             .attr('class', 'junction-area')
             .merge(areas)
-            .attr('d', d => path(d.polygon, true));
+            .attr('d', d => d.polygons.map(polygon => path(polygon, true)).join(''));
 
 
         /* lane ribbons */
@@ -246,7 +246,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* kerbs */
-        const kerbData = shown.filter(piece => !inArea.has(piece)).flatMap(piece => [
+        // (the short roads inside a merged junction keep their kerbs where no side road joins)
+        const kerbData = pieces.filter(piece => !inArea.has(piece)).flatMap(piece => [
             { key: `${pieceKey(piece)}-l`, line: piece.lines[0], assumed: piece.layout.assumed },
             { key: `${pieceKey(piece)}-r`, line: piece.lines[piece.lines.length - 1], assumed: piece.layout.assumed }
         ]);
@@ -338,10 +339,18 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* lane connections from type=connectivity relations */
         // and guide lines carrying lanes through the junction box
-        const innerGuides = [...innerPieces].flatMap(piece => piece.centres.map((line, i) => ({
+        // a short road inside a merged junction: its lane edges carry on through the box as guide lines
+        const innerGuides = [...innerPieces].flatMap(piece => piece.boundaries.slice(1, -1).map((line, i) => ({
             key: `${pieceKey(piece)}-inner-${i}`, nodeID: piece.fromNode, kind: 'guide' as const, optional: false, line
         })));
-        joinPaths(group('connectivity'), markings ? [...connections, ...innerGuides] : [], d => d.key,
+        // and where a road's lane lines stop at a junction box, they carry on through it as guide lines
+        const lengthOf = (line: Vec2[]) => line.slice(1).reduce((sum, p, i) => sum + Math.hypot(p[0] - line[i][0], p[1] - line[i][1]), 0);
+        const stoppedGuides = shown.flatMap(piece => piece.boundaries.slice(1, -1).flatMap((line, i) => {
+            const painted = piece.lines[i + 1];
+            if (painted.length && lengthOf(painted) > lengthOf(line) * 0.98) return [];
+            return [{ key: `${pieceKey(piece)}-through-${i}`, nodeID: piece.fromNode, kind: 'guide' as const, optional: false, line }];
+        }));
+        joinPaths(group('connectivity'), markings ? [...connections, ...innerGuides, ...stoppedGuides] : [], d => d.key,
             d => (d.kind === 'relation' ? 'connectivity-curve' : 'junction-guide') + (d.optional ? ' optional' : ''),
             d => path(d.line, false));
 

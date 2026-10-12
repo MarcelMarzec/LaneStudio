@@ -11,8 +11,10 @@
 .ideditor.lane-studio .lanes-layer .carriageway.selected {
     fill: rgb(40, 44, 52); --lanes-a: 0.5;
 }
+/* junction boxes take the colour a road shows (a lane over the carriageway; set by core/lane_settings.ts) */
 .ideditor.lane-studio .lanes-layer .junction-area {
-    fill: rgb(40, 44, 52); --lanes-a: 0.35;
+    fill: var(--lanes-road-fill, rgb(67, 72, 82));
+    fill-opacity: var(--lanes-road-alpha, 0.545);
     stroke: none;
 }
 
@@ -227,7 +229,6 @@
 /* settings: lane surface opacity. Each surface sets its default transparency as --lanes-a;
    the setting (in --lanes-low and --lanes-high, see core/lane_settings.ts) scales it to 0% or 100% */
 .ideditor.lane-studio .lanes-layer .carriageway,
-.ideditor.lane-studio .lanes-layer .junction-area,
 .ideditor.lane-studio .lanes-layer .lane {
     fill-opacity: calc(var(--lanes-a, 1) * var(--lanes-low, 1) + (1 - var(--lanes-a, 1)) * var(--lanes-high, 0));
 }

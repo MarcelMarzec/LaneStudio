@@ -40,6 +40,17 @@ export function laneSettings(context: iD.Context): LaneSettings {
         const high = Math.max(0, (_opacity - defaultSurfaceOpacity) / (1 - defaultSurfaceOpacity));
         container.style('--lanes-low', String(low));
         container.style('--lanes-high', String(high));
+        // junction boxes, mini-roundabouts and turning circles are one shape with the colour a road
+        // shows: a general lane over the carriageway (colours and default alphas as in 20_lanes_layer.css)
+        const scaled = (a: number) => a * low + (1 - a) * high;
+        const lane = { colour: [90, 96, 106], alpha: scaled(0.3) };
+        const carriageway = { colour: [40, 44, 52], alpha: scaled(0.35) };
+        const alpha = 1 - (1 - lane.alpha) * (1 - carriageway.alpha);
+        const colour = lane.colour.map((c, i) => alpha > 0
+            ? Math.round((lane.alpha * c + (1 - lane.alpha) * carriageway.alpha * carriageway.colour[i]) / alpha)
+            : c);
+        container.style('--lanes-road-fill', `rgb(${colour.join(', ')})`);
+        container.style('--lanes-road-alpha', String(Math.round(alpha * 1000) / 1000));
         container.classed('lanes-hide-originals', _hide);
     }
 

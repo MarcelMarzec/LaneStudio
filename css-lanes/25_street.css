@@ -194,9 +194,8 @@
 
 /* mini-roundabouts and turning circles: carriageway around the node, under the lanes */
 .ideditor.lane-studio .lanes-layer .street-surface {
-    fill: rgb(40, 44, 52);
-    --lanes-a: 0.45;
-    fill-opacity: calc(var(--lanes-a) * var(--lanes-low, 1) + (1 - var(--lanes-a)) * var(--lanes-high, 0));
+    fill: var(--lanes-road-fill, rgb(67, 72, 82));
+    fill-opacity: var(--lanes-road-alpha, 0.545);
 }
 .ideditor.lane-studio .lanes-layer .street-surface-turning_circle {
     stroke: #e6e6e6;

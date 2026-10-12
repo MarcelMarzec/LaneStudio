@@ -72,7 +72,11 @@ export interface LaneMark {
 
 export interface JunctionArea {
     nodeID: string;
-    polygon: Vec2[];
+    /**
+     * The box as one or more polygons, all wound the same way, to be filled as one shape: a merged
+     * junction is its nodes' boxes and the short roads between them, so it follows curving roads
+     */
+    polygons: Vec2[][];
 }
 
 /** A line through a junction from the end of one lane to the start of another */
@@ -854,7 +858,7 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
             // so the outline never crosses itself however sharp the angles between arms
             points.push(add(at.point, scale(normal, arm.right)), add(at.point, scale(normal, arm.left)));
         }
-        result.area = { nodeID: node.id, polygon: points.map(frame.toLoc) };
+        result.area = { nodeID: node.id, polygons: [wound(points.map(frame.toLoc))] };
         result.connections = junctionConnections(node, graph, arms, trims, through);
     }
 
@@ -1144,22 +1148,13 @@ const pieceCache = new WeakMap<osmWay, { nodes: osmNode[]; signature: string; pi
 // junction nodes joined by a road shorter than this form one junction, in metres
 export const clusterLink = 25;
 
-/** Convex hull of points (any planar coordinates; lon/lat is fine, as hulls survive stretching) */
-function convexHull(points: Vec2[]): Vec2[] {
-    const sorted = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-    if (sorted.length < 3) return sorted;
-    const cross = (o: Vec2, a: Vec2, b: Vec2) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-    const lower: Vec2[] = [];
-    for (const p of sorted) {
-        while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
-        lower.push(p);
+/** A polygon wound counter-clockwise (in lon/lat), so overlapping parts fill as one shape */
+function wound(polygon: Vec2[]): Vec2[] {
+    let area = 0;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        area += (polygon[j][0] - polygon[i][0]) * (polygon[j][1] + polygon[i][1]);
     }
-    const upper: Vec2[] = [];
-    for (const p of sorted.slice().reverse()) {
-        while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
-        upper.push(p);
-    }
-    return [...lower.slice(0, -1), ...upper.slice(0, -1)];
+    return area > 0 ? polygon.slice().reverse() : polygon;
 }
 
 /** Groups of junction nodes joined by short roads, as node id → group id */
@@ -1297,18 +1292,19 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
     }
     for (const [root, ids] of members) {
         if (ids.length < 2) continue;
-        const points: Vec2[] = [];
+        // the nodes' boxes and the short roads joining them, filled as one shape
+        const polygons: Vec2[][] = [];
         for (const id of ids) {
             const area = junctions.get(id);
-            if (area) points.push(...area.polygon);
+            if (area) polygons.push(...area.polygons);
             junctions.delete(id);
         }
         for (const piece of innerPieces) {
-            if (clusters.get(piece.fromNode) === root) points.push(...piece.carriageway);
+            if (clusters.get(piece.fromNode) === root) polygons.push(wound(piece.carriageway));
         }
-        if (points.length >= 3) {
+        if (polygons.length) {
             const key = `cluster-${ids.slice().sort().join('-')}`;
-            junctions.set(key, { nodeID: key, polygon: convexHull(points) });
+            junctions.set(key, { nodeID: key, polygons });
         }
     }
 
