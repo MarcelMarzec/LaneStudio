@@ -78,3 +78,34 @@ describe('copiedLaneTags', () => {
         expect(canCopyLanes({ highway: 'motorway' }, { highway: 'primary', oneway: '-1' })).toBe(true);
     });
 });
+
+
+describe('roundabout exits', () => {
+    it('lists the roads leaving a roundabout, numbered from the entry, with their turns', () => {
+        // an anticlockwise ring (right-hand traffic) of radius 20 m, entered from the east
+        const ring: InstanceType<typeof iD.osmNode>[] = [];
+        for (let i = 0; i < 8; i++) {
+            const a = i * Math.PI / 4;   // n10 east, n12 north, n14 west, n16 south
+            ring.push(new iD.osmNode({ id: `n${10 + i}`, loc: at(20 * Math.cos(a), 20 * Math.sin(a)) }));
+        }
+        const ids = ring.map(n => n.id);
+        const entities = [
+            ...ring,
+            new iD.osmWay({ id: 'w10', nodes: [...ids, ids[0]], tags: { highway: 'primary', junction: 'roundabout' } }),
+            new iD.osmNode({ id: 'n1', loc: at(120, 0) }), new iD.osmNode({ id: 'n2', loc: at(0, 120) }),
+            new iD.osmNode({ id: 'n3', loc: at(-120, 0) }), new iD.osmNode({ id: 'n4', loc: at(0, -120) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n10'], tags: { highway: 'primary', oneway: 'yes' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n12', 'n2'], tags: { highway: 'primary', name: 'North Road' } }),
+            new iD.osmWay({ id: 'w3', nodes: ['n14', 'n3'], tags: { highway: 'primary', ref: 'A3' } }),
+            new iD.osmWay({ id: 'w4', nodes: ['n16', 'n4'], tags: { highway: 'primary', oneway: 'yes' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const g = new iD.coreGraph(entities);
+        const steps = laneCorridor(g.entity('w1'), g, { direction: 'forward', maxWays: 5 });
+        expect(steps).toHaveLength(1);
+        expect(steps[0].exits.map(e => [e.exitNumber, e.way.id, e.turn])).toEqual([
+            [1, 'w2', 'right'], [2, 'w3', 'through'], [3, 'w4', 'left']
+        ]);
+        expect(steps[0].exits[1].destinationRef).toBe('A3');
+    });
+});

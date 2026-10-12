@@ -288,7 +288,8 @@ export function uiSectionLanes(context: iD.Context) {
                 laneArrowIcon(turnCell as any, exit.turn, 'travel', 18);
                 turnCell.append('span').text(t(`_lanes.turn.${exit.turn}`));
                 li.append('span').attr('class', 'lanes-exit-name')
-                    .text([exit.destinationRef, exit.destination].filter(Boolean).join(' ') || t('_lanes.lookahead.unnamed'));
+                    .text((exit.exitNumber ? t('_lanes.lookahead.exit_number', { n: exit.exitNumber }) + ' ' : '') +
+                        ([exit.destinationRef, exit.destination].filter(Boolean).join(' ') || t('_lanes.lookahead.unnamed')));
                 if (!refs.length) continue;
                 const actions = li.append('span').attr('class', 'lanes-exit-actions');
                 actions.append('button').text(t('_lanes.lookahead.use_turn'))

@@ -19,6 +19,8 @@ export interface CorridorExit {
     /** what a sign would most likely show for this exit */
     destination?: string;
     destinationRef?: string;
+    /** for a roundabout: which exit this is, counting from the entry (1 = first exit) */
+    exitNumber?: number;
 }
 
 /** One road in the corridor, in the order they are driven */
@@ -126,6 +128,76 @@ export function junctionExits(fromWay: osmWay, alongWay: boolean, nodeID: NodeId
 }
 
 
+const isRing = (way: osmWay) => way.tags.junction === 'roundabout' || way.tags.junction === 'circular';
+
+/**
+ * The roads leaving a roundabout, for traffic entering it from `fromWay` at `nodeID`: numbered in the
+ * order they are passed going round, with the turn their direction suggests relative to the entry.
+ */
+export function roundaboutExits(fromWay: osmWay, alongWay: boolean, nodeID: NodeId, graph: coreGraph): CorridorExit[] {
+    const node = graph.entity(nodeID) as osmNode;
+    const frame = metricFrame(node.loc);
+    const incoming = headingAt(fromWay, nodeID, false, alongWay, graph, frame);
+    if (!incoming) return [];
+
+    // ring ways are one-way along their drawing direction: follow them from the entry node
+    const ringWays = graph.parentWays(node).filter(w => isRing(w as osmWay)) as osmWay[];
+    if (!ringWays.length) return [];
+    let way = ringWays.find(w => w.nodes.indexOf(nodeID) < w.nodes.length - 1) ?? ringWays[0];
+    let index = way.nodes.indexOf(nodeID);
+    const exits: CorridorExit[] = [];
+    const seen = new Set<string>();
+    let exitNumber = 0;
+    for (let guard = 0; guard < 500; guard++) {
+        index++;
+        if (index >= way.nodes.length) {
+            // on to the ring way that starts where this one ends
+            const current = way;
+            const end = current.nodes[current.nodes.length - 1];
+            const next = graph.parentWays(graph.entity(end))
+                .find(w => isRing(w as osmWay) && w.id !== current.id && (w as osmWay).nodes[0] === end) as osmWay | undefined;
+            if (!next) {
+                if (way.isClosed()) index = 1;
+                else break;
+            } else {
+                way = next;
+                index = 1;
+            }
+        }
+        const id = way.nodes[index] as NodeId;
+        if (id === nodeID || seen.has(id)) break;
+        seen.add(id);
+
+        const ringNode = graph.entity(id) as osmNode;
+        let numbered = false;
+        for (const parent of graph.parentWays(ringNode)) {
+            const exitWay = parent as osmWay;
+            if (isRing(exitWay) || !isLaneRoad(exitWay)) continue;
+            const i = exitWay.nodes.indexOf(id);
+            for (const along of [true, false]) {
+                if (along && i === exitWay.nodes.length - 1) continue;
+                if (!along && i === 0) continue;
+                if (!drivable(exitWay, along)) continue;
+                const heading = headingAt(exitWay, id, true, along, graph, metricFrame(ringNode.loc));
+                if (!heading) continue;
+                if (!numbered) {
+                    exitNumber++;
+                    numbered = true;
+                }
+                const angle = signedAngle(incoming, heading);
+                const tags = exitWay.tags;
+                exits.push({
+                    way: exitWay, alongWay: along, angle, turn: turnForAngle(angle), exitNumber,
+                    destination: tags.destination ?? tags[`destination:${along ? 'forward' : 'backward'}`] ?? tags.name,
+                    destinationRef: tags['destination:ref'] ?? tags.ref
+                });
+            }
+        }
+    }
+    return exits;
+}
+
+
 /** The exit that continues the road: same ref, then same name, then same class, then the straightest */
 export function continuation(fromWay: osmWay, exits: CorridorExit[]): CorridorExit | undefined {
     const score = (exit: CorridorExit) =>
@@ -159,8 +231,14 @@ export function laneCorridor(start: osmWay, graph: coreGraph, options: CorridorO
         const endNode = alongWay ? way.last() : way.first();
         const frame = metricFrame((graph.entity(way.first()) as osmNode).loc);
         distance += polylineLength(lineOf(way, graph, frame));
-        const exits = junctionExits(way, alongWay, endNode, graph);
+        let exits = junctionExits(way, alongWay, endNode, graph);
+        // entering a roundabout: the exits that matter are the roads leaving the ring
+        if (!isRing(way) && exits.some(exit => isRing(exit.way))) {
+            const ringExits = roundaboutExits(way, alongWay, endNode, graph);
+            if (ringExits.length) exits = ringExits;
+        }
         steps.push({ way, alongWay, distance, exits, endNode });
+        if (exits.some(exit => exit.exitNumber)) break;
 
         if (distance >= maxMetres) break;
         const next = continuation(way, exits);

@@ -161,6 +161,7 @@ en:
     restrictions: "{n} turn restrictions found; a standard turbo roundabout needs {needed}. Add missing ones with the Turn Restrictions field on the junction nodes."
     spiral: Spiral roundabouts have no tagging scheme of their own; use turn lanes, change:lanes=no and lane connections.
   lookahead:
+    exit_number: "Exit {n}:"
     title: Look ahead
     limit: "Roads: "
     travelling_forward: Following the road in its drawing direction. Select a backward lane to look the other way.
