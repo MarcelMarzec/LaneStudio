@@ -68,8 +68,8 @@ describe('Lane Studio sidebar', () => {
         selection.select('.turn-grid button.turn-right').dispatch('click');
         expect(context.entity('w1').tags['turn:lanes:forward']).toBe('none|right');
 
-        const kind = selection.select<HTMLSelectElement>('.lane-kind select');
-        kind.property('value', 'bus').dispatch('change');
+        const kind = selection.select<HTMLInputElement>('#lane-field-kind');
+        kind.property('value', 'Bus lane').dispatch('change');
         expect(context.entity('w1').tags['bus:lanes:forward']).toBe('|designated');
     });
 
