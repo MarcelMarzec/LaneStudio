@@ -2,7 +2,7 @@ import { dispatch as d3_dispatch } from 'd3-dispatch';
 
 import type { WayId } from '../../osm';
 import type { osmWay } from '../../osm/way';
-import { sameLaneRef, type LaneRef } from '../model';
+import { parseLanes, sameLaneRef, type LaneRef } from '../model';
 
 export interface LaneSelection {
     wayID: WayId;
@@ -93,13 +93,17 @@ export function laneState(context: iD.Context): LaneState {
         if (context.mode()?.id !== 'select' || ids.length !== 1 || ids[0] !== _selected.wayID) state.clear();
     });
 
-    // after an edit, drop lanes that no longer exist (e.g. a lane was removed)
+    // after an edit or undo, drop lanes that no longer exist (e.g. a lane was removed)
     context.history().on('change.lane-state', () => {
         if (!_selected) return;
         const way = context.hasEntity(_selected.wayID) as osmWay | undefined;
         if (!way) {
             state.clear();
+            return;
         }
+        const model = parseLanes(way.tags);
+        const refs = _selected.refs.filter(ref => model.lanes[ref.direction][ref.index]);
+        if (refs.length !== _selected.refs.length) state.select(way.id, refs);
     });
 
     states.set(context, state);

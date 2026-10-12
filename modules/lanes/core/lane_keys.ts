@@ -24,8 +24,11 @@ export function laneKeys(context: iD.Context) {
 
     context.operationFilter(operation => !(active() && operation.id === 'delete'));
 
-    // capture phase, so this runs before iD's own delete shortcut and can stop it
+    // capture phase, so this runs before iD's own delete shortcut and can stop it;
+    // capture also sees typing in text fields, which must be left alone
     const handle = (fn: () => void) => (event: KeyboardEvent) => {
+        const target = event.target as HTMLElement | null;
+        if (target && (/^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName) || target.isContentEditable)) return;
         if (!active()) return;
         event.preventDefault();
         event.stopImmediatePropagation();

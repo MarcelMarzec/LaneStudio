@@ -3,6 +3,7 @@ import { localizer, t } from '../../core/localizer';
 import { coreValidatorAddRule } from '../../core/validator';
 import { prefs } from '../../core/preferences';
 import { uiEntityEditorAddSection } from '../../ui/entity_editor';
+import { services } from '../../services';
 import { utilStringQs } from '../../util';
 import { laneKeys } from './lane_keys';
 import { svgLanes } from '../svg/lanes';
@@ -50,6 +51,16 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
             issues: { lane_tags: { title: t('_lanes.validation.title'), tip: t('_lanes.validation.tip') } }
         });
     }).catch(() => { /* without strings the rule still runs, unnamed */ });
+
+    // iD sends logins back to `<page path>land.html`, which only works for a page served as a folder
+    // index; Lane Studio may also be served as /lanes.html, so point it at land.html next to the page
+    const osm = services.osm;
+    if (osm) {
+        const redirect = new URL('land.html', window.location.href);
+        redirect.search = '';
+        redirect.hash = '';
+        osm.switch({ url: osm.getUrlRoot(), apiUrl: osm.getApiUrlRoot(), redirect_uri: redirect.href });
+    }
 
     // the lanes layer, drawn under iD's own data
     context.layers().add([{ id: 'lanes', layer: svgLanes(context.projection, context) }]);

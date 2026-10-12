@@ -22,11 +22,11 @@ export function actionAddMarking(wayID: osmWay['id'], loc: Vec2, type: MarkingTy
     const cumulative = cumulativeLengths(points);
     const { along } = offsetFromWay(way, graph, loc);
 
-    // an existing node close by?
+    // an existing node close by? (not one shared with another road: a junction is no place for a sign)
     const near = way.nodes.findIndex((_, i) => Math.abs(cumulative[i] - along) < 1);
     if (near !== -1) {
         const node = graph.entity(way.nodes[near]) as osmNode;
-        if (markingType(node.tags) === 'none') {
+        if (markingType(node.tags) === 'none' && graph.parentWays(node).length === 1) {
             return { action: actionChangeTags(node.id, withMarkingType(node.tags, type)), nodeID: node.id };
         }
     }

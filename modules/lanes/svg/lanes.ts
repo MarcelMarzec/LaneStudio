@@ -399,6 +399,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const graph = context.graph();
         const way = graph.entity(d.wayID) as osmWay;
         const layout = laneLayout(way, graph);
+        if (layout.model.keys['width:lanes']?.readonly) return;
         const widths = layout.lanes.map(lane => lane.width);
         const total = layout.total;
         const n = widths.length;
