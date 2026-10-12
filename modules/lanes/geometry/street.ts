@@ -9,7 +9,7 @@ import {
     offsetPolyline, cumulativeLengths, polylineLength, type MetricFrame
 } from './frame';
 import { parseWidth, type LaneLayout } from './layout';
-import { cachedLayout, edgesAt, visualShift, type WayVisual } from './road_geometry';
+import { cachedLayout, edgesAt, visualShift, miniRoundaboutRadius, type WayVisual } from './road_geometry';
 import { isTrafficIsland, islandSurface, surfaceGroup, type SurfaceGroup } from '../model/street_features';
 
 /*
@@ -66,7 +66,9 @@ export interface KerbLine {
 export type MarkingKind =
     | 'crossing' | 'zebra_bar' | 'crossing_line' | 'island'
     | 'stop_line' | 'give_way_line' | 'signal_line'
-    | 'calming' | 'mini_roundabout' | 'kerb_node';
+    | 'calming' | 'mini_roundabout' | 'kerb_node'
+    | 'mini_roundabout_surface' | 'turning_circle' | 'turning_loop_island'
+    | 'barrier_line' | 'barrier_post' | 'barrier_node' | 'cattle_grid';
 
 export interface MarkingShape {
     key: string;
@@ -78,7 +80,7 @@ export interface MarkingShape {
     variant?: string;
 }
 
-export type SymbolKind = 'stop_text' | 'give_way_triangle' | 'signals';
+export type SymbolKind = 'stop_text' | 'give_way_triangle' | 'signals' | 'speed_limit';
 
 export interface SymbolShape {
     key: string;
@@ -88,15 +90,47 @@ export interface SymbolShape {
     ahead: Vec2;
     /** metres the symbol should span */
     size: number;
+    /** painted text, for speed limits */
+    text?: string;
+}
+
+/** A barrier mapped as a line (fence, wall, guard rail, hedge…), drawn at its width */
+export interface BarrierLine {
+    id: string;
+    kind: string;
+    line: Vec2[];
+    /** metres */
+    width: number;
 }
 
 export interface StreetGeometry {
     paths: PathShape[];
     areas: AreaShape[];
     kerbs: KerbLine[];
+    /** road surfaces around nodes (mini-roundabouts, turning circles), drawn under the lanes */
+    surfaces: MarkingShape[];
     markings: MarkingShape[];
     symbols: SymbolShape[];
+    barriers: BarrierLine[];
 }
+
+/** Default widths of barriers mapped as lines, in metres */
+export const barrierWidths: Record<string, number> = {
+    wall: 0.3, retaining_wall: 0.4, city_wall: 1.5, fence: 0.1, guard_rail: 0.3, jersey_barrier: 0.6,
+    hedge: 1, handrail: 0.08, cable_barrier: 0.1, railing: 0.1, wire_fence: 0.1, chain: 0.05, ditch: 1
+};
+
+// barriers on a road node drawn as a line across it, or as a row of posts
+const lineBarriers = new Set(['gate', 'swing_gate', 'sliding_gate', 'lift_gate', 'chain', 'rope', 'bar', 'hampshire_gate',
+    'border_control', 'toll_booth', 'height_restrictor', 'spikes', 'debris', 'log', 'kissing_gate', 'cycle_barrier',
+    'turnstile', 'full-height_turnstile', 'stile', 'motorcycle_barrier', 'entrance', 'barrier_board']);
+const postBarriers: Record<string, { spacing: number; size: number }> = {
+    bollard: { spacing: 1.5, size: 0.35 }, block: { spacing: 2, size: 0.8 }, planter: { spacing: 2.2, size: 1 },
+    jersey_barrier: { spacing: 1.3, size: 0.6 }, sump_buster: { spacing: 2.5, size: 0.4 }, bus_trap: { spacing: 2.5, size: 0.5 }
+};
+
+const circle = (centre: Vec2, r: number, steps = 32): Vec2[] => Array.from({ length: steps }, (_, a) =>
+    [centre[0] + r * Math.cos(a * 2 * Math.PI / steps), centre[1] + r * Math.sin(a * 2 * Math.PI / steps)] as Vec2);
 
 
 /* ---------- crossings ---------- */
@@ -333,6 +367,15 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
     const parents = graph.parentWays(node);
     const road = parents.find(isLaneRoad) as osmWay | undefined;
     if (!road) {
+        // other barriers on paths: a marker
+        if (tags.barrier && tags.barrier !== 'kerb' && parents.length) {
+            const frame = metricFrame(node.loc);
+            out.markings.push({
+                key: `${node.id}-barrier`, kind: 'barrier_node', nodeID: node.id, closed: true, variant: tags.barrier,
+                points: circle([0, 0], 0.35, 12).map(frame.toLoc)
+            });
+            return;
+        }
         // kerb points on footways
         if (tags.barrier === 'kerb' || tags.kerb) {
             const frame = metricFrame(node.loc);
@@ -419,18 +462,155 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
         out.markings.push({ key: `${node.id}-calming`, kind: 'calming', nodeID: node.id, closed: true, variant: calming, points: band(cs, -length / 2, length / 2, left, right) });
     }
 
-    if (highway === 'mini_roundabout') {
-        const r = Math.max(1.5, Math.min(4, (right - left) * 0.3));
-        const ring: Vec2[] = [];
-        for (let a = 0; a < 24; a++) ring.push([r * Math.cos(a * Math.PI / 12), r * Math.sin(a * Math.PI / 12)]);
-        out.markings.push({ key: `${node.id}-mini`, kind: 'mini_roundabout', nodeID: node.id, closed: true, points: ring.map(p => cs.frame.toLoc(p)) });
+    if (highway === 'mini_roundabout') miniRoundaboutMarkings(node, parents, cs, graph, out, visuals);
+    if (highway === 'turning_circle' || highway === 'turning_loop') turningCircleMarkings(node, cs, out);
+    if (tags.barrier && tags.barrier !== 'kerb' && tags.barrier !== 'no') barrierMarkings(node, cs, out);
+}
+
+
+/** A mini-roundabout: its circular carriageway, the white disc, and give way where roads join it */
+function miniRoundaboutMarkings(node: osmNode, parents: OsmEntity[], cs: CrossSection, graph: coreGraph, out: StreetGeometry, visuals?: Map<string, WayVisual>) {
+    const R = miniRoundaboutRadius(node, graph) ?? 6;
+    // the circular carriageway, under the lanes, and the white disc in the middle
+    out.surfaces.push({ key: `${node.id}-mini-surface`, kind: 'mini_roundabout_surface', nodeID: node.id, closed: true, points: circle([0, 0], R).map(cs.frame.toLoc) });
+    const r = Math.max(1, Math.min(4, R * 0.35));
+    out.markings.push({ key: `${node.id}-mini`, kind: 'mini_roundabout', nodeID: node.id, closed: true, points: circle([0, 0], r, 24).map(cs.frame.toLoc) });
+    // give way where each road joins the circle: traffic on a mini-roundabout has priority, so
+    // the lines are implied (one mapped on the approach is used instead)
+    for (const way of parents.filter(isLaneRoad) as osmWay[]) {
+        const i = way.nodes.indexOf(node.id);
+        const arm = crossSection(way, i, graph, visuals);
+        for (const side of [1, -1]) {
+            if ((side > 0 && i === way.nodes.length - 1) || (side < 0 && i === 0)) continue;
+            const approach = side > 0 ? 'backward' : 'forward';
+            const range = approachRange(arm, approach);
+            if (!range || mappedGiveWay(way, i, side, R + 10, graph)) continue;
+            const dir = scale(arm.direction, side);
+            const at = (across: number) => arm.frame.toLoc(add(scale(dir, R), scale(arm.normal, across)));
+            out.markings.push({
+                key: `${node.id}-mini-giveway-${way.id}-${side}`, kind: 'give_way_line', nodeID: node.id, closed: false,
+                points: [at(range[0]), at(range[1])]
+            });
+        }
+    }
+}
+
+
+/** A turning circle or loop: a disc of carriageway centred on the node */
+function turningCircleMarkings(node: osmNode, cs: CrossSection, out: StreetGeometry) {
+    const tags = node.tags;
+    const highway = tags.highway;
+    const left = cs.edges[0];
+    const right = cs.edges[cs.edges.length - 1];
+    // centred on the node (wiki: Tag:highway=turning_circle), sized by diameter=* or the road
+    const R = (parseWidth(tags.diameter) ?? Math.max(12, 2 * (right - left))) / 2;
+    const centre = scale(cs.normal, (left + right) / 2);
+    out.surfaces.push({ key: `${node.id}-turning`, kind: 'turning_circle', nodeID: node.id, closed: true, points: circle(centre, R).map(cs.frame.toLoc) });
+    if (highway === 'turning_loop') {
+        const inner = (parseWidth(tags.inner_diameter) ?? R) / 2;
+        out.markings.push({ key: `${node.id}-loop-island`, kind: 'turning_loop_island', nodeID: node.id, closed: true, points: circle(centre, inner).map(cs.frame.toLoc) });
+    }
+}
+
+
+/** A barrier on a road: a line across it, a row of posts, or a cattle grid */
+function barrierMarkings(node: osmNode, cs: CrossSection, out: StreetGeometry) {
+    const left = cs.edges[0];
+    const right = cs.edges[cs.edges.length - 1];
+    const barrier = node.tags.barrier!;
+    if (barrier === 'cattle_grid') {
+        out.markings.push({ key: `${node.id}-cattle`, kind: 'cattle_grid', nodeID: node.id, closed: true, points: band(cs, -1.25, 1.25, left, right) });
+    } else if (postBarriers[barrier]) {
+        const { spacing, size } = postBarriers[barrier];
+        const count = Math.max(2, Math.round((right - left) / spacing));
+        for (let k = 0; k < count; k++) {
+            const x = left + (right - left) * (k + 0.5) / count;
+            out.markings.push({
+                key: `${node.id}-post-${k}`, kind: 'barrier_post', nodeID: node.id, closed: true, variant: barrier,
+                points: band(cs, -size / 2, size / 2, x - size / 2, x + size / 2)
+            });
+        }
+    } else if (lineBarriers.has(barrier)) {
+        out.markings.push({
+            key: `${node.id}-barrier`, kind: 'barrier_line', nodeID: node.id, closed: false, variant: barrier,
+            points: [scale(cs.normal, left), scale(cs.normal, right)].map(cs.frame.toLoc)
+        });
+    }
+}
+
+/** Is there a mapped give way on a road within `distance` metres of node `index`, going `side` along it? */
+function mappedGiveWay(way: osmWay, index: number, side: number, distance: number, graph: coreGraph): boolean {
+    const origin = (graph.entity(way.nodes[index]) as osmNode).loc;
+    const frame = metricFrame(origin);
+    for (let i = index + side; i >= 0 && i < way.nodes.length; i += side) {
+        const node = graph.entity(way.nodes[i]) as osmNode;
+        const p = frame.toMetres(node.loc);
+        if (Math.hypot(p[0], p[1]) > distance) break;
+        if (node.tags.highway === 'give_way' || node.tags.highway === 'stop') return true;
+    }
+    return false;
+}
+
+
+/* ---------- speed limits ---------- */
+
+/** A posted limit as painted on the road (the number), or null when it is not a plain number */
+function paintedLimit(value: string | undefined): string | null {
+    const match = (value ?? '').trim().toLowerCase().match(/^(\d+)\s*(mph|km\/h|kmh|kph|knots)?$/);
+    return match ? match[1] : null;
+}
+
+/**
+ * Speed limit roundels where the limit changes: at the start of the new limit, on each lane that
+ * enters it, only when the road before also had a limit (a limit appearing from nothing is not painted)
+ */
+function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, WayVisual> | undefined, out: StreetGeometry) {
+    const layout = cachedLayout(way, graph);
+    const frame = metricFrame((graph.entity(way.first()) as osmNode).loc);
+    const points = locs(way, graph).map(frame.toMetres);
+    const cumulative = cumulativeLengths(points);
+    const total = cumulative[cumulative.length - 1];
+    if (total < 20) return;
+    const limitOf = (w: osmWay, direction: 'forward' | 'backward') => w.tags[`maxspeed:${direction}`] ?? w.tags.maxspeed;
+
+    for (const direction of ['forward', 'backward'] as const) {
+        if (!layout.lanes.some(lane => lane.ref.direction === direction)) continue;
+        const now = paintedLimit(limitOf(way, direction));
+        if (!now) continue;
+        // the road traffic arrives from: the one other road ending here, or the one with the same name or ref
+        const entryID = direction === 'forward' ? way.first() : way.last();
+        const entry = graph.entity(entryID) as osmNode;
+        const others = graph.parentWays(entry).filter(w => w.id !== way.id && isLaneRoad(w) &&
+            ((w as osmWay).first() === entryID || (w as osmWay).last() === entryID)) as osmWay[];
+        let previous = others.length === 1 ? others[0] : undefined;
+        if (!previous) {
+            const same = others.filter(w => (way.tags.ref && w.tags.ref === way.tags.ref) || (way.tags.name && w.tags.name === way.tags.name));
+            if (same.length === 1) previous = same[0];
+        }
+        if (!previous) continue;
+        const before = paintedLimit(limitOf(previous, previous.last() === entryID ? 'forward' : 'backward'));
+        if (!before || before === now) continue;
+
+        const s = direction === 'forward' ? 10 : total - 10;
+        const edges = edgesAt(layout, visuals?.get(way.id) ?? { start: 0, end: 0, taperStart: null, taperEnd: null }, s, total);
+        const at = pointAlong(points, s);
+        const travel = direction === 'forward' ? at.direction : scale(at.direction, -1);
+        layout.lanes.forEach((lane, k) => {
+            if (lane.ref.direction !== direction) return;
+            const centre = add(at.point, scale(rightNormal(at.direction), (edges[k] + edges[k + 1]) / 2));
+            out.symbols.push({
+                key: `${way.id}-speed-${direction}-${k}`, kind: 'speed_limit', text: now,
+                loc: frame.toLoc(centre), ahead: frame.toLoc(add(centre, travel)),
+                size: Math.min(lane.width * 0.85, 3)
+            });
+        });
     }
 }
 
 
 /** Footways, areas, kerbs and road markings among `entities` (usually everything in view) */
 export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?: Map<string, WayVisual>): StreetGeometry {
-    const out: StreetGeometry = { paths: [], areas: [], kerbs: [], markings: [], symbols: [] };
+    const out: StreetGeometry = { paths: [], areas: [], kerbs: [], surfaces: [], markings: [], symbols: [], barriers: [] };
 
     for (const entity of entities) {
         if (entity.type === 'way') {
@@ -444,7 +624,10 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?
             }
             if (tags.barrier === 'kerb') {
                 out.kerbs.push({ id: way.id, kerb: tags.kerb ?? 'raised', line: locs(way, graph) });
+            } else if (tags.barrier && barrierWidths[tags.barrier] !== undefined && way.nodes.length > 1) {
+                out.barriers.push({ id: way.id, kind: tags.barrier, line: locs(way, graph), width: parseWidth(tags.width) ?? barrierWidths[tags.barrier] });
             }
+            if (isLaneRoad(way)) speedLimitSymbols(way, graph, visuals, out);
         } else if (entity.type === 'node' && Object.keys(entity.tags).length) {
             nodeMarkings(entity as osmNode, graph, out, visuals);
         }

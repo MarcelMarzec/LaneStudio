@@ -9,7 +9,7 @@ import {
     metricFrame, sub, add, scale, rightNormal, len, unit,
     pointAlong, slicePolyline, offsetPolyline, cumulativeLengths, polylineLength, pointInPolygon, type MetricFrame
 } from './frame';
-import { laneLayout, type LaneLayout, type RoadsideKind } from './layout';
+import { laneLayout, parseWidth, type LaneLayout, type RoadsideKind } from './layout';
 import { parseTurn, parseConnectivity, type LaneDirection } from '../model';
 
 // Longest distance a road is pulled back from a junction, in metres
@@ -196,6 +196,21 @@ export function edgesAt(layout: LaneLayout, visual: WayVisual, s: number, total:
         else if (k === n - 1) edges[n] = edges[n - 1] + width;
     }
     return edges.map(e => e + shift);
+}
+
+
+/* ---------- mini-roundabouts ---------- */
+
+/**
+ * The radius of the circular carriageway drawn round a mini-roundabout node, in metres:
+ * from `diameter=*`, else from the widest road meeting there. Null for any other node.
+ */
+export function miniRoundaboutRadius(node: osmNode, graph: coreGraph): number | null {
+    if (node.tags.highway !== 'mini_roundabout') return null;
+    const tagged = parseWidth(node.tags.diameter);
+    if (tagged) return tagged / 2;
+    const widest = Math.max(0, ...graph.parentWays(node).filter(isLaneRoad).map(w => cachedLayout(w as osmWay, graph).total));
+    return Math.max(5, Math.min(10, widest * 0.8));
 }
 
 
@@ -784,16 +799,18 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
     const result: Junction = { trims, marks, connections: [] };
 
     if (arms.length >= 2) {
-        const through = arms.length >= 3 ? throughPair(arms) : null;
+        // round a mini-roundabout nothing runs straight through: every arm stops at its circle
+        const mini = miniRoundaboutRadius(node, graph);
+        const through = arms.length >= 3 && !mini ? throughPair(arms) : null;
         arms.forEach((arm, i) => {
-            let trim = 0;
+            let trim = mini ?? 0;
             const onMainRoad = through && (through[0] === i || through[1] === i);
             if (arms.length >= 3 && !onMainRoad) {
                 const leftNeighbour = arms[(i + 1) % arms.length];                 // counter-clockwise
                 const rightNeighbour = arms[(i - 1 + arms.length) % arms.length];  // clockwise
                 const l = edgeMeeting(arm, arm.left, leftNeighbour, leftNeighbour.right);
                 const r = edgeMeeting(arm, arm.right, rightNeighbour, rightNeighbour.left);
-                trim = Math.min(maxClearance, Math.max(0, l ?? 0, r ?? 0));
+                trim = Math.min(maxClearance, Math.max(trim, l ?? 0, r ?? 0));
             }
             trims.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), trim);
         });
@@ -1220,8 +1237,9 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
             if (joinNodes.has(id)) return;
             const arms = armCount(id);
             const isEnd = i === 0 || i === way.nodes.length - 1;
-            if (arms >= 3 || (isEnd && arms === 2)) joinNodes.set(id, arms);
-            if (arms >= 3) junctionNodes.add(id);
+            const mini = arms >= 2 && (graph.entity(id) as osmNode).tags.highway === 'mini_roundabout';
+            if (arms >= 3 || (isEnd && arms === 2) || mini) joinNodes.set(id, arms);
+            if (arms >= 3 || mini) junctionNodes.add(id);
         });
     }
     for (const [id] of joinNodes) alignAt(graph.entity(id as NodeId) as osmNode, graph, visuals);

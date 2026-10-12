@@ -39,6 +39,14 @@ export function pathFor(projection: Projection) {
     };
 }
 
+/** Pixels per metre at a place on the map (the scale barely changes across the view) */
+export function pxPerMetre(projection: Projection, loc: Vec2 | undefined): number {
+    if (!loc) return 1;
+    const a = projection(loc);
+    const b = projection([loc[0], loc[1] + 1 / 111320]);
+    return Math.hypot(b[0] - a[0], b[1] - a[1]);
+}
+
 /** Screen position, scale and heading of a symbol placed in metres */
 export function screenPlacement(projection: Projection, loc: Vec2, ahead: Vec2) {
     const p = projection(loc);
@@ -100,8 +108,24 @@ export function drawStreet(
     joinPaths(group('kerb-lines'), street.kerbs, d => d.id,
         d => `street-kerb kerb-${d.kerb}`, d => path(d.line, false));
 
+    // mini-roundabout and turning circle carriageways, under the lanes
+    joinPaths(group('node-surfaces'), street.surfaces, d => d.key,
+        d => `street-surface street-surface-${d.kind}`, d => path(d.points, true));
+
+    // fences, walls, guard rails, hedges… at their width
+    const metres = pxPerMetre(projection, street.barriers[0]?.line[0]);
+    const barriers = group('barriers').selectAll<SVGPathElement, typeof street.barriers[number]>('path')
+        .data(zoom >= zooms.markings ? street.barriers : street.barriers.filter(b => b.width >= 0.5), d => d.id);
+    barriers.exit().remove();
+    barriers.enter().append('path')
+        .merge(barriers)
+        .attr('class', function(d) { return withIdState(this, `street-barrier barrier-${d.kind} ${d.id}`); })
+        .attr('d', d => path(d.line, false))
+        .attr('stroke-width', d => Math.max(1.2, d.width * metres).toFixed(1));
+
     // node markings, with the bands under the bars and lines
-    const order = ['crossing', 'calming', 'mini_roundabout', 'island', 'kerb_node', 'zebra_bar', 'crossing_line', 'stop_line', 'give_way_line', 'signal_line'];
+    const order = ['crossing', 'calming', 'cattle_grid', 'mini_roundabout', 'island', 'turning_loop_island', 'kerb_node', 'zebra_bar', 'crossing_line',
+        'stop_line', 'give_way_line', 'signal_line', 'barrier_line', 'barrier_post', 'barrier_node'];
     const nodeShapes = !markings ? [] : [...street.markings].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
     joinPaths(group('markings'), nodeShapes, d => d.key,
         d => `marking marking-${d.kind}` + (d.variant ? ` ${d.variant}` : ''), d => path(d.points, d.closed));
@@ -127,12 +151,24 @@ function drawSymbols(group: Group, data: SymbolShape[], projection: Projection) 
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'central')
         .text('STOP');
-    enter.filter(d => d.kind !== 'stop_text').append('use');
+    // a speed limit roundel: a red ring around the number
+    const roundel = enter.filter(d => d.kind === 'speed_limit');
+    roundel.append('circle').attr('class', 'speed-ring');
+    roundel.append('text').attr('class', 'speed-number')
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'central');
+    enter.filter(d => d.kind !== 'stop_text' && d.kind !== 'speed_limit').append('use');
 
     const all = enter.merge(symbols)
         .attr('transform', d => d.transform);
-    all.select('text')
+    all.filter(d => d.kind === 'stop_text').select('text')
         .attr('font-size', d => (d.k * 0.55).toFixed(1));
+    all.filter(d => d.kind === 'speed_limit').select('circle')
+        .attr('r', d => (d.k / 2).toFixed(1))
+        .attr('stroke-width', d => Math.max(1, d.k * 0.14).toFixed(1));
+    all.filter(d => d.kind === 'speed_limit').select('text')
+        .attr('font-size', d => (d.k * 0.48).toFixed(1))
+        .text(d => d.text ?? '');
     all.select('use')
         .attr('href', d => (d.kind === 'signals' ? '#lanes-signals' : '#lanes-giveway'))
         .attr('transform', d => `scale(${(d.k / 20).toFixed(3)})`);

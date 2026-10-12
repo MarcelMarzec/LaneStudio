@@ -108,8 +108,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'roadside', 'parking', 'paths', 'carriageway', 'junctions', 'lanes', 'islands', 'dividers', 'kerbs',
-                'kerb-lines', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'labels', 'symbols', 'short', 'selection', 'connect-from',
+                'areas', 'roadside', 'parking', 'paths', 'carriageway', 'junctions', 'node-surfaces', 'lanes', 'islands', 'dividers', 'kerbs',
+                'kerb-lines', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'labels', 'symbols', 'short', 'selection', 'connect-from',
                 'targets', 'short-targets', 'divider-targets'
             ])
             .enter()
@@ -386,10 +386,11 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         for (const p of street.paths) drawnWays.add(p.id);
         for (const a of street.areas) drawnWays.add(a.id);
         for (const k of street.kerbs) drawnWays.add(k.id);
+        for (const b of street.barriers) drawnWays.add(b.id);
         for (const p of parking) drawnWays.add(p.id);
         for (const l of roadMarkings.lines) drawnWays.add(l.id);
         for (const a of roadMarkings.areas) drawnWays.add(a.id);
-        const drawnNodes = new Set<string>(street.markings.map(m => m.nodeID));
+        const drawnNodes = new Set<string>([...street.markings, ...street.surfaces].map(m => m.nodeID));
         for (const text of roadMarkings.texts) drawnNodes.add(text.id);
         for (const id of drawnWays) {
             const way = graph.hasEntity(id as osmWay['id']) as osmWay | undefined;

@@ -142,3 +142,48 @@ describe('streetGeometry surfaces and paths', () => {
         expect(street.paths.find(p => p.id === 'w3')!.use).toBe('shared');
     });
 });
+
+
+describe('streetGeometry: mini-roundabouts, turning circles, barriers, speed limits', () => {
+    function build(extra: InstanceType<typeof iD.osmNode | typeof iD.osmWay>[] = []) {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-100, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(-50, 0) }),
+            new iD.osmNode({ id: 'n3', loc: at(0, 0), tags: { highway: 'mini_roundabout' } }),
+            new iD.osmNode({ id: 'n4', loc: at(100, 0) }),
+            new iD.osmNode({ id: 'n5', loc: at(0, -80), tags: { highway: 'turning_circle', diameter: '16' } }),
+            new iD.osmNode({ id: 'n6', loc: at(0, -40), tags: { barrier: 'bollard' } }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags: { highway: 'tertiary', lanes: '2', 'width:lanes': '3|3', maxspeed: '40 mph' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n2', 'n3', 'n4'], tags: { highway: 'tertiary', lanes: '2', 'width:lanes': '3|3', maxspeed: '30 mph' } }),
+            new iD.osmWay({ id: 'w3', nodes: ['n3', 'n6', 'n5'], tags: { highway: 'residential', lanes: '2', 'width:lanes': '3|3' } }),
+            ...extra
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        return streetGeometry(entities.map(e => graph.entity(e.id)), graph);
+    }
+
+    it('draws a mini-roundabout with its circle, centre disc and a give way on each approach', () => {
+        const street = build();
+        expect(street.surfaces.map(s => s.kind)).toContain('mini_roundabout_surface');
+        expect(street.markings.filter(m => m.kind === 'mini_roundabout')).toHaveLength(1);
+        // three arms (west, east, south), each with one lane approaching
+        expect(street.markings.filter(m => m.nodeID === 'n3' && m.kind === 'give_way_line')).toHaveLength(3);
+    });
+
+    it('sizes turning circles by diameter and puts bollards across the road', () => {
+        const street = build();
+        const frame = metricFrame(origin);
+        const turning = street.surfaces.find(s => s.kind === 'turning_circle')!;
+        const xs = turning.points.map(p => frame.toMetres(p)[0]);
+        expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(16, 0);
+        expect(street.markings.filter(m => m.kind === 'barrier_post' && m.variant === 'bollard').length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('paints the new speed limit where it changes, in both directions', () => {
+        const street = build();
+        const limits = street.symbols.filter(s => s.kind === 'speed_limit');
+        // entering w2 eastbound: 30; entering w1 westbound: 40; none where a limit appears from nothing (w3)
+        expect(limits.map(s => s.text).sort()).toEqual(['30', '40']);
+    });
+});
