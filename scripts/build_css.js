@@ -26,18 +26,8 @@ export function buildCSS() {
 
   return _currBuild =
     Promise.resolve()
-      .then(() => fs.globSync('css/**/*.css'))
-      .then(files => doConcat(files.sort(), 'dist/iD.css'))
-      .then(() => {
-        const css = fs.readFileSync('dist/iD.css', 'utf8');
-        return postcss([
-            autoprefixer,
-            duplicateDarkMode,
-            prepend({ prefix: '.ideditor', exclude: [ /^\.ideditor(\[.*?\])*/ ] })
-          ])
-          .process(css, { from: 'dist/iD.css', to: 'dist/iD.css' });
-      })
-      .then(result => fs.writeFileSync('dist/iD.css', result.css))
+      .then(() => buildBundle('css/**/*.css', 'dist/iD.css'))
+      .then(() => buildBundle('css-lanes/**/*.css', 'dist/lanes.css'))
       .then(() => {
         console.timeEnd(END);
         console.log('');
@@ -49,6 +39,24 @@ export function buildCSS() {
         _currBuild = null;
         process.exit(1);
       });
+}
+
+
+// concatenate the css files matching `pattern` and post-process them into `output`
+function buildBundle(pattern, output) {
+  return Promise.resolve()
+    .then(() => fs.globSync(pattern))
+    .then(files => doConcat(files.sort(), output))
+    .then(() => {
+      const css = fs.readFileSync(output, 'utf8');
+      return postcss([
+          autoprefixer,
+          duplicateDarkMode,
+          prepend({ prefix: '.ideditor', exclude: [ /^\.ideditor(\[.*?\])*/ ] })
+        ])
+        .process(css, { from: output, to: output });
+    })
+    .then(result => fs.writeFileSync(output, result.css));
 }
 
 

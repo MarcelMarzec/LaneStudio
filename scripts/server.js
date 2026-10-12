@@ -8,7 +8,10 @@ import { buildCSS } from './build_css.js';
 const port = 8080;
 
 watch(
-  await Array.fromAsync(glob('css/**/*.css')), {
+  [
+    ...await Array.fromAsync(glob('css/**/*.css')),
+    ...await Array.fromAsync(glob('css-lanes/**/*.css'))
+  ], {
   ignoreInitial: false
 }).on('all', () => {
   buildCSS();

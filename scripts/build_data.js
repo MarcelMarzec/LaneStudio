@@ -78,6 +78,8 @@ async function buildData() {
   let territoryLanguages = generateTerritoryLanguages();
   fs.writeFileSync('dist/data/territory_languages.min.json', JSON.stringify(territoryLanguages) );
 
+  writeLanesStrings();
+
   await writeEnJson();
 
   const languageInfo = await languageNames.getLangNamesInNativeLang();
@@ -240,6 +242,15 @@ function writeEnJson() {
 
       fs.writeFileSync('dist/locales/en.min.json', JSON.stringify(enjson));
     });
+}
+
+
+// Lane Studio strings live in their own localizer scope (`_lanes.*`), English only for now
+function writeLanesStrings() {
+  const strings = loadYaml(fs.readFileSync('data/lanes.yaml', 'utf8'));
+  shell.mkdir('-p', 'dist/locales/lanes');
+  fs.writeFileSync('dist/locales/lanes/en.min.json', JSON.stringify(strings));
+  fs.writeFileSync('dist/locales/lanes/index.min.json', JSON.stringify({ en: { rtl: false, pct: 1 } }));
 }
 
 

@@ -77,6 +77,7 @@ export interface coreContext extends Pick<Dispatch<object, EventMap>, 'on'> {
     defaultChangesetHashtags: GetSet<coreContext, string>;
     setsDocumentTitle: GetSet<coreContext, boolean>;
     documentTitleBase: GetSet<coreContext, string>;
+    createdBy: GetSet<coreContext, string>;
     ui(): ReturnType<typeof uiInit>;
     lastPointerType(): PointerEvent['pointerType'];
     keybinding(): ReturnType<typeof utilKeybinding>;
@@ -229,6 +230,15 @@ export function coreContext(this: object): coreContext {
     _documentTitleBase = val;
     return context;
   } as coreContext['documentTitleBase'];
+
+
+  // The `created_by` changeset tag, which tells data users which editor made an edit
+  let _createdBy = `iD ${context.version}`;
+  context.createdBy = function(val) {
+    if (!arguments.length) return _createdBy;
+    _createdBy = val;
+    return context;
+  } as coreContext['createdBy'];
 
 
   /** User interface and keybinding */

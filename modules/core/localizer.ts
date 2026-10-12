@@ -157,6 +157,16 @@ export class coreLocalizer {
 
     private _loadPromise?: Promise<this>;
 
+    // Extra string scopes registered by an app built on iD, e.g. `{ lanes: 'locales/lanes' }`
+    private _extraLocaleDirs: Record<string, string> = {};
+
+    /** registers another directory of translated strings, read as `_<scopeId>.*` by `t()` */
+    addLocaleDir(scopeId: string, directory: string) {
+        this._extraLocaleDirs[scopeId] = directory;
+        this._loadPromise = undefined;
+        return this;
+    }
+
     ensureLoaded() {
         if (this._loadPromise) return this._loadPromise;
 
@@ -164,7 +174,8 @@ export class coreLocalizer {
 
         const localeDirs = {
             general: 'locales',
-            tagging: presetsCdnUrl + 'dist/translations'
+            tagging: presetsCdnUrl + 'dist/translations',
+            ...this._extraLocaleDirs
         };
 
         let fileMap = fileFetcher.fileMap();

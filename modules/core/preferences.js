@@ -15,6 +15,10 @@ _storage = _storage || (() => {
 
 const _listeners = {};
 
+// Prepended to every stored key, so that several apps built on iD
+// (e.g. iD and Lane Studio) can run on the same origin without sharing state
+let _prefix = '';
+
 //
 // corePreferences is an interface for persisting basic key-value strings
 // within and between iD sessions on the same site.
@@ -33,9 +37,9 @@ const _listeners = {};
  */
 function corePreferences(k, v) {
   try {
-    if (v === undefined) return _storage.getItem(k);
-    else if (v === null) _storage.removeItem(k);
-    else _storage.setItem(k, v);
+    if (v === undefined) return _storage.getItem(_prefix + k);
+    else if (v === null) _storage.removeItem(_prefix + k);
+    else _storage.setItem(_prefix + k, v);
 
     if (_listeners[k]) {
       _listeners[k].forEach(handler => handler(v));
@@ -58,10 +62,29 @@ corePreferences.onChange = function(k, handler) {
   _listeners[k].push(handler);
 };
 
+/**
+ * gets or sets the prefix used for all stored keys; set it before iD is initialised
+ * @overload getter
+ * @returns {string}
+ */
+/**
+ * @overload setter
+ * @param {string} val
+ * @returns {typeof corePreferences}
+ */
+corePreferences.prefix = function(val) {
+  if (val === undefined) return _prefix;
+  _prefix = val;
+  return corePreferences;
+};
+
 export { corePreferences as prefs };
 
 export const asyncPrefs = {
-  get,
-  set,
-  del
+  /** @type {typeof get} */
+  get: (k, ...args) => get(_prefix + k, ...args),
+  /** @type {typeof set} */
+  set: (k, ...args) => set(_prefix + k, ...args),
+  /** @type {typeof del} */
+  del: (k, ...args) => del(_prefix + k, ...args)
 };

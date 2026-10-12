@@ -107,7 +107,7 @@ export type ActionList = Action[] | [...actions: Action[], annotation: string]
 export class coreHistory extends EventDispatcher<EventMap> {
     private context: coreContext;
 
-    private _lock = utilSessionMutex('lock');
+    private _lock = utilSessionMutex(prefs.prefix() + 'lock');
 
     // restorable if iD not open in another window/tab and a saved history exists in localStorage
     private _hasUnresolvedRestorableChanges = this._lock.lock() && !!prefs('has_saved_history');

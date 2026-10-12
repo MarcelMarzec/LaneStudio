@@ -13,11 +13,14 @@ const context = await esbuild.context({
   define: envs,
   bundle: true,
   sourcemap: true,
-  entryPoints: ['./modules/id.js'],
+  entryPoints: {
+    iD: './modules/id.js',
+    lanes: './modules/lanes/index.ts'
+  },
   legalComments: 'none',
   logLevel: 'info',
   metafile: true,
-  outfile: 'dist/iD.js',
+  outdir: 'dist',
   target: browserslistToEsbuild(),
   loader: { '.DS_Store' : 'empty', '.swp' : 'empty' },
   treeShaking: false,
