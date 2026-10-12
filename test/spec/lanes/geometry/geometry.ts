@@ -1,6 +1,6 @@
 import { offsetPolyline, metricFrame, polylineLength } from '../../../../modules/lanes/geometry/frame';
 import { laneLayout, parseWidth } from '../../../../modules/lanes/geometry/layout';
-import { roadGeometry } from '../../../../modules/lanes/geometry/road_geometry';
+import { roadGeometry, _test } from '../../../../modules/lanes/geometry/road_geometry';
 
 // a T-junction near Berlin (right-hand traffic); 1 m ≈ 1/111320° of latitude
 const m = 1 / 111320;
@@ -94,18 +94,20 @@ describe('laneLayout', () => {
 
 
 describe('roadGeometry', () => {
-    it('splits a road at a junction and pulls it back by the side road', () => {
+    it('splits a road at a junction; the main road runs through and the side road stops at its kerb', () => {
         const graph = tJunction();
         const { pieces, junctions } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
         const main = pieces.filter(p => p.wayID === 'w1');
         expect(main).toHaveLength(2);
-        // each half of the 100 m road is shortened by about half the 6 m side road
         for (const piece of main) {
-            expect(piece.length).toBeLessThan(98);
-            expect(piece.length).toBeGreaterThan(90);
+            expect(piece.length).toBeCloseTo(100, 0);
             expect(piece.lanes).toHaveLength(4);
             expect(piece.boundaries).toHaveLength(5);
         }
+        // the 4-lane main road is about 14 m wide, so the side road is pulled back by about 7 m
+        const side = pieces.find(p => p.wayID === 'w2')!;
+        expect(side.length).toBeLessThan(95);
+        expect(side.length).toBeGreaterThan(90);
         expect(junctions.map(j => j.nodeID)).toEqual(['n2']);
     });
 
@@ -116,11 +118,14 @@ describe('roadGeometry', () => {
         const second = roadGeometry(ways, graph).pieces;
         expect(second[0]).toBe(first[0]);
 
-        const edited = graph.replace(graph.entity('w2').update({ tags: { highway: 'residential', lanes: '4', width: '12' } }));
+        // a wider main road pulls the side road further back
+        const sideBefore = first.find(p => p.wayID === 'w2')!;
+        const edited = graph.replace(graph.entity('w1').update({ tags: { highway: 'primary', lanes: '6' } }));
         const third = roadGeometry([edited.entity('w1'), edited.entity('w2')], edited).pieces;
         expect(third[0]).not.toBe(first[0]);
-        const main = third.filter(p => p.wayID === 'w1');
-        expect(polylineLength([[0, 0], [0, main[0].length]])).toBeLessThan(95);
+        const sideAfter = third.find(p => p.wayID === 'w2')!;
+        expect(sideAfter).not.toBe(sideBefore);
+        expect(polylineLength([[0, 0], [0, sideAfter.length]])).toBeLessThan(sideBefore.length - 2);
     });
 
     it('puts turn arrows on the approach to the junction', () => {
@@ -130,6 +135,145 @@ describe('roadGeometry', () => {
         const first = pieces.find(p => p.wayID === 'w1' && p.atWayStart)!;
         expect(last.arrows.length).toBeGreaterThan(0);
         expect(first.arrows).toHaveLength(0);
+    });
+});
+
+
+describe('roadGeometry at joins and junctions', () => {
+    const { throughPair, zipLanes } = _test;
+
+    // a one-way road of 3 lanes continuing as 2 (a lane dropped at the kerb), east-west
+    function laneDrop(fromTags: Tags, toTags: Tags) {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-100, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n3', loc: at(100, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags: fromTags }),
+            new iD.osmWay({ id: 'w2', nodes: ['n2', 'n3'], tags: toTags })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        return new iD.coreGraph(entities);
+    }
+    const frame = metricFrame(origin);
+    const y = (loc: [number, number]) => frame.toMetres(loc)[1];
+
+    it('lines up the lanes that carry on where a lane is dropped, and tapers the dropped lane', () => {
+        const graph = laneDrop(
+            { highway: 'primary', oneway: 'yes', lanes: '3', 'width:lanes': '3|3|3' },
+            { highway: 'primary', oneway: 'yes', lanes: '2', 'width:lanes': '3|3' });
+        const { pieces } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
+        const before = pieces.find(p => p.wayID === 'w1')!;
+        const after = pieces.find(p => p.wayID === 'w2')!;
+        // right-hand traffic drops the right (kerb) lane: the two left lanes line up across the join
+        const end = (line: [number, number][]) => line[line.length - 1];
+        expect(y(after.boundaries[0][0])).toBeCloseTo(y(end(before.boundaries[0])), 1);
+        expect(y(after.boundaries[1][0])).toBeCloseTo(y(end(before.boundaries[1])), 1);
+        // the dropped lane narrows to nothing at the join, and is full width well before it
+        expect(y(end(before.boundaries[3]))).toBeCloseTo(y(end(before.boundaries[2])), 1);
+        expect(Math.abs(y(before.boundaries[3][0]) - y(before.boundaries[2][0]))).toBeCloseTo(3, 1);
+    });
+
+    it('does not move a road that has placement tags', () => {
+        const graph = laneDrop(
+            { highway: 'primary', oneway: 'yes', lanes: '3', 'width:lanes': '3|3|3' },
+            { highway: 'primary', oneway: 'yes', lanes: '2', 'width:lanes': '3|3', placement: 'middle_of:1' });
+        const { pieces } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
+        const after = pieces.find(p => p.wayID === 'w2')!;
+        expect(y(after.centres[0][0])).toBeCloseTo(0, 1);   // lane 1 stays centred on the way
+    });
+
+    it('picks the main road through a junction', () => {
+        const arms = (specs: [string, number, Tags][]) => specs.map(([id, angle, tags]) => ({
+            way: { id, tags }, direction: [Math.cos(angle * Math.PI / 180), Math.sin(angle * Math.PI / 180)]
+        })) as any;
+        // the side road is straighter on with one arm, but the named primary road wins
+        expect(throughPair(arms([
+            ['a', 0, { highway: 'primary', name: 'High Street' }],
+            ['b', 90, { highway: 'residential' }],
+            ['c', 175, { highway: 'primary', name: 'High Street' }]
+        ]))).toEqual([0, 2]);
+        // two roundabout arms always pair, even round a bend
+        expect(throughPair(arms([
+            ['r1', 0, { highway: 'primary', junction: 'roundabout' }],
+            ['x', 110, { highway: 'primary' }],
+            ['r2', 120, { highway: 'primary', junction: 'roundabout' }]
+        ]))).toEqual([0, 2]);
+        expect(throughPair(arms([['a', 0, { highway: 'service' }], ['b', 90, { highway: 'service' }]]))).toBeNull();
+    });
+
+    it('pairs lanes one to one, extra lanes merging into the outermost', () => {
+        expect(zipLanes([0, 1], 2, true).map(p => [p.from, p.to])).toEqual([[0, 0], [1, 1]]);
+        expect(zipLanes([1, 2], 3, false).map(p => [p.from, p.to])).toEqual([[2, 2], [1, 1]]);
+        const merging = zipLanes([0, 1, 2], 2, true);
+        expect(merging.map(p => [p.from, p.to, !!p.merges])).toEqual([[0, 0, false], [1, 1, false], [2, 1, true]]);
+    });
+
+    it('draws guide lines through a junction from turn lanes', () => {
+        // one-way main road west to east with a left-turn lane into the side road to the north
+        const graph = tJunction({ highway: 'primary', oneway: 'yes', lanes: '2', 'turn:lanes': 'left|through' });
+        const { connections } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
+        const guides = connections.filter(c => c.kind === 'guide');
+        // the left lane turns into the side road; the through lane carries straight on (no gap to draw)
+        expect(guides).toHaveLength(1);
+        expect(guides[0].key).toContain('w2');
+        const line = guides[0].line.map(frame.toMetres);
+        expect(line[line.length - 1][1]).toBeGreaterThan(3);
+    });
+
+    it('starts a slip road where the lane leading into it ends', () => {
+        // right-hand traffic: the right lane of three peels off to the north-east
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-100, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n3', loc: at(100, 0) }),
+            new iD.osmNode({ id: 'n4', loc: at(80, -50) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags: { highway: 'primary', oneway: 'yes', lanes: '3', 'width:lanes': '3|3|3', 'turn:lanes': 'through|through|slight_right' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n2', 'n3'], tags: { highway: 'primary', oneway: 'yes', lanes: '2', 'width:lanes': '3|3' } }),
+            new iD.osmWay({ id: 'w3', nodes: ['n2', 'n4'], tags: { highway: 'primary_link', oneway: 'yes', lanes: '1', 'width:lanes': '3' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const { pieces } = roadGeometry([graph.entity('w1'), graph.entity('w2'), graph.entity('w3')], graph);
+        // the through road lines up with the two left lanes: 1.5 m to the left of the way
+        const through = pieces.find(p => p.wayID === 'w2')!;
+        expect(y(through.boundaries[1][0])).toBeCloseTo(1.5, 1);
+        // the slip road is shifted right, towards the lane that leads into it
+        const slip = pieces.find(p => p.wayID === 'w3')!;
+        const startCentre = frame.toMetres(slip.centres[0][0]);
+        const d = Math.hypot(80, 50);
+        const right = [-50 / d, -80 / d];   // right of the slip road's direction (80, -50)
+        const offset = startCentre[0] * right[0] + startCentre[1] * right[1];
+        expect(offset).toBeGreaterThan(2);
+        expect(offset).toBeLessThan(4);
+    });
+
+    it('stops the main road kerb where a side road joins, but not the far kerb', () => {
+        const graph = tJunction({ highway: 'primary', oneway: 'yes', lanes: '2', 'width:lanes': '3|3' });
+        const { pieces } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
+        const before = pieces.find(p => p.wayID === 'w1' && p.atWayStart)!;
+        const length = (line: [number, number][]) => polylineLength(line.map(frame.toMetres));
+        // the side road joins on the left (north) of the eastbound road
+        expect(length(before.lines[0])).toBeLessThan(length(before.boundaries[0]) - 2);
+        expect(length(before.lines[2])).toBeCloseTo(length(before.boundaries[2]), 1);
+        // the line between the lanes stops at the junction box too
+        expect(length(before.lines[1])).toBeLessThan(length(before.boundaries[1]) - 2);
+    });
+
+    it('flags very short roads and keeps arrows on short approach pieces', () => {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-50, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n3', loc: at(6, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags: { highway: 'primary', oneway: 'yes', lanes: '2' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n2', 'n3'], tags: { highway: 'primary', oneway: 'yes', lanes: '2', 'turn:lanes': 'left|right' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const { pieces } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
+        const short = pieces.find(p => p.wayID === 'w2')!;
+        expect(short.short).toBe(true);
+        expect(pieces.find(p => p.wayID === 'w1')!.short).toBe(false);
+        expect(short.arrows).toHaveLength(2);
     });
 });
 

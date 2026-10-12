@@ -2,17 +2,22 @@ import type { coreGraph } from '../../core/graph';
 import type { Vec2 } from '../../geo/vector';
 import type { NodeId, WayId } from '../../osm';
 import type { osmNode } from '../../osm/node';
+import type { osmRelation } from '../../osm/relation';
 import type { osmWay } from '../../osm/way';
 import { isLaneRoad } from '../core/roads';
 import {
-    metricFrame, sub, add, scale, rightNormal,
+    metricFrame, sub, add, scale, rightNormal, len, unit,
     pointAlong, slicePolyline, offsetPolyline, cumulativeLengths, polylineLength, type MetricFrame
 } from './frame';
 import { laneLayout, type LaneLayout, type RoadsideKind } from './layout';
-import { parseTurn } from '../model';
+import { parseTurn, parseConnectivity, type LaneDirection } from '../model';
 
 // Longest distance a road is pulled back from a junction, in metres
 const maxClearance = 30;
+// How long a lane takes to appear or disappear where roads join, in metres
+const taperLength = 25;
+// Ways shorter than this are hard to see and get highlighted, in metres
+export const shortWayLength = 8;
 
 
 /** One drawable stretch of a road between junctions, everything in lon/lat */
@@ -30,6 +35,10 @@ export interface RoadPiece {
     centres: Vec2[][];
     /** for each lane boundary, two lines 0.12 m either side of it, for double markings (empty at the kerbs) */
     dividerSides: [Vec2[], Vec2[]][];
+    /** `boundaries` as painted: kerbs and lane lines stop where side roads join a road that runs on */
+    lines: Vec2[][];
+    /** `dividerSides` as painted */
+    lineSides: [Vec2[], Vec2[]][];
     /** where turn arrows go: a point on a lane and a point 1 m further in its direction of travel */
     arrows: LaneMark[];
     /** where lane labels go, one per lane in the middle of the piece */
@@ -40,6 +49,10 @@ export interface RoadPiece {
     /** whether this piece starts at the way's first node / ends at its last node */
     atWayStart: boolean;
     atWayEnd: boolean;
+    /** the whole way is shorter than `shortWayLength`: easy to miss, so it is highlighted */
+    short: boolean;
+    /** the middle of the piece, for the short-way marker */
+    middle: Vec2;
 }
 
 export interface LaneMark {
@@ -54,21 +67,39 @@ export interface JunctionArea {
     polygon: Vec2[];
 }
 
-
-interface Arm {
-    way: osmWay;
-    /** the node's position in `way.nodes` */
-    nodeIndex: number;
-    /** true when the arm leaves the node in the way's drawing direction */
-    alongWay: boolean;
-    /** the road's centre line leaving the node, in metres in the node's frame */
+/** A line through a junction from the end of one lane to the start of another */
+export interface JunctionConnection {
+    key: string;
+    nodeID: string;
+    /** `relation`: from a type=connectivity relation; `guide`: worked out from turn lanes */
+    kind: 'relation' | 'guide';
+    optional: boolean;
     line: Vec2[];
-    direction: Vec2;
-    angle: number;
-    /** carriageway edge offsets relative to the arm's direction (right positive) */
-    left: number;
-    right: number;
 }
+
+
+/* ---------- drawing-only adjustments at way ends ---------- */
+
+/** A lane that narrows to nothing at one end of a way (a lane added or dropped where roads join) */
+interface Taper {
+    /** lane index, left to right along the way; only the outermost lanes can taper */
+    lane: number;
+    /** metres */
+    length: number;
+}
+
+/**
+ * How a way is drawn shifted sideways at each end so its lanes line up with the road it continues,
+ * and which lanes taper. Drawing only: tags are never changed.
+ */
+export interface WayVisual {
+    start: number;
+    end: number;
+    taperStart: Taper | null;
+    taperEnd: Taper | null;
+}
+
+const noVisual: WayVisual = { start: 0, end: 0, taperStart: null, taperEnd: null };
 
 
 /* Per-entity caches. iD entities are immutable, so an unchanged entity means unchanged input. */
@@ -91,15 +122,63 @@ function lineLocs(way: osmWay, graph: coreGraph): Vec2[] {
 }
 
 
-/** The placement shift at distance `s` along a way of length `total` */
-function shiftAt(layout: LaneLayout, s: number, total: number): number {
+/**
+ * Lane boundary offsets from the way line at distance `s` along it (right positive): the layout's
+ * edges, its placement shift, the drawing-only shift and any tapering outer lane.
+ */
+export function edgesAt(layout: LaneLayout, visual: WayVisual, s: number, total: number): number[] {
     const t = total > 0 ? s / total : 0;
-    return layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * t;
+    // a drawing shift holds near each join and changes over the middle of the way
+    const ramp = Math.min(total, taperLength * 2);
+    const r = ramp > 0 ? Math.max(0, Math.min(1, (s - (total - ramp) / 2) / ramp)) : t;
+    const eased = r * r * (3 - 2 * r);
+    const shift = layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * t +
+        visual.start + (visual.end - visual.start) * eased;
+    const edges = layout.edges.slice();
+    const n = layout.lanes.length;
+
+    const factors = new Map<number, number>();
+    const taper = (spec: Taper | null, f: number) => {
+        if (!spec) return;
+        factors.set(spec.lane, Math.min(factors.get(spec.lane) ?? 1, Math.max(0, Math.min(1, f))));
+    };
+    taper(visual.taperStart, visual.taperStart ? s / visual.taperStart.length : 1);
+    taper(visual.taperEnd, visual.taperEnd ? (total - s) / visual.taperEnd.length : 1);
+    for (const [k, f] of factors) {
+        const width = layout.lanes[k].width * f;
+        if (k === 0) edges[0] = edges[1] - width;
+        else if (k === n - 1) edges[n] = edges[n - 1] + width;
+    }
+    return edges.map(e => e + shift);
 }
 
 
+/* ---------- junction arms ---------- */
+
+interface Arm {
+    way: osmWay;
+    layout: LaneLayout;
+    /** the node's position in `way.nodes` */
+    nodeIndex: number;
+    /** true when the arm leaves the node in the way's drawing direction */
+    alongWay: boolean;
+    /** the arm is a way end (not a way passing through) */
+    isEnd: boolean;
+    /** the road's centre line leaving the node, in metres in the node's frame */
+    line: Vec2[];
+    direction: Vec2;
+    angle: number;
+    /** lane boundary offsets at the node in the way's frame (right of its drawing direction positive) */
+    edges: number[];
+    /** carriageway edges relative to the arm's direction (right positive) */
+    left: number;
+    right: number;
+}
+
+const armKey = (wayID: string, nodeIndex: number, alongWay: boolean) => `${wayID}:${nodeIndex}:${alongWay}`;
+
 /** The road arms meeting at a node: each way end there gives one arm, a way passing through gives two */
-function armsAt(node: osmNode, graph: coreGraph): Arm[] {
+function armsAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>): Arm[] {
     const frame = metricFrame(node.loc);
     const arms: Arm[] = [];
     const ways = graph.parentWays(node).filter(isLaneRoad) as osmWay[];
@@ -109,29 +188,87 @@ function armsAt(node: osmNode, graph: coreGraph): Arm[] {
         const points = lineLocs(way, graph).map(frame.toMetres);
         const cumulative = cumulativeLengths(points);
         const total = cumulative[cumulative.length - 1];
+        const visual = visuals.get(way.id) ?? noVisual;
 
         way.nodes.forEach((id, i) => {
             if (id !== node.id) return;
-            const shift = shiftAt(layout, cumulative[i], total);
-            const wayLeft = layout.edges[0] + shift;
-            const wayRight = layout.edges[layout.edges.length - 1] + shift;
+            const edges = edgesAt(layout, visual, cumulative[i], total);
+            const wayLeft = edges[0];
+            const wayRight = edges[edges.length - 1];
+            const isEnd = i === 0 || i === way.nodes.length - 1;
 
-            const add = (alongWay: boolean) => {
+            const push = (alongWay: boolean) => {
                 const line = alongWay ? points.slice(i) : points.slice(0, i + 1).reverse();
                 if (line.length < 2 || polylineLength(line) === 0) return;
                 const direction = pointAlong(line, Math.min(5, polylineLength(line))).direction;
                 arms.push({
-                    way, nodeIndex: i, alongWay, line, direction,
+                    way, layout, nodeIndex: i, alongWay, isEnd, line, direction, edges,
                     angle: Math.atan2(direction[1], direction[0]),
                     left: alongWay ? wayLeft : -wayRight,
                     right: alongWay ? wayRight : -wayLeft
                 });
             };
-            if (i < way.nodes.length - 1) add(true);
-            if (i > 0) add(false);
+            if (i < way.nodes.length - 1) push(true);
+            if (i > 0) push(false);
         });
     }
     return arms.sort((a, b) => a.angle - b.angle);
+}
+
+/** Lanes on an arm travelling towards the node (`approach`) or away from it */
+function armLaneDirection(arm: Arm, approach: boolean): LaneDirection {
+    // leaving the node along the way is travelling forward
+    return (arm.alongWay !== approach) ? 'forward' : 'backward';
+}
+
+/** Lane centre offset of a lane on an arm, relative to its direction of travel (right positive) */
+function travelOffset(arm: Arm, direction: LaneDirection, index: number): number | null {
+    const k = arm.layout.lanes.findIndex(l => l.ref.direction === direction && l.ref.index === index);
+    if (k === -1) return null;
+    const offset = (arm.edges[k] + arm.edges[k + 1]) / 2;
+    return direction === 'backward' ? -offset : offset;
+}
+
+// explicit placement tags say where a way is drawn: they are not second-guessed
+const hasPlacement = (way: osmWay) => !!(way.tags.placement || way.tags['placement:forward'] || way.tags['placement:backward']);
+
+const isRing = (way: osmWay) => way.tags.junction === 'roundabout' || way.tags.junction === 'circular';
+
+const highwayRank: Record<string, number> = {
+    motorway: 9, trunk: 8, primary: 7, secondary: 6, tertiary: 5, unclassified: 4, residential: 3,
+    motorway_link: 6, trunk_link: 5, primary_link: 5, secondary_link: 4, tertiary_link: 3,
+    living_street: 2, service: 1, road: 1, busway: 2, track: 0
+};
+
+/**
+ * The two arms that carry the main road straight through a junction: both on a roundabout ring,
+ * or nearly straight on and sharing a ref, name or class. The main road is not pulled back there;
+ * only the side roads stop at its kerb.
+ */
+function throughPair(arms: Arm[]): [number, number] | null {
+    let best: { pair: [number, number]; score: number } | null = null;
+    for (let i = 0; i < arms.length; i++) {
+        for (let j = i + 1; j < arms.length; j++) {
+            const a = arms[i];
+            const b = arms[j];
+            const cos = a.direction[0] * b.direction[0] + a.direction[1] * b.direction[1];
+            const deviation = Math.PI - Math.acos(Math.max(-1, Math.min(1, cos)));   // 0 = straight on
+            const ring = isRing(a.way) && isRing(b.way);
+            if (!ring && deviation > 35 * Math.PI / 180) continue;
+            if (ring && deviation > 80 * Math.PI / 180) continue;
+            const ta = a.way.tags;
+            const tb = b.way.tags;
+            const score = (ring ? 100 : 0) +
+                (a.way.id === b.way.id ? 30 : 0) +
+                (ta.ref && ta.ref === tb.ref ? 20 : 0) +
+                (ta.name && ta.name === tb.name ? 10 : 0) +
+                (ta.highway === tb.highway ? 5 : 0) +
+                (highwayRank[ta.highway ?? ''] ?? 0) + (highwayRank[tb.highway ?? ''] ?? 0) -
+                deviation * 10;
+            if (!best || score > best.score) best = { pair: [i, j], score };
+        }
+    }
+    return best?.pair ?? null;
 }
 
 
@@ -148,34 +285,425 @@ function edgeMeeting(a: Arm, offA: number, b: Arm, offB: number): number | undef
 }
 
 
-interface JunctionTrims {
-    /** pull-back distance per arm, keyed `${wayID}:${nodeIndex}:${alongWay}` */
-    trims: Map<string, number>;
-    area?: JunctionArea;
+/* ---------- which lanes lead to which ---------- */
+
+interface LanePair {
+    from: number;
+    to: number;
+    optional: boolean;
+    /** an extra approaching lane that merges into a lane another one already leads to */
+    merges?: boolean;
 }
 
-const armKey = (wayID: string, nodeIndex: number, alongWay: boolean) => `${wayID}:${nodeIndex}:${alongWay}`;
+/** The type=connectivity relation from one way to another via a node, if any */
+function connectivityRelation(graph: coreGraph, fromID: string, nodeID: string, toID: string): osmRelation | undefined {
+    const from = graph.hasEntity(fromID as WayId);
+    if (!from) return undefined;
+    return graph.parentRelations(from).find(r => {
+        if (r.tags.type !== 'connectivity') return false;
+        const members = (r as osmRelation).members;
+        return members.some(m => m.role === 'from' && m.id === fromID) &&
+            members.some(m => m.role === 'via' && m.id === nodeID) &&
+            members.some(m => m.role === 'to' && m.id === toID);
+    }) as osmRelation | undefined;
+}
 
-// a junction depends on its roads and on every node of them (a moved node turns an arm)
-const junctionCache = new WeakMap<osmNode, { deps: unknown[]; result: JunctionTrims }>();
+function relationPairs(relation: osmRelation): LanePair[] {
+    return parseConnectivity(relation.tags.connectivity ?? '').flatMap(group => {
+        const from = parseInt(group.from, 10) - 1;
+        if (Number.isNaN(from)) return [];
+        return group.to.flatMap(c => {
+            const to = parseInt(c.to, 10) - 1;
+            return Number.isNaN(to) ? [] : [{ from, to, optional: c.optional }];
+        });
+    });
+}
 
-/** Works out how far each road is pulled back at a node, and the junction area that fills the gap */
-function junctionAt(node: osmNode, graph: coreGraph): JunctionTrims {
+/**
+ * Pairs a group of approaching lanes with the lanes of the road they lead to, one to one in order,
+ * lined up on the left or the right. Extra approaching lanes share the outermost lane.
+ */
+function zipLanes(fromLanes: number[], toCount: number, alignLeft: boolean): LanePair[] {
+    const pairs: LanePair[] = [];
+    const n = fromLanes.length;
+    for (let k = 0; k < n; k++) {
+        const from = alignLeft ? fromLanes[k] : fromLanes[n - 1 - k];
+        const ideal = alignLeft ? k : toCount - 1 - k;
+        const to = Math.max(0, Math.min(toCount - 1, ideal));
+        pairs.push({ from, to, optional: false, merges: to !== ideal });
+    }
+    return pairs;
+}
+
+/** Turn values whose lanes carry on along the road (an unmarked lane on a marked road carries on too) */
+const continues = (values: string[]) => !values.length || values.includes('through') ||
+    values.includes('merge_to_left') || values.includes('merge_to_right');
+
+/**
+ * Which approaching lanes carry on into the continuing road, and how they line up:
+ * from a connectivity relation if there is one, else from turn lanes. Where nothing turns off
+ * (a lane added or dropped), lanes line up on the side away from the kerb.
+ */
+function continuationPairs(graph: coreGraph, up: Arm, down: Arm, nodeID: string, twoArms: boolean): LanePair[] {
+    const upDirection = armLaneDirection(up, true);
+    const downDirection = armLaneDirection(down, false);
+    const upLanes = up.layout.model.lanes[upDirection];
+    const downCount = down.layout.model.lanes[downDirection].length;
+    if (!upLanes.length || !downCount) return [];
+
+    if (up.isEnd && down.isEnd) {
+        const relation = connectivityRelation(graph, up.way.id, nodeID, down.way.id);
+        if (relation) return relationPairs(relation).filter(p => !p.optional);
+    }
+
+    const turns = upLanes.map(lane => parseTurn(lane.values['turn:lanes'] ?? ''));
+    const anyTagged = turns.some(t => t.length);
+    const going = upLanes.map((_, i) => i).filter(i => twoArms || !anyTagged || continues(turns[i]));
+    if (!going.length) return [];
+    if (going.length === downCount) return going.map((from, to) => ({ from, to, optional: false }));
+
+    let alignLeft: boolean;
+    const turning = upLanes.map((_, i) => i).filter(i => !going.includes(i));
+    if (turning.length) {
+        // the turning lanes peel off on one side; the rest stay lined up on the other
+        alignLeft = turning.some(i => i > Math.max(...going));
+    } else {
+        // a lane added or dropped happens at the kerb, so line up on the other side,
+        // unless the road it leads to says the new lane is a turn lane on the other side
+        alignLeft = up.layout.model.driveSide === 'right';
+        if (downCount > going.length) {
+            const downTurns = down.layout.model.lanes[downDirection].map(lane => parseTurn(lane.values['turn:lanes'] ?? ''));
+            const leftish = (values: string[]) => values.some(v => /left/.test(v));
+            const rightish = (values: string[]) => values.some(v => /right/.test(v));
+            const first = downTurns[0];
+            const last = downTurns[downTurns.length - 1];
+            if (rightish(last) && !leftish(first)) alignLeft = true;
+            else if (leftish(first) && !rightish(last)) alignLeft = false;
+        }
+    }
+    return zipLanes(going, downCount, alignLeft);
+}
+
+
+/**
+ * Works out, for a node where one road continues another, how the second is shifted (drawing only)
+ * so the lanes that carry on line up, and which lane tapers where lanes are added or dropped.
+ */
+function alignAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>) {
+    const arms = armsAt(node, graph, new Map());
+    const pair = arms.length === 2 ? [0, 1] : throughPair(arms);
+    if (!pair) return;
+    const a = arms[pair[0]];
+    const b = arms[pair[1]];
+    if (a.way.id === b.way.id || !a.isEnd || !b.isEnd) return;
+    const twoArms = arms.length === 2;
+
+    // the road with more lanes is the reference; the other is shifted to meet it
+    const count = (arm: Arm) => arm.layout.lanes.length;
+    if (count(a) === count(b) && a.layout.total === b.layout.total) return;
+    const reference = count(a) >= count(b) ? a : b;
+    const moved = reference === a ? b : a;
+    if (hasPlacement(moved.way)) return;
+
+    let delta: number | null = null;
+    for (const [up, down] of [[a, b], [b, a]] as const) {
+        const upDirection = armLaneDirection(up, true);
+        const downDirection = armLaneDirection(down, false);
+        const pairs = continuationPairs(graph, up, down, node.id, twoArms);
+        if (!pairs.length) continue;
+
+        if (delta === null) {
+            const differences = pairs.filter(p => !p.merges).flatMap(p => {
+                const u = travelOffset(up, upDirection, p.from);
+                const d = travelOffset(down, downDirection, p.to);
+                return u === null || d === null ? [] : [u - d];
+            });
+            if (differences.length) {
+                const mean = differences.reduce((x, y) => x + y, 0) / differences.length;
+                // shift the moved way so the travel offsets match, in the moved way's own frame
+                if (moved === down) delta = downDirection === 'backward' ? -mean : mean;
+                else delta = upDirection === 'backward' ? mean : -mean;
+            }
+        }
+
+        // where roads simply join, an unpaired outer lane of the wider road tapers away
+        if (twoArms) {
+            const wide = count(up) > count(down) ? up : count(down) > count(up) ? down : null;
+            if (wide) {
+                const direction = wide === up ? upDirection : downDirection;
+                const used = new Set(pairs.filter(p => !p.merges).map(p => (wide === up ? p.from : p.to)));
+                wide.layout.model.lanes[direction].forEach((_, index) => {
+                    if (used.has(index)) return;
+                    const k = wide.layout.lanes.findIndex(l => l.ref.direction === direction && l.ref.index === index);
+                    if (k !== 0 && k !== wide.layout.lanes.length - 1) return;
+                    const total = polylineLength(lineLocs(wide.way, graph).map(metricFrame(node.loc).toMetres));
+                    const visual = { ...(visuals.get(wide.way.id) ?? noVisual) };
+                    const taper = { lane: k, length: Math.min(taperLength, total * 0.45) };
+                    if (wide.nodeIndex === 0) visual.taperStart = taper;
+                    else visual.taperEnd = taper;
+                    visuals.set(wide.way.id, visual);
+                });
+            }
+        }
+    }
+
+    if (delta !== null && Math.abs(delta) > 0.05) {
+        const visual = { ...(visuals.get(moved.way.id) ?? noVisual) };
+        if (moved.nodeIndex === 0) visual.start = delta;
+        else visual.end = delta;
+        visuals.set(moved.way.id, visual);
+    }
+}
+
+
+/* ---------- junctions ---------- */
+
+/** How far from a node lane lines and each kerb stop, where they are drawn shorter than the road */
+interface MarkTrim {
+    /** the way's left and right kerbs (as seen along the way) */
+    left: number;
+    right: number;
+    /** lines between lanes */
+    lanes: number;
+}
+
+interface Junction {
+    /** pull-back distance per arm, keyed `${wayID}:${nodeIndex}:${alongWay}` */
+    trims: Map<string, number>;
+    /** where kerbs and lane lines stop on arms that run on through the junction, keyed like `trims` */
+    marks: Map<string, MarkTrim>;
+    area?: JunctionArea;
+    connections: JunctionConnection[];
+}
+
+const idealAngle: Record<string, number> = {
+    through: 0, slight_left: 40, left: 90, sharp_left: 135, slight_right: -40, right: -90, sharp_right: -135,
+    merge_to_left: 0, merge_to_right: 0, reverse: 180
+};
+
+function signedAngle(from: Vec2, to: Vec2): number {
+    const cross = from[0] * to[1] - from[1] * to[0];
+    const dot = from[0] * to[0] + from[1] * to[1];
+    return Math.atan2(cross, dot) * 180 / Math.PI;
+}
+
+/** The point at a lane's end on an arm, at the arm's pull-back distance, and its travel direction */
+function laneEnd(arm: Arm, trim: number, direction: LaneDirection, index: number, approach: boolean) {
+    const k = arm.layout.lanes.findIndex(l => l.ref.direction === direction && l.ref.index === index);
+    if (k === -1) return null;
+    const wayOffset = (arm.edges[k] + arm.edges[k + 1]) / 2;
+    const armOffset = arm.alongWay ? wayOffset : -wayOffset;
+    const at = pointAlong(arm.line, Math.min(trim, polylineLength(arm.line)));
+    const point = add(at.point, scale(rightNormal(at.direction), armOffset));
+    return { point, tangent: approach ? scale(at.direction, -1) : at.direction };
+}
+
+function curve(a: { point: Vec2; tangent: Vec2 }, b: { point: Vec2; tangent: Vec2 }): Vec2[] {
+    const chord = len(sub(b.point, a.point));
+    const c = Math.max(1.5, chord * 0.4);
+    const p1 = add(a.point, scale(a.tangent, c));
+    const p2 = sub(b.point, scale(b.tangent, c));
+    const points: Vec2[] = [];
+    for (let i = 0; i <= 16; i++) {
+        const t = i / 16;
+        const u = 1 - t;
+        points.push([
+            u * u * u * a.point[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * b.point[0],
+            u * u * u * a.point[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * b.point[1]
+        ]);
+    }
+    return points;
+}
+
+interface LaneExits {
+    upDirection: LaneDirection;
+    /** the arms traffic from `up` can drive into, with the turn angle (left positive), in degrees */
+    exits: { down: Arm; j: number; angle: number }[];
+    /** for each approaching lane, the arms it leads to */
+    targets: Set<number>[];
+}
+
+/** Where each lane approaching a junction on arm `i` leads: by its turn arrows and the exit angles */
+function laneExits(arms: Arm[], i: number, through: [number, number] | null): LaneExits | null {
+    const up = arms[i];
+    const upDirection = armLaneDirection(up, true);
+    const upLanes = up.layout.model.lanes[upDirection];
+    if (!upLanes.length) return null;
+    const exits = arms.map((down, j) => ({ down, j, angle: signedAngle(scale(up.direction, -1), down.direction) }))
+        .filter(x => x.j !== i && x.down.layout.model.lanes[armLaneDirection(x.down, false)].length);
+    if (!exits.length) return null;
+
+    const isThrough = (j: number) => !!through && ((through[0] === i && through[1] === j) || (through[0] === j && through[1] === i));
+    const turns = upLanes.map(lane => parseTurn(lane.values['turn:lanes'] ?? ''));
+    const anyTagged = turns.some(t => t.length);
+    const targets = turns.map(values => {
+        const result = new Set<number>();
+        if (!anyTagged || (!values.length && through)) {
+            // unmarked lanes carry on along the main road
+            const partner = exits.find(x => isThrough(x.j));
+            if (partner) result.add(partner.j);
+            return result;
+        }
+        for (const value of (values.length ? values : ['through'])) {
+            const ideal = idealAngle[value];
+            if (ideal === undefined) continue;
+            let best: { j: number; d: number } | null = null;
+            for (const x of exits) {
+                const d = Math.abs(((x.angle - ideal + 540) % 360) - 180);
+                if (!best || d < best.d) best = { j: x.j, d };
+            }
+            if (best && best.d < 70) result.add(best.j);
+        }
+        return result;
+    });
+    return { upDirection, exits, targets };
+}
+
+/**
+ * Where a road splits (a one-way slip road peeling off the main road), shifts the branch so its
+ * lanes start where the lanes that lead into it end.
+ */
+function alignBranches(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>) {
+    const arms = armsAt(node, graph, visuals);
+    if (arms.length < 3) return;
+    const through = throughPair(arms);
+    if (!through) return;
+    for (const i of through) {
+        const up = arms[i];
+        const lanes = laneExits(arms, i, through);
+        if (!lanes) continue;
+        for (const exit of lanes.exits) {
+            const side = exit.down;
+            if (through.includes(exit.j) || !side.isEnd || hasPlacement(side.way) || side.way.id === up.way.id) continue;
+            // only a branch peeling off (one way, leaving at a shallow angle), not a side road
+            if (Math.abs(exit.angle) > 60 || side.layout.model.lanes[armLaneDirection(side, true)].length) continue;
+            const visual = visuals.get(side.way.id) ?? noVisual;
+            if ((side.nodeIndex === 0 ? visual.start : visual.end) !== 0) continue;
+            const fromLanes = lanes.targets.flatMap((set, index) => (set.has(exit.j) ? [index] : []));
+            if (!fromLanes.length) continue;
+            const sideDirection = armLaneDirection(side, false);
+            const pairs = zipLanes(fromLanes, side.layout.model.lanes[sideDirection].length, exit.angle > 0)
+                .filter(p => !p.merges);
+            const differences = pairs.flatMap(p => {
+                const u = travelOffset(up, lanes.upDirection, p.from);
+                const d = travelOffset(side, sideDirection, p.to);
+                return u === null || d === null ? [] : [u - d];
+            });
+            if (!differences.length) continue;
+            const mean = differences.reduce((x, y) => x + y, 0) / differences.length;
+            const delta = sideDirection === 'backward' ? -mean : mean;
+            if (Math.abs(delta) < 0.05) continue;
+            const next = { ...visual };
+            if (side.nodeIndex === 0) next.start = delta;
+            else next.end = delta;
+            visuals.set(side.way.id, next);
+        }
+    }
+}
+
+
+/**
+ * Lines through a junction from each approaching lane to the lanes it leads to: from connectivity
+ * relations where they exist, else guide lines worked out from turn lanes and the exit angles.
+ */
+function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims: Map<string, number>, through: [number, number] | null): JunctionConnection[] {
+    const frame = metricFrame(node.loc);
+    const result: JunctionConnection[] = [];
+    const trimOf = (arm: Arm) => trims.get(armKey(arm.way.id, arm.nodeIndex, arm.alongWay)) ?? 0;
+    const isThrough = (i: number, j: number) => !!through && ((through[0] === i && through[1] === j) || (through[0] === j && through[1] === i));
+
+    arms.forEach((up, i) => {
+        const lanes = laneExits(arms, i, through);
+        if (!lanes) return;
+        const { upDirection, exits } = lanes;
+
+        // connectivity relations say exactly which lanes lead where
+        const byExit = new Map<number, number[]>();
+        const relations = new Set<number>();
+        for (const exit of exits) {
+            const relation = up.isEnd && exit.down.isEnd ? connectivityRelation(graph, up.way.id, node.id, exit.down.way.id) : undefined;
+            if (!relation) continue;
+            relations.add(exit.j);
+            const downDirection = armLaneDirection(exit.down, false);
+            for (const p of relationPairs(relation)) {
+                const a = laneEnd(up, trimOf(up), upDirection, p.from, true);
+                const b = laneEnd(exit.down, trimOf(exit.down), downDirection, p.to, false);
+                if (!a || !b) continue;
+                result.push({
+                    key: `${node.id}-r-${up.way.id}-${exit.down.way.id}-${p.from}-${p.to}`, nodeID: node.id,
+                    kind: 'relation', optional: p.optional, line: curve(a, b).map(frame.toLoc)
+                });
+            }
+        }
+        if (arms.length < 3) return;   // where two roads just join, lanes carry straight on
+
+        lanes.targets.forEach((targets, laneIndex) => {
+            for (const j of targets) {
+                if (relations.has(j)) continue;
+                byExit.set(j, [...(byExit.get(j) ?? []), laneIndex]);
+            }
+        });
+
+        for (const [j, fromLanes] of byExit) {
+            const exit = exits.find(x => x.j === j)!;
+            const down = exit.down;
+            const downDirection = armLaneDirection(down, false);
+            const downCount = down.layout.model.lanes[downDirection].length;
+            const pairs = isThrough(i, j)
+                ? continuationPairs(graph, up, down, node.id, false)
+                : zipLanes(fromLanes, downCount, exit.angle > 0);   // turning left lines up on the left
+            // a turn off or onto the main road (which runs through untrimmed) starts or ends
+            // past the other road's kerb, so the curve has room to turn
+            const turning = !isThrough(i, j);
+            const upTrim = turning ? Math.max(trimOf(up), (down.right - down.left) / 2) : trimOf(up);
+            const downTrim = turning ? Math.max(trimOf(down), (up.right - up.left) / 2) : trimOf(down);
+            for (const p of pairs) {
+                if (!fromLanes.includes(p.from)) continue;
+                const a = laneEnd(up, upTrim, upDirection, p.from, true);
+                const b = laneEnd(down, downTrim, downDirection, p.to, false);
+                if (!a || !b || len(sub(b.point, a.point)) < 1.5) continue;
+                result.push({
+                    key: `${node.id}-g-${up.way.id}:${up.alongWay}-${down.way.id}:${down.alongWay}-${p.from}-${p.to}`, nodeID: node.id,
+                    kind: 'guide', optional: false, line: curve(a, b).map(frame.toLoc)
+                });
+            }
+        }
+    });
+    return result;
+}
+
+
+// a junction depends on its roads, every node of them, their relations, and their drawing shifts
+const junctionCache = new WeakMap<osmNode, { deps: unknown[]; signature: string; result: Junction }>();
+
+function visualSignature(ways: osmWay[], visuals: Map<string, WayVisual>): string {
+    return ways.map(w => {
+        const v = visuals.get(w.id);
+        return v ? `${w.id}:${v.start.toFixed(2)}:${v.end.toFixed(2)}:${v.taperStart?.lane ?? ''}:${v.taperEnd?.lane ?? ''}` : '';
+    }).join('|');
+}
+
+/** How far each road is pulled back at a node, the junction area that fills the gap, and the lane connections */
+function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>): Junction {
     const parents = graph.parentWays(node).filter(isLaneRoad) as osmWay[];
-    const deps = parents.flatMap(way => [way, ...way.nodes.map(id => graph.entity(id))]);
+    const deps = parents.flatMap(way => [way, ...way.nodes.map(id => graph.entity(id)), ...graph.parentRelations(way)]);
+    const signature = visualSignature(parents, visuals);
     const cached = junctionCache.get(node);
-    if (cached && cached.deps.length === deps.length && cached.deps.every((d, i) => d === deps[i])) {
+    if (cached && cached.signature === signature && cached.deps.length === deps.length && cached.deps.every((d, i) => d === deps[i])) {
         return cached.result;
     }
 
-    const arms = armsAt(node, graph);
+    const arms = armsAt(node, graph, visuals);
     const trims = new Map<string, number>();
-    const result: JunctionTrims = { trims };
+    const marks = new Map<string, MarkTrim>();
+    const result: Junction = { trims, marks, connections: [] };
 
     if (arms.length >= 2) {
+        const through = arms.length >= 3 ? throughPair(arms) : null;
         arms.forEach((arm, i) => {
             let trim = 0;
-            if (arms.length >= 3) {
+            const onMainRoad = through && (through[0] === i || through[1] === i);
+            if (arms.length >= 3 && !onMainRoad) {
                 const leftNeighbour = arms[(i + 1) % arms.length];                 // counter-clockwise
                 const rightNeighbour = arms[(i - 1 + arms.length) % arms.length];  // clockwise
                 const l = edgeMeeting(arm, arm.left, leftNeighbour, leftNeighbour.right);
@@ -185,23 +713,54 @@ function junctionAt(node: osmNode, graph: coreGraph): JunctionTrims {
             trims.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), trim);
         });
 
-        // the junction area joins the trimmed ends of all arms
+        // the main road runs on through: its kerbs stop where side roads join, and its lane lines
+        // stop at the junction box (except round a roundabout, whose lanes carry on)
+        if (through) {
+            for (const i of through) {
+                const arm = arms[i];
+                let left = 0;
+                let right = 0;
+                arms.forEach((side, j) => {
+                    if (through.includes(j)) return;
+                    const cross = arm.direction[0] * side.direction[1] - arm.direction[1] * side.direction[0];
+                    const sin = Math.max(0.3, Math.abs(cross));
+                    const reach = Math.min(maxClearance, (side.right - side.left) / 2 / sin + 0.5);
+                    // counter-clockwise from the arm is its left
+                    if (cross > 0) left = Math.max(left, reach);
+                    else right = Math.max(right, reach);
+                });
+                const lanes = isRing(arm.way) ? 0 : Math.max(left, right);
+                // in the way's frame, an arm against the way has its sides swapped
+                marks.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), arm.alongWay
+                    ? { left, right, lanes }
+                    : { left: right, right: left, lanes });
+            }
+        }
+
+        // the junction area joins the pulled-back ends of all arms
+        // (the main road runs through untrimmed, so the box reaches along it as far as the side roads are wide)
         const frame = metricFrame(node.loc);
         const points: Vec2[] = [];
-        for (const arm of arms) {
-            const t = Math.min(trims.get(armKey(arm.way.id, arm.nodeIndex, arm.alongWay)) ?? 0, polylineLength(arm.line));
+        const onMain = (i: number) => !!through && (through[0] === i || through[1] === i);
+        const reach = Math.max(0, ...arms.filter((_, i) => !onMain(i)).map(arm => (arm.right - arm.left) / 2));
+        for (const [i, arm] of arms.entries()) {
+            const trim = trims.get(armKey(arm.way.id, arm.nodeIndex, arm.alongWay)) ?? 0;
+            const t = Math.min(onMain(i) ? Math.max(trim, reach) : trim, polylineLength(arm.line));
             const at = pointAlong(arm.line, t);
             const normal = rightNormal(at.direction);
             points.push(add(at.point, scale(normal, arm.left)), add(at.point, scale(normal, arm.right)));
         }
         points.sort((a, b) => Math.atan2(a[1], a[0]) - Math.atan2(b[1], b[0]));
         result.area = { nodeID: node.id, polygon: points.map(frame.toLoc) };
+        result.connections = junctionConnections(node, graph, arms, trims, through);
     }
 
-    junctionCache.set(node, { deps, result });
+    junctionCache.set(node, { deps, signature, result });
     return result;
 }
 
+
+/* ---------- pieces ---------- */
 
 function toLocs(frame: MetricFrame, points: Vec2[]): Vec2[] {
     return points.map(frame.toLoc);
@@ -211,9 +770,30 @@ function ring(left: Vec2[], right: Vec2[]): Vec2[] {
     return [...left, ...right.slice().reverse()];
 }
 
+/** Adds vertices at the given distances along a polyline, so a taper has corners where it starts and ends */
+function withVerticesAt(points: Vec2[], distances: number[]): Vec2[] {
+    const total = polylineLength(points);
+    const wanted = distances.filter(d => d > 0.01 && d < total - 0.01).sort((a, b) => a - b);
+    if (!wanted.length) return points;
+    const cumulative = cumulativeLengths(points);
+    const result: Vec2[] = [points[0]];
+    let w = 0;
+    for (let i = 1; i < points.length; i++) {
+        while (w < wanted.length && wanted[w] < cumulative[i]) {
+            if (wanted[w] > cumulative[i - 1] + 0.01) result.push(pointAlong(points, wanted[w]).point);
+            w++;
+        }
+        result.push(points[i]);
+    }
+    return result;
+}
+
 
 /** Builds the pieces of one road, between the nodes where it meets two or more other roads */
-function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, trimAt: (index: number, alongWay: boolean) => number): RoadPiece[] {
+function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, visual: WayVisual,
+    trimAt: (index: number, alongWay: boolean) => number,
+    markAt: (index: number, alongWay: boolean) => MarkTrim | undefined): RoadPiece[] {
+
     const layout = cachedLayout(way, graph);
     const frame = metricFrame((graph.entity(way.first()) as osmNode).loc);
     const points = lineLocs(way, graph).map(frame.toMetres);
@@ -242,18 +822,42 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             trimStart *= k;
             trimEnd *= k;
         }
-        const sliced = slicePolyline(line, trimStart, length - trimEnd);
+        const startAt = cumulative[a] + trimStart;
+        // vertices where tapers end, so the taper is drawn as a straight slope
+        const breaks = [
+            visual.taperStart ? visual.taperStart.length - startAt : -1,
+            visual.taperEnd ? total - visual.taperEnd.length - startAt : -1
+        ];
+        const sliced = withVerticesAt(slicePolyline(line, trimStart, length - trimEnd), breaks);
         const local = cumulativeLengths(sliced);
-        const shifts = local.map(s => shiftAt(layout, cumulative[a] + trimStart + s, total));
-        const offset = (d: number) => offsetPolyline(sliced, shifts.map(shift => d + shift));
+        const rows = local.map(s => edgesAt(layout, visual, startAt + s, total));
+        const offset = (distances: number[]) => offsetPolyline(sliced, distances);
+        const column = (k: number, plus = 0) => rows.map(r => r[k] + plus);
 
-        const boundaries = layout.edges.map(edge => offset(edge));
+        const boundaries = layout.edges.map((_, k) => offset(column(k)));
         const lanes = layout.lanes.map((_, i) => ring(boundaries[i], boundaries[i + 1]));
-        const centres = layout.lanes.map((_, i) => offset((layout.edges[i] + layout.edges[i + 1]) / 2));
-        const dividerSides = layout.edges.map((edge, k): [Vec2[], Vec2[]] =>
-            k === 0 || k === layout.edges.length - 1 ? [[], []] : [offset(edge - 0.12), offset(edge + 0.12)]);
+        const centres = layout.lanes.map((_, i) => offset(rows.map(r => (r[i] + r[i + 1]) / 2)));
+        const dividerSides = layout.edges.map((_, k): [Vec2[], Vec2[]] =>
+            k === 0 || k === layout.edges.length - 1 ? [[], []] : [offset(column(k, -0.12)), offset(column(k, 0.12))]);
 
         const pieceLength = polylineLength(sliced);
+
+        // painted lines stop short of where side roads join
+        const markStart = markAt(a, true);
+        const markEnd = markAt(b, false);
+        const clip = (points: Vec2[], fromStart: number, fromEnd: number) => {
+            if (!fromStart && !fromEnd) return points;
+            const total = polylineLength(points);
+            const k = pieceLength > 0 ? total / pieceLength : 1;
+            const from = Math.max(0, fromStart - trimStart) * k;
+            const to = total - Math.max(0, fromEnd - trimEnd) * k;
+            return to - from > 0.5 ? slicePolyline(points, from, to) : [];
+        };
+        const lastEdge = layout.edges.length - 1;
+        const markFor = (k: number, m: MarkTrim | undefined) => !m ? 0 : k === 0 ? m.left : k === lastEdge ? m.right : m.lanes;
+        const lines = boundaries.map((line, k) => clip(line, markFor(k, markStart), markFor(k, markEnd)));
+        const lineSides = dividerSides.map(([l, r], k): [Vec2[], Vec2[]] =>
+            [clip(l, markFor(k, markStart), markFor(k, markEnd)), clip(r, markFor(k, markStart), markFor(k, markEnd))]);
         const arrows: LaneMark[] = [];
         const labels: LaneMark[] = [];
         layout.lanes.forEach((lane, i) => {
@@ -269,11 +873,17 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             if (lane.ref.direction === 'both_ways') {
                 // centre lanes are used from both sides
                 if (pieceLength > 12) arrows.push(mark(pieceLength * 0.3, true), mark(pieceLength * 0.7, false));
+                else if (pieceLength > 3) arrows.push(mark(pieceLength * 0.5, false));
                 return;
             }
-            // turn arrows sit on the approach to the junction the lane leads to, repeated every 60 m
+            // turn arrows sit on the approach to the junction the lane leads to, repeated every 60 m;
+            // short pieces (on roundabouts, between close junctions) get one arrow in the middle
             const approach = against ? a === 0 : b === way.nodes.length - 1;
             if (!approach) return;
+            if (pieceLength < 12) {
+                if (pieceLength > 2.5) arrows.push(mark(pieceLength / 2, against));
+                return;
+            }
             for (let dist = Math.min(8, pieceLength * 0.3); dist < pieceLength - 4; dist += 60) {
                 arrows.push(mark(against ? dist : pieceLength - dist, against));
             }
@@ -282,9 +892,9 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
         const roadside: RoadPiece['roadside'] = [];
         for (const side of ['left', 'right'] as const) {
             const sign = side === 'left' ? -1 : 1;
-            let cursor = side === 'left' ? layout.edges[0] : layout.edges[layout.edges.length - 1];
+            let cursor = side === 'left' ? column(0) : column(layout.edges.length - 1);
             for (const strip of layout.roadside[side]) {
-                const outer = cursor + sign * strip.width;
+                const outer = cursor.map(c => c + sign * strip.width);
                 roadside.push({
                     side, kind: strip.kind, assumed: strip.assumed,
                     polygon: toLocs(frame, ring(offset(cursor), offset(outer)))
@@ -302,12 +912,16 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             boundaries: boundaries.map(l => toLocs(frame, l)),
             centres: centres.map(l => toLocs(frame, l)),
             dividerSides: dividerSides.map(([l, r]) => [toLocs(frame, l), toLocs(frame, r)]),
+            lines: lines.map(l => toLocs(frame, l)),
+            lineSides: lineSides.map(([l, r]) => [toLocs(frame, l), toLocs(frame, r)]),
             arrows,
             labels,
             roadside,
             length: pieceLength,
             atWayStart: a === 0,
-            atWayEnd: b === way.nodes.length - 1
+            atWayEnd: b === way.nodes.length - 1,
+            short: total < shortWayLength,
+            middle: frame.toLoc(pointAlong(sliced, pieceLength / 2).point)
         });
     }
     return pieces;
@@ -319,14 +933,16 @@ const pieceCache = new WeakMap<osmWay, { nodes: osmNode[]; signature: string; pi
 export interface RoadGeometry {
     pieces: RoadPiece[];
     junctions: JunctionArea[];
+    connections: JunctionConnection[];
 }
 
 /** Lane geometry for a set of roads, reusing everything whose inputs have not changed */
 export function roadGeometry(ways: osmWay[], graph: coreGraph): RoadGeometry {
     const pieces: RoadPiece[] = [];
     const junctions = new Map<string, JunctionArea>();
+    const connections = new Map<string, JunctionConnection[]>();
     const junctionNodes = new Set<string>();
-    const trimsByNode = new Map<string, JunctionTrims>();
+    const byNode = new Map<string, Junction>();
 
     const armCount = (nodeID: NodeId) => {
         const node = graph.entity(nodeID) as osmNode;
@@ -341,22 +957,43 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph): RoadGeometry {
         return count;
     };
 
+    // 1. which nodes join roads, and the drawing-only shifts and tapers that line their lanes up
+    const visuals = new Map<string, WayVisual>();
+    const joinNodes = new Map<string, number>();
+    for (const way of ways) {
+        way.nodes.forEach((id, i) => {
+            if (joinNodes.has(id)) return;
+            const arms = armCount(id);
+            const isEnd = i === 0 || i === way.nodes.length - 1;
+            if (arms >= 3 || (isEnd && arms === 2)) joinNodes.set(id, arms);
+            if (arms >= 3) junctionNodes.add(id);
+        });
+    }
+    for (const [id] of joinNodes) alignAt(graph.entity(id as NodeId) as osmNode, graph, visuals);
+    for (const [id, arms] of joinNodes) {
+        if (arms >= 3) alignBranches(graph.entity(id as NodeId) as osmNode, graph, visuals);
+    }
+
+    // 2. junctions: pull-backs, areas and lane connections
+    for (const [id] of joinNodes) {
+        const junction = junctionAt(graph.entity(id as NodeId) as osmNode, graph, visuals);
+        byNode.set(id, junction);
+        if (junction.area) junctions.set(id, junction.area);
+        if (junction.connections.length) connections.set(id, junction.connections);
+    }
+
+    // 3. the roads themselves
     for (const way of ways) {
         const nodes = way.nodes.map(id => graph.entity(id) as osmNode);
-        const sig: string[] = [];
-        nodes.forEach((node, i) => {
-            const arms = armCount(node.id);
-            const isEnd = i === 0 || i === nodes.length - 1;
-            if (arms >= 3 || (isEnd && arms === 2)) {
-                if (arms >= 3) junctionNodes.add(node.id);
-                let j = trimsByNode.get(node.id);
-                if (!j) {
-                    j = junctionAt(node, graph);
-                    trimsByNode.set(node.id, j);
-                    if (j.area) junctions.set(node.id, j.area);
-                }
-                sig.push(`${i}:${[...j.trims.entries()].filter(([k]) => k.startsWith(way.id + ':')).map(([k, v]) => k + '=' + v.toFixed(3)).join(',')}`);
-            }
+        const visual = visuals.get(way.id) ?? noVisual;
+        const sig: string[] = [visualSignature([way], visuals)];
+        way.nodes.forEach((id, i) => {
+            const junction = byNode.get(id);
+            if (!junction) return;
+            const own = (k: string) => k.startsWith(way.id + ':');
+            sig.push(`${i}:${[...junction.trims.entries()].filter(([k]) => own(k)).map(([k, v]) => k + '=' + v.toFixed(3)).join(',')}`);
+            sig.push([...junction.marks.entries()].filter(([k]) => own(k))
+                .map(([k, v]) => `${k}=${v.left.toFixed(2)},${v.right.toFixed(2)},${v.lanes.toFixed(2)}`).join(','));
         });
         const signature = sig.join('|');
 
@@ -368,11 +1005,16 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph): RoadGeometry {
         }
 
         const trimAt = (index: number, alongWay: boolean) =>
-            trimsByNode.get(way.nodes[index])?.trims.get(armKey(way.id, index, alongWay)) ?? 0;
-        const built = buildPieces(way, graph, junctionNodes, trimAt);
+            byNode.get(way.nodes[index])?.trims.get(armKey(way.id, index, alongWay)) ?? 0;
+        const markAt = (index: number, alongWay: boolean) =>
+            byNode.get(way.nodes[index])?.marks.get(armKey(way.id, index, alongWay));
+        const built = buildPieces(way, graph, junctionNodes, visual, trimAt, markAt);
         pieceCache.set(way, { nodes, signature, pieces: built });
         pieces.push(...built);
     }
 
-    return { pieces, junctions: [...junctions.values()] };
+    return { pieces, junctions: [...junctions.values()], connections: [...connections.values()].flat() };
 }
+
+// exported for tests
+export const _test = { throughPair, zipLanes, unit };

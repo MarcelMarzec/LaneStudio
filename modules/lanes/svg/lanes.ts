@@ -20,7 +20,6 @@ import { laneLayout } from '../geometry/layout';
 import { offsetFromWay } from '../geometry/measure';
 import { svgLaneDefs, turnArrowSymbol } from './defs';
 import { drawStreet, joinPaths } from './street';
-import { connectivityShapes } from '../geometry/connectivity';
 import { actionConnectLanes, connectionNode } from '../actions/connect_lanes';
 import { streetGeometry } from '../geometry/street';
 
@@ -84,8 +83,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         _layer.selectAll('g.lanes-group')
             .data([
                 'areas', 'roadside', 'paths', 'carriageway', 'junctions', 'lanes', 'islands', 'dividers', 'kerbs',
-                'kerb-lines', 'crossings', 'markings', 'arrows', 'connectivity', 'labels', 'symbols', 'selection', 'connect-from',
-                'targets', 'divider-targets'
+                'kerb-lines', 'crossings', 'markings', 'arrows', 'connectivity', 'labels', 'symbols', 'short', 'selection', 'connect-from',
+                'targets', 'short-targets', 'divider-targets'
             ])
             .enter()
             .append('g')
@@ -109,7 +108,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const visible = context.history().intersects(map.extent())
             .filter(entity => !features.isHidden(entity, graph, entity.geometry(graph)));
         const ways = visible.filter(isLaneRoad);
-        const { pieces, junctions } = roadGeometry(ways, graph);
+        const { pieces, junctions, connections } = roadGeometry(ways, graph);
         const selected = new Set(context.selectedIDs());
         const corridor = state.corridor();
         const group = groups();
@@ -179,10 +178,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 if (style === 'centre' || style.startsWith('solid-')) {
                     const leftStyle = style === 'centre' || style === 'solid-left' ? 'solid' : 'dashed';
                     const rightStyle = style === 'centre' || style === 'solid-right' ? 'solid' : 'dashed';
-                    result.push({ key: key + 'l', style: `${leftStyle} double${style === 'centre' ? ' centre' : ''}`, line: path(piece.dividerSides[k][0], false), piece, k });
-                    result.push({ key: key + 'r', style: `${rightStyle} double${style === 'centre' ? ' centre' : ''}`, line: path(piece.dividerSides[k][1], false), piece, k });
+                    result.push({ key: key + 'l', style: `${leftStyle} double${style === 'centre' ? ' centre' : ''}`, line: path(piece.lineSides[k][0], false), piece, k });
+                    result.push({ key: key + 'r', style: `${rightStyle} double${style === 'centre' ? ' centre' : ''}`, line: path(piece.lineSides[k][1], false), piece, k });
                 } else {
-                    result.push({ key, style, line: path(piece.boundaries[k], false), piece, k });
+                    result.push({ key, style, line: path(piece.lines[k], false), piece, k });
                 }
             }
             return result;
@@ -198,8 +197,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* kerbs */
         const kerbData = pieces.flatMap(piece => [
-            { key: `${pieceKey(piece)}-l`, line: piece.boundaries[0], assumed: piece.layout.assumed },
-            { key: `${pieceKey(piece)}-r`, line: piece.boundaries[piece.boundaries.length - 1], assumed: piece.layout.assumed }
+            { key: `${pieceKey(piece)}-l`, line: piece.lines[0], assumed: piece.layout.assumed },
+            { key: `${pieceKey(piece)}-r`, line: piece.lines[piece.lines.length - 1], assumed: piece.layout.assumed }
         ]);
         const kerbs = group('kerbs').selectAll<SVGPathElement, typeof kerbData[number]>('path')
             .data(kerbData, d => d.key);
@@ -276,9 +275,17 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* lane connections from type=connectivity relations */
-        const connections = markings ? connectivityShapes(visible, graph) : [];
-        joinPaths(group('connectivity'), connections, d => d.key,
-            d => 'connectivity-curve' + (d.optional ? ' optional' : ''), d => path(d.line, false));
+        // and guide lines carrying lanes through the junction box
+        joinPaths(group('connectivity'), markings ? connections : [], d => d.key,
+            d => (d.kind === 'relation' ? 'connectivity-curve' : 'junction-guide') + (d.optional ? ' optional' : ''),
+            d => path(d.line, false));
+
+
+        /* very short roads (slivers between junctions): an outline and a marker so they can be seen and clicked */
+        const shortData = !markings ? [] : pieces.filter(piece => piece.short);
+        joinPaths(group('short'), shortData, pieceKey,
+            d => 'short-way' + (selected.has(d.wayID) ? ' selected' : ''), d => path(d.carriageway, true));
+        drawShortTargets(group('short-targets'), shortData, selected);
 
         /* the lane picked first with the Connect tool */
         const from = tools.tool() === 'connect' ? tools.connectFrom() : null;
@@ -532,6 +539,27 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .merge(dividers)
             .attr('class', d => 'divider-target' + (d.clickable ? '' : ' width-only'))
             .attr('d', d => d.d);
+    }
+
+
+    /** A marker in the middle of each short road, clickable to select it */
+    function drawShortTargets(target: Selection, shortPieces: RoadPiece[], selected: Set<string>) {
+        const graph = context.graph();
+        const data = shortPieces.flatMap(piece => {
+            const entity = graph.hasEntity(piece.wayID) as osmWay | undefined;
+            if (!entity) return [];
+            const p = projection(piece.middle);
+            return [{ key: pieceKey(piece), properties: { entity }, wayID: piece.wayID, p }];
+        });
+        const markers = target.selectAll<SVGCircleElement, typeof data[number]>('circle.short-way-marker')
+            .data(data, d => d.key);
+        markers.exit().remove();
+        markers.enter().append('circle')
+            .attr('r', 7)
+            .merge(markers)
+            .attr('class', d => 'short-way-marker' + (selected.has(d.wayID) ? ' selected' : ''))
+            .attr('cx', d => d.p[0].toFixed(1))
+            .attr('cy', d => d.p[1].toFixed(1));
     }
 
 
