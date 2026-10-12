@@ -49,6 +49,9 @@ export interface RoadPiece {
     /** whether this piece starts at the way's first node / ends at its last node */
     atWayStart: boolean;
     atWayEnd: boolean;
+    /** the nodes the piece runs between */
+    fromNode: string;
+    toNode: string;
     /** the whole way is shorter than `shortWayLength`: easy to miss, so it is highlighted */
     short: boolean;
     /** the middle of the piece, for the short-way marker */
@@ -278,6 +281,11 @@ const highwayRank: Record<string, number> = {
     living_street: 2, service: 1, road: 1, busway: 2, track: 0
 };
 
+/** The angle between two directions, in degrees */
+function angleBetween(a: Vec2, b: Vec2): number {
+    return Math.acos(Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1]))) * 180 / Math.PI;
+}
+
 /**
  * The two arms that carry the main road straight through a junction: both on a roundabout ring,
  * or nearly straight on and sharing a ref, name or class. The main road is not pulled back there;
@@ -292,10 +300,19 @@ function throughPair(arms: Arm[]): [number, number] | null {
             const cos = a.direction[0] * b.direction[0] + a.direction[1] * b.direction[1];
             const deviation = Math.PI - Math.acos(Math.max(-1, Math.min(1, cos)));   // 0 = straight on
             const ring = isRing(a.way) && isRing(b.way);
-            if (!ring && deviation > 35 * Math.PI / 180) continue;
-            if (ring && deviation > 80 * Math.PI / 180) continue;
             const ta = a.way.tags;
             const tb = b.way.tags;
+            if (!ring && deviation > 35 * Math.PI / 180) continue;
+            if (ring && deviation > 80 * Math.PI / 180) continue;
+            // a fork (a dual carriageway splitting, a slip road peeling off at a shallow angle): nothing
+            // runs straight through, so every arm stops where it meets its neighbours
+            // (a minor road joining at a shallow angle does not make a fork: it stops at the main road's kerb)
+            const rank = (w: osmWay) => highwayRank[w.tags.highway ?? ''] ?? 0;
+            const peer = (c: Arm) => (c.way.tags.name && (c.way.tags.name === ta.name || c.way.tags.name === tb.name)) ||
+                (c.way.tags.ref && (c.way.tags.ref === ta.ref || c.way.tags.ref === tb.ref)) ||
+                rank(c.way) >= Math.min(rank(a.way), rank(b.way));
+            if (!ring && arms.some((c, k) => k !== i && k !== j && !isRing(c.way) && peer(c) &&
+                (angleBetween(c.direction, a.direction) < 40 || angleBetween(c.direction, b.direction) < 40))) continue;
             const score = (ring ? 100 : 0) +
                 (a.way.id === b.way.id ? 30 : 0) +
                 (ta.ref && ta.ref === tb.ref ? 20 : 0) +
@@ -811,9 +828,10 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
             const t = Math.min(onMain(i) ? Math.max(trim, reach) : trim, polylineLength(arm.line));
             const at = pointAlong(arm.line, t);
             const normal = rightNormal(at.direction);
-            points.push(add(at.point, scale(normal, arm.left)), add(at.point, scale(normal, arm.right)));
+            // arms are in counter-clockwise order, and each arm's right edge comes before its left,
+            // so the outline never crosses itself however sharp the angles between arms
+            points.push(add(at.point, scale(normal, arm.right)), add(at.point, scale(normal, arm.left)));
         }
-        points.sort((a, b) => Math.atan2(a[1], a[0]) - Math.atan2(b[1], b[0]));
         result.area = { nodeID: node.id, polygon: points.map(frame.toLoc) };
         result.connections = junctionConnections(node, graph, arms, trims, through);
     }
@@ -1013,6 +1031,7 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             const approach = against ? a === 0 : b === way.nodes.length - 1;
             if (!approach) return;
             if (pieceLength < 12) {
+                // (a short link inside a junction cluster is not drawn, arrows included)
                 if (pieceLength > 2.5) arrows.push(mark(pieceLength / 2, against));
                 return;
             }
@@ -1052,6 +1071,8 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             length: pieceLength,
             atWayStart: a === 0,
             atWayEnd: b === way.nodes.length - 1,
+            fromNode: way.nodes[a],
+            toNode: way.nodes[b],
             short: total < shortWayLength,
             middle: frame.toLoc(pointAlong(sliced, pieceLength / 2).point)
         });
@@ -1062,10 +1083,65 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
 
 const pieceCache = new WeakMap<osmWay, { nodes: osmNode[]; signature: string; pieces: RoadPiece[] }>();
 
+/* ---------- junction clusters ---------- */
+
+// junction nodes joined by a road shorter than this form one junction, in metres
+export const clusterLink = 25;
+
+/** Convex hull of points (any planar coordinates; lon/lat is fine, as hulls survive stretching) */
+function convexHull(points: Vec2[]): Vec2[] {
+    const sorted = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    if (sorted.length < 3) return sorted;
+    const cross = (o: Vec2, a: Vec2, b: Vec2) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lower: Vec2[] = [];
+    for (const p of sorted) {
+        while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+        lower.push(p);
+    }
+    const upper: Vec2[] = [];
+    for (const p of sorted.slice().reverse()) {
+        while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+        upper.push(p);
+    }
+    return [...lower.slice(0, -1), ...upper.slice(0, -1)];
+}
+
+/** Groups of junction nodes joined by short roads, as node id → group id */
+function junctionClusters(ways: osmWay[], graph: coreGraph, junctionNodes: Set<string>): Map<string, string> {
+    const parent = new Map<string, string>();
+    const find = (id: string): string => {
+        let root = id;
+        while (parent.get(root) && parent.get(root) !== root) root = parent.get(root)!;
+        parent.set(id, root);
+        return root;
+    };
+    for (const way of ways) {
+        const frame = metricFrame((graph.entity(way.first()) as osmNode).loc);
+        const cumulative = cumulativeLengths(lineLocs(way, graph).map(frame.toMetres));
+        let last = -1;
+        way.nodes.forEach((id, i) => {
+            if (!junctionNodes.has(id)) return;
+            if (!parent.has(id)) parent.set(id, id);
+            if (last >= 0 && cumulative[i] - cumulative[last] < clusterLink) {
+                const a = find(way.nodes[last]);
+                const b = find(id);
+                if (a !== b) parent.set(a, b);
+            }
+            last = i;
+        });
+    }
+    const result = new Map<string, string>();
+    for (const id of parent.keys()) result.set(id, find(id));
+    return result;
+}
+
+
 export interface RoadGeometry {
     /** drawing-only shifts and tapers per way id, for markings that should move with their road */
     visuals: Map<string, WayVisual>;
     pieces: RoadPiece[];
+    /** short pieces inside a junction cluster: drawn only as lane guide lines */
+    innerPieces: Set<RoadPiece>;
     junctions: JunctionArea[];
     connections: JunctionConnection[];
 }
@@ -1153,7 +1229,36 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         pieces.push(...built);
     }
 
-    return { visuals, pieces, junctions: [...junctions.values()], connections: [...connections.values()].flat() };
+    // 4. junction clusters: the short links inside are not drawn as roads, and one box covers it all
+    const clusters = junctionClusters(ways, graph, junctionNodes);
+    const members = new Map<string, string[]>();
+    for (const [id, root] of clusters) members.set(root, [...(members.get(root) ?? []), id]);
+    const innerPieces = new Set<RoadPiece>();
+    for (const piece of pieces) {
+        const a = clusters.get(piece.fromNode);
+        if (a && a === clusters.get(piece.toNode) && piece.fromNode !== piece.toNode && piece.length < clusterLink) innerPieces.add(piece);
+    }
+    for (const [root, ids] of members) {
+        if (ids.length < 2) continue;
+        const points: Vec2[] = [];
+        for (const id of ids) {
+            const area = junctions.get(id);
+            if (area) points.push(...area.polygon);
+            junctions.delete(id);
+        }
+        for (const piece of innerPieces) {
+            if (clusters.get(piece.fromNode) === root) points.push(...piece.carriageway);
+        }
+        if (points.length >= 3) {
+            const key = `cluster-${ids.slice().sort().join('-')}`;
+            junctions.set(key, { nodeID: key, polygon: convexHull(points) });
+        }
+    }
+
+    return {
+        visuals, pieces, innerPieces,
+        junctions: [...junctions.values()], connections: [...connections.values()].flat()
+    };
 }
 
 // exported for tests

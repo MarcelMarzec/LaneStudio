@@ -284,6 +284,32 @@ describe('roadGeometry at joins and junctions', () => {
         expect(length(before.lines[1])).toBeLessThan(length(before.boundaries[1]) - 2);
     });
 
+    it('merges junctions joined by a short road into one box, and does not draw the link as a road', () => {
+        // a dual carriageway (two one-way ways) becomes a two-way road 10 m before a crossroads
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-4, 120) }), new iD.osmNode({ id: 'n2', loc: at(0, 10) }),
+            new iD.osmNode({ id: 'n3', loc: at(4, 120) }), new iD.osmNode({ id: 'n4', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n5', loc: at(0, -100) }), new iD.osmNode({ id: 'n6', loc: at(-100, 0) }),
+            new iD.osmNode({ id: 'n7', loc: at(100, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags: { highway: 'secondary', oneway: 'yes', name: 'Morningside Drive' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n2', 'n3'], tags: { highway: 'secondary', oneway: 'yes', name: 'Morningside Drive' } }),
+            new iD.osmWay({ id: 'w3', nodes: ['n2', 'n4', 'n5'], tags: { highway: 'secondary', lanes: '2', name: 'Morningside Drive' } }),
+            new iD.osmWay({ id: 'w4', nodes: ['n6', 'n4', 'n7'], tags: { highway: 'tertiary', lanes: '2' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const { pieces, innerPieces, junctions } = roadGeometry(['w1', 'w2', 'w3', 'w4'].map(id => graph.entity(id as 'w1')), graph);
+        expect(junctions.map(j => j.nodeID)).toEqual(['cluster-n2-n4']);
+        const link = pieces.find(p => p.wayID === 'w3' && p.fromNode === 'n2')!;
+        expect(innerPieces.has(link)).toBe(true);
+        expect(pieces.filter(p => innerPieces.has(p))).toHaveLength(1);
+        // at the fork neither carriageway runs through: both stop short of the split node
+        const fork = pieces.find(p => p.wayID === 'w1')!;
+        const frame = metricFrame(origin);
+        const end = frame.toMetres(fork.centres[0][fork.centres[0].length - 1]);
+        expect(end[1]).toBeGreaterThan(12);
+    });
+
     it('flags very short roads and keeps arrows on short approach pieces', () => {
         const entities = [
             new iD.osmNode({ id: 'n1', loc: at(-50, 0) }),

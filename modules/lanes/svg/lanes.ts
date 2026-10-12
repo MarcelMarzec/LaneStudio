@@ -135,7 +135,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .filter(entity => !features.isHidden(entity, graph, entity.geometry(graph)));
         const ways = visible.filter(isLaneRoad);
         const carriagewayAreas = visible.filter(isCarriagewayArea) as osmWay[];
-        const { visuals, pieces, junctions, connections } = roadGeometry(ways, graph, carriagewayAreas);
+        const { visuals, pieces, innerPieces, junctions, connections } = roadGeometry(ways, graph, carriagewayAreas);
+        // short links inside a junction cluster are drawn only as lane guide lines (still clickable)
+        const shown = pieces.filter(piece => !innerPieces.has(piece));
         const selected = new Set(context.selectedIDs());
         const corridor = context.mode()?.id === 'select' ? state.corridor() : new Set<string>();
         const group = groups();
@@ -159,7 +161,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* roadside strips */
-        const strips = pieces.filter(piece => !inArea.has(piece)).flatMap(piece => piece.roadside.map((strip, i) => ({ ...strip, key: `${pieceKey(piece)}-${i}` })));
+        const strips = shown.filter(piece => !inArea.has(piece)).flatMap(piece => piece.roadside.map((strip, i) => ({ ...strip, key: `${pieceKey(piece)}-${i}` })));
         const stripPaths = group('roadside').selectAll<SVGPathElement, typeof strips[number]>('path')
             .data(strips, d => d.key);
         stripPaths.exit().remove();
@@ -171,7 +173,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* carriageways */
         const carriageways = group('carriageway').selectAll<SVGPathElement, RoadPiece>('path')
-            .data(pieces.filter(piece => !inArea.has(piece)), pieceKey);
+            .data(shown.filter(piece => !inArea.has(piece)), pieceKey);
         carriageways.exit().remove();
         carriageways.enter().append('path')
             .merge(carriageways)
@@ -197,7 +199,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* lane ribbons */
-        const laneData = pieces.flatMap(piece => piece.layout.lanes.map((lane, i) => ({ piece, lane, i })))
+        const laneData = shown.flatMap(piece => piece.layout.lanes.map((lane, i) => ({ piece, lane, i })))
             .filter(d => !(inArea.has(d.piece) && d.lane.kind === 'general'));
         const ribbons = group('lanes').selectAll<SVGPathElement, typeof laneData[number]>('path')
             .data(laneData, d => `${pieceKey(d.piece)}-${d.i}`);
@@ -212,7 +214,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* dividers between lanes, from change:lanes */
-        const dividerData = !markings ? [] : pieces.flatMap(piece => {
+        const dividerData = !markings ? [] : shown.flatMap(piece => {
             const lanes = piece.layout.lanes;
             const result: { key: string; style: string; line: string; piece: RoadPiece; k: number }[] = [];
             for (let k = 1; k < lanes.length; k++) {
@@ -241,7 +243,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* kerbs */
-        const kerbData = pieces.filter(piece => !inArea.has(piece)).flatMap(piece => [
+        const kerbData = shown.filter(piece => !inArea.has(piece)).flatMap(piece => [
             { key: `${pieceKey(piece)}-l`, line: piece.lines[0], assumed: piece.layout.assumed },
             { key: `${pieceKey(piece)}-r`, line: piece.lines[piece.lines.length - 1], assumed: piece.layout.assumed }
         ]);
@@ -262,7 +264,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const angle = Math.atan2(q[1] - p[1], q[0] - p[0]) * 180 / Math.PI;
             return { p, pxPerMetre, angle };
         };
-        const arrowData = !markings ? [] : pieces.flatMap(piece => piece.arrows.flatMap((mark, m) => {
+        const arrowData = !markings ? [] : shown.flatMap(piece => piece.arrows.flatMap((mark, m) => {
             const lane = piece.layout.lanes[mark.lane];
             const { p, pxPerMetre, angle } = screenMark(mark);
             // arrows are drawn in a 24 unit tall box pointing up; size them to the lane
@@ -287,7 +289,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* labels: destination and speed */
-        const labelData = !labels ? [] : pieces.flatMap(piece => piece.labels.map(mark => {
+        const labelData = !labels ? [] : shown.flatMap(piece => piece.labels.map(mark => {
             const lane = piece.layout.lanes[mark.lane];
             const text = [
                 lane.values['destination:ref:lanes'],
@@ -321,7 +323,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* lane connections from type=connectivity relations */
         // and guide lines carrying lanes through the junction box
-        joinPaths(group('connectivity'), markings ? connections : [], d => d.key,
+        const innerGuides = [...innerPieces].flatMap(piece => piece.centres.map((line, i) => ({
+            key: `${pieceKey(piece)}-inner-${i}`, nodeID: piece.fromNode, kind: 'guide' as const, optional: false, line
+        })));
+        joinPaths(group('connectivity'), markings ? [...connections, ...innerGuides] : [], d => d.key,
             d => (d.kind === 'relation' ? 'connectivity-curve' : 'junction-guide') + (d.optional ? ' optional' : ''),
             d => path(d.line, false));
 
