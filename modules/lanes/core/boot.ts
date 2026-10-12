@@ -3,8 +3,10 @@ import { localizer } from '../../core/localizer';
 import { prefs } from '../../core/preferences';
 import { uiEntityEditorAddSection } from '../../ui/entity_editor';
 import { utilStringQs } from '../../util';
+import { laneKeys } from './lane_keys';
 import { svgLanes } from '../svg/lanes';
 import { uiSectionLanes } from '../ui/section_lanes';
+import { uiSectionMarkings } from '../ui/section_markings';
 import { laneStudioVersion } from '../version';
 
 export interface LaneStudioOptions {
@@ -28,12 +30,16 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
 
     // the Lanes section sits in iD's sidebar, after the issues and before the preset fields
     uiEntityEditorAddSection(uiSectionLanes);
+    uiEntityEditorAddSection(uiSectionMarkings);
 
     context.container().classed('lane-studio', true);
     context.init();
 
     // the lanes layer, drawn under iD's own data
     context.layers().add([{ id: 'lanes', layer: svgLanes(context.projection, context) }]);
+
+    // Delete removes selected lanes, [ and ] step between lanes
+    laneKeys(context);
 
     // like iD, hide boundaries unless the URL asks for a specific set of hidden features
     const q = utilStringQs(window.location.hash);

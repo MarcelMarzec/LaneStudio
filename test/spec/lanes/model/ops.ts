@@ -170,3 +170,12 @@ describe('lane change dividers', () => {
         expect(nextDivider(nextDivider(oneWay))).toEqual(dashed);
     });
 });
+
+
+describe('moveLane within a direction', () => {
+    it('reorders lanes and every key with them', () => {
+        const tags = { highway: 'primary', oneway: 'yes', lanes: '3', 'turn:lanes': 'left|through|right', 'bus:lanes': 'designated||' };
+        const result = edit(tags, m => moveLane(m, { direction: 'forward', index: 0 }, 'forward', 2));
+        expect(result).toEqual({ ...tags, 'turn:lanes': 'through|right|left', 'bus:lanes': '||designated' });
+    });
+});

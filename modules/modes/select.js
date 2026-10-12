@@ -232,7 +232,8 @@ export function modeSelect(context, selectedIDs) {
     }
 
     mode.operations = function() {
-        return _operations.filter(operation => operation.available());
+        var filter = context.operationFilter();
+        return _operations.filter(operation => operation.available() && (!filter || filter(operation)));
     };
 
 

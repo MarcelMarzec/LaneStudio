@@ -5,13 +5,22 @@ import type { Vec2 } from '../../geo/vector';
 import type { osmWay } from '../../osm/way';
 import { modeSelect } from '../../modes/select';
 import { actionChangeLanes } from '../actions/change_lanes';
+import { actionAddMarking } from '../actions/add_marking';
 import { laneState } from '../core/lane_state';
 import { isLaneRoad } from '../core/roads';
 import { roadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
 import type { LaneInfo } from '../geometry/layout';
 import { t } from '../../core/localizer';
-import { parseTurn, dividerAt, setDivider, nextDivider, type LaneDirection, type LaneRef } from '../model';
+import {
+    parseLanes, parseTurn, formatTurn, dividerAt, setDivider, nextDivider, setLaneValue, setLaneKind,
+    type LaneDirection, type LaneModel, type LaneRef
+} from '../model';
+import { laneTools } from '../core/lane_tools';
+import { laneLayout } from '../geometry/layout';
+import { offsetFromWay } from '../geometry/measure';
 import { svgLaneDefs, turnArrowSymbol } from './defs';
+import { drawStreet } from './street';
+import { streetGeometry } from '../geometry/street';
 
 /** Zoom levels where each level of detail appears (see the plan's zoom rules) */
 export const laneZooms = {
@@ -44,6 +53,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     let _layer: Selection = d3_select<SVGGElement, unknown>(null!) as Selection;
     let _enabled = true;
     const state = laneState(context);
+    const tools = laneTools(context);
 
     const path = (locs: Vec2[], closed: boolean) => {
         if (locs.length < 2) return '';
@@ -70,7 +80,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
     function groups() {
         _layer.selectAll('g.lanes-group')
-            .data(['roadside', 'carriageway', 'junctions', 'lanes', 'dividers', 'kerbs', 'arrows', 'labels', 'selection', 'targets', 'divider-targets'])
+            .data([
+                'areas', 'roadside', 'paths', 'carriageway', 'junctions', 'lanes', 'islands', 'dividers', 'kerbs',
+                'kerb-lines', 'crossings', 'markings', 'arrows', 'labels', 'symbols', 'selection', 'targets', 'divider-targets'
+            ])
             .enter()
             .append('g')
             .attr('class', (d: string) => `lanes-group lanes-${d}`);
@@ -90,8 +103,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         const graph = context.graph();
         const features = context.features();
-        const ways = (context.history().intersects(map.extent()) as osmWay[])
-            .filter(entity => isLaneRoad(entity) && !features.isHidden(entity, graph, 'line'));
+        const visible = context.history().intersects(map.extent())
+            .filter(entity => !features.isHidden(entity, graph, entity.geometry(graph)));
+        const ways = visible.filter(isLaneRoad);
         const { pieces, junctions } = roadGeometry(ways, graph);
         const selected = new Set(context.selectedIDs());
         const group = groups();
@@ -99,6 +113,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const labels = zoom >= laneZooms.labels;
 
         markSurface(true);
+
+        /* footways, mapped areas and kerbs, road markings on nodes */
+        drawStreet(group, streetGeometry(visible, graph), projection, zoom, laneZooms);
 
 
         /* roadside strips */
@@ -289,10 +306,96 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     }
 
     interface DividerTarget extends Omit<LaneTarget, 'ref'> {
+        /** boundary index left to right along the way: 0 is the left kerb */
+        k: number;
+        /** false for the kerbs and for lines between directions, which only the Width tool uses */
+        clickable: boolean;
         direction: LaneDirection;
         /** the lane on the divider's left, as seen by that direction's drivers */
         leftIndex: number;
     }
+
+
+    /** Applies the Paint tool's value to one lane, as one undo step */
+    function paintLane(d: LaneTarget) {
+        const paint = tools.paint();
+        const way = context.entity(d.wayID) as osmWay;
+        const key = paint.key === 'kind' ? null : paint.key;
+        if (key && parseLanes(way.tags).keys[key]?.readonly) return;
+        const change = (m: LaneModel) => key
+            ? setLaneValue(m, d.ref, key, key === 'turn:lanes' ? formatTurn(parseTurn(paint.value)) : paint.value)
+            : setLaneKind(m, [d.ref], paint.value);
+        context.perform(actionChangeLanes(d.wayID, change), t(`_lanes.annotation.${key === 'turn:lanes' ? 'turn' : key ? 'value' : 'kind'}`));
+    }
+
+
+    /** Marking tool: puts a crossing, stop sign, … on the road where it was clicked, then selects it */
+    function placeMarking(event: MouseEvent, d: LaneTarget) {
+        const type = tools.marking();
+        if (type === 'none') return;
+        const loc = context.projection.invert(context.map().mouse(event));
+        const { action, nodeID } = actionAddMarking(d.wayID, loc, type, context.graph());
+        context.perform(action, t('_lanes.annotation.marking'));
+        context.enter(modeSelect(context, [nodeID]));
+    }
+
+
+    /**
+     * Width tool: drags a lane line or kerb sideways. The lanes either side of a line trade width;
+     * a kerb widens or narrows its outer lane. All lane widths are then written to `width:lanes`.
+     */
+    function dragWidth(event: PointerEvent, d: DividerTarget) {
+        if (tools.tool() !== 'width') return;
+        event.preventDefault();
+        event.stopPropagation();   // keep iD from panning the map or changing the selection
+        const node = event.currentTarget as SVGPathElement;
+        node.setPointerCapture(event.pointerId);
+
+        const graph = context.graph();
+        const way = graph.entity(d.wayID) as osmWay;
+        const layout = laneLayout(way, graph);
+        const widths = layout.lanes.map(lane => lane.width);
+        const total = layout.total;
+        const n = widths.length;
+        let started = false;
+
+        const move = (e: PointerEvent) => {
+            const loc = context.projection.invert(context.map().mouse(e));
+            const at = offsetFromWay(way, graph, loc);
+            const shift = layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * (at.total ? at.along / at.total : 0);
+            const p = at.offset - shift;
+            const next = [...widths];
+            if (d.k === 0) {
+                next[0] = widths[0] + (-2 * p - total);           // the carriageway stays centred, so the kerb moves half as far
+            } else if (d.k === n) {
+                next[n - 1] = widths[n - 1] + (2 * p - total);
+            } else {
+                const delta = p - layout.edges[d.k];
+                next[d.k - 1] = widths[d.k - 1] + delta;
+                next[d.k] = widths[d.k] - delta;
+            }
+            if (next.some(w => w < 1)) return;
+            const values = next.map(w => String(Math.round(w * 10) / 10));
+            const action = actionChangeLanes(d.wayID, m => layout.lanes.reduce(
+                (acc, lane, i) => setLaneValue(acc, lane.ref, 'width:lanes', values[i]), m));
+            const annotation = t('_lanes.annotation.width');
+            if (started) {
+                context.replace(action, annotation);
+            } else {
+                context.perform(action, annotation);
+                started = true;
+            }
+        };
+        const end = () => {
+            node.removeEventListener('pointermove', move);
+            node.removeEventListener('pointerup', end);
+            node.removeEventListener('pointercancel', end);
+        };
+        node.addEventListener('pointermove', move);
+        node.addEventListener('pointerup', end);
+        node.addEventListener('pointercancel', end);
+    }
+
 
     function drawTargets(target: Selection, dividerTarget: Selection, pieces: RoadPiece[], editable: boolean, selected: Set<string>) {
         const graph = context.graph();
@@ -314,6 +417,14 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         lanes.enter().append('path')
             .attr('class', 'lane-target')
             .on('click.lanes', (event: MouseEvent, d: LaneTarget) => {
+                if (tools.tool() === 'paint') {
+                    paintLane(d);
+                    return;
+                }
+                if (tools.tool() === 'marking') {
+                    placeMarking(event, d);
+                    return;
+                }
                 const ids = context.selectedIDs();
                 if (event.shiftKey) {
                     // iD's select behaviour toggles the road on shift-click; lanes add to the selection instead
@@ -326,22 +437,27 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .merge(lanes)
             .attr('d', d => d.d);
 
+        const widthTool = tools.tool() === 'width';
         const dividerTargets: DividerTarget[] = !editable ? [] : pieces.filter(piece => selected.has(piece.wayID)).flatMap(piece => {
             const entity = graph.hasEntity(piece.wayID) as osmWay | undefined;
             const lanesHere = piece.layout.lanes;
-            if (!entity || !piece.layout.markings) return [];
+            if (!entity) return [];
             const result: DividerTarget[] = [];
-            for (let k = 1; k < lanesHere.length; k++) {
-                const left = lanesHere[k - 1].ref;
-                const right = lanesHere[k].ref;
-                if (left.direction !== right.direction) continue;
+            for (let k = 0; k <= lanesHere.length; k++) {
+                const left = lanesHere[k - 1]?.ref;
+                const right = lanesHere[k]?.ref;
+                const clickable = !!left && !!right && left.direction === right.direction && piece.layout.markings;
+                if (!clickable && !widthTool) continue;
+                const direction = (left ?? right)!.direction;
                 result.push({
                     key: `${pieceKey(piece)}-${k}`,
                     properties: { entity },
                     wayID: piece.wayID,
-                    direction: left.direction,
+                    k,
+                    clickable,
+                    direction,
                     // backward lanes run against the way, so their drivers' left is the way's right
-                    leftIndex: left.direction === 'backward' ? right.index : left.index,
+                    leftIndex: left && right ? (direction === 'backward' ? right.index : left.index) : -1,
                     d: path(piece.boundaries[k], false)
                 });
             }
@@ -353,16 +469,18 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .data(dividerTargets, d => d.key);
         dividers.exit().remove();
         dividers.enter().append('path')
-            .attr('class', 'divider-target')
+            .on('pointerdown.lanes', dragWidth)
             .on('click.lanes', (_event: MouseEvent, d: DividerTarget) => {
-                const piece = pieces.find(p => p.wayID === d.wayID);
-                if (!piece || piece.layout.model.keys['change:lanes']?.readonly) return;
+                if (tools.tool() !== 'select' || !d.clickable) return;
+                const way = context.entity(d.wayID) as osmWay;
+                if (parseLanes(way.tags).keys['change:lanes']?.readonly) return;
                 context.perform(
                     actionChangeLanes(d.wayID, m => setDivider(m, d.direction, d.leftIndex, nextDivider(dividerAt(m, d.direction, d.leftIndex)))),
                     t('_lanes.annotation.change')
                 );
             })
             .merge(dividers)
+            .attr('class', d => 'divider-target' + (d.clickable ? '' : ' width-only'))
             .attr('d', d => d.d);
     }
 
@@ -394,6 +512,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     // iD redraws edited features without redrawing layers, so follow every map draw
     context.map().on('drawn.lanes', draw);
     state.on('change.layer', draw);
+    tools.on('change.layer', draw);
 
     drawLanes.enabled = function(val?: boolean) {
         if (!arguments.length) return _enabled;

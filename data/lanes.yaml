@@ -32,9 +32,28 @@ en:
     change_right: To the right
     kind: Lane type
     remove: Remove this lane
+    order: Position
+    move_left: ← Move left
+    move_right: Move right →
     mixed: Mixed
     readonly: "{key} is kept as tagged because its values do not match the lanes. Fix it in the tag editor."
     other_keys: Other lane tags
+  tools:
+    select: Select
+    select_tip: Click lanes to edit them
+    paint: Paint
+    paint_tip: Pick a value, then click lanes on the map to apply it
+    paint_hint: Click lanes on the map to apply this value. Each click is one undo step.
+    width: Width
+    width_tip: Drag lane lines and kerbs of the selected road to set lane widths
+    width_hint: Drag a lane line or kerb of the selected road. Widths are written to width:lanes in metres.
+    marking: Markings
+    marking_tip: Place crossings, stop and give way signs, signals and traffic calming by clicking a road
+  change:
+    "yes": Change allowed both ways
+    "no": No lane change
+    not_left: Not to the left
+    not_right: Not to the right
   kind:
     general: General traffic
     bus: Bus lane
@@ -73,7 +92,71 @@ en:
     mixed_key_styles: "{key} is tagged both with and without a direction."
     invalid_lane_count: "{key} is not a whole number."
     key_not_updated: "{key} was not updated for the new lane count."
+  markings:
+    title: Road markings
+    type: What is here
+    types:
+      none: Nothing
+      crossing: Crossing
+      stop: Stop
+      give_way: Give way
+      traffic_signals: Traffic signals
+      calming: Traffic calming
+      mini_roundabout: Mini-roundabout
+    crossing_markings: Crossing markings
+    crossing:
+      zebra: Zebra
+      lines: Lines
+      dots: Dots
+      "no": Unmarked
+      signals: Traffic signals
+      island: Traffic island in the middle
+    direction: Applies to traffic travelling
+    directions:
+      forward: Along the road
+      backward: Against the road
+      both: Both ways
+    direction_hint: '"Along the road" is the way''s drawing direction, shown by iD''s direction arrows.'
+    all_way_stop: All-way stop
+    calming: Type
+    calming_types:
+      bump: Bump
+      hump: Hump
+      table: Table
+      cushion: Cushion
+      rumble_strip: Rumble strip
+      chicane: Chicane
+      choker: Choker
+    place: Place on the map
+    place_tip: Choose what to place, then click a road on the map
+    placing: "Click a road to place a {type}."
+    stop_placing: Stop placing
+  roadside:
+    title: Roadside
+    hint: Left and right are as seen looking along the way's drawing direction.
+    left: Left side
+    right: Right side
+    sidewalk: Pavement
+    cycleway: Cycleway
+    unknown: Not tagged
+    values:
+      "yes": "Yes"
+      "no": "No"
+      separate: Mapped separately
+      lane: Lane on the road
+      track: Track
+      shared_lane: Shared lane
+    separate_found: "A pavement is mapped separately on the {side}."
+    use_separate: Set to "mapped separately"
+    double_mapped: "The {side} pavement is tagged on the road and also mapped separately; tag it as mapped separately instead."
+    kerb_width: "Mapped kerbs are {width} m apart."
+    set_width: "Set width={width}"
+    islands:
+      one: "{n} traffic island is mapped on this road."
+      other: "{n} traffic islands are mapped on this road."
   annotation:
+    marking: Changed a road marking.
+    roadside: Changed the roadside.
     add_lane: Added a lane.
     remove_lane: Removed a lane.
     move_lane: Changed a lane's direction.
@@ -81,3 +164,4 @@ en:
     change: Changed lane markings.
     kind: Changed a lane's type.
     value: Changed a lane's tags.
+    width: Changed lane widths.

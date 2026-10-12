@@ -75,7 +75,7 @@ interface Arm {
 
 const layoutCache = new WeakMap<osmWay, LaneLayout>();
 
-function cachedLayout(way: osmWay, graph: coreGraph): LaneLayout {
+export function cachedLayout(way: osmWay, graph: coreGraph): LaneLayout {
     let layout = layoutCache.get(way);
     // transitions depend on their neighbours, so they are not cached
     if (!layout || way.tags.placement === 'transition') {

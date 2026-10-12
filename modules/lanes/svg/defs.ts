@@ -39,6 +39,19 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
             .attr('fill', '#fff').attr('stroke', 'none');
     }
 
+    // give-way triangle painted on the road: its base faces the line ahead, its tip the driver
+    defs.append('symbol').attr('id', 'lanes-giveway').attr('overflow', 'visible')
+        .append('path').attr('d', 'M-7 -10L7 -10L0 10Z')
+        .attr('fill', 'none').attr('stroke', '#fff').attr('stroke-width', 2).attr('stroke-linejoin', 'round');
+
+    // traffic signal head
+    const signals = defs.append('symbol').attr('id', 'lanes-signals').attr('overflow', 'visible');
+    signals.append('rect').attr('x', -4).attr('y', -10).attr('width', 8).attr('height', 20).attr('rx', 2)
+        .attr('fill', '#222').attr('stroke', '#fff').attr('stroke-width', 1);
+    for (const [cy, colour] of [[-6, '#e33'], [0, '#fb3'], [6, '#3c5']] as const) {
+        signals.append('circle').attr('cx', 0).attr('cy', cy).attr('r', 2.2).attr('fill', colour);
+    }
+
     // hatching for unknown or restricted space
     const hatch = defs.append('pattern')
         .attr('id', 'lanes-hatch')

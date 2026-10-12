@@ -78,6 +78,7 @@ export interface coreContext extends Pick<Dispatch<object, EventMap>, 'on'> {
     setsDocumentTitle: GetSet<coreContext, boolean>;
     documentTitleBase: GetSet<coreContext, string>;
     createdBy: GetSet<coreContext, string>;
+    operationFilter: GetSet<coreContext, ((operation: { id: string }) => boolean) | null>;
     ui(): ReturnType<typeof uiInit>;
     lastPointerType(): PointerEvent['pointerType'];
     keybinding(): ReturnType<typeof utilKeybinding>;
@@ -239,6 +240,15 @@ export function coreContext(this: object): coreContext {
     _createdBy = val;
     return context;
   } as coreContext['createdBy'];
+
+
+  // Lets an app hide operations from the edit menu, e.g. while a part of a feature is selected
+  let _operationFilter: ((operation: { id: string }) => boolean) | null = null;
+  context.operationFilter = function(val) {
+    if (!arguments.length) return _operationFilter;
+    _operationFilter = val;
+    return context;
+  } as coreContext['operationFilter'];
 
 
   /** User interface and keybinding */

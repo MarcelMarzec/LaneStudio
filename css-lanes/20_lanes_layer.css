@@ -128,3 +128,28 @@
 .ideditor.lane-studio .surface.lanes-visible .layer-osm path.line.shadow.lanes-drawn {
     stroke-width: 7px !important;
 }
+
+/* Paint tool: lanes look paintable */
+.ideditor.lane-studio.lanes-tool-paint .lanes-layer .lane-target {
+    cursor: copy;
+}
+.ideditor.lane-studio.lanes-tool-paint .lanes-layer .lane-target:hover {
+    fill: rgba(112, 146, 255, 0.35);
+}
+
+/* Width tool: every lane line and kerb of the selected road can be dragged sideways */
+.ideditor.lane-studio .lanes-layer .divider-target.width-only {
+    pointer-events: none;
+}
+.ideditor.lane-studio.lanes-tool-width .lanes-layer .divider-target {
+    pointer-events: stroke;
+    cursor: ew-resize;
+    stroke: rgba(112, 146, 255, 0.35);
+    touch-action: none;
+}
+
+/* Paint and Marking tools act on lanes: iD's own road and node targets step aside */
+.ideditor.lane-studio.lanes-tool-paint .layer-touch .target,
+.ideditor.lane-studio.lanes-tool-marking .layer-touch .target {
+    pointer-events: none;
+}

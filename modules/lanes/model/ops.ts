@@ -124,9 +124,12 @@ export function removeLane(model: LaneModel, ref: LaneRef): LaneModel {
 }
 
 
-/** Moves a lane to another direction (a two-way road only), keeping its values */
+/**
+ * Moves a lane, keeping its values: to another direction (two-way roads only),
+ * or to another position within its own direction (`toIndex`, 0 = the driver's leftmost)
+ */
 export function moveLane(model: LaneModel, ref: LaneRef, toDirection: LaneDirection, toIndex?: number): LaneModel {
-    if (model.oneway) throw new Error('Lanes on a one-way road cannot change direction');
+    if (model.oneway && toDirection !== ref.direction) throw new Error('Lanes on a one-way road cannot change direction');
     const lane = model.lanes[ref.direction][ref.index];
     if (!lane) throw new Error('No such lane');
 

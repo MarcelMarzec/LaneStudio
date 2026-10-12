@@ -127,3 +127,44 @@
     margin-top: 10px;
     width: 100%;
 }
+
+.ideditor.lane-studio .lanes-tools {
+    margin: 8px 0 4px 0;
+}
+.ideditor.lane-studio .lanes-tools button {
+    flex: 1 1 0;
+    padding: 4px 6px;
+}
+.ideditor.lane-studio .lanes-palette {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin: 4px 0;
+}
+
+/* roadside: pavement and cycleway per side, with suggestions from mapped ways */
+.ideditor.lane-studio .lanes-roadside {
+    border-top: 1px solid var(--border-color, #ccc);
+    margin-top: 10px;
+    padding-top: 8px;
+}
+.ideditor.lane-studio .lanes-roadside h4 { margin: 0 0 4px 0; }
+.ideditor.lane-studio .lanes-roadside-grid {
+    display: grid;
+    grid-template-columns: 35% 65%;
+    gap: 4px;
+    align-items: center;
+    font-size: 12px;
+}
+.ideditor.lane-studio .lanes-suggestion {
+    border-left: 3px solid var(--link-color, #7092ff);
+    padding-left: 6px;
+}
+.ideditor.lane-studio .lanes-suggestion button {
+    display: block;
+    margin-top: 4px;
+    height: auto;
+    padding: 3px 8px;
+}
+.ideditor.lane-studio .lanes-marking-type { width: 100%; margin: 4px 0; }
+.ideditor.lane-studio.lanes-tool-marking .lanes-layer .lane-target { cursor: crosshair; }

@@ -132,3 +132,38 @@ describe('roadGeometry', () => {
         expect(first.arrows).toHaveLength(0);
     });
 });
+
+
+describe('streetGeometry', () => {
+    it('draws footways at their width, crossings, stop lines and mapped kerbs', async () => {
+        const { streetGeometry, crossingMarkings } = await import('../../../../modules/lanes/geometry/street');
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-100, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(0, 0), tags: { highway: 'crossing', 'crossing:markings': 'zebra', 'crossing:island': 'yes' } }),
+            new iD.osmNode({ id: 'n3', loc: at(90, 0), tags: { highway: 'stop' } }),
+            new iD.osmNode({ id: 'n4', loc: at(100, 0) }),
+            new iD.osmNode({ id: 'n5', loc: at(-100, 8) }), new iD.osmNode({ id: 'n6', loc: at(100, 8) }),
+            new iD.osmNode({ id: 'n7', loc: at(-100, 6) }), new iD.osmNode({ id: 'n8', loc: at(100, 6) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3', 'n4'], tags: { highway: 'primary', lanes: '2' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n5', 'n6'], tags: { highway: 'footway', footway: 'sidewalk', width: '3' } }),
+            new iD.osmWay({ id: 'w3', nodes: ['n7', 'n8'], tags: { barrier: 'kerb', kerb: 'lowered' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const street = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
+
+        expect(street.paths.map(p => [p.id, p.kind])).toEqual([['w2', 'sidewalk']]);
+        expect(street.kerbs.map(k => [k.id, k.kerb])).toEqual([['w3', 'lowered']]);
+
+        const kinds = street.markings.map(m => m.kind);
+        expect(kinds).toContain('crossing');
+        expect(kinds.filter(k => k === 'zebra_bar').length).toBeGreaterThan(4);
+        expect(kinds).toContain('island');
+        // a stop sign near the end of a two-way road faces the forward lane only
+        expect(street.markings.filter(m => m.kind === 'stop_line').map(m => m.key)).toEqual(['n3-stop_line-forward']);
+        expect(street.symbols.filter(s => s.kind === 'stop_text')).toHaveLength(1);
+
+        expect(crossingMarkings({ crossing: 'traffic_signals' })).toBe('lines');
+        expect(crossingMarkings({ 'crossing:markings': 'no', crossing: 'zebra' })).toBe('none');
+    });
+});

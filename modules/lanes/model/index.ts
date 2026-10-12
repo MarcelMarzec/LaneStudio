@@ -9,3 +9,5 @@ export {
     parseChange, formatChange, dividerAt, setDivider, nextDivider,
     type TurnValue, type LaneChange, type Divider
 } from './values';
+export { laneKindKeys, laneKindOf, setLaneKind } from './kinds';
+export * from './markings';
