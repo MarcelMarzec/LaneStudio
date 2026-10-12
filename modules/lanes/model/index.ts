@@ -11,3 +11,4 @@ export {
 } from './values';
 export { laneKindKeys, laneKindOf, setLaneKind } from './kinds';
 export * from './markings';
+export * from './connectivity';

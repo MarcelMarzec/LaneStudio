@@ -9,8 +9,10 @@ import { laneCorridor } from '../osm/corridor';
 import { uiSection } from '../../ui/section';
 import { utilHighlightEntities } from '../../util';
 import {
-    parallelWays, isSidewalkWay, isKerbWay, sidewalkValue, withSidewalk, cyclewayValue, withCycleway
+    parallelWays, isSidewalkWay, isKerbWay, sidewalkValue, withSidewalk, cyclewayValue, withCycleway,
+    parkingValue, withParking
 } from '../core/roadside';
+import { roundaboutOf, withTurbo, turboRestrictionCount, type Roundabout } from '../osm/roundabout';
 import { markingTypes, type MarkingType } from '../model/markings';
 import { actionChangeLanes } from '../actions/change_lanes';
 import { laneDriveSide } from '../core/drive_side';
@@ -182,8 +184,45 @@ export function uiSectionLanes(context: iD.Context) {
         }
 
         if (selected.length) renderInspector(wrap, model, wayID, selected);
-        renderLookAhead(wrap, road, model, selected);
+        const ring = roundaboutOf(road, graph);
+        if (ring) renderRoundabout(wrap, road, ring);
+        else renderLookAhead(wrap, road, model, selected);
         renderRoadside(wrap, road);
+    }
+
+
+    /** A roundabout: the whole ring, turbo tagging and its checks */
+    function renderRoundabout(wrap: Div, road: osmWay, ring: Roundabout) {
+        state.setCorridor(ring.ring.map(w => w.id));
+        const box = wrap.append('div').attr('class', 'lanes-lookahead lanes-roundabout');
+        box.append('h4').text(t('_lanes.roundabout.title'));
+        box.append('p').attr('class', 'lanes-note').text(t('_lanes.roundabout.summary', {
+            segments: ring.ring.length, approaches: ring.approaches.length
+        }));
+
+        const turbo = road.tags.roundabout === 'turbo';
+        const label = box.append('label').attr('class', 'lane-check');
+        label.append('input').attr('type', 'checkbox')
+            .property('checked', turbo)
+            .on('change', function(this: HTMLInputElement) {
+                context.perform(actionChangeTags(road.id, withTurbo(road.tags, this.checked)), t('_lanes.annotation.roundabout'));
+            });
+        label.append('span').text(t('_lanes.roundabout.turbo'));
+        box.append('p').attr('class', 'lanes-note').text(t('_lanes.roundabout.turbo_hint'));
+
+        if (ring.turbo.length) {
+            const untagged = ring.ring.filter(w => w.tags.roundabout !== 'turbo');
+            if (untagged.length) {
+                const note = box.append('p').attr('class', 'lanes-note lanes-suggestion')
+                    .text(t('_lanes.roundabout.untagged', { n: untagged.length, total: ring.ring.length }));
+                note.append('button').text(t('_lanes.roundabout.select_next'))
+                    .on('click', () => context.enter(modeSelect(context, [untagged[0].id])));
+            }
+            const found = ring.restrictions.length;
+            box.append('p').attr('class', 'lanes-note' + (found < turboRestrictionCount ? ' lanes-suggestion' : ''))
+                .text(t('_lanes.roundabout.restrictions', { n: found, needed: turboRestrictionCount }));
+        }
+        box.append('p').attr('class', 'lanes-note').text(t('_lanes.roundabout.spiral'));
     }
 
 
@@ -324,6 +363,7 @@ export function uiSectionLanes(context: iD.Context) {
             };
             pick('sidewalk', ['yes', 'no', 'separate'], sidewalkValue(tags, side), v => withSidewalk(tags, side, v));
             pick('cycleway', ['no', 'lane', 'track', 'shared_lane', 'separate'], cyclewayValue(tags, side), v => withCycleway(tags, side, v));
+            pick('parking', ['no', 'lane', 'street_side', 'half_on_kerb', 'on_kerb', 'separate'], parkingValue(tags, side), v => withParking(tags, side, v));
 
             // separately mapped pavement on this side?
             const found = sidewalks[side][0];
@@ -531,7 +571,7 @@ export function uiSectionLanes(context: iD.Context) {
     function renderTools(wrap: Div) {
         const tool = tools.tool();
         const bar = wrap.append('div').attr('class', 'lane-buttons lanes-tools');
-        for (const id of ['select', 'paint', 'width', 'marking'] as const) {
+        for (const id of ['select', 'paint', 'width', 'marking', 'connect'] as const) {
             bar.append('button')
                 .attr('class', `lanes-tool-${id}` + (tool === id ? ' active' : ''))
                 .attr('aria-pressed', tool === id)
@@ -541,6 +581,10 @@ export function uiSectionLanes(context: iD.Context) {
         }
         if (tool === 'width') {
             wrap.append('p').attr('class', 'lanes-note').text(t('_lanes.tools.width_hint'));
+        }
+        if (tool === 'connect') {
+            wrap.append('p').attr('class', 'lanes-note')
+                .text(t(tools.connectFrom() ? '_lanes.connect.pick_to' : '_lanes.connect.pick_from'));
         }
         if (tool === 'marking') {
             const select = wrap.append('select').attr('class', 'lanes-marking-type')

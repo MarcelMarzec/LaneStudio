@@ -19,7 +19,9 @@ import { laneTools } from '../core/lane_tools';
 import { laneLayout } from '../geometry/layout';
 import { offsetFromWay } from '../geometry/measure';
 import { svgLaneDefs, turnArrowSymbol } from './defs';
-import { drawStreet } from './street';
+import { drawStreet, joinPaths } from './street';
+import { connectivityShapes } from '../geometry/connectivity';
+import { actionConnectLanes, connectionNode } from '../actions/connect_lanes';
 import { streetGeometry } from '../geometry/street';
 
 /** Zoom levels where each level of detail appears (see the plan's zoom rules) */
@@ -82,7 +84,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         _layer.selectAll('g.lanes-group')
             .data([
                 'areas', 'roadside', 'paths', 'carriageway', 'junctions', 'lanes', 'islands', 'dividers', 'kerbs',
-                'kerb-lines', 'crossings', 'markings', 'arrows', 'labels', 'symbols', 'selection', 'targets', 'divider-targets'
+                'kerb-lines', 'crossings', 'markings', 'arrows', 'connectivity', 'labels', 'symbols', 'selection', 'connect-from',
+                'targets', 'divider-targets'
             ])
             .enter()
             .append('g')
@@ -272,6 +275,19 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .text(d => d.text);
 
 
+        /* lane connections from type=connectivity relations */
+        const connections = markings ? connectivityShapes(visible, graph) : [];
+        joinPaths(group('connectivity'), connections, d => d.key,
+            d => 'connectivity-curve' + (d.optional ? ' optional' : ''), d => path(d.line, false));
+
+        /* the lane picked first with the Connect tool */
+        const from = tools.tool() === 'connect' ? tools.connectFrom() : null;
+        const fromData = !from ? [] : pieces.filter(piece => piece.wayID === from.wayID).flatMap(piece =>
+            piece.layout.lanes.map((lane, i) => ({ lane, key: `${pieceKey(piece)}-${i}`, polygon: piece.lanes[i] }))
+                .filter(x => x.lane.ref.direction === from.ref.direction && x.lane.ref.index === from.ref.index));
+        joinPaths(group('connect-from'), fromData, d => d.key, () => 'lane-connect-from', d => path(d.polygon, true));
+
+
         /* selected lanes */
         const chosen = state.selected();
         const selectionData = !chosen ? [] : pieces.filter(piece => piece.wayID === chosen.wayID).flatMap(piece =>
@@ -328,6 +344,33 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             ? setLaneValue(m, d.ref, key, key === 'turn:lanes' ? formatTurn(parseTurn(paint.value)) : paint.value)
             : setLaneKind(m, [d.ref], paint.value);
         context.perform(actionChangeLanes(d.wayID, change), t(`_lanes.annotation.${key === 'turn:lanes' ? 'turn' : key ? 'value' : 'kind'}`));
+    }
+
+
+    /** Connect tool: the first click picks a lane, the second a lane on a road it leads to */
+    function connectLane(d: LaneTarget) {
+        const from = tools.connectFrom();
+        if (!from) {
+            tools.setConnectFrom({ wayID: d.wayID, ref: d.ref });
+            return;
+        }
+        const graph = context.graph();
+        const fromWay = graph.entity(from.wayID) as osmWay;
+        const toWay = graph.entity(d.wayID) as osmWay;
+        const result = connectionNode(fromWay, from.ref, toWay, d.ref);
+        if ('problem' in result) {
+            if (result.problem === 'same_road') {
+                tools.setConnectFrom({ wayID: d.wayID, ref: d.ref });   // pick again
+                return;
+            }
+            // uiFlash is plain JavaScript with getter/setter overloads
+            const flash = context.ui().flash as any;
+            flash.iconName('#iD-icon-no').label(t(`_lanes.connect.${result.problem}`))();
+            tools.setConnectFrom(null);
+            return;
+        }
+        context.perform(actionConnectLanes(fromWay.id, from.ref, result.nodeID, toWay.id, d.ref), t('_lanes.annotation.connect'));
+        tools.setConnectFrom(null);
     }
 
 
@@ -425,6 +468,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 }
                 if (tools.tool() === 'marking') {
                     placeMarking(event, d);
+                    return;
+                }
+                if (tools.tool() === 'connect') {
+                    connectLane(d);
                     return;
                 }
                 const ids = context.selectedIDs();

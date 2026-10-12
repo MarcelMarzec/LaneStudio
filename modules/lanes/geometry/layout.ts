@@ -21,7 +21,7 @@ export interface LaneInfo {
     values: Record<string, string>;
 }
 
-export type RoadsideKind = 'sidewalk' | 'sidewalk_unknown' | 'cycle_lane' | 'cycle_track';
+export type RoadsideKind = 'sidewalk' | 'sidewalk_unknown' | 'cycle_lane' | 'cycle_track' | 'parking';
 
 export interface RoadsideStrip {
     kind: RoadsideKind;
@@ -119,7 +119,17 @@ function roadsideStrips(tags: Tags, side: 'left' | 'right'): RoadsideStrip[] {
     const cycleway = sideValue(tags, 'cycleway', side);
     if (cycleway === 'lane' || cycleway === 'opposite_lane') {
         strips.push({ kind: 'cycle_lane', width: 1.5, assumed: true });
-    } else if (cycleway === 'track' || cycleway === 'opposite_track') {
+    }
+
+    // on-street parking sits between the carriageway (or its cycle lane) and the kerb
+    const parking = tags[`parking:${side}`] ?? tags['parking:both'];
+    if (parking === 'lane' || parking === 'street_side' || parking === 'half_on_kerb') {
+        const orientation = tags[`parking:${side}:orientation`] ?? tags['parking:both:orientation'];
+        const width = orientation === 'perpendicular' ? 5 : orientation === 'diagonal' ? 4.5 : 2.2;
+        strips.push({ kind: 'parking', width: parking === 'half_on_kerb' ? width / 2 : width, assumed: true });
+    }
+
+    if (cycleway === 'track' || cycleway === 'opposite_track') {
         strips.push({ kind: 'cycle_track', width: 2, assumed: true });
     }
 

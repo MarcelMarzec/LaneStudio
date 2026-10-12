@@ -129,3 +129,26 @@ export function withCycleway(tags: Tags, side: Side, value: string | undefined):
     }
     return next;
 }
+
+
+/** One side's on-street parking (`parking:<side>=lane|street_side|…`, the current parking scheme) */
+export function parkingValue(tags: Tags, side: Side): string | undefined {
+    return tags[`parking:${side}`] ?? tags['parking:both'];
+}
+
+/** Sets one side's parking, writing `parking:both` when both sides match */
+export function withParking(tags: Tags, side: Side, value: string | undefined): Tags {
+    const values: Record<Side, string | undefined> = { left: parkingValue(tags, 'left'), right: parkingValue(tags, 'right') };
+    values[side] = value;
+    const next = { ...tags };
+    delete next['parking:both'];
+    delete next['parking:left'];
+    delete next['parking:right'];
+    if (values.left && values.left === values.right) {
+        next['parking:both'] = values.left;
+    } else {
+        if (values.left) next['parking:left'] = values.left;
+        if (values.right) next['parking:right'] = values.right;
+    }
+    return next;
+}

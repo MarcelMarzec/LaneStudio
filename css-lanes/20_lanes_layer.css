@@ -158,3 +158,27 @@
 .ideditor.lane-studio .lanes-layer .carriageway.corridor {
     fill: rgba(112, 146, 255, 0.28);
 }
+
+/* on-street parking beside the carriageway */
+.ideditor.lane-studio .lanes-layer .roadside-parking {
+    fill: rgba(90, 120, 200, 0.35);
+}
+
+/* lane connections (type=connectivity relations) */
+.ideditor.lane-studio .lanes-layer .connectivity-curve {
+    fill: none;
+    stroke: #6cf;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-opacity: 0.9;
+}
+.ideditor.lane-studio .lanes-layer .connectivity-curve.optional {
+    stroke-dasharray: 5, 4;
+}
+.ideditor.lane-studio .lanes-layer .lane-connect-from {
+    fill: rgba(102, 204, 255, 0.35);
+    stroke: #6cf;
+    stroke-width: 2;
+}
+.ideditor.lane-studio.lanes-tool-connect .lanes-layer .lane-target { cursor: alias; }
+.ideditor.lane-studio.lanes-tool-connect .layer-touch .target { pointer-events: none; }
