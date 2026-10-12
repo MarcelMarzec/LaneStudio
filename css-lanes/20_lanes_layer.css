@@ -223,3 +223,20 @@
 .ideditor.lane-studio.lanes-tool-marking .lanes-layer .short-way-marker {
     pointer-events: none;
 }
+
+/* settings: lane surface opacity */
+.ideditor.lane-studio .lanes-layer .lanes-carriageway,
+.ideditor.lane-studio .lanes-layer .lanes-junctions,
+.ideditor.lane-studio .lanes-layer .lanes-lanes {
+    opacity: var(--lanes-surface-opacity, 1);
+}
+
+/* settings: hide iD's own drawing of what Lane Studio draws (touch targets stay, so it can still be clicked) */
+.ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm .lanes-drawn,
+.ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm .lanes-drawn-feature {
+    display: none;
+}
+/* street-side parking points on a road are shown by the road's parking strip */
+.ideditor.lane-studio .surface.lanes-visible .layer-osm .lanes-redundant {
+    display: none;
+}

@@ -3,6 +3,7 @@ import { localizer, t } from '../../core/localizer';
 import { coreValidatorAddRule } from '../../core/validator';
 import { prefs } from '../../core/preferences';
 import { uiEntityEditorAddSection } from '../../ui/entity_editor';
+import { uiInitAddPane } from '../../ui/init';
 import { services } from '../../services';
 import { utilStringQs } from '../../util';
 import { laneKeys } from './lane_keys';
@@ -12,6 +13,8 @@ import { uiSectionLanes } from '../ui/section_lanes';
 import { uiSectionMarkings } from '../ui/section_markings';
 import { uiSectionStreetFeature } from '../ui/section_street_feature';
 import { laneStudioSplash } from '../ui/splash';
+import { uiPaneLaneStudio } from '../ui/pane_settings';
+import { laneSettings } from './lane_settings';
 import { laneStudioVersion } from '../version';
 
 export interface LaneStudioOptions {
@@ -41,7 +44,11 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
     uiEntityEditorAddSection(uiSectionMarkings);
     uiEntityEditorAddSection(uiSectionStreetFeature);
 
+    // Lane Studio's settings pane, after iD's own panes
+    uiInitAddPane(uiPaneLaneStudio);
+
     context.container().classed('lane-studio', true);
+    laneSettings(context);
     context.init();
     // after init (it needs the UI), but before iD's UI renders and decides on its own splash
     laneStudioSplash(context);

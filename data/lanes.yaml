@@ -222,6 +222,15 @@ en:
     hov_lane_reference: Mark the HOV lanes with hov:lanes=designated|… instead, using the Lanes section.
     destination_twoway: "{feature} has destination on a two-way road."
     destination_twoway_reference: Use destination:forward or destination:backward on two-way roads.
+  settings:
+    title: Lane Studio
+    description: Lane Studio settings
+    key: K
+    display: Display
+    opacity: Lane surface opacity
+    reset_opacity: Reset lane surface opacity
+    hide_originals: Hide iD's lines and points under lanes
+    hide_originals_tip: Hides iD's own way lines, vertices, points and direction cones for roads, paths, markings and areas Lane Studio draws. They can still be clicked.
   street_feature:
     island: Traffic island
     road_marking: Painted marking

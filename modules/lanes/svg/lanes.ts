@@ -24,6 +24,8 @@ import { actionConnectLanes, connectionNode } from '../actions/connect_lanes';
 import { streetGeometry } from '../geometry/street';
 import { parkingGeometry } from '../geometry/parking';
 import { roadMarkingGeometry } from '../geometry/road_marking';
+import { isStreetParking } from '../model/street_features';
+import type { OsmEntity } from '../../osm';
 
 /** Zoom levels where each level of detail appears (see the plan's zoom rules) */
 export const laneZooms = {
@@ -120,9 +122,12 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         markSurface(true);
 
         /* footways, mapped areas and kerbs, road markings on nodes */
-        drawStreet(group, streetGeometry(visible, graph), projection, zoom, laneZooms);
-        drawParking(group('parking'), parkingGeometry(visible, graph), projection, markings);
-        drawRoadMarkings(group('road-markings'), markings ? roadMarkingGeometry(visible, graph) : { lines: [], areas: [], texts: [] }, projection, labels);
+        const street = streetGeometry(visible, graph);
+        const parking = parkingGeometry(visible, graph);
+        const roadMarkings = markings ? roadMarkingGeometry(visible, graph) : { lines: [], areas: [], texts: [] };
+        drawStreet(group, street, projection, zoom, laneZooms);
+        drawParking(group('parking'), parking, projection, markings);
+        drawRoadMarkings(group('road-markings'), roadMarkings, projection, labels);
 
 
         /* roadside strips */
@@ -318,10 +323,32 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         drawTargets(group('targets'), group('divider-targets'), pieces, markings, selected);
 
 
-        /* thin iD's own strokes for roads whose lanes are drawn */
+        /* mark iD's own drawing of what is drawn here: road lines are thinned, and the
+           "hide iD's lines and points" setting hides all of it (their touch targets stay clickable) */
         const drawn = new Set<string>(pieces.map(piece => piece.wayID));
-        context.surface().selectAll<SVGPathElement, { id: string }>('.layer-osm.lines path.line')
-            .classed('lanes-drawn', d => !!d && drawn.has(d.id));
+        const drawnWays = new Set<string>(drawn);
+        for (const p of street.paths) drawnWays.add(p.id);
+        for (const a of street.areas) drawnWays.add(a.id);
+        for (const k of street.kerbs) drawnWays.add(k.id);
+        for (const p of parking) drawnWays.add(p.id);
+        for (const l of roadMarkings.lines) drawnWays.add(l.id);
+        for (const a of roadMarkings.areas) drawnWays.add(a.id);
+        const drawnNodes = new Set<string>(street.markings.map(m => m.nodeID));
+        for (const text of roadMarkings.texts) drawnNodes.add(text.id);
+        for (const id of drawnWays) {
+            const way = graph.hasEntity(id as osmWay['id']) as osmWay | undefined;
+            if (way?.type === 'way') way.nodes.forEach(n => drawnNodes.add(n));
+        }
+        const surface = context.surface();
+        surface.selectAll<SVGPathElement, { id: string }>('.layer-osm.lines path.line')
+            .classed('lanes-drawn', d => !!d && drawn.has(d.id))
+            .classed('lanes-drawn-feature', d => !!d && drawnWays.has(d.id));
+        surface.selectAll<SVGPathElement, { id: string }>('.layer-osm.areas path')
+            .classed('lanes-drawn-feature', d => !!d && drawnWays.has(d.id));
+        surface.selectAll<SVGGElement, OsmEntity>('.layer-osm .vertices g.vertex, .layer-osm .points g.point')
+            .classed('lanes-drawn-feature', d => !!d && drawnNodes.has(d.id))
+            // street-side parking mapped as a point on a road is already shown by the road's parking strip
+            .classed('lanes-redundant', d => !!d && isStreetParking(d.tags) && graph.parentWays(d).some(isLaneRoad));
     }
 
 
