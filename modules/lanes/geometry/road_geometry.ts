@@ -590,18 +590,50 @@ function signedAngle(from: Vec2, to: Vec2): number {
     return Math.atan2(cross, dot) * 180 / Math.PI;
 }
 
-/** The point at a lane's end on an arm, at the arm's pull-back distance, and its travel direction */
-function laneEnd(arm: Arm, trim: number, direction: LaneDirection, index: number, approach: boolean) {
+/**
+ * The point at a lane's end on an arm, at the arm's pull-back distance, and its travel direction:
+ * the lane's centre, or (`edge`) its edge on the driver's left or right
+ */
+function laneEnd(arm: Arm, trim: number, direction: LaneDirection, index: number, approach: boolean, edge?: 'left' | 'right') {
     const k = arm.layout.lanes.findIndex(l => l.ref.direction === direction && l.ref.index === index);
     if (k === -1) return null;
-    const wayOffset = (arm.edges[k] + arm.edges[k + 1]) / 2;
+    let wayOffset = (arm.edges[k] + arm.edges[k + 1]) / 2;
+    if (edge) {
+        // offsets to the driver's right: along the arm when leaving the node, against it when approaching
+        const driverRight = (w: number) => (arm.alongWay ? w : -w) * (approach ? -1 : 1);
+        const [a, b] = [arm.edges[k], arm.edges[k + 1]];
+        const leftFirst = driverRight(a) < driverRight(b);
+        wayOffset = edge === 'left' ? (leftFirst ? a : b) : (leftFirst ? b : a);
+    }
     const armOffset = arm.alongWay ? wayOffset : -wayOffset;
     const at = pointAlong(arm.line, Math.min(trim, polylineLength(arm.line)));
     const point = add(at.point, scale(rightNormal(at.direction), armOffset));
     return { point, tangent: approach ? scale(at.direction, -1) : at.direction };
 }
 
+/**
+ * A line through a junction from one lane end to another. A turn bends round the corner where
+ * the two directions of travel meet (a quadratic curve), so tight inner corners do not loop;
+ * a lane shifting sideways, where they do not meet ahead, takes a gentle S-curve.
+ */
 function curve(a: { point: Vec2; tangent: Vec2 }, b: { point: Vec2; tangent: Vec2 }): Vec2[] {
+    const cross = a.tangent[0] * b.tangent[1] - a.tangent[1] * b.tangent[0];
+    if (Math.abs(cross) > 0.1) {
+        const d = sub(b.point, a.point);
+        const ahead = (d[0] * b.tangent[1] - d[1] * b.tangent[0]) / cross;    // along a's travel direction
+        const behind = (a.tangent[0] * d[1] - a.tangent[1] * d[0]) / cross;   // back along b's direction
+        if (ahead >= 0 && behind >= 0) {
+            const corner = add(a.point, scale(a.tangent, ahead));
+            return Array.from({ length: 17 }, (_, i) => {
+                const t = i / 16;
+                const u = 1 - t;
+                return [
+                    u * u * a.point[0] + 2 * u * t * corner[0] + t * t * b.point[0],
+                    u * u * a.point[1] + 2 * u * t * corner[1] + t * t * b.point[1]
+                ] as Vec2;
+            });
+        }
+    }
     const chord = len(sub(b.point, a.point));
     const c = Math.max(1.5, chord * 0.4);
     const p1 = add(a.point, scale(a.tangent, c));
@@ -712,6 +744,7 @@ function alignBranches(node: osmNode, graph: coreGraph, visuals: Map<string, Way
 function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims: Map<string, number>, through: [number, number] | null): JunctionConnection[] {
     const frame = metricFrame(node.loc);
     const result: JunctionConnection[] = [];
+    const seen = new Set<string>();
     const trimOf = (arm: Arm) => trims.get(armKey(arm.way.id, arm.nodeIndex, arm.alongWay)) ?? 0;
     const isThrough = (i: number, j: number) => !!through && ((through[0] === i && through[1] === j) || (through[0] === j && through[1] === i));
 
@@ -760,15 +793,23 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
             const turning = !isThrough(i, j);
             const upTrim = turning ? Math.max(trimOf(up), (down.right - down.left) / 2) : trimOf(up);
             const downTrim = turning ? Math.max(trimOf(down), (up.right - up.left) / 2) : trimOf(down);
+            // guide lines follow the lane edges through the junction (each lane's left edge to the left
+            // edge of the lane it leads to, and right to right); lanes turning side by side share a line
             for (const p of pairs) {
                 if (!fromLanes.includes(p.from)) continue;
-                const a = laneEnd(up, upTrim, upDirection, p.from, true);
-                const b = laneEnd(down, downTrim, downDirection, p.to, false);
-                if (!a || !b || len(sub(b.point, a.point)) < 1.5) continue;
-                result.push({
-                    key: `${node.id}-g-${up.way.id}:${up.alongWay}-${down.way.id}:${down.alongWay}-${p.from}-${p.to}`, nodeID: node.id,
-                    kind: 'guide', optional: false, line: curve(a, b).map(frame.toLoc)
-                });
+                for (const edge of ['left', 'right'] as const) {
+                    const a = laneEnd(up, upTrim, upDirection, p.from, true, edge);
+                    const b = laneEnd(down, downTrim, downDirection, p.to, false, edge);
+                    if (!a || !b || len(sub(b.point, a.point)) < 1.5) continue;
+                    const key = `${node.id}-g-${up.way.id}:${up.alongWay}-${down.way.id}:${down.alongWay}-` +
+                        `${a.point[0].toFixed(1)},${a.point[1].toFixed(1)}-${b.point[0].toFixed(1)},${b.point[1].toFixed(1)}`;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    result.push({
+                        key, nodeID: node.id,
+                        kind: 'guide', optional: false, line: curve(a, b).map(frame.toLoc)
+                    });
+                }
             }
         }
     });

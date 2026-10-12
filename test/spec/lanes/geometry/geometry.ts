@@ -238,11 +238,16 @@ describe('roadGeometry at joins and junctions', () => {
         const graph = tJunction({ highway: 'primary', oneway: 'yes', lanes: '2', 'turn:lanes': 'left|through' });
         const { connections } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
         const guides = connections.filter(c => c.kind === 'guide');
-        // the left lane turns into the side road; the through lane carries straight on (no gap to draw)
-        expect(guides).toHaveLength(1);
-        expect(guides[0].key).toContain('w2');
-        const line = guides[0].line.map(frame.toMetres);
-        expect(line[line.length - 1][1]).toBeGreaterThan(3);
+        // the left lane turns into the side road, guided along both its edges (3.5 m apart where it
+        // starts); the through lane carries straight on (no gap to draw)
+        expect(guides).toHaveLength(2);
+        for (const guide of guides) {
+            expect(guide.key).toContain('w2');
+            const line = guide.line.map(frame.toMetres);
+            expect(line[line.length - 1][1]).toBeGreaterThan(3);
+        }
+        const starts = guides.map(g => frame.toMetres(g.line[0]));
+        expect(Math.hypot(starts[0][0] - starts[1][0], starts[0][1] - starts[1][1])).toBeGreaterThan(2.5);
     });
 
     it('starts a slip road where the lane leading into it ends', () => {
