@@ -19,9 +19,11 @@ import { laneTools } from '../core/lane_tools';
 import { laneLayout } from '../geometry/layout';
 import { offsetFromWay } from '../geometry/measure';
 import { svgLaneDefs, turnArrowSymbol } from './defs';
-import { drawStreet, joinPaths } from './street';
+import { drawStreet, drawParking, drawRoadMarkings, joinPaths } from './street';
 import { actionConnectLanes, connectionNode } from '../actions/connect_lanes';
 import { streetGeometry } from '../geometry/street';
+import { parkingGeometry } from '../geometry/parking';
+import { roadMarkingGeometry } from '../geometry/road_marking';
 
 /** Zoom levels where each level of detail appears (see the plan's zoom rules) */
 export const laneZooms = {
@@ -82,8 +84,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'roadside', 'paths', 'carriageway', 'junctions', 'lanes', 'islands', 'dividers', 'kerbs',
-                'kerb-lines', 'crossings', 'markings', 'arrows', 'connectivity', 'labels', 'symbols', 'short', 'selection', 'connect-from',
+                'areas', 'roadside', 'parking', 'paths', 'carriageway', 'junctions', 'lanes', 'islands', 'dividers', 'kerbs',
+                'kerb-lines', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'labels', 'symbols', 'short', 'selection', 'connect-from',
                 'targets', 'short-targets', 'divider-targets'
             ])
             .enter()
@@ -119,6 +121,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* footways, mapped areas and kerbs, road markings on nodes */
         drawStreet(group, streetGeometry(visible, graph), projection, zoom, laneZooms);
+        drawParking(group('parking'), parkingGeometry(visible, graph), projection, markings);
+        drawRoadMarkings(group('road-markings'), markings ? roadMarkingGeometry(visible, graph) : { lines: [], areas: [], texts: [] }, projection, labels);
 
 
         /* roadside strips */

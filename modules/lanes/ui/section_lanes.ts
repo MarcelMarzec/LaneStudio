@@ -20,6 +20,7 @@ import { laneState } from '../core/lane_state';
 import { laneTools } from '../core/lane_tools';
 import { laneField, laneSuggestions, laneArrowIcon } from './lane_fields';
 import { isLaneRoad } from '../core/roads';
+import { isTrafficIsland } from '../model/street_features';
 import {
     parseLanes, laneRefsInWayOrder, laneCount, insertLane, removeLane, moveLane, setLaneValue, laneValue,
     turnValues, parseTurn, toggleTurn, parseChange, formatChange, laneDirections,
@@ -392,8 +393,7 @@ export function uiSectionLanes(context: iD.Context) {
         }
 
         // traffic islands on the road
-        const islands = nearby.filter(e => e.type === 'way' &&
-            (e.tags['area:highway'] === 'traffic_island' || e.tags.traffic_calming === 'island') &&
+        const islands = nearby.filter(e => e.type === 'way' && (isTrafficIsland(e.tags) || e.tags.traffic_calming === 'island') &&
             road.extent(graph).intersects(e.extent(graph)));
         if (islands.length) {
             box.append('p').attr('class', 'lanes-note').text(t('_lanes.roadside.islands', { n: islands.length }));

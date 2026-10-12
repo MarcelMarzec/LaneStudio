@@ -1,3 +1,5 @@
+import { markingColourValues } from './street';
+
 /**
  * SVG symbols and patterns for the lanes layer.
  * Turn arrows are drawn pointing up in a box from (-9,-12) to (9,12); right-hand arrows are the
@@ -54,6 +56,24 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
         .attr('fill', '#222').attr('stroke', '#fff').attr('stroke-width', 1);
     for (const [cy, colour] of [[-6, '#e33'], [0, '#fb3'], [6, '#3c5']] as const) {
         signals.append('circle').attr('cx', 0).attr('cy', cy).attr('r', 2.2).attr('fill', colour);
+    }
+
+    // fills for painted areas (road_marking with pattern=*), one per colour: patterns take their
+    // colours from where they are defined, not from the shape that uses them
+    for (const [colourName, colour] of Object.entries(markingColourValues)) {
+        const pattern = (name: string, size: number, rotate = 0) => defs.append('pattern')
+            .attr('id', `lanes-pattern-${name}-${colourName}`)
+            .attr('patternUnits', 'userSpaceOnUse')
+            .attr('width', size)
+            .attr('height', size)
+            .attr('patternTransform', rotate ? `rotate(${rotate})` : null);
+        const stroke = (g: d3.Selection<SVGElement>, d: string, width = 2) =>
+            g.append('path').attr('d', d).attr('fill', 'none').attr('stroke', colour).attr('stroke-width', width);
+        stroke(pattern('hatch', 10, 45) as any, 'M0 0V10', 2.5);
+        stroke(pattern('crosshatch', 10, 45) as any, 'M0 0V10M0 0H10', 2);
+        stroke(pattern('chevron', 14) as any, 'M0 10L7 3L14 10', 2.5);
+        stroke(pattern('zigzag', 12) as any, 'M0 9L6 3L12 9', 1.5);
+        pattern('dots', 8).append('circle').attr('cx', 4).attr('cy', 4).attr('r', 1.6).attr('fill', colour);
     }
 
     // hatching for unknown or restricted space

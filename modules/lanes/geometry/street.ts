@@ -10,6 +10,7 @@ import {
 } from './frame';
 import { parseWidth, type LaneLayout } from './layout';
 import { cachedLayout } from './road_geometry';
+import { isTrafficIsland, islandSurface, type IslandSurface } from '../model/street_features';
 
 /*
  * Everything on and beside the road that is not a lane: footways and paths at their real width,
@@ -43,6 +44,8 @@ export interface AreaShape {
     id: string;
     kind: AreaKind;
     polygon: Vec2[];
+    /** traffic islands: what they are covered with */
+    surface?: IslandSurface;
 }
 
 export interface KerbLine {
@@ -181,7 +184,7 @@ function pathShape(way: osmWay, graph: coreGraph): PathShape {
 
 function areaKind(tags: Tags): AreaKind | null {
     const value = tags['area:highway'];
-    if (value === 'traffic_island' || tags.traffic_calming === 'island' || tags['area:highway'] === 'island') return 'island';
+    if (isTrafficIsland(tags)) return 'island';
     if (value) {
         if (['footway', 'pedestrian', 'path', 'steps'].includes(value)) return 'pavement';
         if (value === 'cycleway') return 'cycleway';
@@ -369,7 +372,7 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph): StreetG
                 out.paths.push(pathShape(way, graph));
             } else if (way.isClosed() && way.nodes.length > 3) {
                 const kind = areaKind(tags);
-                if (kind) out.areas.push({ id: way.id, kind, polygon: locs(way, graph) });
+                if (kind) out.areas.push({ id: way.id, kind, polygon: locs(way, graph), surface: kind === 'island' ? islandSurface(tags) : undefined });
             }
             if (tags.barrier === 'kerb') {
                 out.kerbs.push({ id: way.id, kerb: tags.kerb ?? 'raised', line: locs(way, graph) });

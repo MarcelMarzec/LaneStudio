@@ -111,3 +111,34 @@
     font-weight: 700;
     letter-spacing: 0.05em;
 }
+
+/* traffic islands by surface; untagged islands are concrete */
+.ideditor.lane-studio .lanes-layer .street-area-island.surface-grass    { fill: rgba(120, 170, 90, 0.9); }
+.ideditor.lane-studio .lanes-layer .street-area-island.surface-paving   { fill: rgba(215, 195, 160, 0.9); }
+.ideditor.lane-studio .lanes-layer .street-area-island.surface-sett     { fill: rgba(150, 120, 95, 0.9); }
+.ideditor.lane-studio .lanes-layer .street-area-island.surface-asphalt  { fill: rgba(70, 74, 82, 0.95); }
+.ideditor.lane-studio .lanes-layer .street-area-island.surface-concrete { fill: rgba(190, 190, 185, 0.9); }
+
+/* street parking: road surface, a layby joining it to the road, and bay lines */
+.ideditor.lane-studio .lanes-layer .street-parking,
+.ideditor.lane-studio .lanes-layer .street-parking-connector {
+    fill: #343840;
+    stroke: none;
+}
+.ideditor.lane-studio .lanes-layer .street-parking {
+    stroke: rgba(255, 255, 255, 0.75);
+    stroke-width: 1.2;
+    stroke-dasharray: 4, 3;
+}
+.ideditor.lane-studio .lanes-layer .street-parking-bay {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.8);
+    stroke-width: 1.2;
+}
+
+/* road_marking=* features; colours and widths are set per feature */
+.ideditor.lane-studio .lanes-layer .road-marking-line { stroke-linecap: butt; }
+.ideditor.lane-studio .lanes-layer .road-marking-text {
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
