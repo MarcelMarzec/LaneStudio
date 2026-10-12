@@ -73,10 +73,9 @@ export function laneTools(context: iD.Context): LaneTools {
         }
     };
 
-    // leaving the map (drawing, saving) puts the tool back to Select
+    // clicking empty map (iD then enters browse mode), drawing or saving puts the tool back to Select
     context.on('enter.lane-tools', () => {
-        const mode = context.mode()?.id;
-        if (_tool !== 'select' && mode !== 'select' && mode !== 'browse') tools.setTool('select');
+        if (_tool !== 'select' && context.mode()?.id !== 'select') tools.setTool('select');
     });
 
     toolsByContext.set(context, tools);

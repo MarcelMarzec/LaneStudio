@@ -18,6 +18,7 @@ import { actionChangeLanes } from '../actions/change_lanes';
 import { laneDriveSide } from '../core/drive_side';
 import { laneState } from '../core/lane_state';
 import { laneTools } from '../core/lane_tools';
+import { laneField, laneSuggestions, laneArrowIcon } from './lane_fields';
 import { isLaneRoad } from '../core/roads';
 import {
     parseLanes, laneRefsInWayOrder, laneCount, insertLane, removeLane, moveLane, setLaneValue, laneValue,
@@ -63,13 +64,6 @@ const paintChoices: Record<string, { value: string; label: string }[]> = {
     'change:lanes': ['yes', 'no', 'not_left', 'not_right'].map(value => ({ value, label: `_lanes.change.${value}` }))
 };
 
-/** Arrows for turn values in the compact corridor and exit lists */
-const turnGlyph: Record<string, string> = {
-    sharp_left: '↙', left: '←', slight_left: '↖', through: '↑', slight_right: '↗', right: '→',
-    sharp_right: '↘', reverse: '↶', merge_to_left: '⇖', merge_to_right: '⇗'
-};
-
-const directionGlyph: Record<LaneDirection, string> = { forward: '↑', backward: '↓', both_ways: '↕' };
 
 
 /** The "Lanes" section in iD's entity editor, shown for one selected road */
@@ -167,9 +161,9 @@ export function uiSectionLanes(context: iD.Context) {
                     if (event.shiftKey) state.toggle(wayID, ref);
                     else state.select(wayID, [ref]);
                 })
+                .attr('title', turns.length ? turns.map(v => t(`_lanes.turn.${v}`, { default: v })).join(' + ') : t('_lanes.turn.none'))
                 .call(button => {
-                    button.append('span').attr('class', 'lane-glyph').text(directionGlyph[ref.direction]);
-                    button.append('span').attr('class', 'lane-turns').text(turns.length ? turns.map(v => t(`_lanes.turn.${v}`, { default: v })).join(' + ') : ' ');
+                    laneArrowIcon(button as any, laneValue(model, ref, 'turn:lanes'), ref.direction);
                 });
         });
 
@@ -275,7 +269,7 @@ export function uiSectionLanes(context: iD.Context) {
                 const ref = { direction, index };
                 cells.append('span')
                     .attr('class', `lanes-cell lane-${laneKindOf(stepModel, ref)}`)
-                    .text(parseTurn(laneValue(stepModel, ref, 'turn:lanes')).map(v => turnGlyph[v] ?? '?').join('') || ' ');
+                    .call(cell => laneArrowIcon(cell as any, laneValue(stepModel, ref, 'turn:lanes'), 'travel', 18));
             });
             if (stepModel.countSource === 'assumed') cells.classed('assumed', true);
         });
@@ -289,7 +283,9 @@ export function uiSectionLanes(context: iD.Context) {
                 const li = exits.append('li')
                     .on('mouseenter', () => utilHighlightEntities([exit.way.id], true, context))
                     .on('mouseleave', () => utilHighlightEntities([exit.way.id], false, context));
-                li.append('span').attr('class', 'lanes-exit-turn').text(`${turnGlyph[exit.turn] ?? ''} ${t(`_lanes.turn.${exit.turn}`)}`);
+                const turnCell = li.append('span').attr('class', 'lanes-exit-turn');
+                laneArrowIcon(turnCell as any, exit.turn, 'travel', 18);
+                turnCell.append('span').text(t(`_lanes.turn.${exit.turn}`));
                 li.append('span').attr('class', 'lanes-exit-name')
                     .text([exit.destinationRef, exit.destination].filter(Boolean).join(' ') || t('_lanes.lookahead.unnamed'));
                 if (!refs.length) continue;
@@ -431,7 +427,7 @@ export function uiSectionLanes(context: iD.Context) {
                 buttons.append('button')
                     .attr('class', direction === first.direction ? 'active' : null)
                     .attr('aria-pressed', direction === first.direction)
-                    .text(`${directionGlyph[direction]} ${t(`_lanes.direction.${direction}`)}`)
+                    .text(t(`_lanes.direction.${direction}`))
                     .on('click', () => {
                         if (direction === first.direction) return;
                         perform(wayID, m => moveLane(m, first, direction), 'move_lane');
@@ -482,58 +478,39 @@ export function uiSectionLanes(context: iD.Context) {
             }
         }
 
-        /* lane type */
+        /* lane type, as a combo of type names */
         const kinds = refs.map(ref => laneKindOf(model, ref));
-        const kindRow = inspector.append('div').attr('class', 'lane-row lane-kind');
-        kindRow.append('label').text(t('_lanes.inspector.kind'));
-        const select = kindRow.append('select')
-            .on('change', function(this: HTMLSelectElement) {
-                const kind = this.value;
-                perform(wayID, m => setLaneKind(m, refs, kind), 'kind');
-            });
-        if (!kinds.every(k => k === kinds[0])) {
-            select.append('option').attr('value', '').text(t('_lanes.inspector.mixed')).property('selected', true);
-        }
-        for (const kind of Object.keys(laneKindKeys)) {
-            select.append('option').attr('value', kind).text(t(`_lanes.kind.${kind}`))
-                .property('selected', kinds.every(k => k === kind));
-        }
+        const kindNames = Object.keys(laneKindKeys).map(kind => ({ kind, name: t(`_lanes.kind.${kind}`) }));
+        laneField(context, inspector, {
+            id: 'kind',
+            label: t('_lanes.inspector.kind'),
+            value: kinds.every(k => k === kinds[0]) ? t(`_lanes.kind.${kinds[0]}`) : undefined,
+            suggestions: kindNames.map(k => ({ value: k.name })),
+            onChange: name => {
+                const kind = kindNames.find(k => k.name.toLowerCase() === name.toLowerCase())?.kind;
+                if (kind) perform(wayID, m => setLaneKind(m, refs, kind), 'kind');
+                else section.reRender();
+            }
+        });
 
-        /* per-lane text values */
-        for (const field of textFields) {
-            const row = inspector.append('div').attr('class', `lane-row lane-field lane-field-${field.id}`);
-            row.append('label').attr('for', `lane-field-${field.id}`).text(t(`_lanes.field.${field.id}`));
-            const value = shared(field.key);
-            row.append('input')
-                .attr('id', `lane-field-${field.id}`)
-                .attr('type', 'text')
-                .attr('placeholder', value === undefined ? t('_lanes.inspector.mixed') : null)
-                .attr('title', readonly(field.key) ? t('_lanes.inspector.readonly', { key: field.key }) : null)
-                .property('disabled', readonly(field.key))
-                .property('value', value ?? '')
-                .on('change', function(this: HTMLInputElement) {
-                    const next = context.cleanTagValue(this.value.trim());
-                    perform(wayID, m => setLaneValue(m, refs, field.key, next), 'value');
-                });
-        }
+        /* per-lane values, laid out like iD's fields with suggestions */
+        const road = context.entity(wayID) as osmWay;
+        const fieldFor = (id: string, key: string, label: string) => laneField(context, inspector, {
+            id,
+            label,
+            value: shared(key),
+            suggestions: laneSuggestions(context, road, key),
+            disabled: readonly(key),
+            disabledReason: t('_lanes.inspector.readonly', { key }),
+            onChange: value => perform(wayID, m => setLaneValue(m, refs, key, value), 'value')
+        });
+        for (const field of textFields) fieldFor(field.id, field.key, t(`_lanes.field.${field.id}`));
 
         /* other lane keys on the road, so nothing is hidden */
         const others = Object.values(model.keys).filter(key => !handledKeys.has(key.id));
         if (others.length) {
             inspector.append('h5').text(t('_lanes.inspector.other_keys'));
-            for (const key of others) {
-                const row = inspector.append('div').attr('class', 'lane-row lane-field');
-                row.append('label').text(key.id);
-                const value = shared(key.id);
-                row.append('input').attr('type', 'text')
-                    .property('disabled', key.readonly)
-                    .attr('placeholder', value === undefined ? t('_lanes.inspector.mixed') : null)
-                    .property('value', value ?? '')
-                    .on('change', function(this: HTMLInputElement) {
-                        const next = context.cleanTagValue(this.value.trim());
-                        perform(wayID, m => setLaneValue(m, refs, key.id, next), 'value');
-                    });
-            }
+            for (const key of others) fieldFor(key.id.replace(/[^\w-]/g, '_'), key.id, key.id);
         }
 
         /* reorder within the direction (left and right as seen by its drivers) */

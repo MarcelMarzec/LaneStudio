@@ -66,6 +66,7 @@
 
 /* turn arrows: white (set on the symbols) with a dark edge, readable on light and dark imagery */
 .ideditor.lane-studio .lanes-layer .turn-arrow {
+    color: #fff;
     filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
 }
 

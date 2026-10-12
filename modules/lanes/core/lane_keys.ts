@@ -6,6 +6,7 @@ import { select as d3_select } from 'd3-selection';
 import { actionChangeLanes } from '../actions/change_lanes';
 import { laneDriveSide } from './drive_side';
 import { laneState } from './lane_state';
+import { laneTools } from './lane_tools';
 import { parseLanes, laneRefsInWayOrder, laneCount, removeLane, sameLaneRef } from '../model';
 
 /**
@@ -55,6 +56,15 @@ export function laneKeys(context: iD.Context) {
         const next = order[Math.max(0, Math.min(order.length - 1, i + by))];
         if (next) state.select(way.id, [next]);
     };
+
+    // Esc leaves a tool first (keeping the selection); a second Esc is iD's own
+    const tools = laneTools(context);
+    keybinding.on('⎋', (event: KeyboardEvent) => {
+        if (tools.tool() === 'select') return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        tools.setTool('select');
+    }, true);
 
     keybinding
         .on(['⌫', '⌦', uiCmd('⌘⌫'), uiCmd('⌘⌦')], handle(removeSelected), true)

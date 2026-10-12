@@ -257,3 +257,29 @@
     width: 100%;
     font-weight: bold;
 }
+
+/* arrows in the sidebar use the map's symbols */
+.ideditor.lane-studio .lanes-strip-lane { color: #fff; justify-content: center; }
+.ideditor.lane-studio .lanes-strip-lane .lane-arrow-icon { display: block; margin: 0 auto; }
+.ideditor.lane-studio .lanes-cell { display: inline-flex; align-items: center; justify-content: center; color: #fff; }
+.ideditor.lane-studio .lanes-exit-turn { display: inline-flex; align-items: center; gap: 4px; color: var(--text-color, #333); }
+
+/* inspector fields laid out like iD's preset fields */
+.ideditor.lane-studio .lane-inspector .lane-form-field {
+    margin: 0 0 10px 0;
+    padding: 0;
+}
+.ideditor.lane-studio .lane-inspector .lane-form-field .field-label {
+    display: flex;
+    font-weight: bold;
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px solid var(--border-color, #ccc);
+    border-bottom: 0;
+    border-radius: 4px 4px 0 0;
+    background: var(--fill-color-light, #f6f6f6);
+}
+.ideditor.lane-studio .lane-inspector .lane-form-field .form-field-input-wrap input {
+    width: 100%;
+    border-radius: 0 0 4px 4px;
+}

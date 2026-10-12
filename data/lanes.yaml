@@ -45,8 +45,8 @@ en:
     kind: Lane type
     remove: Remove this lane
     order: Position
-    move_left: ← Move left
-    move_right: Move right →
+    move_left: Move left
+    move_right: Move right
     mixed: Mixed
     readonly: "{key} is kept as tagged because its values do not match the lanes. Fix it in the tag editor."
     other_keys: Other lane tags

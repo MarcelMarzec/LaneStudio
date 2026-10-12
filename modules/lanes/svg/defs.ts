@@ -9,13 +9,16 @@ interface ArrowShape {
     head: string;
 }
 
+// Every arrow shares one stem from (0,10) up to (0,1) and branches from its top, so combined values
+// such as `left;through` overlap into one arrow instead of side-by-side copies.
+const stem = 'M0 10V1';
 const arrowShapes: Record<string, ArrowShape> = {
-    through: { stem: 'M0 10V-5', head: 'M-3.5 -5L0 -11L3.5 -5Z' },
-    left: { stem: 'M1.5 10V0Q1.5 -5 -3 -5', head: 'M-3 -8.5L-8.5 -5L-3 -1.5Z' },
-    slight_left: { stem: 'M1.5 10V1L-3.5 -4', head: 'M-1 -6.3L-6.5 -7L-5.8 -1.5Z' },
-    sharp_left: { stem: 'M2 10V-3L-3.5 2.5', head: 'M-1.2 4.8L-6.5 5.5L-5.8 0.2Z' },
-    reverse: { stem: 'M3 10V-3Q3 -8 -0.5 -8Q-4 -8 -4 -3V1', head: 'M-7.2 1L-4 7L-0.8 1Z' },
-    merge_to_left: { stem: 'M3 10V4L-3 -2V-5', head: 'M-6.5 -5L-3 -11L0.5 -5Z' }
+    through: { stem: `${stem}M0 1V-6`, head: 'M-3.2 -6L0 -11.5L3.2 -6Z' },
+    left: { stem: `${stem}M0 1Q0 -5 -4.5 -5`, head: 'M-4.5 -8.2L-9.5 -5L-4.5 -1.8Z' },
+    slight_left: { stem: `${stem}M0 1L-4.2 -4.2`, head: 'M-1.9 -6.5L-7.8 -7.8L-6.5 -1.9Z' },
+    sharp_left: { stem: `${stem}M0 1V-3L-4.5 1.5`, head: 'M-2.4 3.6L-8 5L-6.6 -0.6Z' },
+    reverse: { stem: `${stem}M0 1V-4Q0 -8 -3.5 -8Q-7 -8 -7 -4V1.5`, head: 'M-10 1.5L-7 7L-4 1.5Z' },
+    merge_to_left: { stem: `${stem}M0 1V-1L-6 -7V-8.5`, head: 'M-9 -8.5L-6 -13L-3 -8.5Z' }
 };
 
 /** The symbol for one `turn` value, and whether to mirror it (right-hand turns) */
@@ -31,12 +34,13 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
             .attr('id', `lanes-arrow-${name}`)
             .attr('class', 'lanes-arrow-symbol')
             .attr('overflow', 'visible');
-        // styled with attributes: page CSS does not reach reliably into `<use>` copies
+        // styled with attributes (page CSS does not reach reliably into `<use>` copies), in
+        // currentColor: white on the map, darker where the sidebar needs it
         symbol.append('path').attr('class', 'arrow-stem').attr('d', shape.stem)
-            .attr('fill', 'none').attr('stroke', '#fff').attr('stroke-width', 1.6)
+            .attr('fill', 'none').attr('stroke', 'currentColor').attr('stroke-width', 1.6)
             .attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
         symbol.append('path').attr('class', 'arrow-head').attr('d', shape.head)
-            .attr('fill', '#fff').attr('stroke', 'none');
+            .attr('fill', 'currentColor').attr('stroke', 'none');
     }
 
     // give-way triangle painted on the road: its base faces the line ahead, its tip the driver
