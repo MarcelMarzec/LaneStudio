@@ -2,8 +2,82 @@
 en:
   app:
     name: Lane Studio
-  lanes:
-    count:
-      one: "{n} lane"
-      other: "{n} lanes"
-    assumed: Lane count assumed from the road type
+  section:
+    title: Lanes
+    summary:
+      oneway: "{n} lanes, one way"
+      twoway: "{forward} forward, {backward} backward"
+      both_ways: "{n} both ways"
+    assumed: Lane count assumed from the road type; nothing is written until you change it.
+    no_markings: No lane markings
+    counts:
+      forward: Forward
+      backward: Backward
+      both_ways: Both ways (centre)
+      lanes: Lanes
+      add: Add a lane
+      remove: Remove the outer lane
+    strip_hint: Click a lane here or on the map to edit it.
+  direction:
+    forward: Forward
+    backward: Backward
+    both_ways: Both ways
+  inspector:
+    title: "Lane {n} of {total}"
+    title_multi: "{n} lanes selected"
+    direction: Direction of travel
+    turn: Turn arrows
+    change: Lane change allowed
+    change_left: To the left
+    change_right: To the right
+    kind: Lane type
+    remove: Remove this lane
+    mixed: Mixed
+    readonly: "{key} is kept as tagged because its values do not match the lanes. Fix it in the tag editor."
+    other_keys: Other lane tags
+  kind:
+    general: General traffic
+    bus: Bus lane
+    psv: Public transport (PSV)
+    taxi: Taxi lane
+    hov: HOV lane
+    bicycle: Bicycle lane
+    pedestrian: Pedestrian lane
+    restricted: No access
+  turn:
+    sharp_left: Sharp left
+    left: Left
+    slight_left: Slight left
+    through: Through
+    slight_right: Slight right
+    right: Right
+    sharp_right: Sharp right
+    reverse: U-turn
+    merge_to_left: Merge left
+    merge_to_right: Merge right
+    none: No arrow
+  field:
+    maxspeed: Speed limit
+    minspeed: Minimum speed
+    destination: Destination
+    destination_ref: Destination road number
+    access: Access
+    width: Width (m)
+    maxwidth: Width limit
+    maxheight: Height limit
+    surface: Surface
+  issue:
+    count_mismatch: "{key} has {actual} values for {expected} lanes."
+    direction_counts_mismatch: "Forward, backward and centre lanes add up to {actual}, but lanes is {expected}."
+    ambiguous_direction_counts: An odd number of lanes on a two-way road; add lanes:forward and lanes:backward.
+    mixed_key_styles: "{key} is tagged both with and without a direction."
+    invalid_lane_count: "{key} is not a whole number."
+    key_not_updated: "{key} was not updated for the new lane count."
+  annotation:
+    add_lane: Added a lane.
+    remove_lane: Removed a lane.
+    move_lane: Changed a lane's direction.
+    turn: Changed turn lanes.
+    change: Changed lane markings.
+    kind: Changed a lane's type.
+    value: Changed a lane's tags.

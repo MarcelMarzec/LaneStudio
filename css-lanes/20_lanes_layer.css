@@ -87,3 +87,44 @@
     stroke-width: 4px !important;
     stroke: rgba(0, 0, 0, 0.35);
 }
+
+/* clicking: lanes from the editing zoom, and the dividers of the selected road */
+.ideditor.lane-studio .lanes-layer .lane-target {
+    fill: transparent;
+    stroke: none;
+    pointer-events: fill;
+    cursor: pointer;
+}
+.ideditor.lane-studio .lanes-layer .lane-target:hover {
+    fill: rgba(255, 255, 255, 0.12);
+}
+.ideditor.lane-studio .lanes-layer .divider-target {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 10px;
+    pointer-events: stroke;
+    cursor: pointer;
+}
+.ideditor.lane-studio .lanes-layer .divider-target:hover {
+    stroke: rgba(255, 238, 0, 0.45);
+}
+
+/* selected lanes */
+.ideditor.lane-studio .lanes-layer .lane-selected {
+    fill: rgba(255, 238, 0, 0.22);
+    stroke: #ffee00;
+    stroke-width: 2px;
+    stroke-linejoin: round;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .ideditor.lane-studio .lanes-layer .lane-selected {
+        animation: lanes-breathe 1.6s ease-in-out infinite alternate;
+    }
+}
+@keyframes lanes-breathe {
+    from { stroke-opacity: 1; }
+    to   { stroke-opacity: 0.4; }
+}
+.ideditor.lane-studio .surface.lanes-visible .layer-osm path.line.shadow.lanes-drawn {
+    stroke-width: 7px !important;
+}

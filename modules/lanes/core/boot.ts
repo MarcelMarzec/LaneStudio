@@ -1,8 +1,10 @@
 import { coreContext, type coreContext as Context } from '../../core/context';
 import { localizer } from '../../core/localizer';
 import { prefs } from '../../core/preferences';
+import { uiEntityEditorAddSection } from '../../ui/entity_editor';
 import { utilStringQs } from '../../util';
 import { svgLanes } from '../svg/lanes';
+import { uiSectionLanes } from '../ui/section_lanes';
 import { laneStudioVersion } from '../version';
 
 export interface LaneStudioOptions {
@@ -23,6 +25,9 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
         .containerNode(container)
         .createdBy(`LaneStudio ${laneStudioVersion}`)
         .documentTitleBase('Lane Studio');
+
+    // the Lanes section sits in iD's sidebar, after the issues and before the preset fields
+    uiEntityEditorAddSection(uiSectionLanes);
 
     context.container().classed('lane-studio', true);
     context.init();

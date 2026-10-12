@@ -3,10 +3,14 @@ import { select as d3_select } from 'd3-selection';
 import type { Projection } from '../../geo/raw_mercator';
 import type { Vec2 } from '../../geo/vector';
 import type { osmWay } from '../../osm/way';
+import { modeSelect } from '../../modes/select';
+import { actionChangeLanes } from '../actions/change_lanes';
+import { laneState } from '../core/lane_state';
 import { isLaneRoad } from '../core/roads';
 import { roadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
 import type { LaneInfo } from '../geometry/layout';
-import { parseTurn } from '../model';
+import { t } from '../../core/localizer';
+import { parseTurn, dividerAt, setDivider, nextDivider, type LaneDirection, type LaneRef } from '../model';
 import { svgLaneDefs, turnArrowSymbol } from './defs';
 
 /** Zoom levels where each level of detail appears (see the plan's zoom rules) */
@@ -39,6 +43,7 @@ function dividerClass(left: LaneInfo, right: LaneInfo, layoutMarkings: boolean):
 export function svgLanes(projection: Projection, context: iD.Context) {
     let _layer: Selection = d3_select<SVGGElement, unknown>(null!) as Selection;
     let _enabled = true;
+    const state = laneState(context);
 
     const path = (locs: Vec2[], closed: boolean) => {
         if (locs.length < 2) return '';
@@ -65,7 +70,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
     function groups() {
         _layer.selectAll('g.lanes-group')
-            .data(['roadside', 'carriageway', 'junctions', 'lanes', 'dividers', 'kerbs', 'arrows', 'labels'])
+            .data(['roadside', 'carriageway', 'junctions', 'lanes', 'dividers', 'kerbs', 'arrows', 'labels', 'selection', 'targets', 'divider-targets'])
             .enter()
             .append('g')
             .attr('class', (d: string) => `lanes-group lanes-${d}`);
@@ -248,10 +253,117 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .text(d => d.text);
 
 
+        /* selected lanes */
+        const chosen = state.selected();
+        const selectionData = !chosen ? [] : pieces.filter(piece => piece.wayID === chosen.wayID).flatMap(piece =>
+            piece.layout.lanes
+                .map((lane, i) => ({ lane, i, key: `${pieceKey(piece)}-${i}`, polygon: piece.lanes[i] }))
+                .filter(d => state.isSelected(chosen.wayID, d.lane.ref)));
+        const highlights = group('selection').selectAll<SVGPathElement, typeof selectionData[number]>('path')
+            .data(selectionData, d => d.key);
+        highlights.exit().remove();
+        highlights.enter().append('path')
+            .attr('class', 'lane-selected')
+            .merge(highlights)
+            .attr('d', d => path(d.polygon, true));
+
+
+        /* click targets: lanes from the editing zoom, dividers on the selected road */
+        drawTargets(group('targets'), group('divider-targets'), pieces, markings, selected);
+
+
         /* thin iD's own strokes for roads whose lanes are drawn */
         const drawn = new Set<string>(pieces.map(piece => piece.wayID));
         context.surface().selectAll<SVGPathElement, { id: string }>('.layer-osm.lines path.line')
             .classed('lanes-drawn', d => !!d && drawn.has(d.id));
+    }
+
+
+    interface LaneTarget {
+        key: string;
+        /** read by iD's select and hover behaviours, so clicking a lane selects its road */
+        properties: { entity: osmWay };
+        wayID: osmWay['id'];
+        ref: LaneRef;
+        d: string;
+    }
+
+    interface DividerTarget extends Omit<LaneTarget, 'ref'> {
+        direction: LaneDirection;
+        /** the lane on the divider's left, as seen by that direction's drivers */
+        leftIndex: number;
+    }
+
+    function drawTargets(target: Selection, dividerTarget: Selection, pieces: RoadPiece[], editable: boolean, selected: Set<string>) {
+        const graph = context.graph();
+        const laneTargets: LaneTarget[] = !editable ? [] : pieces.flatMap(piece => {
+            const entity = graph.hasEntity(piece.wayID) as osmWay | undefined;
+            if (!entity) return [];
+            return piece.layout.lanes.map((lane, i) => ({
+                key: `${pieceKey(piece)}-${i}`,
+                properties: { entity },
+                wayID: piece.wayID,
+                ref: lane.ref,
+                d: path(piece.lanes[i], true)
+            }));
+        });
+
+        const lanes = target.selectAll<SVGPathElement, LaneTarget>('path.lane-target')
+            .data(laneTargets, d => d.key);
+        lanes.exit().remove();
+        lanes.enter().append('path')
+            .attr('class', 'lane-target')
+            .on('click.lanes', (event: MouseEvent, d: LaneTarget) => {
+                const ids = context.selectedIDs();
+                if (event.shiftKey) {
+                    // iD's select behaviour toggles the road on shift-click; lanes add to the selection instead
+                    if (ids.length !== 1 || ids[0] !== d.wayID) context.enter(modeSelect(context, [d.wayID]));
+                    state.toggle(d.wayID, d.ref);
+                } else if (ids.length === 1 && ids[0] === d.wayID) {
+                    state.select(d.wayID, [d.ref]);
+                }
+            })
+            .merge(lanes)
+            .attr('d', d => d.d);
+
+        const dividerTargets: DividerTarget[] = !editable ? [] : pieces.filter(piece => selected.has(piece.wayID)).flatMap(piece => {
+            const entity = graph.hasEntity(piece.wayID) as osmWay | undefined;
+            const lanesHere = piece.layout.lanes;
+            if (!entity || !piece.layout.markings) return [];
+            const result: DividerTarget[] = [];
+            for (let k = 1; k < lanesHere.length; k++) {
+                const left = lanesHere[k - 1].ref;
+                const right = lanesHere[k].ref;
+                if (left.direction !== right.direction) continue;
+                result.push({
+                    key: `${pieceKey(piece)}-${k}`,
+                    properties: { entity },
+                    wayID: piece.wayID,
+                    direction: left.direction,
+                    // backward lanes run against the way, so their drivers' left is the way's right
+                    leftIndex: left.direction === 'backward' ? right.index : left.index,
+                    d: path(piece.boundaries[k], false)
+                });
+            }
+            return result;
+        });
+
+        // dividers sit in a group above the lanes, so they win where they overlap
+        const dividers = dividerTarget.selectAll<SVGPathElement, DividerTarget>('path.divider-target')
+            .data(dividerTargets, d => d.key);
+        dividers.exit().remove();
+        dividers.enter().append('path')
+            .attr('class', 'divider-target')
+            .on('click.lanes', (_event: MouseEvent, d: DividerTarget) => {
+                const piece = pieces.find(p => p.wayID === d.wayID);
+                if (!piece || piece.layout.model.keys['change:lanes']?.readonly) return;
+                context.perform(
+                    actionChangeLanes(d.wayID, m => setDivider(m, d.direction, d.leftIndex, nextDivider(dividerAt(m, d.direction, d.leftIndex)))),
+                    t('_lanes.annotation.change')
+                );
+            })
+            .merge(dividers)
+            .attr('d', d => d.d);
     }
 
 
@@ -281,6 +393,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
     // iD redraws edited features without redrawing layers, so follow every map draw
     context.map().on('drawn.lanes', draw);
+    state.on('change.layer', draw);
 
     drawLanes.enabled = function(val?: boolean) {
         if (!arguments.length) return _enabled;

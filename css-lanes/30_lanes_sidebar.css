@@ -1,0 +1,129 @@
+/* The Lanes section in the sidebar */
+.ideditor.lane-studio .lanes-editor {
+    padding: 0 0 10px 0;
+}
+.ideditor.lane-studio .lanes-editor .lanes-summary {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+.ideditor.lane-studio .lanes-editor .lanes-note {
+    color: var(--text-color-secondary, #666);
+    font-size: 12px;
+    margin: 4px 0;
+}
+.ideditor.lane-studio .lanes-editor .lanes-note.assumed {
+    border-left: 3px solid #f0a800;
+    padding-left: 6px;
+}
+
+.ideditor.lane-studio .lanes-counts {
+    display: grid;
+    gap: 4px;
+    margin: 8px 0;
+}
+.ideditor.lane-studio .lanes-count-row {
+    display: grid;
+    grid-template-columns: 1fr 32px 32px 32px;
+    align-items: center;
+    gap: 4px;
+}
+.ideditor.lane-studio .lanes-count-row button {
+    height: 28px;
+    font-size: 16px;
+    font-weight: bold;
+}
+.ideditor.lane-studio .lanes-count-value {
+    text-align: center;
+    font-weight: bold;
+}
+
+/* one cell per lane, in the order they lie along the road */
+.ideditor.lane-studio .lanes-strip {
+    display: flex;
+    gap: 3px;
+    margin: 6px 0;
+}
+.ideditor.lane-studio .lanes-strip-lane {
+    flex: 1 1 0;
+    min-width: 0;
+    height: auto;
+    min-height: 54px;
+    padding: 4px 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #5a606a;
+    color: #fff;
+    border: 2px solid transparent;
+    border-radius: 4px;
+}
+.ideditor.lane-studio .lanes-strip-lane .lane-glyph { font-size: 18px; line-height: 20px; }
+.ideditor.lane-studio .lanes-strip-lane .lane-turns { font-size: 10px; line-height: 12px; text-align: center; overflow-wrap: anywhere; }
+.ideditor.lane-studio .lanes-strip-lane.lane-bus        { background: #b33a3a; }
+.ideditor.lane-studio .lanes-strip-lane.lane-psv,
+.ideditor.lane-studio .lanes-strip-lane.lane-taxi       { background: #b77d10; }
+.ideditor.lane-studio .lanes-strip-lane.lane-hov        { background: #3d5c99; }
+.ideditor.lane-studio .lanes-strip-lane.lane-bicycle    { background: #24764a; }
+.ideditor.lane-studio .lanes-strip-lane.lane-pedestrian { background: #8a7a55; }
+.ideditor.lane-studio .lanes-strip-lane.selected {
+    border-color: #ffee00;
+    box-shadow: 0 0 0 1px #000;
+}
+
+.ideditor.lane-studio .lanes-issues {
+    margin: 6px 0;
+    padding-left: 18px;
+    color: #b35c00;
+    font-size: 12px;
+    list-style: disc;
+}
+
+/* the inspector for the selected lanes */
+.ideditor.lane-studio .lane-inspector {
+    border-top: 1px solid var(--border-color, #ccc);
+    margin-top: 10px;
+    padding-top: 8px;
+}
+.ideditor.lane-studio .lane-inspector h4 { margin: 0 0 6px 0; }
+.ideditor.lane-studio .lane-inspector h5 { margin: 10px 0 4px 0; }
+.ideditor.lane-studio .lane-row {
+    margin: 6px 0;
+}
+.ideditor.lane-studio .lane-row > label:first-child {
+    display: block;
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+.ideditor.lane-studio .lane-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+.ideditor.lane-studio .lane-buttons button {
+    height: auto;
+    padding: 3px 6px;
+    font-size: 12px;
+}
+.ideditor.lane-studio .lane-buttons button.active {
+    background: var(--link-color, #7092ff);
+    color: #fff;
+}
+.ideditor.lane-studio .lane-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 12px;
+    font-size: 12px;
+}
+.ideditor.lane-studio .lane-field {
+    display: grid;
+    grid-template-columns: 40% 60%;
+    align-items: center;
+}
+.ideditor.lane-studio .lane-field > label:first-child { margin: 0; overflow-wrap: anywhere; }
+.ideditor.lane-studio .lane-kind select { width: 100%; }
+.ideditor.lane-studio .lane-remove {
+    margin-top: 10px;
+    width: 100%;
+}

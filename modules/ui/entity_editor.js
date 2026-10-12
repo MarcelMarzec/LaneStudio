@@ -18,6 +18,15 @@ import { uiSectionRawMembershipEditor } from './sections/raw_membership_editor';
 import { uiSectionRawTagEditor } from './sections/raw_tag_editor';
 import { uiSectionSelectionList } from './sections/selection_list';
 
+// Factories for extra sections that an app built on iD shows after the issues section
+const _extraSectionFactories = [];
+
+/** Registers an extra entity editor section; call before the editor first renders */
+export function uiEntityEditorAddSection(factory) {
+    _extraSectionFactories.push(factory);
+}
+
+
 export function uiEntityEditor(context) {
     var dispatch = d3_dispatch('choose');
     var _state = 'select';
@@ -94,6 +103,7 @@ export function uiEntityEditor(context) {
                     dispatch.call('choose', this, presets);
                 }),
                 uiSectionEntityIssues(context),
+                ..._extraSectionFactories.map(factory => factory(context)),
                 uiSectionPresetFields(context).on('change', changeTags).on('revert', revertTags),
                 uiSectionRawTagEditor('raw-tag-editor', context).on('change', changeTags),
                 uiSectionRawMemberEditor(context),
