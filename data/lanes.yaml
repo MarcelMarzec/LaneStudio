@@ -2,6 +2,18 @@
 en:
   app:
     name: Lane Studio
+  welcome:
+    title: Welcome to Lane Studio
+    intro: "Lane Studio {version} is a lane and road editor for OpenStreetMap, built on iD {idVersion}. Your edits are saved to {server} as changesets tagged created_by=LaneStudio."
+    steps:
+      zoom: Zoom in to street level. Lanes appear from zoom 17 and can be edited from zoom 18.
+      click: Click a lane to edit it in the Lanes section of the sidebar; shift-click to pick more lanes.
+      tools: Use Paint to apply one value to many lanes, Width to drag lane widths, and Connect to link lanes across a junction.
+      markings: Use Markings to place crossings, stop and give way signs, signals and traffic calming.
+      save: Every change can be undone. Save uploads your changes with a changeset comment.
+    rules: "Map what is on the ground: use your own survey, the aerial imagery offered here and street-level photos you are allowed to use. Never copy from Google or other maps. Change one road at a time and check it before saving."
+    wiki: "Read more on the wiki:"
+    start: Start mapping
   section:
     title: Lanes
     summary:
@@ -189,6 +201,27 @@ en:
     islands:
       one: "{n} traffic island is mapped on this road."
       other: "{n} traffic islands are mapped on this road."
+  validation:
+    title: Lane tags
+    tip: Find lane tags that do not match the number of lanes, unknown turn values and other lane tagging problems
+    count_mismatch: "{feature} has {actual} values in {key} for {expected} lanes."
+    count_mismatch_reference: "Every *:lanes tag needs one value per lane, separated by |. Fix the value or the lane count in the Lanes section."
+    direction_counts_mismatch: "{feature}: lanes:forward, lanes:backward and lanes:both_ways add up to {actual}, but lanes={expected}."
+    ambiguous_direction_counts: "{feature} has an odd number of lanes but no lanes:forward and lanes:backward."
+    mixed_key_styles: "{feature} has {key} both with and without a direction."
+    invalid_lane_count: "{feature} has {key} that is not a whole number of lanes."
+    zero_lanes: "{feature} has lanes=0."
+    zero_lanes_reference: Roads without lane markings are tagged lane_markings=no, not lanes=0.
+    fix_zero_lanes: Use lane_markings=no
+    unknown_turn: "{feature} has an unknown turn value \"{value}\"."
+    unknown_turn_reference: "Turn values are left, slight_left, sharp_left, through, right, slight_right, sharp_right, reverse, merge_to_left, merge_to_right and none."
+    fix_unknown_turn: "Change \"{value}\" to \"{replacement}\""
+    deprecated_change: "{feature} uses the deprecated lane change value \"{value}\"."
+    fix_deprecated_change: "Change \"{value}\" to \"{replacement}\""
+    hov_lane: "{feature} has hov=lane, which is deprecated."
+    hov_lane_reference: Mark the HOV lanes with hov:lanes=designated|… instead, using the Lanes section.
+    destination_twoway: "{feature} has destination on a two-way road."
+    destination_twoway_reference: Use destination:forward or destination:backward on two-way roads.
   annotation:
     marking: Changed a road marking.
     roadside: Changed the roadside.

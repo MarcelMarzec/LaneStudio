@@ -167,6 +167,27 @@ export class coreLocalizer {
         return this;
     }
 
+    /**
+     * Deep-merges extra strings into a loaded scope, e.g. the names of an app's own validation
+     * rules, which iD's issue panes look up under `issues.<rule>` in the general scope
+     */
+    mergeStrings(scopeId: string, locale: string, strings: Record<string, unknown>) {
+        const merge = (target: Record<string, unknown>, source: Record<string, unknown>) => {
+            for (const [key, value] of Object.entries(source)) {
+                if (value && typeof value === 'object' && !Array.isArray(value)) {
+                    if (!target[key] || typeof target[key] !== 'object') target[key] = {};
+                    merge(target[key] as Record<string, unknown>, value as Record<string, unknown>);
+                } else {
+                    target[key] = value;
+                }
+            }
+        };
+        this._localeStrings[scopeId] ??= {};
+        this._localeStrings[scopeId][locale] ??= {} as Translations;
+        merge(this._localeStrings[scopeId][locale] as unknown as Record<string, unknown>, strings);
+        return this;
+    }
+
     ensureLoaded() {
         if (this._loadPromise) return this._loadPromise;
 

@@ -241,3 +241,19 @@
     font-size: 12px;
 }
 .ideditor.lane-studio .lanes-copy-next { width: 100%; margin-top: 6px; }
+
+/* welcome screen */
+.ideditor.lane-studio .lanes-welcome ol {
+    list-style: decimal;
+    padding-left: 20px;
+    margin: 8px 0;
+}
+.ideditor.lane-studio .lanes-welcome li { margin: 4px 0; }
+.ideditor.lane-studio .lanes-welcome-rules {
+    border-left: 3px solid #f0a800;
+    padding-left: 8px;
+}
+.ideditor.lane-studio .lanes-welcome-start {
+    width: 100%;
+    font-weight: bold;
+}

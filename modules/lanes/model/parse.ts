@@ -75,6 +75,8 @@ function laneCounts(tags: Tags, oneway: LaneOneway, groups: Map<string, KeyGroup
     let source: LaneModel['countSource'] = 'tagged';
 
     let total = parseCount(tags.lanes);
+    // lanes=0 is not a lane count: roads without markings use lane_markings=no instead
+    if (total === 0) total = NaN;
     if (Number.isNaN(total)) {
         issues.push({ code: 'invalid_lane_count', key: 'lanes' });
         total = undefined;

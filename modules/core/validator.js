@@ -7,6 +7,14 @@ import { modeSelect } from '../modes/select';
 import { utilArrayChunk, utilArrayDifference, utilArrayGroupBy, utilArrayIntersection, utilArrayUnion, utilEntityAndDeepMemberIDs, utilRebind } from '../util';
 import * as Validations from '../validations/index';
 
+// Validation rules added by an app built on iD, created alongside iD's own rules
+const _extraValidations = [];
+
+/** Registers an extra validation rule (a `CreateValidator`); call before iD is initialised */
+export function coreValidatorAddRule(createValidator) {
+  _extraValidations.push(createValidator);
+}
+
 
 export function coreValidator(context) {
   let dispatch = d3_dispatch('validated', 'focusedIssue');
@@ -78,7 +86,7 @@ export function coreValidator(context) {
   // Initialize the validator, called once on iD startup
   //
   validator.init = () => {
-    Object.values(Validations).forEach(validation => {
+    [...Object.values(Validations), ..._extraValidations].forEach(validation => {
       if (typeof validation !== 'function') return;
       const fn = validation(context);
       const key = fn.type;
