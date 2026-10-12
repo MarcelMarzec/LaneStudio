@@ -18,8 +18,7 @@ Then open:
 - http://127.0.0.1:8080/lanes.html for Lane Studio
 - http://127.0.0.1:8080/ for plain iD
 
-`npm start` rebuilds JavaScript and CSS on save. After editing `data/lanes.yaml`, run
-`npm run build:data` (or restart) to rebuild the strings.
+`npm start` rebuilds JavaScript, CSS and Lane Studio's strings (`data/lanes.yaml`) on save.
 
 Before pushing: `npm run lint`, `npx tsc` and `npm run test:once`.
 
@@ -40,6 +39,14 @@ text and give-way triangles from zoom 19.
 - Click the line between two lanes of the selected road to cycle its marking: dashed, solid,
   crossable one way, crossable the other way (`change:lanes`).
 
+**Settings** (the Lane Studio pane, first in the pane bar on the right, shortcut `K`)
+
+- Lane surface opacity: 35% is the usual see-through look, 100% fully opaque, 0% invisible; the
+  reset button returns to 35%.
+- Hide iD's lines and points under lanes: hides iD's own way lines, vertices, points and direction
+  cones for everything Lane Studio draws. They can still be clicked, and hovering or selecting a road
+  highlights Lane Studio's drawing of it.
+
 **Tools** (buttons in the Lanes section)
 
 | Tool | What it does |
@@ -56,7 +63,7 @@ Lane fields in the inspector work like iD's own fields: type or pick from the su
 the country's units, access and surface values, widths, destinations used on nearby roads).
 
 **Look ahead**: the roads the selected road leads on to (highlighted on the map), the exits at its
-end with a suggested turn and the exit's sign text (written to the selected lanes only when you
+end (for a road entering a roundabout, the roundabout's exits, numbered) with a suggested turn and the exit's sign text (written to the selected lanes only when you
 click Turn or Destination), and "Copy lanes to the next road" (lane counts and lane tags, not turn
 or destination lanes; one road per click).
 
@@ -94,6 +101,20 @@ calming and mini-roundabouts on road nodes; `road_marking=*` lines, areas and te
 with its bays and a layby joining it to the road; and lane connections. Everything else is drawn by
 iD as usual.
 
+**Surfaces**: `surface=*` (and `surface:lanes`) changes how carriageways, lanes, paths and mapped areas
+look: asphalt, concrete, paving slabs, setts and gravel (as textures), unpaved, grass, wood and metal.
+A road mapped as an area (`area=yes` + `highway=service` etc., or `area:highway=<road>`) is the road's
+surface: ways inside it draw only their lane lines, arrows and special lanes. Shared foot and cycle
+paths are striped with both colours, segregated ones split in two.
+
+**Also drawn**: mini-roundabouts (a circular carriageway from `diameter=*` or the roads, the white
+disc, and a give way line on each approach unless one is mapped); turning circles and loops (from
+`diameter=*`, else twice the road width); speed limit roundels where the limit changes between two
+roads that both have one; barriers on roads (gates and similar across the road, bollards and blocks
+as posts, cattle grids) and on paths; fences, walls, guard rails, jersey barriers and hedges at their
+width; and small direction arrows on the lanes of one-way roads (iD's own arrows on the way line are
+hidden).
+
 **Junctions** (drawing only; no tags are written):
 
 - The main road through a junction (the roundabout ring, or the road that carries on with the same
@@ -102,7 +123,14 @@ iD as usual.
 - Where one road continues another, the lanes that carry on line up: the road with fewer lanes is
   shifted (unless it has `placement` tags), an added or dropped outer lane tapers over 25 m, and a
   one-way slip road starts where the lane leading into it ends. Which lanes carry on comes from a
-  `type=connectivity` relation, else from `turn:lanes`.
+  `type=connectivity` relation, else from `turn:lanes`; a lane marked `merge_to_left` or
+  `merge_to_right` is the one that ends. A shift holds for 30 m from the join, then fades out over
+  50 m.
+- Where a mapped carriageway area covers a road, the road is shifted to sit in the middle of it, and
+  stop, give way and signal lines, symbols and crossings move with it.
+- Junctions joined by a road shorter than 25 m are one junction: one box, and the short link is drawn
+  only as lane guide lines. At a fork (a dual carriageway splitting) nothing runs through, so the
+  carriageways stop where they meet.
 - Dashed guide lines carry each lane through the junction box to the lanes it leads to, from its turn
   arrows and the exit angles; connectivity relations are drawn as solid blue curves instead.
 - Roads shorter than 8 m get an outline and a marker you can click.
@@ -152,11 +180,11 @@ page for Lane Studio that names its `created_by` value, and list it on the wiki'
 | Entry point and boot | `modules/lanes/index.ts`, `modules/lanes/core/boot.ts`, `lanes.html` |
 | Lane model (parse, edit, write `*:lanes` tags), lane types, markings, connectivity, street feature tags | `modules/lanes/model/` |
 | Actions (lanes, markings, copy, connect), each one undo step | `modules/lanes/actions/` |
-| Selected lanes, tools, keyboard, roadside detection | `modules/lanes/core/` |
+| Selected lanes, tools, keyboard, settings, roadside detection | `modules/lanes/core/` |
 | Geometry in metres: lanes, junctions and lane connections, street features, road markings, parking | `modules/lanes/geometry/` |
 | Look-ahead corridor, roundabouts | `modules/lanes/osm/` |
 | Map drawing and click targets | `modules/lanes/svg/` |
-| Sidebar sections and welcome screen | `modules/lanes/ui/` |
+| Sidebar sections, settings pane and welcome screen | `modules/lanes/ui/` |
 | Lane tags validation rule | `modules/lanes/validations/` |
 | Styles (built into `dist/lanes.css`) | `css-lanes/` |
 | Strings (read as `t('_lanes.…')`) | `data/lanes.yaml` |
@@ -172,8 +200,9 @@ iD itself needed only small, default-preserving hooks, so iD at `index.html` beh
 | `prefs.prefix()` for stored keys, saved edits and the edit lock | `modules/core/preferences.js`, `modules/core/history.ts` | no prefix |
 | `localizer.addLocaleDir()` and `localizer.mergeStrings()` | `modules/core/localizer.ts` | none |
 | `uiEntityEditorAddSection()` for extra sidebar sections | `modules/ui/entity_editor.js` | none |
+| `uiInitAddPane()` for extra map panes | `modules/ui/init.js` | none |
 | `coreValidatorAddRule()` for extra validation rules | `modules/core/validator.js` | none |
-| Second esbuild entry, CSS bundle and strings file | `config/`, `scripts/` | iD unchanged |
+| Second esbuild entry, CSS bundle and strings file (`scripts/build_lanes_strings.js`) | `config/`, `scripts/` | iD unchanged |
 
 Lane Studio saves changesets with `created_by=LaneStudio <version>`, keeps its saved edits and
 preferences under a `lanes_` prefix, and writes `none` for unmarked lanes in new `turn:lanes` keys.
