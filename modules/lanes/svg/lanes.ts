@@ -108,6 +108,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const ways = visible.filter(isLaneRoad);
         const { pieces, junctions } = roadGeometry(ways, graph);
         const selected = new Set(context.selectedIDs());
+        const corridor = state.corridor();
         const group = groups();
         const markings = zoom >= laneZooms.markings;
         const labels = zoom >= laneZooms.labels;
@@ -137,7 +138,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .merge(carriageways)
             .attr('class', d => 'carriageway' +
                 (d.layout.assumed ? ' assumed' : '') +
-                (selected.has(d.wayID) ? ' selected' : ''))
+                (selected.has(d.wayID) ? ' selected' : '') +
+                (corridor.has(d.wayID) && !selected.has(d.wayID) ? ' corridor' : ''))
             .attr('d', d => path(d.carriageway, true));
 
 
@@ -512,6 +514,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     // iD redraws edited features without redrawing layers, so follow every map draw
     context.map().on('drawn.lanes', draw);
     state.on('change.layer', draw);
+    state.on('corridor.layer', draw);
     tools.on('change.layer', draw);
 
     drawLanes.enabled = function(val?: boolean) {

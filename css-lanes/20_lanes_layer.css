@@ -153,3 +153,8 @@
 .ideditor.lane-studio.lanes-tool-marking .layer-touch .target {
     pointer-events: none;
 }
+
+/* roads of the look-ahead corridor */
+.ideditor.lane-studio .lanes-layer .carriageway.corridor {
+    fill: rgba(112, 146, 255, 0.28);
+}

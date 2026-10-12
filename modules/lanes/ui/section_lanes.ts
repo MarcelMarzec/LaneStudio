@@ -2,6 +2,10 @@ import { t } from '../../core/localizer';
 import type { WayId } from '../../osm';
 import type { osmWay } from '../../osm/way';
 import { actionChangeTags } from '../../actions/change_tags';
+import { prefs } from '../../core/preferences';
+import { modeSelect } from '../../modes/select';
+import { actionCopyLanes, canCopyLanes } from '../actions/copy_lanes';
+import { laneCorridor } from '../osm/corridor';
 import { uiSection } from '../../ui/section';
 import { utilHighlightEntities } from '../../util';
 import {
@@ -55,6 +59,12 @@ const paintChoices: Record<string, { value: string; label: string }[]> = {
     'kind': Object.keys(laneKindKeys).map(kind => ({ value: kind, label: `_lanes.kind.${kind}` })),
     'turn:lanes': turnValues.map(value => ({ value, label: `_lanes.turn.${value}` })),
     'change:lanes': ['yes', 'no', 'not_left', 'not_right'].map(value => ({ value, label: `_lanes.change.${value}` }))
+};
+
+/** Arrows for turn values in the compact corridor and exit lists */
+const turnGlyph: Record<string, string> = {
+    sharp_left: '↙', left: '←', slight_left: '↖', through: '↑', slight_right: '↗', right: '→',
+    sharp_right: '↘', reverse: '↶', merge_to_left: '⇖', merge_to_right: '⇗'
 };
 
 const directionGlyph: Record<LaneDirection, string> = { forward: '↑', backward: '↓', both_ways: '↕' };
@@ -172,7 +182,109 @@ export function uiSectionLanes(context: iD.Context) {
         }
 
         if (selected.length) renderInspector(wrap, model, wayID, selected);
+        renderLookAhead(wrap, road, model, selected);
         renderRoadside(wrap, road);
+    }
+
+
+    /**
+     * Look ahead: the roads the selected road leads on to, the exits at its end with suggested
+     * turn and destination values for the selected lanes, and copying lanes to the next road.
+     * Suggestions are only written when clicked, one road per click.
+     */
+    function renderLookAhead(wrap: Div, road: osmWay, model: LaneModel, refs: LaneRef[]) {
+        const graph = context.graph();
+        const travel: 'forward' | 'backward' = model.oneway || (refs[0]?.direction === 'backward' ? 'backward' : 'forward');
+        const limit = Math.max(1, Math.min(10, parseInt(prefs('lanes-lookahead') ?? '', 10) || 5));
+        const steps = laneCorridor(road, graph, { direction: travel, maxWays: limit, maxMetres: 1500 });
+        state.setCorridor(steps.map(step => step.way.id));
+
+        const box = wrap.append('div').attr('class', 'lanes-lookahead');
+        const head = box.append('div').attr('class', 'lanes-lookahead-head');
+        head.append('h4').text(t('_lanes.lookahead.title'));
+        head.append('label').text(t('_lanes.lookahead.limit'))
+            .append('input').attr('type', 'number').attr('min', 1).attr('max', 10)
+            .property('value', limit)
+            .on('change', function(this: HTMLInputElement) {
+                prefs('lanes-lookahead', String(Math.max(1, Math.min(10, parseInt(this.value, 10) || 5))));
+                section.reRender();
+            });
+        if (!model.oneway) {
+            box.append('p').attr('class', 'lanes-note').text(t(`_lanes.lookahead.travelling_${travel}`));
+        }
+
+        /* the corridor, one row per road */
+        const list = box.append('ol').attr('class', 'lanes-corridor');
+        steps.forEach((step, i) => {
+            const tags = step.way.tags;
+            const stepModel = parseLanes(tags, { driveSide: laneDriveSide(step.way, graph) });
+            // the lanes travelling our way on this road, left to right for the driver
+            const direction: LaneDirection = stepModel.oneway || (step.alongWay ? 'forward' : 'backward');
+            const item = list.append('li').attr('class', i === 0 ? 'current' : null)
+                .on('mouseenter', () => utilHighlightEntities([step.way.id], true, context))
+                .on('mouseleave', () => utilHighlightEntities([step.way.id], false, context));
+            item.append('a').attr('href', '#')
+                .text([tags.ref, tags.name].filter(Boolean).join(' ') || t('_lanes.lookahead.unnamed'))
+                .on('click', (event: MouseEvent) => {
+                    event.preventDefault();
+                    utilHighlightEntities([step.way.id], false, context);
+                    context.enter(modeSelect(context, [step.way.id]));
+                });
+            item.append('span').attr('class', 'lanes-corridor-distance').text(` ${Math.round(step.distance)} m`);
+            const cells = item.append('div').attr('class', 'lanes-corridor-cells');
+            stepModel.lanes[direction].forEach((_, index) => {
+                const ref = { direction, index };
+                cells.append('span')
+                    .attr('class', `lanes-cell lane-${laneKindOf(stepModel, ref)}`)
+                    .text(parseTurn(laneValue(stepModel, ref, 'turn:lanes')).map(v => turnGlyph[v] ?? '?').join('') || ' ');
+            });
+            if (stepModel.countSource === 'assumed') cells.classed('assumed', true);
+        });
+
+        /* exits at the end of the selected road */
+        const first = steps[0];
+        if (first?.exits.length) {
+            box.append('h5').text(t('_lanes.lookahead.exits'));
+            const exits = box.append('ul').attr('class', 'lanes-exits');
+            for (const exit of first.exits) {
+                const li = exits.append('li')
+                    .on('mouseenter', () => utilHighlightEntities([exit.way.id], true, context))
+                    .on('mouseleave', () => utilHighlightEntities([exit.way.id], false, context));
+                li.append('span').attr('class', 'lanes-exit-turn').text(`${turnGlyph[exit.turn] ?? ''} ${t(`_lanes.turn.${exit.turn}`)}`);
+                li.append('span').attr('class', 'lanes-exit-name')
+                    .text([exit.destinationRef, exit.destination].filter(Boolean).join(' ') || t('_lanes.lookahead.unnamed'));
+                if (!refs.length) continue;
+                const actions = li.append('span').attr('class', 'lanes-exit-actions');
+                actions.append('button').text(t('_lanes.lookahead.use_turn'))
+                    .attr('title', t('_lanes.lookahead.use_turn_tip'))
+                    .on('click', () => perform(road.id, m => refs.reduce(
+                        (acc, ref) => setLaneValue(acc, ref, 'turn:lanes', toggleTurn(laneValue(acc, ref, 'turn:lanes'), exit.turn)), m), 'turn'));
+                if (exit.destination || exit.destinationRef) {
+                    actions.append('button').text(t('_lanes.lookahead.use_destination'))
+                        .attr('title', t('_lanes.lookahead.use_destination_tip'))
+                        .on('click', () => perform(road.id, m => {
+                            let next = m;
+                            if (exit.destination && !next.keys['destination:lanes']?.readonly) next = setLaneValue(next, refs, 'destination:lanes', exit.destination);
+                            if (exit.destinationRef && !next.keys['destination:ref:lanes']?.readonly) next = setLaneValue(next, refs, 'destination:ref:lanes', exit.destinationRef);
+                            return next;
+                        }, 'value'));
+                }
+            }
+            if (!refs.length) box.append('p').attr('class', 'lanes-note').text(t('_lanes.lookahead.select_lanes'));
+        }
+
+        /* copy to the next road */
+        const second = steps[1];
+        if (second && canCopyLanes(road.tags, second.way.tags)) {
+            const sameOrientation = first.alongWay === second.alongWay;
+            box.append('button').attr('class', 'lanes-copy-next')
+                .text(t('_lanes.lookahead.copy', { road: second.way.tags.ref ?? second.way.tags.name ?? second.way.id }))
+                .attr('title', t('_lanes.lookahead.copy_tip'))
+                .on('click', () => {
+                    context.perform(actionCopyLanes(road.id, second.way.id, sameOrientation), t('_lanes.annotation.copy'));
+                    context.enter(modeSelect(context, [second.way.id]));
+                });
+        }
     }
 
 

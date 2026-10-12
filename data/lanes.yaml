@@ -131,6 +131,20 @@ en:
     place_tip: Choose what to place, then click a road on the map
     placing: "Click a road to place a {type}."
     stop_placing: Stop placing
+  lookahead:
+    title: Look ahead
+    limit: "Roads: "
+    travelling_forward: Following the road in its drawing direction. Select a backward lane to look the other way.
+    travelling_backward: Following the road against its drawing direction.
+    unnamed: Unnamed road
+    exits: Exits at the end of this road
+    use_turn: Turn
+    use_turn_tip: Add this turn to the selected lanes' arrows
+    use_destination: Destination
+    use_destination_tip: Use this exit's sign text as the selected lanes' destination; check it against the real sign
+    select_lanes: Select lanes to use an exit's turn or destination.
+    copy: "Copy lanes to {road}"
+    copy_tip: Copies lane counts and lane tags (not turn or destination lanes) onto the next road, as one undo step
   roadside:
     title: Roadside
     hint: Left and right are as seen looking along the way's drawing direction.
@@ -157,6 +171,7 @@ en:
   annotation:
     marking: Changed a road marking.
     roadside: Changed the roadside.
+    copy: Copied lanes to the next road.
     add_lane: Added a lane.
     remove_lane: Removed a lane.
     move_lane: Changed a lane's direction.

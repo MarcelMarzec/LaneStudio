@@ -17,8 +17,11 @@ export interface LaneState {
     toggle(wayID: WayId, ref: LaneRef): void;
     clear(): void;
     isSelected(wayID: string, ref: LaneRef): boolean;
-    /** `change`, optionally namespaced like `change.layer` */
-    on(type: `change${string}`, listener: (() => void) | null): LaneState;
+    /** the roads of the look-ahead corridor, highlighted on the map */
+    corridor(): Set<string>;
+    setCorridor(ids: string[]): void;
+    /** `change` (selected lanes) or `corridor`, optionally namespaced like `change.layer` */
+    on(type: `change${string}` | `corridor${string}`, listener: (() => void) | null): LaneState;
 }
 
 
@@ -32,8 +35,9 @@ export function laneState(context: iD.Context): LaneState {
     const existing = states.get(context);
     if (existing) return existing;
 
-    const dispatch = d3_dispatch('change');
+    const dispatch = d3_dispatch('change', 'corridor');
     let _selected: LaneSelection | null = null;
+    let _corridor = new Set<string>();
 
     const changed = () => dispatch.call('change', state);
 
@@ -62,6 +66,15 @@ export function laneState(context: iD.Context): LaneState {
             changed();
         },
 
+        corridor: () => _corridor,
+
+        setCorridor(ids) {
+            const next = new Set(ids);
+            if (next.size === _corridor.size && ids.every(id => _corridor.has(id))) return;
+            _corridor = next;
+            dispatch.call('corridor', state);
+        },
+
         isSelected: (wayID, ref) =>
             !!_selected && _selected.wayID === wayID && _selected.refs.some(r => sameLaneRef(r, ref)),
 
@@ -74,8 +87,9 @@ export function laneState(context: iD.Context): LaneState {
 
     // leaving the way clears its lanes
     context.on('enter.lane-state', () => {
-        if (!_selected) return;
         const ids = context.selectedIDs();
+        if (_corridor.size && (ids.length !== 1 || !_corridor.has(ids[0]))) state.setCorridor([]);
+        if (!_selected) return;
         if (context.mode()?.id !== 'select' || ids.length !== 1 || ids[0] !== _selected.wayID) state.clear();
     });
 

@@ -168,3 +168,76 @@
 }
 .ideditor.lane-studio .lanes-marking-type { width: 100%; margin: 4px 0; }
 .ideditor.lane-studio.lanes-tool-marking .lanes-layer .lane-target { cursor: crosshair; }
+
+/* look ahead: the corridor, the exits and copying lanes on */
+.ideditor.lane-studio .lanes-lookahead {
+    border-top: 1px solid var(--border-color, #ccc);
+    margin-top: 10px;
+    padding-top: 8px;
+}
+.ideditor.lane-studio .lanes-lookahead-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.ideditor.lane-studio .lanes-lookahead-head h4 { margin: 0; }
+.ideditor.lane-studio .lanes-lookahead-head input {
+    width: 48px;
+    height: 24px;
+    margin-left: 4px;
+}
+.ideditor.lane-studio .lanes-corridor {
+    list-style: decimal;
+    padding-left: 22px;
+    margin: 6px 0;
+    font-size: 12px;
+}
+.ideditor.lane-studio .lanes-corridor li { margin: 4px 0; }
+.ideditor.lane-studio .lanes-corridor li.current > a { font-weight: bold; }
+.ideditor.lane-studio .lanes-corridor-distance { color: var(--text-color-secondary, #666); }
+.ideditor.lane-studio .lanes-corridor-cells {
+    display: flex;
+    gap: 2px;
+    margin-top: 2px;
+}
+.ideditor.lane-studio .lanes-corridor-cells.assumed .lanes-cell { opacity: 0.55; border-style: dashed; }
+.ideditor.lane-studio .lanes-cell {
+    min-width: 22px;
+    height: 20px;
+    padding: 0 3px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background: #5a606a;
+    color: #fff;
+    text-align: center;
+    line-height: 18px;
+}
+.ideditor.lane-studio .lanes-cell.lane-bus     { background: #b33a3a; }
+.ideditor.lane-studio .lanes-cell.lane-psv,
+.ideditor.lane-studio .lanes-cell.lane-taxi    { background: #b77d10; }
+.ideditor.lane-studio .lanes-cell.lane-hov     { background: #3d5c99; }
+.ideditor.lane-studio .lanes-cell.lane-bicycle { background: #24764a; }
+.ideditor.lane-studio .lanes-exits {
+    margin: 4px 0;
+    font-size: 12px;
+}
+.ideditor.lane-studio .lanes-exits li {
+    display: grid;
+    grid-template-columns: 34% 1fr;
+    gap: 2px 6px;
+    align-items: center;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border-color, #eee);
+}
+.ideditor.lane-studio .lanes-exit-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 4px;
+}
+.ideditor.lane-studio .lanes-exit-actions button,
+.ideditor.lane-studio .lanes-copy-next {
+    height: auto;
+    padding: 3px 8px;
+    font-size: 12px;
+}
+.ideditor.lane-studio .lanes-copy-next { width: 100%; margin-top: 6px; }
