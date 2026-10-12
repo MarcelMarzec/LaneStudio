@@ -7,7 +7,7 @@
     margin-bottom: 4px;
 }
 .ideditor.lane-studio .lanes-editor .lanes-note {
-    color: var(--text-color-secondary, #666);
+    color: var(--passive-text-color);
     font-size: 12px;
     margin: 4px 0;
 }
@@ -73,14 +73,14 @@
 .ideditor.lane-studio .lanes-issues {
     margin: 6px 0;
     padding-left: 18px;
-    color: #b35c00;
+    color: var(--warning-text-color);
     font-size: 12px;
     list-style: disc;
 }
 
 /* the inspector for the selected lanes */
 .ideditor.lane-studio .lane-inspector {
-    border-top: 1px solid var(--border-color, #ccc);
+    border-top: 1px solid var(--border-color);
     margin-top: 10px;
     padding-top: 8px;
 }
@@ -106,7 +106,7 @@
     font-size: 12px;
 }
 .ideditor.lane-studio .lane-buttons button.active {
-    background: var(--link-color, #7092ff);
+    background: var(--link-color);
     color: #fff;
 }
 .ideditor.lane-studio .lane-check {
@@ -144,7 +144,7 @@
 
 /* roadside: pavement and cycleway per side, with suggestions from mapped ways */
 .ideditor.lane-studio .lanes-roadside {
-    border-top: 1px solid var(--border-color, #ccc);
+    border-top: 1px solid var(--border-color);
     margin-top: 10px;
     padding-top: 8px;
 }
@@ -157,7 +157,7 @@
     font-size: 12px;
 }
 .ideditor.lane-studio .lanes-suggestion {
-    border-left: 3px solid var(--link-color, #7092ff);
+    border-left: 3px solid var(--link-color);
     padding-left: 6px;
 }
 .ideditor.lane-studio .lanes-suggestion button {
@@ -171,7 +171,7 @@
 
 /* look ahead: the corridor, the exits and copying lanes on */
 .ideditor.lane-studio .lanes-lookahead {
-    border-top: 1px solid var(--border-color, #ccc);
+    border-top: 1px solid var(--border-color);
     margin-top: 10px;
     padding-top: 8px;
 }
@@ -194,7 +194,7 @@
 }
 .ideditor.lane-studio .lanes-corridor li { margin: 4px 0; }
 .ideditor.lane-studio .lanes-corridor li.current > a { font-weight: bold; }
-.ideditor.lane-studio .lanes-corridor-distance { color: var(--text-color-secondary, #666); }
+.ideditor.lane-studio .lanes-corridor-distance { color: var(--passive-text-color); }
 .ideditor.lane-studio .lanes-corridor-cells {
     display: flex;
     gap: 2px;
@@ -227,7 +227,7 @@
     gap: 2px 6px;
     align-items: center;
     padding: 3px 0;
-    border-bottom: 1px solid var(--border-color, #eee);
+    border-bottom: 1px solid var(--border-color-2);
 }
 .ideditor.lane-studio .lanes-exit-actions {
     grid-column: 1 / -1;
@@ -262,24 +262,15 @@
 .ideditor.lane-studio .lanes-strip-lane { color: #fff; justify-content: center; }
 .ideditor.lane-studio .lanes-strip-lane .lane-arrow-icon { display: block; margin: 0 auto; }
 .ideditor.lane-studio .lanes-cell { display: inline-flex; align-items: center; justify-content: center; color: #fff; }
-.ideditor.lane-studio .lanes-exit-turn { display: inline-flex; align-items: center; gap: 4px; color: var(--text-color, #333); }
+.ideditor.lane-studio .lanes-exit-turn { display: inline-flex; align-items: center; gap: 4px; color: var(--text-color); }
 
 /* inspector fields laid out like iD's preset fields */
-.ideditor.lane-studio .lane-inspector .lane-form-field {
+.ideditor.lane-studio .lane-form-field {
     margin: 0 0 10px 0;
     padding: 0;
 }
-.ideditor.lane-studio .lane-inspector .lane-form-field .field-label {
-    display: flex;
-    font-weight: bold;
-    font-size: 12px;
-    padding: 4px 8px;
-    border: 1px solid var(--border-color, #ccc);
-    border-bottom: 0;
-    border-radius: 4px 4px 0 0;
-    background: var(--fill-color-light, #f6f6f6);
-}
-.ideditor.lane-studio .lane-inspector .lane-form-field .form-field-input-wrap input {
+/* labels and inputs use iD's own .field-label and .form-field-input-wrap styles, light and dark */
+.ideditor.lane-studio .lane-form-field .form-field-input-wrap input {
     width: 100%;
     border-radius: 0 0 4px 4px;
 }
