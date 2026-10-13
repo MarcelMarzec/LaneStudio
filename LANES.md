@@ -93,6 +93,18 @@ island, the direction a sign applies to, all-way stop, and the kind of traffic c
 - street parking (`amenity=parking` with `parking=street_side|lane|layby|on_kerb|half_on_kerb`):
   where, direction, spaces, surface, and which road it is joined to.
 
+**Structures** (drawn on roads and paths; iD's own cutting and embankment triangles are hidden):
+bridges (`bridge=*`) get parapets along their outer edges; tunnels and covered ways (`tunnel=*`,
+`covered=yes`) are faded with dashed walls; cuttings and embankments (`cutting=*`, `embankment=*`:
+`yes`/`both`, `left`, `right`) get slope wedges on that side, falling towards the road for a cutting
+and away from it for an embankment; a ford way (`ford=*`) is drawn as water, and a ford node on a
+road as a band of water across it.
+
+**Under construction** (`highway=construction` + `construction=<type>`, or the `construction:highway=<type>`
+lifecycle prefix): roads and paths are drawn as the type they will be, with their lanes, widths and
+pavements, faded, with yellow and black work stripes and dashed orange kerbs, and without turn arrows,
+lane lines or direction arrows. `highway=construction` without a type is left to iD.
+
 **What is drawn**: lanes by type (bus, PSV, taxi, HOV, bicycle, pedestrian, no access), kerbs,
 lane lines, turn arrows, labels; junctions; pavements and cycle and parking strips from road tags,
 with unknown sides hatched; footways, paths, cycleways, steps and pedestrian streets at their real
@@ -131,7 +143,8 @@ hidden).
   `type=connectivity` relation, else from `turn:lanes`; a lane marked `merge_to_left` or
   `merge_to_right` is the one that ends, and its arrow sits just before its taper. A shift holds for 30 m from the join, then fades out over
   50 m.
-- A mapped carriageway area belongs to the road lying mostly inside it: that road is shifted to sit in
+- A mapped carriageway area belongs to the road lying mostly inside it (an area of ordinary road
+  surface, asphalt or untagged, is drawn in the road colour): that road is shifted to sit in
   the middle of it (stop, give way and signal lines, symbols and crossings move with it), the area is
   drawn as its surface, and hovering or clicking the area selects that road. A road the area only
   touches, like the main road a side road's area reaches, is left as it is (no box, unbroken kerbs).
@@ -143,10 +156,13 @@ hidden).
   carriageways stop where they meet.
 - Junction boxes are a little lighter and bluer than the road. Their corners use each road's edges
   where it actually ends (a shifted or tapering road included), and curve round from one road's kerb
-  to the next, with a kerb line. Where no traffic crosses the main road (round a roundabout, or a slip
-  road leaving or joining a one-way road on one side) the box is only the mouth outside its edge, and
-  a roundabout's kerbs and lane lines run all the way round. Where two roads just join there is no
-  box; where a road bends at a node, both halves are cut on the bisector of the
+  to the next, with a kerb line. On the side a road joins, the box runs back along the main road to
+  that road's corner (and the main road's kerb stops there), so a road joining at a shallow angle
+  meets a smooth wedge. Where no traffic crosses the main road (round a roundabout, or a slip road
+  leaving or joining a road that is one-way on both sides of the junction, on one side) the box is
+  only the widening mouth outside the main road's edge, drawn in the road colour; a ring's outside
+  is taken from its centre, and the mouth follows the ring's kerb. A roundabout's kerbs and lane
+  lines run all the way round. Where two roads just join there is no box; where a road bends at a node, both halves are cut on the bisector of the
   bend so their lanes, kerbs and pavements meet exactly.
 - Dashed guide lines carry each lane through the junction box to the lanes it leads to, along the
   lane's edges, from its turn arrows and the exit angles; connectivity relations are drawn as solid

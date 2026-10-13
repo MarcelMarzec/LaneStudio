@@ -159,6 +159,11 @@
 }
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-asphalt,
 .ideditor.lane-studio .lanes-layer .street-path.surface-asphalt     { fill: rgb(60, 64, 72); --lanes-a: 0.55; }
+/* a carriageway area of ordinary road surface is the colour the road shows */
+.ideditor.lane-studio .lanes-layer .street-area.street-area-carriageway.surface-asphalt {
+    fill: var(--lanes-road-fill, rgb(67, 72, 82));
+    fill-opacity: var(--lanes-road-alpha, 0.545);
+}
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-concrete,
 .ideditor.lane-studio .lanes-layer .street-path.surface-concrete,
 .ideditor.lane-studio .lanes-layer .carriageway.surface-concrete,
@@ -270,3 +275,31 @@
 /* speed limit roundels painted on the road */
 .ideditor.lane-studio .lanes-layer .symbol-speed_limit .speed-ring { fill: #fff; stroke: #d6342c; }
 .ideditor.lane-studio .lanes-layer .symbol-speed_limit .speed-number { fill: #111; font-weight: 700; }
+
+/* structures (wiki: bridge, tunnel, covered, cutting, embankment, ford) */
+.ideditor.lane-studio .lanes-layer .structure { pointer-events: none; }
+.ideditor.lane-studio .lanes-layer .structure-parapet {
+    fill: none;
+    stroke: rgb(215, 212, 205);
+    stroke-width: 2.5;
+    stroke-linecap: butt;
+}
+.ideditor.lane-studio .lanes-layer .structure-tunnel {
+    fill: none;
+    stroke: rgba(235, 235, 235, 0.85);
+    stroke-width: 1.5;
+    stroke-dasharray: 7, 5;
+}
+.ideditor.lane-studio .lanes-layer .lanes-covered { opacity: 0.45; }
+.ideditor.lane-studio .lanes-layer .structure-slope {
+    fill: rgb(150, 120, 80);
+    fill-opacity: 0.85;
+    stroke: none;
+}
+.ideditor.lane-studio .lanes-layer .structure-ford,
+.ideditor.lane-studio .lanes-layer .marking-ford {
+    fill: rgb(70, 150, 230);
+    fill-opacity: 0.45;
+    stroke: rgba(70, 150, 230, 0.9);
+    stroke-width: 1;
+}

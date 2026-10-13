@@ -3,13 +3,14 @@ import type { Vec2 } from '../../geo/vector';
 import type { OsmEntity } from '../../osm';
 import type { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
-import { isLaneRoad, laneRoadHighways } from '../core/roads';
+import { asBuilt, builtHighway, isLaneRoad, isUnderConstruction, laneRoadHighways } from '../core/roads';
 import {
     metricFrame, sub, add, scale, unit, dot, rightNormal, pointAlong,
     offsetPolyline, cumulativeLengths, polylineLength, type MetricFrame
 } from './frame';
 import { parseWidth, type LaneLayout } from './layout';
 import { cachedLayout, edgesAt, visualShift, miniRoundaboutRadius, type WayVisual } from './road_geometry';
+import { isFord } from './structures';
 import { isTrafficIsland, islandSurface, surfaceGroup, type SurfaceGroup } from '../model/street_features';
 
 /*
@@ -44,6 +45,8 @@ export interface PathShape {
     markings?: CrossingMarkings;
     /** zebra bars or edge lines for crossings */
     marks: Vec2[][];
+    /** being built (`highway=construction`) */
+    construction?: boolean;
 }
 
 export type AreaKind = 'island' | 'pavement' | 'cycleway' | 'carriageway' | 'other';
@@ -66,7 +69,7 @@ export interface KerbLine {
 export type MarkingKind =
     | 'crossing' | 'zebra_bar' | 'crossing_line' | 'island'
     | 'stop_line' | 'give_way_line' | 'signal_line'
-    | 'calming' | 'mini_roundabout' | 'kerb_node'
+    | 'calming' | 'mini_roundabout' | 'kerb_node' | 'ford'
     | 'mini_roundabout_surface' | 'turning_loop_island'
     | 'barrier_line' | 'barrier_post' | 'barrier_node' | 'cattle_grid';
 
@@ -177,7 +180,7 @@ const pathCache = new WeakMap<osmWay, { nodes: OsmEntity[]; stretch: [number, nu
 export function isTrueWidthPath(entity: OsmEntity): boolean {
     if (entity.type !== 'way') return false;
     const way = entity as osmWay;
-    return (way.tags.highway ?? '') in pathWidths && !way.isArea() && way.nodes.length > 1;
+    return (builtHighway(way.tags) ?? '') in pathWidths && !way.isArea() && way.nodes.length > 1;
 }
 
 /**
@@ -211,7 +214,8 @@ function crossingStretch(way: osmWay, graph: coreGraph, points: Vec2[], frame: M
 
 function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisual>): PathShape {
     const nodes = way.nodes.map(id => graph.entity(id));
-    const tags = way.tags;
+    // a path under construction is drawn as the path it will be
+    const tags = asBuilt(way.tags);
     const frame = metricFrame((nodes[0] as osmNode).loc);
     let points = locs(way, graph).map(frame.toMetres);
     const stretch: [number, number] = isCrossingPath(tags) ? crossingStretch(way, graph, points, frame, visuals) : [0, 0];
@@ -265,7 +269,7 @@ function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisua
     }
 
     const shape: PathShape = {
-        id: way.id, kind, assumed: tagged === undefined, markings, marks,
+        id: way.id, kind, assumed: tagged === undefined, markings, marks, construction: isUnderConstruction(way.tags),
         surface: surfaceGroup(tags.surface), use, divider, footHalf,
         polygon: [...left, ...right.reverse()].map(frame.toLoc)
     };
@@ -473,6 +477,9 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
         const length = calming === 'table' ? 6 : calming === 'rumble_strip' ? 4 : 3;
         out.markings.push({ key: `${node.id}-calming`, kind: 'calming', nodeID: node.id, closed: true, variant: calming, points: band(cs, -length / 2, length / 2, left, right) });
     }
+
+    // a ford on a road node: water across the road
+    if (isFord(tags)) out.markings.push({ key: `${node.id}-ford`, kind: 'ford', nodeID: node.id, closed: true, points: band(cs, -2.5, 2.5, left, right) });
 
     if (highway === 'mini_roundabout') miniRoundaboutMarkings(node, parents, cs, graph, out, visuals);
     if (tags.barrier && tags.barrier !== 'kerb' && tags.barrier !== 'no') barrierMarkings(node, cs, out);

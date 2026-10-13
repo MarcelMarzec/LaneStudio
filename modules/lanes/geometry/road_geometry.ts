@@ -7,7 +7,7 @@ import type { osmWay } from '../../osm/way';
 import { isLaneRoad } from '../core/roads';
 import {
     metricFrame, sub, add, scale, rightNormal, len, unit,
-    pointAlong, slicePolyline, offsetPolyline, cumulativeLengths, polylineLength, pointInPolygon, type MetricFrame
+    dot, pointAlong, slicePolyline, offsetPolyline, cumulativeLengths, polylineLength, pointInPolygon, type MetricFrame
 } from './frame';
 import { laneLayout, parseWidth, type LaneLayout, type RoadsideKind } from './layout';
 import { turningHead } from './turning_head';
@@ -73,6 +73,8 @@ export interface LaneMark {
 
 export interface JunctionArea {
     nodeID: string;
+    /** `flare`: where no traffic crosses the main road, only the widening mouth of a road, drawn as road */
+    kind: 'junction' | 'flare';
     /** the box's edges between neighbouring roads, which are kerbs (`assumed` when a road's width is not tagged) */
     kerbs: { line: Vec2[]; assumed: boolean }[];
     /**
@@ -579,6 +581,29 @@ function alignAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual
 }
 
 
+/** How far along a line its nearest point to `p` is */
+function projectOnto(line: Vec2[], p: Vec2): number {
+    let best = 0;
+    let nearest = Infinity;
+    let walked = 0;
+    for (let i = 1; i < line.length; i++) {
+        const a = line[i - 1];
+        const segment = sub(line[i], a);
+        const length = len(segment);
+        if (length > 0) {
+            const t = Math.max(0, Math.min(length, dot(sub(p, a), segment) / length));
+            const d = len(sub(p, add(a, scale(segment, t / length))));
+            if (d < nearest) {
+                nearest = d;
+                best = walked + t;
+            }
+        }
+        walked += length;
+    }
+    return best;
+}
+
+
 /* ---------- junctions ---------- */
 
 /** How far from a node lane lines and each kerb stop, where they are drawn shorter than the road */
@@ -964,33 +989,88 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
         const frame = metricFrame(node.loc);
         const onMain = (i: number) => !!through && (through[0] === i || through[1] === i);
         const reach = Math.max(0, ...arms.filter((_, i) => !onMain(i)).map(arm => (arm.right - arm.left) / 2));
-        // where no traffic crosses the main road (round a roundabout, or on a one-way road that roads only
-        // join or leave on one side, like a slip road), the box is only the mouth, outside the main road's edge
-        const sidesOf = (arm: Arm) => arms.filter((_, j) => !onMain(j))
-            .map(side => Math.sign(arm.direction[0] * side.direction[1] - arm.direction[1] * side.direction[0]));
-        const mouthOnly = (arm: Arm, i: number) => {
-            if (!onMain(i) || !(isRing(arm.way) || arm.layout.model.oneway)) return false;
-            const sides = sidesOf(arm);
-            return sides.length > 0 && sides.every(side => side === sides[0]);
-        };
-        const ends = arms.map((arm, i) => {
-            const trim = trims.get(armKey(arm.way.id, arm.nodeIndex, arm.alongWay)) ?? 0;
-            const t = Math.min(onMain(i) && !mouthOnly(arm, i) ? Math.max(trim, reach) : trim, polylineLength(arm.line));
-            const at = pointAlong(arm.line, t);
-            const normal = rightNormal(at.direction);
-            // the road's edges where it ends: a road shifted or tapering along its length is not where it is at the node
-            let [left, right] = arm.sidesAt(t);
-            if (mouthOnly(arm, i)) {
-                // counter-clockwise from the arm is its left
-                if (sidesOf(arm)[0] > 0) right = left;
-                else left = right;
+        // the side of a main road arm its side roads are on (1: its left, counter-clockwise; -1: its right),
+        // or 0 when they are on both: round a roundabout, the outside of the ring
+        const sideOf = (arm: Arm): number => {
+            if (isRing(arm.way)) {
+                const ring = lineLocs(arm.way, graph).map(frame.toMetres);
+                const centre = scale(ring.slice(0, -1).reduce((sum, p) => add(sum, p), [0, 0] as Vec2), 1 / Math.max(1, ring.length - 1));
+                return Math.sign(-arm.direction[1] * -centre[0] + arm.direction[0] * -centre[1]) || 1;
             }
-            return {
-                right: add(at.point, scale(normal, right)),
-                left: add(at.point, scale(normal, left)),
-                direction: at.direction
-            };
+            const sides = arms.filter((_, j) => !onMain(j))
+                .map(side => Math.sign(arm.direction[0] * side.direction[1] - arm.direction[1] * side.direction[0]));
+            return sides.length && sides.every(side => side === sides[0]) ? sides[0] : 0;
+        };
+        // where no traffic crosses the main road (round a roundabout, or a one-way road that roads only join
+        // or leave on one side, like a slip road) the box is only the mouth outside the main road's edge: the
+        // entry or exit widening out, drawn as road
+        const mouthOnly = !!through && through.every(k => isRing(arms[k].way)) ||
+            !!through && through.every(k => !!arms[k].layout.model.oneway && sideOf(arms[k]) !== 0);
+        const edgeAt = (arm: Arm, t: number, side: 'left' | 'right'): Vec2 => {
+            const at = pointAlong(arm.line, Math.min(t, polylineLength(arm.line)));
+            const [left, right] = arm.sidesAt(t);
+            return add(at.point, scale(rightNormal(at.direction), side === 'left' ? left : right));
+        };
+        const directionAt = (arm: Arm, t: number) => pointAlong(arm.line, Math.min(t, polylineLength(arm.line))).direction;
+
+        type End = { right: Vec2; left: Vec2; rightAt: number; leftAt: number; rightDirection: Vec2; leftDirection: Vec2 };
+        const ends: End[] = arms.map((arm, i) => {
+            const trim = trims.get(armKey(arm.way.id, arm.nodeIndex, arm.alongWay)) ?? 0;
+            // the road's edges where it ends: a road shifted or tapering along its length is not where it is at the node
+            const t = Math.min(onMain(i) && !mouthOnly ? Math.max(trim, reach) : trim, polylineLength(arm.line));
+            const direction = directionAt(arm, t);
+            return { right: edgeAt(arm, t, 'right'), left: edgeAt(arm, t, 'left'), rightAt: t, leftAt: t, rightDirection: direction, leftDirection: direction };
         });
+        // on the side a road joins, the main road's end of the box runs back to that road's corner, so a road
+        // joining at a shallow angle meets a smooth wedge rather than a step
+        if (through) {
+            for (const i of through) {
+                const arm = arms[i];
+                const length = polylineLength(arm.line);
+                const extended = { left: 0, right: 0 };
+                const extend = (side: 'left' | 'right', corner: Vec2) => {
+                    const s = Math.min(maxClearance, projectOnto(arm.line, corner));
+                    const key = side === 'left' ? 'leftAt' : 'rightAt';
+                    if (s <= ends[i][key] || s >= length) return;
+                    extended[side] = s;
+                    ends[i][key] = s;
+                    ends[i][side] = edgeAt(arm, s, side);
+                    ends[i][side === 'left' ? 'leftDirection' : 'rightDirection'] = directionAt(arm, s);
+                };
+                const next = (i + 1) % arms.length;
+                const previous = (i - 1 + arms.length) % arms.length;
+                if (!onMain(next)) extend('left', ends[next].right);
+                if (!onMain(previous)) extend('right', ends[previous].left);
+                // the main road's kerb stops where the box's edge starts
+                const key = armKey(arm.way.id, arm.nodeIndex, arm.alongWay);
+                const mark = marks.get(key);
+                if (mark && !isRing(arm.way)) {
+                    const [wayLeft, wayRight] = arm.alongWay ? [extended.left, extended.right] : [extended.right, extended.left];
+                    marks.set(key, { ...mark, left: Math.max(mark.left, wayLeft), right: Math.max(mark.right, wayRight) });
+                }
+                // a mouth-only box keeps to the main road's edge on its side roads' side
+                if (mouthOnly) {
+                    const facing = sideOf(arm) > 0 ? 'left' : 'right';
+                    const other = facing === 'left' ? 'right' : 'left';
+                    ends[i][other] = ends[i][facing];
+                    ends[i][other === 'left' ? 'leftAt' : 'rightAt'] = ends[i][facing === 'left' ? 'leftAt' : 'rightAt'];
+                    ends[i][other === 'left' ? 'leftDirection' : 'rightDirection'] = ends[i][facing === 'left' ? 'leftDirection' : 'rightDirection'];
+                }
+            }
+        }
+        // the edge of a mouth-only box between the two halves of the main road follows its kerb, which curves
+        // round a roundabout, from one half's end back past the node and out to the other's
+        const alongKerb = (from: Arm, fromAt: number, to: Arm, toAt: number): Vec2[] => {
+            const fromSide = sideOf(from) > 0 ? 'left' : 'right';
+            const toSide = sideOf(to) > 0 ? 'left' : 'right';
+            const points: Vec2[] = [];
+            for (let s = fromAt; s > 0; s -= 2) points.push(edgeAt(from, s, fromSide));
+            points.push(edgeAt(from, 0, fromSide), edgeAt(to, 0, toSide));
+            for (let s = 2; s < toAt; s += 2) points.push(edgeAt(to, s, toSide));
+            points.push(edgeAt(to, toAt, toSide));
+            return points;
+        };
+
         // arms are in counter-clockwise order, and each arm's right edge comes before its left, so the
         // outline never crosses itself; between two neighbouring arms it follows a kerb curve
         const points: Vec2[] = [];
@@ -998,17 +1078,21 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
         ends.forEach((end, i) => {
             const j = (i + 1) % ends.length;
             const next = ends[j];
-            const corner = cornerCurve(end.left, end.direction, next.right, next.direction);
+            const throughCorner = onMain(i) && onMain(j);
+            const corner = throughCorner && mouthOnly
+                ? alongKerb(arms[i], end.leftAt, arms[j], next.rightAt)
+                : cornerCurve(end.left, end.leftDirection, next.right, next.rightDirection);
             points.push(end.right, end.left, ...corner.slice(1, -1));
             // the corner is a kerb, except between the two halves of a road running straight through
             // (its own kerb is drawn) and round a mini-roundabout (its circle is the edge)
-            const throughCorner = onMain(i) && onMain(j);
             if (arms.length >= 3 && !throughCorner && !mini && len(sub(next.right, end.left)) > 0.5) {
                 kerbs.push({ line: corner.map(frame.toLoc), assumed: arms[i].layout.assumed || arms[j].layout.assumed });
             }
         });
         // (where two roads just join, they meet on the bisector and need no box)
-        if ((arms.length >= 3 || mini) && !onlyAreaSides) result.area = { nodeID: node.id, polygons: [wound(points.map(frame.toLoc))], kerbs };
+        if ((arms.length >= 3 || mini) && !onlyAreaSides) {
+            result.area = { nodeID: node.id, polygons: [wound(points.map(frame.toLoc))], kerbs, kind: mouthOnly ? 'flare' : 'junction' };
+        }
         result.connections = junctionConnections(node, graph, arms, trims, through);
     }
 
@@ -1623,11 +1707,13 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         // the nodes' boxes and the short roads joining them, filled as one shape
         const polygons: Vec2[][] = [];
         const kerbs: JunctionArea['kerbs'] = [];
+        let kind: JunctionArea['kind'] = 'flare';
         for (const id of ids) {
             const area = junctions.get(id);
             if (area) {
                 polygons.push(...area.polygons);
                 kerbs.push(...area.kerbs);
+                if (area.kind === 'junction') kind = 'junction';
             }
             junctions.delete(id);
         }
@@ -1636,7 +1722,7 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         }
         if (polygons.length) {
             const key = `cluster-${ids.slice().sort().join('-')}`;
-            junctions.set(key, { nodeID: key, polygons, kerbs });
+            junctions.set(key, { nodeID: key, polygons, kerbs, kind });
         }
     }
 

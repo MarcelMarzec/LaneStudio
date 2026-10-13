@@ -17,6 +17,10 @@
     fill-opacity: var(--lanes-road-alpha, 0.545);
     stroke: none;
 }
+/* the widening mouth of a road where no traffic crosses the main road (a roundabout entry or exit, a slip road): road */
+.ideditor.lane-studio .lanes-layer .junction-area.junction-flare {
+    fill: var(--lanes-road-fill, rgb(67, 72, 82));
+}
 
 .ideditor.lane-studio .lanes-layer .lane {
     stroke: none;
@@ -308,4 +312,18 @@
 .ideditor.lane-studio .lanes-layer .travel-arrow {
     color: #fff;
     opacity: 0.55;
+}
+
+/* roads and paths under construction: faded, with work stripes and dashed orange kerbs */
+.ideditor.lane-studio .lanes-layer .lanes-construction { opacity: 0.6; }
+.ideditor.lane-studio .lanes-layer .works {
+    fill: url(#lanes-works);
+    fill-opacity: 0.35;
+    stroke: none;
+    pointer-events: none;
+}
+.ideditor.lane-studio .lanes-layer .kerb.construction {
+    stroke: #ff8c1a;
+    stroke-dasharray: 6, 4;
+    stroke-opacity: 1;
 }

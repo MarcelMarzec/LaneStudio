@@ -385,11 +385,16 @@ describe('roadGeometry at joins and junctions', () => {
         ];
         // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
-        const { junctions } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
+        const { junctions, pieces } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
         const kerbs = junctions[0].kerbs.map(k => k.line.map(frame.toMetres));
-        // no kerb across the main road: only the two corners beside the side road, both north of it
-        expect(kerbs).toHaveLength(2);
+        // no kerb across the main road: on the sharp (east) side the main road's own kerb runs on to the side
+        // road's corner, so only the wide west corner is a kerb of the box
+        expect(kerbs).toHaveLength(1);
         for (const kerb of kerbs) for (const p of kerb) expect(p[1]).toBeGreaterThan(3);
+        const east = pieces.find(p => p.wayID === 'w1' && p.fromNode === 'n2')!;
+        const northKerbStart = frame.toMetres(east.lines[0][0]);
+        const sideCorner = frame.toMetres(pieces.find(p => p.wayID === 'w2')!.boundaries[2][0]);
+        expect(Math.abs(northKerbStart[0] - sideCorner[0])).toBeLessThan(0.3);
         // the west corner is a curve that bulges towards where the two kerbs would meet
         const west = kerbs.find(k => k.some(p => p[0] < -1))!;
         expect(west.length).toBeGreaterThan(3);

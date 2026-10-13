@@ -2,7 +2,7 @@ import type { coreGraph } from '../../core/graph';
 import type { NodeId } from '../../osm';
 import type { osmWay } from '../../osm/way';
 import { laneDriveSide } from '../core/drive_side';
-import { isLaneRoad, sidewalkExpectedHighways } from '../core/roads';
+import { builtHighway, isLaneRoad, sidewalkExpectedHighways } from '../core/roads';
 import {
     parseLanes, laneRefsInWayOrder, parseChange,
     type LaneChange, type LaneModel, type LaneRef
@@ -137,7 +137,7 @@ function roadsideStrips(tags: Tags, side: 'left' | 'right'): RoadsideStrip[] {
     const width = parseWidth(tags[`sidewalk:${side}:width`] ?? tags['sidewalk:both:width'] ?? tags['sidewalk:width']);
     if (sidewalk === 'yes') {
         strips.push({ kind: 'sidewalk', width: width ?? 2, assumed: width === undefined });
-    } else if (sidewalk === undefined && sidewalkExpectedHighways.has(tags.highway ?? '')) {
+    } else if (sidewalk === undefined && sidewalkExpectedHighways.has(builtHighway(tags) ?? '')) {
         strips.push({ kind: 'sidewalk_unknown', width: 1.5, assumed: true });
     }
     return strips;

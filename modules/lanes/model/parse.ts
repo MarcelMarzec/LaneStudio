@@ -5,6 +5,7 @@ import {
     type DriveSide, type Lane, type LaneDirection, type LaneIssue, type LaneKey,
     type LaneModel, type LaneOneway
 } from './types';
+import { builtHighway } from '../core/roads';
 
 export interface ParseLanesOptions {
     /** from `countryCoder.driveSide(loc)`; defaults to right-hand traffic */
@@ -30,7 +31,7 @@ export function laneOneway(tags: Tags): LaneOneway {
     if (oneway === 'yes' || oneway === 'true' || oneway === '1' ||
         oneway === 'alternating' || oneway === 'reversible') return 'forward';
     if (tags.junction === 'roundabout' || tags.junction === 'circular') return 'forward';
-    if (tags.highway === 'motorway') return 'forward';
+    if (builtHighway(tags) === 'motorway') return 'forward';
     return false;
 }
 
@@ -153,7 +154,7 @@ function laneCounts(tags: Tags, oneway: LaneOneway, groups: Map<string, KeyGroup
         } else {
             // nothing tagged at all: the wiki's defaults, for display only
             source = 'assumed';
-            if (forward === undefined && backward === undefined && sharedSingleLaneHighways.has(tags.highway ?? '')) {
+            if (forward === undefined && backward === undefined && sharedSingleLaneHighways.has(builtHighway(tags) ?? '')) {
                 forward = 0;
                 backward = 0;
                 both = 1;

@@ -113,6 +113,16 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
     shared.append('rect').attr('width', 6).attr('height', 12).attr('fill', 'rgba(225, 215, 195, 0.6)');
     shared.append('rect').attr('x', 6).attr('width', 6).attr('height', 12).attr('fill', 'rgba(40, 150, 90, 0.5)');
 
+    // work stripes over roads and paths under construction: yellow and black
+    const works = defs.append('pattern')
+        .attr('id', 'lanes-works')
+        .attr('patternUnits', 'userSpaceOnUse')
+        .attr('width', 12)
+        .attr('height', 12)
+        .attr('patternTransform', 'rotate(45)');
+    works.append('rect').attr('width', 6).attr('height', 12).attr('fill', '#f2c400');
+    works.append('rect').attr('x', 6).attr('width', 6).attr('height', 12).attr('fill', '#1c1c1c');
+
     // hatching for unknown or restricted space
     const hatch = defs.append('pattern')
         .attr('id', 'lanes-hatch')

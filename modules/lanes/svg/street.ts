@@ -89,7 +89,7 @@ export function drawStreet(
         {
             key: p.id, d: path(p.polygon, true),
             cls: `street-path street-path-${p.kind} ${p.id}` + (p.assumed ? ' assumed' : '') +
-                (p.surface ? ` surface-${p.surface}` : '') + (p.use ? ` use-${p.use}` : '')
+                (p.surface ? ` surface-${p.surface}` : '') + (p.use ? ` use-${p.use}` : '') + (p.construction ? ' lanes-construction' : '')
         },
         ...(p.footHalf ? [{ key: `${p.id}-foot`, cls: 'street-path-foot-half', d: path(p.footHalf, true) }] : []),
         ...(p.divider && markings ? [{ key: `${p.id}-divider`, cls: 'street-path-divider', d: path(p.divider, false) }] : [])
@@ -127,7 +127,7 @@ export function drawStreet(
         .attr('stroke-width', d => Math.max(1.2, d.width * metres).toFixed(1));
 
     // node markings, with the bands under the bars and lines
-    const order = ['crossing', 'calming', 'cattle_grid', 'mini_roundabout', 'island', 'turning_loop_island', 'kerb_node', 'zebra_bar', 'crossing_line',
+    const order = ['ford', 'crossing', 'calming', 'cattle_grid', 'mini_roundabout', 'island', 'turning_loop_island', 'kerb_node', 'zebra_bar', 'crossing_line',
         'stop_line', 'give_way_line', 'signal_line', 'barrier_line', 'barrier_post', 'barrier_node'];
     const nodeShapes = !markings ? [] : [...street.markings].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
     joinPaths(group('markings'), nodeShapes, d => d.key,
