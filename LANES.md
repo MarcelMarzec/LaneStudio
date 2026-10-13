@@ -131,8 +131,13 @@ hidden).
 - Junctions joined by a road shorter than 25 m are one junction: one box, and the short link is drawn
   only as lane guide lines. At a fork (a dual carriageway splitting) nothing runs through, so the
   carriageways stop where they meet.
-- Dashed guide lines carry each lane through the junction box to the lanes it leads to, from its turn
-  arrows and the exit angles; connectivity relations are drawn as solid blue curves instead.
+- The junction box's corners between neighbouring roads curve round from one road's kerb to the
+  next, with a kerb line; where a road bends at a node, both halves are cut on the bisector of the
+  bend so their lanes, kerbs and pavements meet exactly.
+- Dashed guide lines carry each lane through the junction box to the lanes it leads to, along the
+  lane's edges, from its turn arrows and the exit angles; connectivity relations are drawn as solid
+  blue curves instead. A road running straight through with no gap gets no guides, and fragments
+  shorter than 2 m are left out.
 - Roads shorter than 8 m get an outline and a marker you can click.
 
 **Issues**: the "Lane tags" rule in iD's Issues pane checks lane tags everywhere on the map (value

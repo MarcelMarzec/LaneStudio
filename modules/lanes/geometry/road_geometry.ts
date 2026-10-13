@@ -72,6 +72,8 @@ export interface LaneMark {
 
 export interface JunctionArea {
     nodeID: string;
+    /** the box's edges between neighbouring roads, which are kerbs (`assumed` when a road's width is not tagged) */
+    kerbs: { line: Vec2[]; assumed: boolean }[];
     /**
      * The box as one or more polygons, all wound the same way, to be filled as one shape: a merged
      * junction is its nodes' boxes and the short roads between them, so it follows curving roads
@@ -575,6 +577,9 @@ interface Junction {
     trims: Map<string, number>;
     /** where kerbs and lane lines stop on arms that run on through the junction, keyed like `trims` */
     marks: Map<string, MarkTrim>;
+    /** for an arm that carries straight on into another (a join, or a road running through), the
+     *  direction that other arm leaves the node in, keyed like `trims` */
+    partners: Map<string, Vec2>;
     area?: JunctionArea;
     connections: JunctionConnection[];
 }
@@ -791,6 +796,8 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
             // a turn off or onto the main road (which runs through untrimmed) starts or ends
             // past the other road's kerb, so the curve has room to turn
             const turning = !isThrough(i, j);
+            // a road running straight through with no gap needs no guide: its lanes join up by themselves
+            if (!turning && trimOf(up) === 0 && trimOf(down) === 0) continue;
             const upTrim = turning ? Math.max(trimOf(up), (down.right - down.left) / 2) : trimOf(up);
             const downTrim = turning ? Math.max(trimOf(down), (up.right - up.left) / 2) : trimOf(down);
             // guide lines follow the lane edges through the junction (each lane's left edge to the left
@@ -800,7 +807,8 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
                 for (const edge of ['left', 'right'] as const) {
                     const a = laneEnd(up, upTrim, upDirection, p.from, true, edge);
                     const b = laneEnd(down, downTrim, downDirection, p.to, false, edge);
-                    if (!a || !b || len(sub(b.point, a.point)) < 1.5) continue;
+                    // fragments shorter than 2 m only add clutter
+                    if (!a || !b || len(sub(b.point, a.point)) < 2) continue;
                     const key = `${node.id}-g-${up.way.id}:${up.alongWay}-${down.way.id}:${down.alongWay}-` +
                         `${a.point[0].toFixed(1)},${a.point[1].toFixed(1)}-${b.point[0].toFixed(1)},${b.point[1].toFixed(1)}`;
                     if (seen.has(key)) continue;
@@ -814,6 +822,35 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
         }
     });
     return result;
+}
+
+
+/**
+ * The edge of a junction box between the left kerb of one road (ending at `from`, running
+ * `fromDirection` away from the node) and the right kerb of the next (ending at `to`): a curve bending
+ * round the point where the two kerbs would meet, as a kerb rounds a corner; a straight line when they
+ * do not meet on the junction's side, or only far away (very sharp angles).
+ */
+function cornerCurve(from: Vec2, fromDirection: Vec2, to: Vec2, toDirection: Vec2): Vec2[] {
+    // the kerbs run back towards the node: from - t × fromDirection and to - u × toDirection
+    const cross = fromDirection[0] * toDirection[1] - fromDirection[1] * toDirection[0];
+    if (Math.abs(cross) > 0.05) {
+        const d = sub(to, from);
+        const t = -(d[0] * toDirection[1] - d[1] * toDirection[0]) / cross;
+        const u = -(d[0] * fromDirection[1] - d[1] * fromDirection[0]) / cross;
+        if (t >= 0 && u >= 0 && t < 20 && u < 20) {
+            const meet = sub(from, scale(fromDirection, t));
+            return Array.from({ length: 9 }, (_, i) => {
+                const a = i / 8;
+                const b = 1 - a;
+                return [
+                    b * b * from[0] + 2 * a * b * meet[0] + a * a * to[0],
+                    b * b * from[1] + 2 * a * b * meet[1] + a * a * to[1]
+                ] as Vec2;
+            });
+        }
+    }
+    return [from, to];
 }
 
 
@@ -841,7 +878,8 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
     const arms = armsAt(node, graph, visuals);
     const trims = new Map<string, number>();
     const marks = new Map<string, MarkTrim>();
-    const result: Junction = { trims, marks, connections: [] };
+    const partners = new Map<string, Vec2>();
+    const result: Junction = { trims, marks, partners, connections: [] };
 
     if (arms.length >= 2) {
         // round a mini-roundabout nothing runs straight through: every arm stops at its circle
@@ -884,22 +922,52 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
             }
         }
 
+        // arms that carry straight on into each other meet on the bisector of their bend
+        const pair = arms.length === 2 && !mini ? [0, 1] : through;
+        if (pair) {
+            // the direction of the segment touching the node, which is what each half's own end uses
+            const firstSegment = (arm: Arm) => {
+                const d = sub(arm.line[1], arm.line[0]);
+                return len(d) > 0.01 ? unit(d) : arm.direction;
+            };
+            const [p, q] = pair.map(i => arms[i]);
+            partners.set(armKey(p.way.id, p.nodeIndex, p.alongWay), firstSegment(q));
+            partners.set(armKey(q.way.id, q.nodeIndex, q.alongWay), firstSegment(p));
+        }
+
         // the junction area joins the pulled-back ends of all arms
         // (the main road runs through untrimmed, so the box reaches along it as far as the side roads are wide)
         const frame = metricFrame(node.loc);
-        const points: Vec2[] = [];
         const onMain = (i: number) => !!through && (through[0] === i || through[1] === i);
         const reach = Math.max(0, ...arms.filter((_, i) => !onMain(i)).map(arm => (arm.right - arm.left) / 2));
-        for (const [i, arm] of arms.entries()) {
+        const ends = arms.map((arm, i) => {
             const trim = trims.get(armKey(arm.way.id, arm.nodeIndex, arm.alongWay)) ?? 0;
             const t = Math.min(onMain(i) ? Math.max(trim, reach) : trim, polylineLength(arm.line));
             const at = pointAlong(arm.line, t);
             const normal = rightNormal(at.direction);
-            // arms are in counter-clockwise order, and each arm's right edge comes before its left,
-            // so the outline never crosses itself however sharp the angles between arms
-            points.push(add(at.point, scale(normal, arm.right)), add(at.point, scale(normal, arm.left)));
-        }
-        result.area = { nodeID: node.id, polygons: [wound(points.map(frame.toLoc))] };
+            return {
+                right: add(at.point, scale(normal, arm.right)),
+                left: add(at.point, scale(normal, arm.left)),
+                direction: at.direction
+            };
+        });
+        // arms are in counter-clockwise order, and each arm's right edge comes before its left, so the
+        // outline never crosses itself; between two neighbouring arms it follows a kerb curve
+        const points: Vec2[] = [];
+        const kerbs: JunctionArea['kerbs'] = [];
+        ends.forEach((end, i) => {
+            const j = (i + 1) % ends.length;
+            const next = ends[j];
+            const corner = cornerCurve(end.left, end.direction, next.right, next.direction);
+            points.push(end.right, end.left, ...corner.slice(1, -1));
+            // the corner is a kerb, except between the two halves of a road running straight through
+            // (its own kerb is drawn) and round a mini-roundabout (its circle is the edge)
+            const throughCorner = onMain(i) && onMain(j);
+            if (arms.length >= 3 && !throughCorner && !mini && len(sub(next.right, end.left)) > 0.5) {
+                kerbs.push({ line: corner.map(frame.toLoc), assumed: arms[i].layout.assumed || arms[j].layout.assumed });
+            }
+        });
+        result.area = { nodeID: node.id, polygons: [wound(points.map(frame.toLoc))], kerbs };
         result.connections = junctionConnections(node, graph, arms, trims, through);
     }
 
@@ -1009,7 +1077,8 @@ function withVerticesAt(points: Vec2[], distances: number[]): Vec2[] {
 /** Builds the pieces of one road, between the nodes where it meets two or more other roads */
 function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, visual: WayVisual,
     trimAt: (index: number, alongWay: boolean) => number,
-    markAt: (index: number, alongWay: boolean) => MarkTrim | undefined): RoadPiece[] {
+    markAt: (index: number, alongWay: boolean) => MarkTrim | undefined,
+    partnerAt: (index: number, alongWay: boolean) => Vec2 | undefined = () => undefined): RoadPiece[] {
 
     const layout = cachedLayout(way, graph);
     const frame = metricFrame((graph.entity(way.first()) as osmNode).loc);
@@ -1048,7 +1117,11 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
         const sliced = withVerticesAt(slicePolyline(line, trimStart, length - trimEnd), breaks);
         const local = cumulativeLengths(sliced);
         const rows = local.map(s => edgesAt(layout, visual, startAt + s, total));
-        const offset = (distances: number[]) => offsetPolyline(sliced, distances);
+        // an untrimmed end that carries straight on into another road is cut on the bisector of the bend
+        const partnerIn = trimStart < 0.01 ? partnerAt(a, true) : undefined;
+        const partnerOut = trimEnd < 0.01 ? partnerAt(b, false) : undefined;
+        const ends = { into: partnerIn ? scale(partnerIn, -1) : undefined, outOf: partnerOut };
+        const offset = (distances: number[]) => offsetPolyline(sliced, distances, ends);
         const column = (k: number, plus = 0) => rows.map(r => r[k] + plus);
 
         const boundaries = layout.edges.map((_, k) => offset(column(k)));
@@ -1301,6 +1374,8 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
             if (!junction) return;
             const own = (k: string) => k.startsWith(way.id + ':');
             sig.push(`${i}:${[...junction.trims.entries()].filter(([k]) => own(k)).map(([k, v]) => k + '=' + v.toFixed(3)).join(',')}`);
+            sig.push([...junction.partners.entries()].filter(([k]) => own(k))
+                .map(([k, v]) => `${k}~${v[0].toFixed(3)},${v[1].toFixed(3)}`).join(','));
             sig.push([...junction.marks.entries()].filter(([k]) => own(k))
                 .map(([k, v]) => `${k}=${v.left.toFixed(2)},${v.right.toFixed(2)},${v.lanes.toFixed(2)}`).join(','));
         });
@@ -1317,7 +1392,9 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
             byNode.get(way.nodes[index])?.trims.get(armKey(way.id, index, alongWay)) ?? 0;
         const markAt = (index: number, alongWay: boolean) =>
             byNode.get(way.nodes[index])?.marks.get(armKey(way.id, index, alongWay));
-        const built = buildPieces(way, graph, junctionNodes, visual, trimAt, markAt);
+        const partnerAt = (index: number, alongWay: boolean) =>
+            byNode.get(way.nodes[index])?.partners.get(armKey(way.id, index, alongWay));
+        const built = buildPieces(way, graph, junctionNodes, visual, trimAt, markAt, partnerAt);
         pieceCache.set(way, { nodes, signature, pieces: built });
         pieces.push(...built);
     }
@@ -1335,9 +1412,13 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         if (ids.length < 2) continue;
         // the nodes' boxes and the short roads joining them, filled as one shape
         const polygons: Vec2[][] = [];
+        const kerbs: JunctionArea['kerbs'] = [];
         for (const id of ids) {
             const area = junctions.get(id);
-            if (area) polygons.push(...area.polygons);
+            if (area) {
+                polygons.push(...area.polygons);
+                kerbs.push(...area.kerbs);
+            }
             junctions.delete(id);
         }
         for (const piece of innerPieces) {
@@ -1345,7 +1426,7 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         }
         if (polygons.length) {
             const key = `cluster-${ids.slice().sort().join('-')}`;
-            junctions.set(key, { nodeID: key, polygons });
+            junctions.set(key, { nodeID: key, polygons, kerbs });
         }
     }
 

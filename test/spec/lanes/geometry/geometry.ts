@@ -1,4 +1,4 @@
-import { offsetPolyline, metricFrame, polylineLength } from '../../../../modules/lanes/geometry/frame';
+import { offsetPolyline, slicePolyline, metricFrame, polylineLength } from '../../../../modules/lanes/geometry/frame';
 import { laneLayout, parseWidth } from '../../../../modules/lanes/geometry/layout';
 import { roadGeometry, visualShift, _test } from '../../../../modules/lanes/geometry/road_geometry';
 
@@ -36,6 +36,21 @@ describe('offsetPolyline', () => {
     it('caps the mitre at sharp bends', () => {
         const [, corner] = offsetPolyline([[0, 0], [10, 0], [0, 0.5]], [1, 1, 1]);
         expect(Math.hypot(corner[0] - 10, corner[1])).toBeLessThanOrEqual(2.0001);
+    });
+
+    it('cuts an end on the bisector with the line it carries on into', () => {
+        // the line turns 90° left after its end, so its end is mitred like a corner
+        const [, end] = offsetPolyline([[0, 0], [10, 0]], [-1, -1], { outOf: [0, 1] });
+        expect(end[0]).toBeCloseTo(9);
+        expect(end[1]).toBeCloseTo(1);
+    });
+});
+
+describe('slicePolyline', () => {
+    it('leaves no vertex a hair away from either end', () => {
+        // a vertex a millimetre before the end would make a segment with no usable direction
+        const sliced = slicePolyline([[0, 0], [5, 0], [9.999, 0], [10, 0]], 1, 10);
+        expect(sliced).toEqual([[1, 0], [5, 0], [10, 0]]);
     });
 });
 
@@ -250,6 +265,28 @@ describe('roadGeometry at joins and junctions', () => {
         expect(Math.hypot(starts[0][0] - starts[1][0], starts[0][1] - starts[1][1])).toBeGreaterThan(2.5);
     });
 
+    it('guides a road straight across a main road it is not paired through with', () => {
+        // a two-way side road crosses a one-way main road; the main road is the through pair, and the
+        // side road's own lanes carry on across it, so they are guided too
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-100, 0) }), new iD.osmNode({ id: 'n2', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n3', loc: at(100, 0) }), new iD.osmNode({ id: 'n4', loc: at(0, 100) }),
+            new iD.osmNode({ id: 'n5', loc: at(0, -100) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: { highway: 'primary', oneway: 'yes', lanes: '2' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n4', 'n2', 'n5'], tags: { highway: 'residential', lanes: '2', 'turn:lanes:forward': 'through', 'turn:lanes:backward': 'through' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const { connections } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
+        const across = connections.filter(c => c.kind === 'guide' && /-g-w2:\w+-w2:/.test(c.key));
+        // both edges of the lane in each direction
+        expect(across).toHaveLength(4);
+        for (const guide of across) {
+            const line = guide.line.map(frame.toMetres);
+            expect(Math.abs(line[0][1] - line[line.length - 1][1])).toBeGreaterThan(6);
+        }
+    });
+
     it('starts a slip road where the lane leading into it ends', () => {
         // right-hand traffic: the right lane of three peels off to the north-east
         const entities = [
@@ -313,6 +350,55 @@ describe('roadGeometry at joins and junctions', () => {
         const frame = metricFrame(origin);
         const end = frame.toMetres(fork.centres[0][fork.centres[0].length - 1]);
         expect(end[1]).toBeGreaterThan(12);
+    });
+
+    it('meets the next road on the bisector where two roads join at a bend', () => {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-100, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n3', loc: at(87, 50) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags: { highway: 'primary', lanes: '2' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n2', 'n3'], tags: { highway: 'primary', lanes: '2' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const { pieces } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
+        const before = pieces.find(p => p.wayID === 'w1')!;
+        const after = pieces.find(p => p.wayID === 'w2')!;
+        before.boundaries.forEach((line, k) => {
+            const end = frame.toMetres(line[line.length - 1]);
+            const start = frame.toMetres(after.boundaries[k][0]);
+            expect(Math.hypot(end[0] - start[0], end[1] - start[1])).toBeLessThan(0.01);
+        });
+        // the inner kerb is pulled back from the node and the outer one pushed past it
+        expect(frame.toMetres(before.boundaries[0][before.boundaries[0].length - 1])[0]).toBeLessThan(-0.5);
+        expect(frame.toMetres(before.boundaries[2][before.boundaries[2].length - 1])[0]).toBeGreaterThan(0.5);
+    });
+
+    it('rounds the kerb between a side road and the main road, following the corner', () => {
+        // a side road leaving at 53° to the north-east: a wide corner on its west side
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-100, 0) }), new iD.osmNode({ id: 'n2', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n3', loc: at(100, 0) }), new iD.osmNode({ id: 'n4', loc: at(60, 80) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: { highway: 'primary', lanes: '2', width: '7' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n2', 'n4'], tags: { highway: 'residential', lanes: '2', width: '6' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const { junctions } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
+        const kerbs = junctions[0].kerbs.map(k => k.line.map(frame.toMetres));
+        // no kerb across the main road: only the two corners beside the side road, both north of it
+        expect(kerbs).toHaveLength(2);
+        for (const kerb of kerbs) for (const p of kerb) expect(p[1]).toBeGreaterThan(3);
+        // the west corner is a curve that bulges towards where the two kerbs would meet
+        const west = kerbs.find(k => k.some(p => p[0] < -1))!;
+        expect(west.length).toBeGreaterThan(3);
+        const [a, b] = [west[0], west[west.length - 1]];
+        const mid = west[Math.floor(west.length / 2)];
+        // the kerbs meet at about (-1.1, 3.5): the curve's middle is nearer to it than the chord's middle
+        const meet = [-1.1, 3.5];
+        const chordMid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        expect(Math.hypot(mid[0] - meet[0], mid[1] - meet[1])).toBeLessThan(Math.hypot(chordMid[0] - meet[0], chordMid[1] - meet[1]));
     });
 
     it('flags very short roads and keeps arrows on short approach pieces', () => {

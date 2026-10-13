@@ -161,7 +161,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* roadside strips */
-        const strips = shown.filter(piece => !inArea.has(piece)).flatMap(piece => piece.roadside.map((strip, i) => ({ ...strip, key: `${pieceKey(piece)}-${i}` })));
+        // (short roads inside a merged junction keep their pavements)
+        const strips = pieces.filter(piece => !inArea.has(piece)).flatMap(piece => piece.roadside.map((strip, i) => ({ ...strip, key: `${pieceKey(piece)}-${i}` })));
         const stripPaths = group('roadside').selectAll<SVGPathElement, typeof strips[number]>('path')
             .data(strips, d => d.key);
         stripPaths.exit().remove();
@@ -188,12 +189,13 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .attr('d', d => path(d.carriageway, true));
 
 
-        /* junction areas */
+        /* junction areas (not inside a road mapped as an area, which is their surface) */
+        const shownJunctions = roadAreas.length ? junctions.filter(j => {
+            const node = graph.hasEntity(j.nodeID as NodeId) as osmNode | undefined;
+            return !node || !roadAreas.some(a => pointInPolygon(node.loc, a.polygon));
+        }) : junctions;
         const areas = group('junctions').selectAll<SVGPathElement, typeof junctions[number]>('path')
-            .data(roadAreas.length ? junctions.filter(j => {
-                const node = graph.hasEntity(j.nodeID as NodeId) as osmNode | undefined;
-                return !node || !roadAreas.some(a => pointInPolygon(node.loc, a.polygon));
-            }) : junctions, d => d.nodeID);
+            .data(shownJunctions, d => d.nodeID);
         areas.exit().remove();
         areas.enter().append('path')
             .attr('class', 'junction-area')
@@ -247,10 +249,14 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* kerbs */
         // (the short roads inside a merged junction keep their kerbs where no side road joins)
-        const kerbData = pieces.filter(piece => !inArea.has(piece)).flatMap(piece => [
-            { key: `${pieceKey(piece)}-l`, line: piece.lines[0], assumed: piece.layout.assumed },
-            { key: `${pieceKey(piece)}-r`, line: piece.lines[piece.lines.length - 1], assumed: piece.layout.assumed }
-        ]);
+        const kerbData = [
+            ...pieces.filter(piece => !inArea.has(piece)).flatMap(piece => [
+                { key: `${pieceKey(piece)}-l`, line: piece.lines[0], assumed: piece.layout.assumed },
+                { key: `${pieceKey(piece)}-r`, line: piece.lines[piece.lines.length - 1], assumed: piece.layout.assumed }
+            ]),
+            // junction corners between neighbouring roads
+            ...shownJunctions.flatMap(j => j.kerbs.map((kerb, i) => ({ key: `${j.nodeID}-kerb-${i}`, line: kerb.line, assumed: kerb.assumed })))
+        ];
         const kerbs = group('kerbs').selectAll<SVGPathElement, typeof kerbData[number]>('path')
             .data(kerbData, d => d.key);
         kerbs.exit().remove();
@@ -356,7 +362,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* very short roads (slivers between junctions): an outline and a marker so they can be seen and clicked */
-        const shortData = !markings ? [] : pieces.filter(piece => piece.short);
+        // (not the links inside a merged junction: they are drawn as guide lines, and stay clickable)
+        const shortData = !markings ? [] : pieces.filter(piece => piece.short && !innerPieces.has(piece));
         joinPaths(group('short'), shortData, pieceKey,
             d => 'short-way' + (selected.has(d.wayID) ? ' selected' : ''), d => path(d.carriageway, true));
         drawShortTargets(group('short-targets'), shortData, selected);

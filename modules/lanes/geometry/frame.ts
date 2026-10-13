@@ -65,7 +65,8 @@ export function slicePolyline(points: Vec2[], from: number, to: number): Vec2[] 
     let walked = 0;
     for (let i = 1; i < points.length; i++) {
         walked += len(sub(points[i], points[i - 1]));
-        if (walked > from && walked < to) result.push(points[i]);
+        // vertices within a centimetre of either end would make a near-zero segment with no direction
+        if (walked > from + 0.01 && walked < to - 0.01) result.push(points[i]);
     }
     result.push(pointAlong(points, to).point);
     return result;
@@ -75,12 +76,14 @@ export function slicePolyline(points: Vec2[], from: number, to: number): Vec2[] 
  * Offsets a polyline sideways by a distance per vertex (positive = right of travel).
  * Corners use mitre joins capped at twice the offset, so sharp bends do not spike.
  */
-export function offsetPolyline(points: Vec2[], distances: number[]): Vec2[] {
+export function offsetPolyline(points: Vec2[], distances: number[], ends: { into?: Vec2; outOf?: Vec2 } = {}): Vec2[] {
     const n = points.length;
     const result: Vec2[] = [];
     for (let i = 0; i < n; i++) {
-        const before = i > 0 ? unit(sub(points[i], points[i - 1])) : null;
-        const after = i < n - 1 ? unit(sub(points[i + 1], points[i])) : null;
+        // `into` and `outOf`: the directions the line continues in beyond its ends (another way carrying
+        // on), so its ends are cut on the bisector and meet that line's offsets exactly
+        const before = i > 0 ? unit(sub(points[i], points[i - 1])) : (ends.into ?? null);
+        const after = i < n - 1 ? unit(sub(points[i + 1], points[i])) : (ends.outOf ?? null);
         const n1 = rightNormal(before ?? after!);
         const n2 = rightNormal(after ?? before!);
         const mitre = unit(add(n1, n2));
