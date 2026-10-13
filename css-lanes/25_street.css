@@ -1,20 +1,22 @@
 /* Footways, mapped areas, kerbs and road markings drawn by the lanes layer */
 
-/* footways and paths at their real width */
+/* footways and paths at their real width: warm, fairly solid colours with a thin edge, so they stand out
+   on light and dark imagery (transparency in --lanes-a, scaled by the surface opacity setting) */
 .ideditor.lane-studio .lanes-layer .street-path {
-    stroke: none;
-    fill: rgba(225, 215, 195, 0.6);
+    stroke: rgba(105, 80, 45, 0.85);
+    stroke-width: 1;
+    fill: rgb(236, 205, 150); --lanes-a: 0.8;
 }
-.ideditor.lane-studio .lanes-layer .street-path.assumed      { fill-opacity: 0.45; }
-.ideditor.lane-studio .lanes-layer .street-path-sidewalk     { fill: rgba(230, 220, 200, 0.7); }
-.ideditor.lane-studio .lanes-layer .street-path-cycleway     { fill: rgba(40, 150, 90, 0.55); }
-.ideditor.lane-studio .lanes-layer .street-path-pedestrian   { fill: rgba(235, 225, 205, 0.6); }
-.ideditor.lane-studio .lanes-layer .street-path-bridleway    { fill: rgba(160, 120, 70, 0.5); }
-.ideditor.lane-studio .lanes-layer .street-path-path         { fill: rgba(200, 185, 150, 0.45); }
+.ideditor.lane-studio .lanes-layer .street-path.assumed      { --lanes-a: 0.6; }
+.ideditor.lane-studio .lanes-layer .street-path-sidewalk     { fill: rgb(236, 205, 150); --lanes-a: 0.8; }
+.ideditor.lane-studio .lanes-layer .street-path-cycleway     { fill: rgb(45, 170, 95); --lanes-a: 0.75; stroke: rgba(20, 90, 50, 0.85); }
+.ideditor.lane-studio .lanes-layer .street-path-pedestrian   { fill: rgb(240, 215, 170); --lanes-a: 0.75; }
+.ideditor.lane-studio .lanes-layer .street-path-bridleway    { fill: rgb(175, 125, 70); --lanes-a: 0.7; }
+.ideditor.lane-studio .lanes-layer .street-path-path         { fill: rgb(205, 180, 130); --lanes-a: 0.7; }
 .ideditor.lane-studio .lanes-layer .street-path-steps        { fill: url(#lanes-hatch); }
-.ideditor.lane-studio .lanes-layer .street-path-crossing     { fill: rgba(40, 44, 52, 0.45); }
+.ideditor.lane-studio .lanes-layer .street-path-crossing     { fill: rgb(40, 44, 52); --lanes-a: 0.45; stroke: none; }
 .ideditor.lane-studio .lanes-layer .street-path-crossing.markings-none {
-    fill: rgba(40, 44, 52, 0.25);
+    fill: rgb(40, 44, 52); --lanes-a: 0.25;
     stroke: rgba(255, 255, 255, 0.6);
     stroke-width: 1;
     stroke-dasharray: 3, 3;
@@ -22,12 +24,11 @@
 
 /* mapped areas: area:highway=*, pedestrian areas and traffic islands */
 .ideditor.lane-studio .lanes-layer .street-area                    { stroke: none; }
-.ideditor.lane-studio .lanes-layer .street-area-pavement           { fill: rgba(230, 220, 200, 0.55); }
-.ideditor.lane-studio .lanes-layer .street-area-cycleway           { fill: rgba(40, 150, 90, 0.45); }
-.ideditor.lane-studio .lanes-layer .street-area-carriageway        { fill: rgba(40, 44, 52, 0.3); }
-.ideditor.lane-studio .lanes-layer .street-area-other              { fill: rgba(150, 170, 120, 0.3); }
+.ideditor.lane-studio .lanes-layer .street-area-pavement           { fill: rgb(236, 205, 150); --lanes-a: 0.65; }
+.ideditor.lane-studio .lanes-layer .street-area-cycleway           { fill: rgb(45, 170, 95); --lanes-a: 0.6; }
+.ideditor.lane-studio .lanes-layer .street-area-other              { fill: rgb(150, 170, 120); --lanes-a: 0.3; }
 .ideditor.lane-studio .lanes-layer .street-area-island {
-    fill: rgba(165, 190, 135, 0.85);
+    fill: rgb(165, 190, 135); --lanes-a: 0.85;
     stroke: #f2f2f2;
     stroke-width: 1.5;
 }
@@ -147,7 +148,15 @@
    Colours are solid with their transparency in --lanes-a, which the lane surface opacity setting scales
    on carriageways and lanes */
 .ideditor.lane-studio .lanes-layer .street-area,
-.ideditor.lane-studio .lanes-layer .street-path { fill-opacity: var(--lanes-a, 1); }
+.ideditor.lane-studio .lanes-layer .street-path,
+.ideditor.lane-studio .lanes-layer .street-path-foot-half {
+    fill-opacity: calc(var(--lanes-a, 1) * var(--lanes-low, 1) + (1 - var(--lanes-a, 1)) * var(--lanes-high, 0));
+}
+/* a road mapped as an area is that road's surface, in the colour the road shows (already scaled by the setting) */
+.ideditor.lane-studio .lanes-layer .street-area-carriageway:not([class*='surface-']) {
+    fill: var(--lanes-road-fill, rgb(67, 72, 82));
+    fill-opacity: var(--lanes-road-alpha, 0.545);
+}
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-asphalt,
 .ideditor.lane-studio .lanes-layer .street-path.surface-asphalt     { fill: rgb(60, 64, 72); --lanes-a: 0.55; }
 .ideditor.lane-studio .lanes-layer .street-area:not(.street-area-island).surface-concrete,
@@ -183,24 +192,22 @@
 
 /* foot and cycle paths: shared ones are striped with both colours, segregated ones split by a line */
 .ideditor.lane-studio .lanes-layer .street-path.use-shared:not([class*='surface-']) { fill: url(#lanes-shared-path); }
-.ideditor.lane-studio .lanes-layer .street-path.use-segregated:not([class*='surface-']) { fill: rgba(40, 150, 90, 0.45); }
+.ideditor.lane-studio .lanes-layer .street-path.use-segregated:not([class*='surface-']) { fill: rgb(45, 170, 95); --lanes-a: 0.6; }
 .ideditor.lane-studio .lanes-layer .street-path-divider {
     fill: none;
     stroke: #fff;
     stroke-width: 1.2;
     stroke-opacity: 0.85;
 }
-.ideditor.lane-studio .lanes-layer .street-path-foot-half { fill: rgba(230, 220, 200, 0.7); stroke: none; }
+.ideditor.lane-studio .lanes-layer .street-path-foot-half { fill: rgb(236, 205, 150); --lanes-a: 0.8; stroke: none; }
 
-/* mini-roundabouts and turning circles: carriageway around the node, under the lanes */
-.ideditor.lane-studio .lanes-layer .street-surface {
+/* mini-roundabouts and turning heads: carriageway in the colour the road shows, so they read as part of it */
+.ideditor.lane-studio .lanes-layer .street-surface,
+.ideditor.lane-studio .lanes-layer .turning-head {
     fill: var(--lanes-road-fill, rgb(67, 72, 82));
     fill-opacity: var(--lanes-road-alpha, 0.545);
-}
-.ideditor.lane-studio .lanes-layer .street-surface-turning_circle {
-    stroke: #e6e6e6;
-    stroke-width: 1.5;
-    stroke-dasharray: 4, 4;
+    fill-rule: evenodd;
+    stroke: none;
 }
 .ideditor.lane-studio .lanes-layer .marking-turning_loop_island {
     fill: rgba(165, 190, 135, 0.9);

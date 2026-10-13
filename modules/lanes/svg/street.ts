@@ -68,14 +68,17 @@ export function drawStreet(
     street: StreetGeometry,
     projection: Projection,
     zoom: number,
-    zooms: { markings: number; labels: number }
+    zooms: { markings: number; labels: number },
+    areaRoads: Map<string, string> = new Map()
 ) {
     const path = pathFor(projection);
     const markings = zoom >= zooms.markings;
     const symbols = zoom >= zooms.labels;
 
+    // a road's carriageway area carries the road's id too, so it lights up with the road
     joinPaths(group('areas'), street.areas.filter(a => a.kind !== 'island'), d => d.id,
-        d => `street-area street-area-${d.kind} ${d.id}` + (d.surface ? ` surface-${d.surface}` : ''), d => path(d.polygon, true));
+        d => `street-area street-area-${d.kind} ${d.id}` + (areaRoads.has(d.id) ? ` ${areaRoads.get(d.id)}` : '') +
+            (d.surface ? ` surface-${d.surface}` : ''), d => path(d.polygon, true));
 
     joinPaths(group('islands'), street.areas.filter(a => a.kind === 'island'), d => d.id,
         d => `street-area street-area-island ${d.id} surface-${d.surface ?? 'concrete'}`, d => path(d.polygon, true));
@@ -110,7 +113,7 @@ export function drawStreet(
 
     // mini-roundabout and turning circle carriageways, under the lanes
     joinPaths(group('node-surfaces'), street.surfaces, d => d.key,
-        d => `street-surface street-surface-${d.kind}`, d => path(d.points, true));
+        d => `street-surface street-surface-${d.kind} ${d.nodeID}`, d => path(d.points, true));
 
     // fences, walls, guard rails, hedges… at their width
     const metres = pxPerMetre(projection, street.barriers[0]?.line[0]);

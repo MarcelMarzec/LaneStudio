@@ -67,7 +67,7 @@ export type MarkingKind =
     | 'crossing' | 'zebra_bar' | 'crossing_line' | 'island'
     | 'stop_line' | 'give_way_line' | 'signal_line'
     | 'calming' | 'mini_roundabout' | 'kerb_node'
-    | 'mini_roundabout_surface' | 'turning_circle' | 'turning_loop_island'
+    | 'mini_roundabout_surface' | 'turning_loop_island'
     | 'barrier_line' | 'barrier_post' | 'barrier_node' | 'cattle_grid';
 
 export interface MarkingShape {
@@ -107,7 +107,7 @@ export interface StreetGeometry {
     paths: PathShape[];
     areas: AreaShape[];
     kerbs: KerbLine[];
-    /** road surfaces around nodes (mini-roundabouts, turning circles), drawn under the lanes */
+    /** road surfaces round mini-roundabout nodes (turning heads are drawn with their roads) */
     surfaces: MarkingShape[];
     markings: MarkingShape[];
     symbols: SymbolShape[];
@@ -475,7 +475,6 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
     }
 
     if (highway === 'mini_roundabout') miniRoundaboutMarkings(node, parents, cs, graph, out, visuals);
-    if (highway === 'turning_circle' || highway === 'turning_loop') turningCircleMarkings(node, cs, out);
     if (tags.barrier && tags.barrier !== 'kerb' && tags.barrier !== 'no') barrierMarkings(node, cs, out);
 }
 
@@ -504,23 +503,6 @@ function miniRoundaboutMarkings(node: osmNode, parents: OsmEntity[], cs: CrossSe
                 points: [at(range[0]), at(range[1])]
             });
         }
-    }
-}
-
-
-/** A turning circle or loop: a disc of carriageway centred on the node */
-function turningCircleMarkings(node: osmNode, cs: CrossSection, out: StreetGeometry) {
-    const tags = node.tags;
-    const highway = tags.highway;
-    const left = cs.edges[0];
-    const right = cs.edges[cs.edges.length - 1];
-    // centred on the node (wiki: Tag:highway=turning_circle), sized by diameter=* or the road
-    const R = (parseWidth(tags.diameter) ?? Math.max(12, 2 * (right - left))) / 2;
-    const centre = scale(cs.normal, (left + right) / 2);
-    out.surfaces.push({ key: `${node.id}-turning`, kind: 'turning_circle', nodeID: node.id, closed: true, points: circle(centre, R).map(cs.frame.toLoc) });
-    if (highway === 'turning_loop') {
-        const inner = (parseWidth(tags.inner_diameter) ?? R) / 2;
-        out.markings.push({ key: `${node.id}-loop-island`, kind: 'turning_loop_island', nodeID: node.id, closed: true, points: circle(centre, inner).map(cs.frame.toLoc) });
     }
 }
 

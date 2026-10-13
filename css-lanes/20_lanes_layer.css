@@ -11,9 +11,9 @@
 .ideditor.lane-studio .lanes-layer .carriageway.selected {
     fill: rgb(40, 44, 52); --lanes-a: 0.5;
 }
-/* junction boxes take the colour a road shows (a lane over the carriageway; set by core/lane_settings.ts) */
+/* junction boxes: a little lighter and bluer than the road, so they stand apart from it (set by core/lane_settings.ts) */
 .ideditor.lane-studio .lanes-layer .junction-area {
-    fill: var(--lanes-road-fill, rgb(67, 72, 82));
+    fill: var(--lanes-junction-fill, rgb(85, 96, 120));
     fill-opacity: var(--lanes-road-alpha, 0.545);
     stroke: none;
 }
@@ -58,13 +58,13 @@
     stroke-opacity: 0.7;
 }
 
-/* roadside strips outside the kerb */
+/* roadside strips outside the kerb (transparency in --lanes-a, scaled by the surface opacity setting) */
 .ideditor.lane-studio .lanes-layer .roadside { stroke: none; }
-.ideditor.lane-studio .lanes-layer .roadside-sidewalk         { fill: rgba(225, 215, 195, 0.55); }
-.ideditor.lane-studio .lanes-layer .roadside-sidewalk.assumed { fill: rgba(225, 215, 195, 0.4); }
-.ideditor.lane-studio .lanes-layer .roadside-sidewalk_unknown { fill: url(#lanes-hatch); opacity: 0.6; }
-.ideditor.lane-studio .lanes-layer .roadside-cycle_lane       { fill: rgba(40, 150, 90, 0.45); }
-.ideditor.lane-studio .lanes-layer .roadside-cycle_track      { fill: rgba(40, 150, 90, 0.6); }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk         { fill: rgb(236, 205, 150); --lanes-a: 0.7; }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk.assumed { --lanes-a: 0.5; }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk_unknown { fill: url(#lanes-hatch); --lanes-a: 0.6; }
+.ideditor.lane-studio .lanes-layer .roadside-cycle_lane       { fill: rgb(45, 170, 95); --lanes-a: 0.55; }
+.ideditor.lane-studio .lanes-layer .roadside-cycle_track      { fill: rgb(45, 170, 95); --lanes-a: 0.7; }
 
 /* turn arrows: white (set on the symbols) with a dark edge, readable on light and dark imagery */
 .ideditor.lane-studio .lanes-layer .turn-arrow {
@@ -100,6 +100,19 @@
 }
 .ideditor.lane-studio .lanes-layer .lane-target:hover {
     fill: rgba(255, 255, 255, 0.12);
+}
+/* mini-roundabouts and turning heads select their node, a road's carriageway area its road */
+.ideditor.lane-studio .lanes-layer .entity-target {
+    fill: transparent;
+    stroke: none;
+    pointer-events: fill;
+    cursor: pointer;
+}
+.ideditor.lane-studio.lanes-tool-paint .lanes-layer .entity-target,
+.ideditor.lane-studio.lanes-tool-connect .lanes-layer .entity-target,
+.ideditor.lane-studio.lanes-tool-width .lanes-layer .entity-target,
+.ideditor.lane-studio.lanes-tool-marking .lanes-layer .entity-target {
+    pointer-events: none;
 }
 .ideditor.lane-studio .lanes-layer .divider-target {
     fill: none;
@@ -229,7 +242,8 @@
 /* settings: lane surface opacity. Each surface sets its default transparency as --lanes-a;
    the setting (in --lanes-low and --lanes-high, see core/lane_settings.ts) scales it to 0% or 100% */
 .ideditor.lane-studio .lanes-layer .carriageway,
-.ideditor.lane-studio .lanes-layer .lane {
+.ideditor.lane-studio .lanes-layer .lane,
+.ideditor.lane-studio .lanes-layer .roadside {
     fill-opacity: calc(var(--lanes-a, 1) * var(--lanes-low, 1) + (1 - var(--lanes-a, 1)) * var(--lanes-high, 0));
 }
 
@@ -237,6 +251,19 @@
 .ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm .lanes-drawn,
 .ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm .lanes-drawn-feature {
     display: none;
+}
+/* ... except the selected road's own line, thin, and its nodes, so it can still be reshaped: drag a node
+   or a midpoint as usual */
+.ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm path.line.stroke.lanes-drawn.selected,
+.ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm path.line.stroke.lanes-drawn-feature.selected {
+    display: inline;
+    stroke-width: 1.5px !important;
+    stroke-opacity: 0.9;
+}
+.ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm g.vertex.lanes-drawn-feature.sibling,
+.ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm g.vertex.lanes-drawn-feature.selected,
+.ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm g.vertex.lanes-drawn-feature.active {
+    display: inline;
 }
 /* street-side parking points on a road are shown by the road's parking strip */
 .ideditor.lane-studio .surface.lanes-visible .layer-osm .lanes-redundant {
@@ -246,6 +273,8 @@
 /* iD's hover and select behaviours add .hover and .selected to everything carrying the feature's id,
    so roads, paths, areas and markings drawn here light up even when iD's own lines are hidden */
 .ideditor.lane-studio .lanes-layer .carriageway.hover,
+.ideditor.lane-studio .lanes-layer .street-surface.hover,
+.ideditor.lane-studio .lanes-layer .turning-head.hover,
 .ideditor.lane-studio .lanes-layer .street-path.hover,
 .ideditor.lane-studio .lanes-layer .street-area.hover,
 .ideditor.lane-studio .lanes-layer .street-parking.hover,
@@ -263,7 +292,9 @@
     stroke: #f6634f;
     stroke-width: 2.5;
 }
-.ideditor.lane-studio .lanes-layer .carriageway.selected {
+.ideditor.lane-studio .lanes-layer .carriageway.selected,
+.ideditor.lane-studio .lanes-layer .street-surface.selected,
+.ideditor.lane-studio .lanes-layer .turning-head.selected {
     stroke: rgba(246, 99, 79, 0.8);
     stroke-width: 2;
 }

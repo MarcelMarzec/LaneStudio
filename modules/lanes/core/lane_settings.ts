@@ -51,6 +51,9 @@ export function laneSettings(context: iD.Context): LaneSettings {
             : c);
         container.style('--lanes-road-fill', `rgb(${colour.join(', ')})`);
         container.style('--lanes-road-alpha', String(Math.round(alpha * 1000) / 1000));
+        // junction boxes: lighter and bluer than the road, so they read as a different surface
+        const junction = colour.map((c, i) => Math.min(255, c + [18, 24, 38][i]));
+        container.style('--lanes-junction-fill', `rgb(${junction.join(', ')})`);
         container.classed('lanes-hide-originals', _hide);
     }
 

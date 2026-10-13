@@ -108,9 +108,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'roadside', 'parking', 'paths', 'carriageway', 'lanes', 'junctions', 'node-surfaces', 'islands', 'dividers', 'kerbs',
+                'areas', 'roadside', 'parking', 'paths', 'carriageway', 'lanes', 'junctions', 'heads', 'node-surfaces', 'islands', 'dividers', 'kerbs',
                 'kerb-lines', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'labels', 'symbols', 'short', 'selection', 'connect-from',
-                'targets', 'short-targets', 'divider-targets'
+                'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
             ])
             .enter()
             .append('g')
@@ -135,7 +135,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .filter(entity => !features.isHidden(entity, graph, entity.geometry(graph)));
         const ways = visible.filter(isLaneRoad);
         const carriagewayAreas = visible.filter(isCarriagewayArea) as osmWay[];
-        const { visuals, pieces, innerPieces, junctions, connections } = roadGeometry(ways, graph, carriagewayAreas);
+        const { visuals, pieces, innerPieces, junctions, connections, heads, areaRoads } = roadGeometry(ways, graph, carriagewayAreas);
         // short links inside a junction cluster are drawn only as lane guide lines (still clickable)
         const shown = pieces.filter(piece => !innerPieces.has(piece));
         const selected = new Set(context.selectedIDs());
@@ -148,21 +148,26 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* footways, mapped areas and kerbs, road markings on nodes */
         const street = streetGeometry(visible, graph, visuals);
-        // roads lying inside a road mapped as an area: the area is their surface, so they draw
-        // no carriageway, kerbs, roadside or general lane fill of their own
+        // roads lying inside their own road mapped as an area: the area is their surface, so they draw
+        // no carriageway, kerbs, roadside or general lane fill of their own (a road it only touches is left alone)
         const roadAreas = street.areas.filter(a => a.kind === 'carriageway');
-        const inArea = new Set<RoadPiece>(roadAreas.length ? pieces.filter(piece => insideAreas(piece, roadAreas)) : []);
+        const inArea = new Set<RoadPiece>(roadAreas.length ? pieces.filter(piece =>
+            insideAreas(piece, roadAreas.filter(area => areaRoads.get(area.id) === piece.wayID))) : []);
         const surfaceOf = (piece: RoadPiece) => surfaceGroup((graph.hasEntity(piece.wayID) as osmWay | undefined)?.tags.surface);
         const parking = parkingGeometry(visible, graph);
         const roadMarkings = markings ? roadMarkingGeometry(visible, graph) : { lines: [], areas: [], texts: [] };
-        drawStreet(group, street, projection, zoom, laneZooms);
+        drawStreet(group, street, projection, zoom, laneZooms, areaRoads);
         drawParking(group('parking'), parking, projection, markings);
         drawRoadMarkings(group('road-markings'), roadMarkings, projection, labels);
 
 
         /* roadside strips */
         // (short roads inside a merged junction keep their pavements)
-        const strips = pieces.filter(piece => !inArea.has(piece)).flatMap(piece => piece.roadside.map((strip, i) => ({ ...strip, key: `${pieceKey(piece)}-${i}` })));
+        const strips = [
+            ...pieces.filter(piece => !inArea.has(piece)).flatMap(piece => piece.roadside.map((strip, i) => ({ ...strip, key: `${pieceKey(piece)}-${i}` }))),
+            // pavements carried round turning heads
+            ...heads.flatMap(head => head.pavements.map((polygon, i) => ({ key: `${head.nodeID}-pavement-${i}`, kind: 'sidewalk', assumed: false, polygon })))
+        ];
         const stripPaths = group('roadside').selectAll<SVGPathElement, typeof strips[number]>('path')
             .data(strips, d => d.key);
         stripPaths.exit().remove();
@@ -201,6 +206,14 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .attr('class', 'junction-area')
             .merge(areas)
             .attr('d', d => d.polygons.map(polygon => path(polygon, true)).join(''));
+
+
+        /* turning circles, loops and hammerheads: road surface carried on from the road's end */
+        const headShapes = heads.flatMap(head => [
+            { key: head.nodeID, cls: `turning-head ${head.nodeID}`, d: head.polygons.map(ring => path(ring, true)).join('') },
+            ...(head.island ? [{ key: `${head.nodeID}-island`, cls: 'marking marking-turning_loop_island', d: path(head.island, true) }] : [])
+        ]);
+        joinPaths(group('heads'), headShapes, d => d.key, d => d.cls, d => d.d);
 
 
         /* lane ribbons */
@@ -255,7 +268,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 { key: `${pieceKey(piece)}-r`, line: piece.lines[piece.lines.length - 1], assumed: piece.layout.assumed }
             ]),
             // junction corners between neighbouring roads
-            ...shownJunctions.flatMap(j => j.kerbs.map((kerb, i) => ({ key: `${j.nodeID}-kerb-${i}`, line: kerb.line, assumed: kerb.assumed })))
+            ...shownJunctions.flatMap(j => j.kerbs.map((kerb, i) => ({ key: `${j.nodeID}-kerb-${i}`, line: kerb.line, assumed: kerb.assumed }))),
+            // round turning heads, from one kerb of the road to the other
+            ...heads.flatMap(h => h.kerbs.map((kerb, i) => ({ key: `${h.nodeID}-head-kerb-${i}`, line: kerb.line, assumed: kerb.assumed })))
         ];
         const kerbs = group('kerbs').selectAll<SVGPathElement, typeof kerbData[number]>('path')
             .data(kerbData, d => d.key);
@@ -351,7 +366,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         })));
         // and where a road's lane lines stop at a junction box, they carry on through it as guide lines
         const lengthOf = (line: Vec2[]) => line.slice(1).reduce((sum, p, i) => sum + Math.hypot(p[0] - line[i][0], p[1] - line[i][1]), 0);
-        const stoppedGuides = shown.flatMap(piece => piece.boundaries.slice(1, -1).flatMap((line, i) => {
+        // (not into a turning head: there the lane lines simply end)
+        const headNodes = new Set(heads.map(h => h.nodeID));
+        const guidedPieces = shown.filter(piece => !headNodes.has(piece.fromNode) && !headNodes.has(piece.toNode));
+        const stoppedGuides = guidedPieces.flatMap(piece => piece.boundaries.slice(1, -1).flatMap((line, i) => {
             const painted = piece.lines[i + 1];
             if (painted.length && lengthOf(painted) > lengthOf(line) * 0.98) return [];
             return [{ key: `${pieceKey(piece)}-through-${i}`, nodeID: piece.fromNode, kind: 'guide' as const, optional: false, line }];
@@ -393,6 +411,14 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* click targets: lanes from the editing zoom, dividers on the selected road */
         drawTargets(group('targets'), group('divider-targets'), pieces, markings, selected);
+        // mini-roundabouts and turning heads select their node
+        drawEntityTargets(group('node-targets'), [
+            ...street.surfaces.map(surface => ({ key: surface.key, entityID: surface.nodeID, d: path(surface.points, true) })),
+            ...heads.map(head => ({ key: head.nodeID, entityID: head.nodeID, d: head.polygons.map(ring => path(ring, true)).join('') }))
+        ]);
+        // a road's carriageway area selects the road (under the lanes, so roads crossing it stay clickable)
+        drawEntityTargets(group('area-targets'), roadAreas.filter(area => areaRoads.has(area.id))
+            .map(area => ({ key: area.id, entityID: areaRoads.get(area.id)!, d: path(area.polygon, true) })));
 
 
         /* mark iD's own drawing of what is drawn here: road lines are thinned, and the
@@ -645,6 +671,26 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             })
             .merge(dividers)
             .attr('class', d => 'divider-target' + (d.clickable ? '' : ' width-only'))
+            .attr('d', d => d.d);
+    }
+
+
+    /**
+     * Click targets that select a feature: mini-roundabout and turning head surfaces select their node,
+     * a road's carriageway area its road (iD's select and hover behaviours read `properties.entity`)
+     */
+    function drawEntityTargets(target: Selection, shapes: { key: string; entityID: string; d: string }[]) {
+        const graph = context.graph();
+        const data = shapes.flatMap(shape => {
+            const entity = graph.hasEntity(shape.entityID as NodeId);
+            return entity ? [{ key: shape.key, properties: { entity }, d: shape.d }] : [];
+        });
+        const targets = target.selectAll<SVGPathElement, typeof data[number]>('path.entity-target')
+            .data(data, d => d.key);
+        targets.exit().remove();
+        targets.enter().append('path')
+            .attr('class', 'entity-target')
+            .merge(targets)
             .attr('d', d => d.d);
     }
 

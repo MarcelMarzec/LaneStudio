@@ -42,10 +42,11 @@ text and give-way triangles from zoom 19.
 **Settings** (the Lane Studio pane, first in the pane bar on the right, shortcut `K`)
 
 - Lane surface opacity: 35% is the usual see-through look, 100% fully opaque, 0% invisible; the
-  reset button returns to 35%.
+  reset button returns to 35%. It applies to lanes, roads, pavements, footways and paths alike.
 - Hide iD's lines and points under lanes: hides iD's own way lines, vertices, points and direction
   cones for everything Lane Studio draws. They can still be clicked, and hovering or selecting a road
-  highlights Lane Studio's drawing of it.
+  highlights Lane Studio's drawing of it. The selected road keeps a thin line and its nodes, so its
+  nodes and midpoints can still be dragged to reshape it.
 
 **Tools** (buttons in the Lanes section)
 
@@ -108,8 +109,12 @@ surface: ways inside it draw only their lane lines, arrows and special lanes. Sh
 paths are striped with both colours, segregated ones split in two.
 
 **Also drawn**: mini-roundabouts (a circular carriageway from `diameter=*` or the roads, the white
-disc, and a give way line on each approach unless one is mapped); turning circles and loops (from
-`diameter=*`, else twice the road width); speed limit roundels where the limit changes between two
+disc, and a give way line on each approach unless one is mapped); turning heads at road ends
+(`highway=turning_circle|turning_loop`, shaped by `turning_circle=circle|oval|square|hammer|knuckle`,
+a circle when untagged, sized by `diameter=*` or twice the road width): the road flares out into the
+head with its kerb carried round, a pavement on the road is carried round it too, and a knuckle bulges
+out on the outside of a bend. Hovering or clicking a mini-roundabout or turning head selects its node,
+like a road. Speed limit roundels where the limit changes between two
 roads that both have one; barriers on roads (gates and similar across the road, bollards and blocks
 as posts, cattle grids) and on paths; fences, walls, guard rails, jersey barriers and hedges at their
 width; and small direction arrows on the lanes of one-way roads (iD's own arrows on the way line are
@@ -124,15 +129,24 @@ hidden).
   shifted (unless it has `placement` tags), an added or dropped outer lane tapers over 25 m, and a
   one-way slip road starts where the lane leading into it ends. Which lanes carry on comes from a
   `type=connectivity` relation, else from `turn:lanes`; a lane marked `merge_to_left` or
-  `merge_to_right` is the one that ends. A shift holds for 30 m from the join, then fades out over
+  `merge_to_right` is the one that ends, and its arrow sits just before its taper. A shift holds for 30 m from the join, then fades out over
   50 m.
-- Where a mapped carriageway area covers a road, the road is shifted to sit in the middle of it, and
-  stop, give way and signal lines, symbols and crossings move with it.
+- A mapped carriageway area belongs to the road lying mostly inside it: that road is shifted to sit in
+  the middle of it (stop, give way and signal lines, symbols and crossings move with it), the area is
+  drawn as its surface, and hovering or clicking the area selects that road. A road the area only
+  touches, like the main road a side road's area reaches, is left as it is (no box, unbroken kerbs).
+- Shifts are capped: lining up with a joining road moves a road by at most one lane (3.5 m), and
+  fitting it to an area by at most half its width; bigger gaps mean the lanes or the area do not
+  match, and moving that far would push the road into its neighbours.
 - Junctions joined by a road shorter than 25 m are one junction: one box, and the short link is drawn
   only as lane guide lines. At a fork (a dual carriageway splitting) nothing runs through, so the
   carriageways stop where they meet.
-- The junction box's corners between neighbouring roads curve round from one road's kerb to the
-  next, with a kerb line; where a road bends at a node, both halves are cut on the bisector of the
+- Junction boxes are a little lighter and bluer than the road. Their corners use each road's edges
+  where it actually ends (a shifted or tapering road included), and curve round from one road's kerb
+  to the next, with a kerb line. Where no traffic crosses the main road (round a roundabout, or a slip
+  road leaving or joining a one-way road on one side) the box is only the mouth outside its edge, and
+  a roundabout's kerbs and lane lines run all the way round. Where two roads just join there is no
+  box; where a road bends at a node, both halves are cut on the bisector of the
   bend so their lanes, kerbs and pavements meet exactly.
 - Dashed guide lines carry each lane through the junction box to the lanes it leads to, along the
   lane's edges, from its turn arrows and the exit angles; connectivity relations are drawn as solid

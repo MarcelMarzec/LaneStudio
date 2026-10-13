@@ -171,12 +171,8 @@ describe('streetGeometry: mini-roundabouts, turning circles, barriers, speed lim
         expect(street.markings.filter(m => m.nodeID === 'n3' && m.kind === 'give_way_line')).toHaveLength(3);
     });
 
-    it('sizes turning circles by diameter and puts bollards across the road', () => {
+    it('puts bollards across the road', () => {
         const street = build();
-        const frame = metricFrame(origin);
-        const turning = street.surfaces.find(s => s.kind === 'turning_circle')!;
-        const xs = turning.points.map(p => frame.toMetres(p)[0]);
-        expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(16, 0);
         expect(street.markings.filter(m => m.kind === 'barrier_post' && m.variant === 'bollard').length).toBeGreaterThanOrEqual(3);
     });
 
