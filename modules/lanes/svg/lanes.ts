@@ -45,6 +45,17 @@ export const laneZooms = {
 
 type Selection = d3.Selection<SVGGElement>;
 
+/** Pieces grouped by their road, with the shapes of each, for drawing a road as one path */
+function byWay(pieces: RoadPiece[], shapes: (piece: RoadPiece) => Vec2[][]): { key: string; piece: RoadPiece; polygons: Vec2[][] }[] {
+    const groups = new Map<string, { key: string; piece: RoadPiece; polygons: Vec2[][] }>();
+    for (const piece of pieces) {
+        const group = groups.get(piece.wayID) ?? { key: piece.wayID, piece, polygons: [] };
+        group.polygons.push(...shapes(piece));
+        groups.set(piece.wayID, group);
+    }
+    return [...groups.values()];
+}
+
 /** Bay lengths along the road for each way of parking, in metres */
 const bayLength = { parallel: 6, diagonal: 3, perpendicular: 2.5 };
 
@@ -275,20 +286,24 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* carriageways */
-        const carriageways = group('carriageway').selectAll<SVGPathElement, RoadPiece>('path')
-            .data(shown.filter(piece => !inArea.has(piece)), pieceKey);
+        // all pieces of a road in one path: separate shapes leave a faint seam where they meet
+        // (round a roundabout, at every road that joins it)
+        const carriagewayData = byWay(shown.filter(piece => !inArea.has(piece)), piece => [piece.carriageway]);
+        const carriageways = group('carriageway').selectAll<SVGPathElement, typeof carriagewayData[number]>('path')
+            .data(carriagewayData, d => d.key);
         carriageways.exit().remove();
         carriageways.enter().append('path')
             .merge(carriageways)
             // the way id as a class: iD's hover and select behaviours highlight everything with it
             .attr('class', function(d) {
-                return withIdState(this, `carriageway ${d.wayID}` + coveredTag(d.wayID) + (building(d) ? ' lanes-construction' : '') +
-                    (d.layout.assumed ? ' assumed' : '') +
-                    (surfaceOf(d) ? ` surface-${surfaceOf(d)}` : '') +
-                    (selected.has(d.wayID) ? ' selected' : '') +
-                    (corridor.has(d.wayID) && !selected.has(d.wayID) ? ' corridor' : ''));
+                const piece = d.piece;
+                return withIdState(this, `carriageway ${piece.wayID}` + coveredTag(piece.wayID) + (building(piece) ? ' lanes-construction' : '') +
+                    (piece.layout.assumed ? ' assumed' : '') +
+                    (surfaceOf(piece) ? ` surface-${surfaceOf(piece)}` : '') +
+                    (selected.has(piece.wayID) ? ' selected' : '') +
+                    (corridor.has(piece.wayID) && !selected.has(piece.wayID) ? ' corridor' : ''));
             })
-            .attr('d', d => path(d.carriageway, true));
+            .attr('d', d => d.polygons.map(polygon => path(polygon, true)).join(''));
 
 
         /* junction areas (not inside a road mapped as an area, which is their surface) */
@@ -314,19 +329,30 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* lane ribbons */
-        const laneData = shown.flatMap(piece => piece.layout.lanes.map((lane, i) => ({ piece, lane, i })))
-            .filter(d => !(inArea.has(d.piece) && d.lane.kind === 'general'));
-        const ribbons = group('lanes').selectAll<SVGPathElement, typeof laneData[number]>('path')
-            .data(laneData, d => `${pieceKey(d.piece)}-${d.i}`);
+        // (each lane of a road in one path, as for carriageways)
+        const laneClass = (piece: RoadPiece, lane: LaneInfo) => {
+            const surface = surfaceGroup(lane.values['surface:lanes']) ?? surfaceOf(piece);
+            return `lane lane-${lane.kind} lane-${lane.ref.direction}` + (surface ? ` surface-${surface}` : '') + coveredTag(piece.wayID) +
+                (building(piece) ? ' lanes-construction' : '');
+        };
+        const laneShapes = new Map<string, { key: string; cls: string; polygons: Vec2[][] }>();
+        for (const piece of shown) {
+            piece.layout.lanes.forEach((lane, i) => {
+                if (inArea.has(piece) && lane.kind === 'general') return;
+                const cls = laneClass(piece, lane);
+                const key = `${piece.wayID}-${i}-${cls}`;
+                const shape = laneShapes.get(key) ?? { key, cls, polygons: [] };
+                shape.polygons.push(piece.lanes[i]);
+                laneShapes.set(key, shape);
+            });
+        }
+        const ribbons = group('lanes').selectAll<SVGPathElement, { key: string; cls: string; polygons: Vec2[][] }>('path')
+            .data([...laneShapes.values()], d => d.key);
         ribbons.exit().remove();
         ribbons.enter().append('path')
             .merge(ribbons)
-            .attr('class', d => {
-                const surface = surfaceGroup(d.lane.values['surface:lanes']) ?? surfaceOf(d.piece);
-                return `lane lane-${d.lane.kind} lane-${d.lane.ref.direction}` + (surface ? ` surface-${surface}` : '') + coveredTag(d.piece.wayID) +
-                    (building(d.piece) ? ' lanes-construction' : '');
-            })
-            .attr('d', d => path(d.piece.lanes[d.i], true));
+            .attr('class', d => d.cls)
+            .attr('d', d => d.polygons.map(polygon => path(polygon, true)).join(''));
 
 
         /* roads and paths being built: work stripes over them */

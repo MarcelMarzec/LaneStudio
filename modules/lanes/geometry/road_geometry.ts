@@ -944,6 +944,17 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
  * round the point where the two kerbs would meet, as a kerb rounds a corner; a straight line when they
  * do not meet on the junction's side, or only far away (very sharp angles).
  */
+/** A curve from `from` to `to` drawn towards `control` */
+function quadraticCurve(from: Vec2, control: Vec2, to: Vec2): Vec2[] {
+    return Array.from({ length: 9 }, (_, i) => {
+        const a = i / 8;
+        const b = 1 - a;
+        return [
+            b * b * from[0] + 2 * a * b * control[0] + a * a * to[0],
+            b * b * from[1] + 2 * a * b * control[1] + a * a * to[1]
+        ] as Vec2;
+    });
+}
 function cornerCurve(from: Vec2, fromDirection: Vec2, to: Vec2, toDirection: Vec2): Vec2[] {
     // the kerbs run back towards the node: from - t × fromDirection and to - u × toDirection
     const cross = fromDirection[0] * toDirection[1] - fromDirection[1] * toDirection[0];
@@ -1059,10 +1070,13 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
         const reach = Math.max(0, ...arms.filter((_, i) => !onMain(i)).map(arm => (arm.right - arm.left) / 2));
         // the side of a main road arm its side roads are on (1: its left, counter-clockwise; -1: its right),
         // or 0 when they are on both: round a roundabout, the outside of the ring
+        const ringCentre = (arm: Arm): Vec2 => {
+            const ring = lineLocs(arm.way, graph).map(frame.toMetres);
+            return scale(ring.slice(0, -1).reduce((sum, p) => add(sum, p), [0, 0] as Vec2), 1 / Math.max(1, ring.length - 1));
+        };
         const sideOf = (arm: Arm): number => {
             if (isRing(arm.way)) {
-                const ring = lineLocs(arm.way, graph).map(frame.toMetres);
-                const centre = scale(ring.slice(0, -1).reduce((sum, p) => add(sum, p), [0, 0] as Vec2), 1 / Math.max(1, ring.length - 1));
+                const centre = ringCentre(arm);
                 return Math.sign(-arm.direction[1] * -centre[0] + arm.direction[0] * -centre[1]) || 1;
             }
             const sides = arms.filter((_, j) => !onMain(j))
@@ -1081,6 +1095,47 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
         };
         const directionAt = (arm: Arm, t: number) => pointAlong(arm.line, Math.min(t, polylineLength(arm.line))).direction;
 
+        // a road joining a roundabout stops where both its edges are clear of the ring's curved outer edge,
+        // plus room for its kerbs to flare into the ring (straight lines from the node, as used for other
+        // junctions, miss the ring's curve: wide or slanting roads then overlapped it or left a gap)
+        const ringJoin = mouthOnly && !!through && through.every(k => isRing(arms[k].way));
+        const crossings = new Map<number, { left: Vec2; right: Vec2; flare: number }>();
+        if (ringJoin) {
+            const outerHalf = (arm: Arm) => {
+                const side = sideOf(arm) > 0 ? 'left' : 'right';
+                const length = Math.min(80, polylineLength(arm.line));
+                const points: Vec2[] = [];
+                for (let t = 0; t < length; t += 1) points.push(edgeAt(arm, t, side));
+                points.push(edgeAt(arm, length, side));
+                return points;
+            };
+            const [a, b] = through!.map(k => arms[k]);
+            const outer = [...outerHalf(a).reverse(), ...outerHalf(b).slice(1)];
+            const centre = ringCentre(a);
+            const outside = (p: Vec2) => {
+                const q = pointAlong(outer, projectOnto(outer, p)).point;
+                return len(sub(p, centre)) > len(sub(q, centre)) + 0.05;
+            };
+            arms.forEach((arm, i) => {
+                if (onMain(i)) return;
+                const length = polylineLength(arm.line);
+                const clear = (side: 'left' | 'right') => {
+                    for (let t = 0; t <= Math.min(maxClearance, length); t += 0.25) {
+                        const p = edgeAt(arm, t, side);
+                        if (outside(p)) return { t, p };
+                    }
+                    return null;
+                };
+                const left = clear('left');
+                const right = clear('right');
+                if (!left || !right) return;
+                const flare = Math.min(8, Math.max(2.5, (arm.right - arm.left) * 0.4));
+                const trim = Math.min(Math.max(left.t, right.t) + flare, maxClearance, length * 0.45);
+                trims.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), trim);
+                crossings.set(i, { left: left.p, right: right.p, flare });
+            });
+        }
+
         type End = { right: Vec2; left: Vec2; rightAt: number; leftAt: number; rightDirection: Vec2; leftDirection: Vec2 };
         const ends: End[] = arms.map((arm, i) => {
             const trim = trims.get(armKey(arm.way.id, arm.nodeIndex, arm.alongWay)) ?? 0;
@@ -1096,8 +1151,12 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
                 const arm = arms[i];
                 const length = polylineLength(arm.line);
                 const extended = { left: 0, right: 0 };
-                const extend = (side: 'left' | 'right', corner: Vec2) => {
-                    const s = Math.min(maxClearance, projectOnto(arm.line, corner));
+                const extend = (side: 'left' | 'right', corner: Vec2, neighbour: number) => {
+                    // round a roundabout the ring's edge runs on past where the joining road's edge leaves it,
+                    // so the kerb curves smoothly from one to the other
+                    const crossing = crossings.get(neighbour);
+                    const leaving = crossing?.[side === 'left' ? 'right' : 'left'];
+                    const s = Math.min(maxClearance, leaving ? projectOnto(arm.line, leaving) + crossing!.flare : projectOnto(arm.line, corner));
                     const key = side === 'left' ? 'leftAt' : 'rightAt';
                     if (s <= ends[i][key] || s >= length) return;
                     extended[side] = s;
@@ -1107,8 +1166,8 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
                 };
                 const next = (i + 1) % arms.length;
                 const previous = (i - 1 + arms.length) % arms.length;
-                if (!onMain(next)) extend('left', ends[next].right);
-                if (!onMain(previous)) extend('right', ends[previous].left);
+                if (!onMain(next)) extend('left', ends[next].right, next);
+                if (!onMain(previous)) extend('right', ends[previous].left, previous);
                 // the main road's kerb stops where the box's edge starts
                 const key = armKey(arm.way.id, arm.nodeIndex, arm.alongWay);
                 const mark = marks.get(key);
@@ -1147,9 +1206,13 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
             const j = (i + 1) % ends.length;
             const next = ends[j];
             const throughCorner = onMain(i) && onMain(j);
+            // round a roundabout a joining road's kerb curves through where its edge crosses the ring's edge
+            // (the ring curves away from its tangent, so the two edges' straight lines may never meet)
+            const crossing = !throughCorner && ringJoin ? (onMain(i) ? crossings.get(j)?.right : crossings.get(i)?.left) : undefined;
             const corner = throughCorner && mouthOnly
                 ? alongKerb(arms[i], end.leftAt, arms[j], next.rightAt)
-                : cornerCurve(end.left, end.leftDirection, next.right, next.rightDirection);
+                : crossing ? quadraticCurve(end.left, crossing, next.right)
+                    : cornerCurve(end.left, end.leftDirection, next.right, next.rightDirection);
             points.push(end.right, end.left, ...corner.slice(1, -1));
             // the corner is a kerb, except between the two halves of a road running straight through
             // (its own kerb is drawn) and round a mini-roundabout (its circle is the edge)
