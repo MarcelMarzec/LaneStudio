@@ -274,3 +274,16 @@
     width: 100%;
     border-radius: 0 0 4px 4px;
 }
+
+/* sign picker: one small drawing per sign */
+.ideditor.lane-studio .sign-grid button {
+    padding: 2px;
+    line-height: 0;
+}
+.ideditor.lane-studio .sign-grid button.active {
+    outline: 2px solid var(--link-color);
+}
+.ideditor.lane-studio .sign-editor .sign-turn {
+    height: auto;
+    padding: 3px 8px;
+}

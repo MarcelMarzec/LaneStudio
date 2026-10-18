@@ -63,6 +63,8 @@ en:
     connect: Connect
     connect_tip: Connect a lane to a lane on the next road, for junctions where lanes do not simply carry on
     marking_tip: Place crossings, stop and give way signs, signals and traffic calming by clicking a road
+    sign: Signs
+    sign_tip: Place traffic signs, message signs and cameras beside a road by clicking a lane
   change:
     "yes": Change allowed both ways
     "no": No lane change
@@ -76,6 +78,7 @@ en:
     hov: HOV lane
     bicycle: Bicycle lane
     pedestrian: Pedestrian lane
+    variable: Variable (opened by signs)
     restricted: No access
   turn:
     sharp_left: Sharp left
@@ -145,6 +148,45 @@ en:
     place_tip: Choose what to place, then click a road on the map
     placing: "Click a road to place a {type}."
     stop_placing: Stop placing
+  signs:
+    title: Traffic sign
+    camera_title: Enforcement camera
+    type: Which sign
+    other: "Tagged as {code}, which Lane Studio draws as a plate. Picking a sign replaces the first sign on the post."
+    placing: "Click a lane to place a {type} beside the road, facing that lane's traffic."
+    value: Value on the sign
+    limit: Speed limit (mph)
+    camera_limit: Enforced speed (mph)
+    facing: "Faces: {direction}"
+    unknown: not set
+    turn: Turn round
+    facing_hint: A sign faces the traffic that reads it. direction is the compass bearing it faces.
+    names:
+      gb_670: Speed limit
+      gb_671: National speed limit
+      gb_674: 20 zone
+      gb_672: Minimum speed
+      gb_601_1: Stop
+      gb_602: Give way
+      gb_616: No entry
+      gb_617: All vehicles prohibited
+      gb_619: No motor vehicles
+      gb_612: No right turn
+      gb_613: No left turn
+      gb_614: No U-turn
+      gb_632: No overtaking
+      gb_606: Ahead only
+      gb_610: Keep left
+      gb_652: One way
+      gb_626_2: Weight limit
+      gb_629: Width limit
+      gb_629_2: Height limit
+      gb_955: Cycles only
+      gb_956: Shared path
+      gb_957: Segregated path
+      message: Variable message sign
+      camera_speed: Speed camera
+      camera_red_light: Red light camera
   connect:
     pick_from: Click the lane traffic comes from, near the junction.
     pick_to: Now click the lane on the next road it leads to. Clicking the same pair again removes the connection.
@@ -180,6 +222,7 @@ en:
     hint: Left and right are as seen looking along the way's drawing direction.
     left: Left side
     right: Right side
+    shoulder: Hard shoulder
     sidewalk: Pavement
     cycleway: Cycleway
     parking: Parking
@@ -263,6 +306,7 @@ en:
     not_joined: No road with lanes nearby to join to.
   annotation:
     marking: Changed a road marking.
+    sign: Changed a traffic sign.
     street_feature: Changed a street feature.
     roadside: Changed the roadside.
     copy: Copied lanes to the next road.

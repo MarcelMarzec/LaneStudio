@@ -3,13 +3,14 @@ import type { NodeId } from '../../osm';
 import type { osmWay } from '../../osm/way';
 import { laneDriveSide } from '../core/drive_side';
 import { builtHighway, isLaneRoad, sidewalkExpectedHighways } from '../core/roads';
+import { shoulderValue } from '../core/roadside';
 import {
     parseLanes, laneRefsInWayOrder, parseChange,
     type LaneChange, type LaneModel, type LaneRef
 } from '../model';
 
 /** What a lane is for, which decides its colour and pattern */
-export type LaneKind = 'general' | 'bus' | 'psv' | 'taxi' | 'hov' | 'bicycle' | 'pedestrian' | 'restricted';
+export type LaneKind = 'general' | 'bus' | 'psv' | 'taxi' | 'hov' | 'bicycle' | 'pedestrian' | 'variable' | 'restricted';
 
 export interface LaneInfo {
     ref: LaneRef;
@@ -21,7 +22,7 @@ export interface LaneInfo {
     values: Record<string, string>;
 }
 
-export type RoadsideKind = 'sidewalk' | 'sidewalk_unknown' | 'cycle_lane' | 'cycle_track' | 'parking';
+export type RoadsideKind = 'shoulder' | 'sidewalk' | 'sidewalk_unknown' | 'cycle_lane' | 'cycle_track' | 'parking';
 
 export interface RoadsideStrip {
     kind: RoadsideKind;
@@ -72,6 +73,7 @@ function laneKind(values: Record<string, string>): LaneKind {
     if (reserved('hov:lanes')) return 'hov';
     if (reserved('bicycle:lanes')) return 'bicycle';
     if (reserved('foot:lanes')) return 'pedestrian';
+    if (v('access:lanes') === 'variable') return 'variable';
     if (['no', 'private'].includes(v('access:lanes')) || ['no', 'private'].includes(v('motor_vehicle:lanes')) ||
         ['no', 'private'].includes(v('vehicle:lanes'))) return 'restricted';
     return 'general';
@@ -113,8 +115,14 @@ function sideValue(tags: Tags, key: string, side: 'left' | 'right'): string | un
     return plain;
 }
 
-function roadsideStrips(tags: Tags, side: 'left' | 'right'): RoadsideStrip[] {
+function roadsideStrips(tags: Tags, side: 'left' | 'right', shoulderSide: 'left' | 'right' | null): RoadsideStrip[] {
     const strips: RoadsideStrip[] = [];
+
+    // a hard shoulder runs right beside the carriageway (wiki: Key:shoulder)
+    if (shoulderValue(tags, side, shoulderSide) === 'yes') {
+        const width = parseWidth(tags[`shoulder:${side}:width`] ?? tags['shoulder:both:width'] ?? tags['shoulder:width']);
+        strips.push({ kind: 'shoulder', width: width ?? 2.5, assumed: width === undefined });
+    }
 
     const cycleway = sideValue(tags, 'cycleway', side);
     if (cycleway === 'lane' || cycleway === 'opposite_lane') {
@@ -180,6 +188,10 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
         };
     });
 
+    // a plain shoulder=yes on a one-way road is on the side traffic keeps to (the left in the UK)
+    const driveSide = laneDriveSide(way, graph);
+    const shoulderSide = model.oneway === 'forward' ? driveSide : model.oneway === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
+
     const total = lanes.reduce((sum, l) => sum + l.width, 0);
     const edges = [-total / 2];
     for (const lane of lanes) edges.push(edges[edges.length - 1] + lane.width);
@@ -218,6 +230,6 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
         edges,
         shiftStart,
         shiftEnd,
-        roadside: { left: roadsideStrips(tags, 'left'), right: roadsideStrips(tags, 'right') }
+        roadside: { left: roadsideStrips(tags, 'left', shoulderSide), right: roadsideStrips(tags, 'right', shoulderSide) }
     };
 }

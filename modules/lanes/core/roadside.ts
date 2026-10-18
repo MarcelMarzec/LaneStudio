@@ -81,6 +81,40 @@ export function sidewalkValue(tags: Tags, side: Side): string | undefined {
 }
 
 /**
+ * Whether a side of the road has a hard shoulder: `shoulder:<side>`, `shoulder:both`, or
+ * `shoulder=yes/left/right/both/no`. A plain `yes` is on `oneSide` when given (a one-way road's
+ * driving side), else on both sides (wiki: Key:shoulder).
+ */
+export function shoulderValue(tags: Tags, side: Side, oneSide: Side | null = null): 'yes' | 'no' | undefined {
+    const specific = tags[`shoulder:${side}`] ?? tags['shoulder:both'];
+    if (specific) return specific === 'no' ? 'no' : 'yes';
+    const plain = tags.shoulder;
+    if (!plain) return undefined;
+    if (plain === 'no') return 'no';
+    if (plain === 'both') return 'yes';
+    if (plain === 'left' || plain === 'right') return plain === side ? 'yes' : 'no';
+    return oneSide && oneSide !== side ? 'no' : 'yes';
+}
+
+/** Sets one side's shoulder, written as `shoulder=left/right/both/no`; `undefined` leaves that side untagged */
+export function withShoulder(tags: Tags, side: Side, value: 'yes' | 'no' | undefined, oneSide: Side | null = null): Tags {
+    const values: Record<Side, 'yes' | 'no' | undefined> = {
+        left: shoulderValue(tags, 'left', oneSide),
+        right: shoulderValue(tags, 'right', oneSide)
+    };
+    values[side] = value;
+    const next = { ...tags };
+    for (const key of ['shoulder', 'shoulder:both', 'shoulder:left', 'shoulder:right']) delete next[key];
+    const { left, right } = values;
+    if (left === 'yes' && right === 'yes') next.shoulder = 'both';
+    else if (left === 'yes') next.shoulder = 'left';
+    else if (right === 'yes') next.shoulder = 'right';
+    else if (left === 'no' && right === 'no') next.shoulder = 'no';
+    else if (left === 'no' || right === 'no') next[`shoulder:${left === 'no' ? 'left' : 'right'}`] = 'no';
+    return next;
+}
+
+/**
  * Sets one side's `sidewalk` value and writes both sides in the side-specific scheme
  * (`sidewalk:both` when they match), replacing plain `sidewalk=*`. `undefined` removes the side.
  */

@@ -123,6 +123,24 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
     works.append('rect').attr('width', 6).attr('height', 12).attr('fill', '#f2c400');
     works.append('rect').attr('x', 6).attr('width', 6).attr('height', 12).attr('fill', '#1c1c1c');
 
+    // variable-access lanes (a running hard shoulder): the lane colour with amber stripes
+    const variable = defs.append('pattern')
+        .attr('id', 'lanes-variable')
+        .attr('patternUnits', 'userSpaceOnUse')
+        .attr('width', 14)
+        .attr('height', 14)
+        .attr('patternTransform', 'rotate(45)');
+    variable.append('rect').attr('width', 14).attr('height', 14).attr('fill', 'rgb(90, 96, 106)');
+    variable.append('rect').attr('width', 3).attr('height', 14).attr('fill', 'rgb(240, 170, 40)');
+
+    // the face of a variable message sign: amber dots on black
+    const dots = defs.append('pattern')
+        .attr('id', 'lanes-message-dots')
+        .attr('patternUnits', 'userSpaceOnUse')
+        .attr('width', 3)
+        .attr('height', 3);
+    dots.append('circle').attr('cx', 1.5).attr('cy', 1.5).attr('r', 0.7).attr('fill', 'rgb(255, 176, 0)');
+
     // hatching for unknown or restricted space
     const hatch = defs.append('pattern')
         .attr('id', 'lanes-hatch')

@@ -11,6 +11,7 @@ import { svgLanes } from '../svg/lanes';
 import { validationLaneTags } from '../validations/lane_tags';
 import { uiSectionLanes } from '../ui/section_lanes';
 import { uiSectionMarkings } from '../ui/section_markings';
+import { uiSectionSign } from '../ui/section_sign';
 import { uiSectionStreetFeature } from '../ui/section_street_feature';
 import { laneStudioSplash } from '../ui/splash';
 import { uiPaneLaneStudio } from '../ui/pane_settings';
@@ -42,6 +43,7 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
     // the Lanes section sits in iD's sidebar, after the issues and before the preset fields
     uiEntityEditorAddSection(uiSectionLanes);
     uiEntityEditorAddSection(uiSectionMarkings);
+    uiEntityEditorAddSection(uiSectionSign);
     uiEntityEditorAddSection(uiSectionStreetFeature);
 
     // Lane Studio's settings pane, first in the pane bar

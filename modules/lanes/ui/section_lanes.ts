@@ -10,10 +10,12 @@ import { uiSection } from '../../ui/section';
 import { utilHighlightEntities } from '../../util';
 import {
     parallelWays, isSidewalkWay, isKerbWay, sidewalkValue, withSidewalk, cyclewayValue, withCycleway,
-    parkingValue, withParking
+    parkingValue, withParking, shoulderValue, withShoulder
 } from '../core/roadside';
+import { laneLayout } from '../geometry/layout';
 import { roundaboutOf, withTurbo, turboRestrictionCount, type Roundabout } from '../osm/roundabout';
 import { markingTypes, type MarkingType } from '../model/markings';
+import { signChoices, signNameKey, type SignChoice } from '../model/signs';
 import { actionChangeLanes } from '../actions/change_lanes';
 import { laneDriveSide } from '../core/drive_side';
 import { laneState } from '../core/lane_state';
@@ -359,6 +361,12 @@ export function uiSectionLanes(context: iD.Context) {
                     select.append('option').attr('value', current).text(current).property('selected', true);
                 }
             };
+            // a plain shoulder=yes on a one-way road is on its driving side
+            const layout = laneLayout(road, graph);
+            const driveSide = laneDriveSide(road, graph);
+            const oneSide = layout.model.oneway === 'forward' ? driveSide
+                : layout.model.oneway === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
+            pick('shoulder', ['yes', 'no'], shoulderValue(tags, side, oneSide), v => withShoulder(tags, side, v as 'yes' | 'no' | undefined, oneSide));
             pick('sidewalk', ['yes', 'no', 'separate'], sidewalkValue(tags, side), v => withSidewalk(tags, side, v));
             pick('cycleway', ['no', 'lane', 'track', 'shared_lane', 'separate'], cyclewayValue(tags, side), v => withCycleway(tags, side, v));
             pick('parking', ['no', 'lane', 'street_side', 'half_on_kerb', 'on_kerb', 'separate'], parkingValue(tags, side), v => withParking(tags, side, v));
@@ -549,7 +557,7 @@ export function uiSectionLanes(context: iD.Context) {
     function renderTools(wrap: Div) {
         const tool = tools.tool();
         const bar = wrap.append('div').attr('class', 'lane-buttons lanes-tools');
-        for (const id of ['select', 'paint', 'width', 'marking', 'connect'] as const) {
+        for (const id of ['select', 'paint', 'width', 'marking', 'sign', 'connect'] as const) {
             bar.append('button')
                 .attr('class', `lanes-tool-${id}` + (tool === id ? ' active' : ''))
                 .attr('aria-pressed', tool === id)
@@ -573,6 +581,16 @@ export function uiSectionLanes(context: iD.Context) {
             }
             wrap.append('p').attr('class', 'lanes-note')
                 .text(t('_lanes.markings.placing', { type: t(`_lanes.markings.types.${tools.marking()}`) }));
+        }
+        if (tool === 'sign') {
+            const select = wrap.append('select').attr('class', 'lanes-sign-type')
+                .on('change', function(this: HTMLSelectElement) { tools.setSign(this.value as SignChoice); });
+            for (const choice of signChoices) {
+                select.append('option').attr('value', choice).text(t(`_lanes.signs.names.${signNameKey(choice)}`))
+                    .property('selected', choice === tools.sign());
+            }
+            wrap.append('p').attr('class', 'lanes-note')
+                .text(t('_lanes.signs.placing', { type: t(`_lanes.signs.names.${signNameKey(tools.sign())}`) }));
         }
         if (tool !== 'paint') return;
 

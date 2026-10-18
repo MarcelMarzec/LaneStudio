@@ -6,6 +6,7 @@ import type { osmWay } from '../../osm/way';
 import { modeSelect } from '../../modes/select';
 import { actionChangeLanes } from '../actions/change_lanes';
 import { actionAddMarking } from '../actions/add_marking';
+import { actionAddSign } from '../actions/add_sign';
 import { laneState } from '../core/lane_state';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
 import { roadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
@@ -27,6 +28,8 @@ import { roadMarkingGeometry } from '../geometry/road_marking';
 import { isStreetParking, surfaceGroup } from '../model/street_features';
 import { pointInPolygon } from '../geometry/frame';
 import { edgeStructures, isCovered, ringEdges, type StructureShape } from '../geometry/structures';
+import { signGeometry } from '../geometry/signs';
+import { drawSigns } from './signs';
 import type { AreaShape } from '../geometry/street';
 import type { osmNode } from '../../osm/node';
 import type { NodeId, OsmEntity } from '../../osm';
@@ -45,6 +48,8 @@ type Selection = d3.Selection<SVGGElement>;
 function dividerClass(left: LaneInfo, right: LaneInfo, layoutMarkings: boolean): string {
     if (!layoutMarkings) return 'none';
     if (left.ref.direction !== right.ref.direction) return 'centre';
+    // a variable-access lane (a running hard shoulder) is kept apart by a solid line
+    if ((left.kind === 'variable') !== (right.kind === 'variable')) return 'solid';
     if (!left.change && !right.change) return 'dashed unknown';
 
     // backward lanes are seen from behind their drivers, so their left and right swap
@@ -110,7 +115,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         _layer.selectAll('g.lanes-group')
             .data([
                 'areas', 'roadside', 'parking', 'paths', 'carriageway', 'lanes', 'works', 'junctions', 'heads', 'node-surfaces', 'islands', 'dividers', 'kerbs',
-                'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'labels', 'symbols', 'short', 'selection', 'connect-from',
+                'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'short', 'selection', 'connect-from',
                 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
             ])
             .enter()
@@ -166,6 +171,12 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         drawStreet(group, street, projection, zoom, laneZooms, areaRoads);
         drawParking(group('parking'), parking, projection, markings);
         drawRoadMarkings(group('road-markings'), roadMarkings, projection, labels);
+
+        /* traffic signs, message signs, gantries, enforcement cameras */
+        // (each sign carries its node for iD's select and hover behaviours)
+        const signData = markings ? signGeometry(visible, graph) : { signs: [], gantries: [], sections: [] };
+        const signs = signData.signs.map(sign => ({ ...sign, properties: { entity: graph.entity(sign.nodeID as NodeId) } }));
+        drawSigns(group, { ...signData, signs }, projection, zoom);
 
 
         /* roadside strips */
@@ -280,10 +291,19 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         /* kerbs */
         // (the short roads inside a merged junction keep their kerbs where no side road joins)
         const kerbData = [
-            ...pieces.filter(piece => !inArea.has(piece)).flatMap(piece => [
-                { key: `${pieceKey(piece)}-l`, line: piece.lines[0], assumed: piece.layout.assumed, construction: building(piece) },
-                { key: `${pieceKey(piece)}-r`, line: piece.lines[piece.lines.length - 1], assumed: piece.layout.assumed, construction: building(piece) }
-            ]),
+            ...pieces.filter(piece => !inArea.has(piece)).flatMap(piece => (['left', 'right'] as const).flatMap(side => {
+                const key = `${pieceKey(piece)}-${side === 'left' ? 'l' : 'r'}`;
+                const edge = piece.lines[side === 'left' ? 0 : piece.lines.length - 1];
+                const shoulder = piece.roadside.find(strip => strip.side === side);
+                // with a hard shoulder, the kerb is beyond it and a solid white line marks the carriageway's edge
+                if (shoulder?.kind === 'shoulder') {
+                    return [
+                        { key, line: ringEdges(shoulder.polygon)[1], assumed: piece.layout.assumed, construction: building(piece), shoulder: false },
+                        { key: `${key}-edge`, line: edge, assumed: false, construction: false, shoulder: true }
+                    ];
+                }
+                return [{ key, line: edge, assumed: piece.layout.assumed, construction: building(piece), shoulder: false }];
+            })),
             // junction corners between neighbouring roads
             ...shownJunctions.flatMap(j => j.kerbs.map((kerb, i) => ({ key: `${j.nodeID}-kerb-${i}`, line: kerb.line, assumed: kerb.assumed }))),
             // round turning heads, from one kerb of the road to the other
@@ -294,7 +314,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         kerbs.exit().remove();
         kerbs.enter().append('path')
             .merge(kerbs)
-            .attr('class', d => 'kerb' + (d.assumed ? ' assumed' : '') + ('construction' in d && d.construction ? ' construction' : ''))
+            .attr('class', d => ('shoulder' in d && d.shoulder ? 'shoulder-edge' : 'kerb') + (d.assumed ? ' assumed' : '') +
+                ('construction' in d && d.construction ? ' construction' : ''))
             .attr('d', d => path(d.line, false));
 
 
@@ -470,7 +491,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         for (const p of parking) drawnWays.add(p.id);
         for (const l of roadMarkings.lines) drawnWays.add(l.id);
         for (const a of roadMarkings.areas) drawnWays.add(a.id);
-        const drawnNodes = new Set<string>([...street.markings, ...street.surfaces].map(m => m.nodeID));
+        const drawnNodes = new Set<string>([...street.markings, ...street.surfaces, ...signData.signs].map(m => m.nodeID));
+        for (const gantry of signData.gantries) drawnWays.add(gantry.id);
         for (const text of roadMarkings.texts) drawnNodes.add(text.id);
         for (const id of drawnWays) {
             const way = graph.hasEntity(id as osmWay['id']) as osmWay | undefined;
@@ -567,6 +589,16 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     }
 
 
+    /** Sign tool: puts a sign or camera beside the road, facing the traffic of the clicked lane, then selects it */
+    function placeSign(event: MouseEvent, d: LaneTarget) {
+        const loc = context.projection.invert(context.map().mouse(event));
+        const travel = d.ref.direction === 'backward' ? 'backward' : 'forward';
+        const { action, nodeID } = actionAddSign(d.wayID, loc, travel, tools.sign(), context.graph());
+        context.perform(action, t('_lanes.annotation.sign'));
+        context.enter(modeSelect(context, [nodeID]));
+    }
+
+
     /**
      * Width tool: drags a lane line or kerb sideways. The lanes either side of a line trade width;
      * a kerb widens or narrows its outer lane. All lane widths are then written to `width:lanes`.
@@ -651,6 +683,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 }
                 if (tools.tool() === 'marking') {
                     placeMarking(event, d);
+                    return;
+                }
+                if (tools.tool() === 'sign') {
+                    placeSign(event, d);
                     return;
                 }
                 if (tools.tool() === 'connect') {

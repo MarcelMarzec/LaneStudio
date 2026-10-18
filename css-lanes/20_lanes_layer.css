@@ -32,6 +32,7 @@
 .ideditor.lane-studio .lanes-layer .lane-hov        { fill: url(#lanes-hov); }
 .ideditor.lane-studio .lanes-layer .lane-bicycle    { fill: rgb(40, 150, 90); --lanes-a: 0.55; }
 .ideditor.lane-studio .lanes-layer .lane-pedestrian { fill: rgb(220, 205, 170); --lanes-a: 0.6; }
+.ideditor.lane-studio .lanes-layer .lane-variable   { fill: url(#lanes-variable); --lanes-a: 0.55; }
 .ideditor.lane-studio .lanes-layer .lane-restricted { fill: url(#lanes-hatch); }
 
 #lanes-hov .hov-back      { fill: rgba(90, 96, 106, 0.35); }
@@ -69,6 +70,14 @@
 .ideditor.lane-studio .lanes-layer .roadside-sidewalk_unknown { fill: url(#lanes-hatch); --lanes-a: 0.6; }
 .ideditor.lane-studio .lanes-layer .roadside-cycle_lane       { fill: rgb(45, 170, 95); --lanes-a: 0.55; }
 .ideditor.lane-studio .lanes-layer .roadside-cycle_track      { fill: rgb(45, 170, 95); --lanes-a: 0.7; }
+/* a hard shoulder: road surface, a shade lighter than the lanes */
+.ideditor.lane-studio .lanes-layer .roadside-shoulder         { fill: rgb(110, 115, 125); --lanes-a: 0.55; }
+/* the solid white line between the lanes and a hard shoulder */
+.ideditor.lane-studio .lanes-layer .shoulder-edge {
+    fill: none;
+    stroke: #f2f2f2;
+    stroke-width: 2;
+}
 
 /* turn arrows: white (set on the symbols) with a dark edge, readable on light and dark imagery */
 .ideditor.lane-studio .lanes-layer .turn-arrow {
@@ -115,7 +124,8 @@
 .ideditor.lane-studio.lanes-tool-paint .lanes-layer .entity-target,
 .ideditor.lane-studio.lanes-tool-connect .lanes-layer .entity-target,
 .ideditor.lane-studio.lanes-tool-width .lanes-layer .entity-target,
-.ideditor.lane-studio.lanes-tool-marking .lanes-layer .entity-target {
+.ideditor.lane-studio.lanes-tool-marking .lanes-layer .entity-target,
+.ideditor.lane-studio.lanes-tool-sign .lanes-layer .entity-target {
     pointer-events: none;
 }
 .ideditor.lane-studio .lanes-layer .divider-target {
@@ -171,7 +181,8 @@
 
 /* Paint and Marking tools act on lanes: iD's own road and node targets step aside */
 .ideditor.lane-studio.lanes-tool-paint .layer-touch .target,
-.ideditor.lane-studio.lanes-tool-marking .layer-touch .target {
+.ideditor.lane-studio.lanes-tool-marking .layer-touch .target,
+.ideditor.lane-studio.lanes-tool-sign .layer-touch .target {
     pointer-events: none;
 }
 
@@ -239,7 +250,8 @@
 .ideditor.lane-studio.lanes-tool-paint .lanes-layer .short-way-marker,
 .ideditor.lane-studio.lanes-tool-connect .lanes-layer .short-way-marker,
 .ideditor.lane-studio.lanes-tool-width .lanes-layer .short-way-marker,
-.ideditor.lane-studio.lanes-tool-marking .lanes-layer .short-way-marker {
+.ideditor.lane-studio.lanes-tool-marking .lanes-layer .short-way-marker,
+.ideditor.lane-studio.lanes-tool-sign .lanes-layer .short-way-marker {
     pointer-events: none;
 }
 

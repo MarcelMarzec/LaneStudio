@@ -9,13 +9,18 @@ export const laneKindKeys: Record<string, string | null> = {
     taxi: 'taxi:lanes',
     hov: 'hov:lanes',
     bicycle: 'bicycle:lanes',
-    pedestrian: 'foot:lanes'
+    pedestrian: 'foot:lanes',
+    // a lane opened and closed by signs, like a running hard shoulder (wiki: Variable-access lanes)
+    variable: 'access:lanes'
 };
+
+/** The value a lane type writes in its key: `designated`, or `variable` for a variable-access lane */
+const kindValue = (kind: string) => (kind === 'variable' ? 'variable' : 'designated');
 
 /** A lane's type, read from the same keys `setLaneKind` writes */
 export function laneKindOf(model: LaneModel, ref: LaneRef): string {
     for (const [kind, key] of Object.entries(laneKindKeys)) {
-        if (key && laneValue(model, ref, key) === 'designated') return kind;
+        if (key && laneValue(model, ref, key) === kindValue(kind)) return kind;
     }
     return 'general';
 }
@@ -29,8 +34,11 @@ export function setLaneKind(model: LaneModel, refs: LaneRef[], kind: string): La
     for (const ref of refs) {
         for (const [k, key] of Object.entries(laneKindKeys)) {
             if (!key || next.keys[key]?.readonly) continue;
-            const want = k === kind ? 'designated' : '';
-            if (laneValue(next, ref, key) !== want && (want || next.keys[key])) next = setLaneValue(next, ref, key, want);
+            const current = laneValue(next, ref, key);
+            // other access values (no, private…) are not a lane type: they stay
+            if (k === 'variable' && kind !== 'variable' && current !== 'variable') continue;
+            const want = k === kind ? kindValue(k) : '';
+            if (current !== want && (want || next.keys[key])) next = setLaneValue(next, ref, key, want);
         }
     }
     return next;
