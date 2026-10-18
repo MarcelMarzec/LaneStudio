@@ -75,7 +75,7 @@ describe('laneLayout', () => {
         expect(parseWidth('wide')).toBeUndefined();
     });
 
-    it('uses width:lanes, then width, then iD defaults', () => {
+    it('uses width:lanes, then width, then UK lane widths', () => {
         const graph = tJunction({ highway: 'primary', oneway: 'yes', lanes: '2', 'width:lanes': '3.5|3' });
         const layout = laneLayout(graph.entity('w1'), graph);
         expect(layout.lanes.map(l => l.width)).toEqual([3.5, 3]);
@@ -88,7 +88,25 @@ describe('laneLayout', () => {
         const assumed = tJunction({ highway: 'residential' });
         const layout2 = laneLayout(assumed.entity('w1'), assumed);
         expect(layout2.assumed).toBe(true);
-        expect(layout2.lanes[0].width).toBe(3.5);
+        // a 5.5 m residential street (Manual for Streets)
+        expect(layout2.lanes[0].width).toBe(2.75);
+    });
+
+    it('draws untagged lanes at UK widths: 3.65 m on motorways and main roads, narrower on local roads', () => {
+        const width = (tags: Tags) => {
+            const graph = tJunction(tags);
+            return laneLayout(graph.entity('w1'), graph).lanes[0].width;
+        };
+        expect(width({ highway: 'motorway', oneway: 'yes', lanes: '3' })).toBe(3.65);
+        expect(width({ highway: 'trunk', lanes: '2' })).toBe(3.65);
+        expect(width({ highway: 'primary' })).toBe(3.65);
+        expect(width({ highway: 'secondary' })).toBe(3.5);
+        expect(width({ highway: 'tertiary' })).toBe(3.25);
+        expect(width({ highway: 'living_street' })).toBe(2.4);
+        // a road being built is as wide as the road it will be
+        expect(width({ highway: 'construction', construction: 'motorway', oneway: 'yes', lanes: '2' })).toBe(3.65);
+        // narrow lanes through roadworks are tagged, and drawn as tagged
+        expect(width({ highway: 'motorway', oneway: 'yes', lanes: '3', 'width:lanes': '3|3|3.25' })).toBe(3);
     });
 
     it('shifts the carriageway for placement', () => {

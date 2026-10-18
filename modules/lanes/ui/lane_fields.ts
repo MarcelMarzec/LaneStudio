@@ -69,7 +69,7 @@ export function laneField(context: iD.Context, parent: Selection, options: LaneF
 
 const accessValues = ['yes', 'no', 'designated', 'permissive', 'destination', 'delivery', 'private', 'customers', 'permit'];
 const surfaceValues = ['asphalt', 'concrete', 'concrete:plates', 'paving_stones', 'sett', 'unhewn_cobblestone', 'compacted', 'fine_gravel', 'gravel', 'grass_paver'];
-const widthValues = ['2.5', '2.75', '3', '3.25', '3.5', '3.75', '4'];
+const widthValues = ['2.5', '2.75', '3', '3.25', '3.5', '3.65', '3.75', '4'];
 const limitValues = { maxwidth: ['2', '2.1', '2.2', '2.3', '2.5', '3'], maxheight: ['2.1', '3', '3.5', '4', '4.5', '5'] };
 /** Width and height limits as posted in feet and inches where roads are signed in mph */
 const imperialLimits = { maxwidth: ['6\'6"', '7\'0"', '7\'6"'], maxheight: ['7\'0"', '12\'0"', '13\'0"', '14\'6"', '16\'6"'] };

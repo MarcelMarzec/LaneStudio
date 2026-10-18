@@ -88,8 +88,28 @@ function laneKind(values: Record<string, string>): LaneKind {
 }
 
 
-/** Per-lane width from iD's own highway defaults (`osmWay.impliedLineWidthMeters`) */
+/**
+ * Lane widths in metres for lanes with no width tagged, from UK practice: 3.65 m lanes on motorways and
+ * dual carriageways and a 7.3 m single carriageway (DMRB CD 127), narrowing on local roads to a 5.5 m
+ * residential street and a 4.8 m living street (Manual for Streets). iD's own line widths, used to draw
+ * its lines, are 0.3–1.4 m a lane wider.
+ */
+export const defaultLaneWidths: Record<string, number> = {
+    motorway: 3.65, motorway_link: 3.65,
+    trunk: 3.65, trunk_link: 3.65,
+    primary: 3.65, primary_link: 3.5,
+    secondary: 3.5, secondary_link: 3.5,
+    tertiary: 3.25, tertiary_link: 3.25,
+    unclassified: 3.25, road: 3.25, busway: 3.25, bus_guideway: 3.25,
+    residential: 2.75, service: 2.75,
+    living_street: 2.4
+};
+
+/** Per-lane width for a road with none tagged: the UK defaults above, else iD's own highway defaults */
 function defaultLaneWidth(way: osmWay): number {
+    // a road being built is as wide as the road it will be
+    const highway = builtHighway(way.tags);
+    if (highway && defaultLaneWidths[highway]) return defaultLaneWidths[highway];
     const implied = way.impliedLineWidthMeters();
     if (!implied) return 3;
     const counted = parseInt(way.tags.lanes ?? '', 10) || (way.isOneWay() ? 1 : 2);
