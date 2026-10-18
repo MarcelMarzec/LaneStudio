@@ -275,6 +275,9 @@
 /* speed limit roundels painted on the road */
 .ideditor.lane-studio .lanes-layer .symbol-speed_limit .speed-ring { fill: #fff; stroke: #d6342c; }
 .ideditor.lane-studio .lanes-layer .symbol-speed_limit .speed-number { fill: #111; font-weight: 700; }
+/* minimum speed: a blue disc with a white number */
+.ideditor.lane-studio .lanes-layer .symbol-min_speed .speed-ring { fill: #1d5bbf; stroke: #fff; }
+.ideditor.lane-studio .lanes-layer .symbol-min_speed .speed-number { fill: #fff; font-weight: 700; }
 
 /* structures (wiki: bridge, tunnel, covered, cutting, embankment, ford) */
 .ideditor.lane-studio .lanes-layer .structure { pointer-events: none; }
@@ -313,6 +316,11 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     pointer-events: none;
 }
+.ideditor.lane-studio .lanes-layer .lanes-sign .sign-hit {
+    fill: transparent;
+    stroke: none;
+    pointer-events: all;
+}
 .ideditor.lane-studio .lanes-layer .sign-post {
     stroke: #c8c8c8;
     stroke-width: 2;
@@ -347,4 +355,49 @@
     fill: rgba(255, 140, 0, 0.9);
     stroke: #fff;
     stroke-width: 1.5;
+}
+
+/* road number shields (drawn like iD's labels, upright and a fixed size on screen) */
+.ideditor.lane-studio .lanes-layer .road-shield {
+    pointer-events: none;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.7));
+}
+.ideditor.lane-studio .lanes-layer .shield-text,
+.ideditor.lane-studio .lanes-layer .junction-label text {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 700;
+}
+
+/* motorway junction numbers: a black box with a white number, and the junction's name */
+.ideditor.lane-studio .lanes-layer .junction-label {
+    cursor: pointer;
+}
+.ideditor.lane-studio .lanes-layer .junction-hit {
+    fill: transparent;
+    pointer-events: all;
+}
+.ideditor.lane-studio .lanes-layer .junction-box {
+    fill: #111;
+    stroke: #fff;
+    stroke-width: 1.2;
+}
+.ideditor.lane-studio .lanes-layer .junction-number {
+    fill: #fff;
+    pointer-events: none;
+}
+.ideditor.lane-studio .lanes-layer .junction-name {
+    fill: #fff;
+    paint-order: stroke;
+    stroke: rgba(0, 0, 0, 0.85);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+    font-weight: 600;
+    pointer-events: none;
+}
+.ideditor.lane-studio .lanes-layer .junction-label.hover .junction-box {
+    stroke: #ffee00;
+}
+.ideditor.lane-studio .lanes-layer .junction-label.selected .junction-box {
+    stroke: #f6634f;
+    stroke-width: 2;
 }

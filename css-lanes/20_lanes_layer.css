@@ -72,6 +72,10 @@
 .ideditor.lane-studio .lanes-layer .roadside-cycle_track      { fill: rgb(45, 170, 95); --lanes-a: 0.7; }
 /* a hard shoulder: road surface, a shade lighter than the lanes */
 .ideditor.lane-studio .lanes-layer .roadside-shoulder         { fill: rgb(110, 115, 125); --lanes-a: 0.55; }
+.ideditor.lane-studio .lanes-layer .roadside-shoulder.selected {
+    stroke: #fc6;
+    stroke-width: 2.5px;
+}
 /* the solid white line between the lanes and a hard shoulder */
 .ideditor.lane-studio .lanes-layer .shoulder-edge {
     fill: none;
@@ -111,6 +115,13 @@
     pointer-events: fill;
     cursor: pointer;
 }
+.ideditor.lane-studio .lanes-layer .shoulder-target {
+    fill: transparent;
+    stroke: none;
+    pointer-events: fill;
+    cursor: pointer;
+}
+.ideditor.lane-studio .lanes-layer .shoulder-target:hover,
 .ideditor.lane-studio .lanes-layer .lane-target:hover {
     fill: rgba(255, 255, 255, 0.12);
 }
@@ -121,6 +132,11 @@
     pointer-events: fill;
     cursor: pointer;
 }
+.ideditor.lane-studio.lanes-tool-paint .lanes-layer .shoulder-target,
+.ideditor.lane-studio.lanes-tool-connect .lanes-layer .shoulder-target,
+.ideditor.lane-studio.lanes-tool-width .lanes-layer .shoulder-target,
+.ideditor.lane-studio.lanes-tool-marking .lanes-layer .shoulder-target,
+.ideditor.lane-studio.lanes-tool-sign .lanes-layer .shoulder-target,
 .ideditor.lane-studio.lanes-tool-paint .lanes-layer .entity-target,
 .ideditor.lane-studio.lanes-tool-connect .lanes-layer .entity-target,
 .ideditor.lane-studio.lanes-tool-width .lanes-layer .entity-target,
@@ -191,10 +207,16 @@
     fill: rgba(112, 146, 255, 0.28);
 }
 
-/* on-street parking beside the carriageway */
-.ideditor.lane-studio .lanes-layer .roadside-parking {
-    fill: rgba(90, 120, 200, 0.35);
+/* on-street parking: road surface with white bay markings; on the pavement, pavement coloured */
+.ideditor.lane-studio .lanes-layer .roadside-parking          { fill: rgb(90, 96, 106); --lanes-a: 0.45; }
+.ideditor.lane-studio .lanes-layer .roadside-parking.parking-on_kerb { fill: rgb(236, 205, 150); --lanes-a: 0.6; }
+.ideditor.lane-studio .lanes-layer .parking-edge,
+.ideditor.lane-studio .lanes-layer .parking-bay {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.85);
+    stroke-width: 1.2;
 }
+.ideditor.lane-studio .lanes-layer .parking-edge { stroke-dasharray: 6, 3; }
 
 /* lane connections (type=connectivity relations) */
 .ideditor.lane-studio .lanes-layer .connectivity-curve {

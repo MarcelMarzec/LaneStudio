@@ -150,12 +150,44 @@
 }
 .ideditor.lane-studio .lanes-roadside h4 { margin: 0 0 4px 0; }
 .ideditor.lane-studio .lanes-roadside-grid {
-    display: grid;
-    grid-template-columns: 35% 65%;
-    gap: 4px;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     font-size: 12px;
 }
+.ideditor.lane-studio .lanes-roadside-feature-name {
+    display: block;
+    color: var(--text-color-light, #555);
+    margin-bottom: 2px;
+}
+.ideditor.lane-studio .lanes-radios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+}
+.ideditor.lane-studio .lanes-radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+}
+.ideditor.lane-studio .lanes-radio input { margin: 0; }
+
+/* turn arrow and lane change buttons: icons, named in their tooltips */
+.ideditor.lane-studio .turn-grid button,
+.ideditor.lane-studio .change-buttons button {
+    width: 36px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+}
+.ideditor.lane-studio .turn-grid button.active,
+.ideditor.lane-studio .change-buttons button.active { color: #fff; }
+.ideditor.lane-studio .turn-grid button .lane-arrow-icon { color: currentColor; }
+.ideditor.lane-studio .change-buttons button.mixed { opacity: 0.7; }
 .ideditor.lane-studio .lanes-suggestion {
     border-left: 3px solid var(--link-color);
     padding-left: 6px;

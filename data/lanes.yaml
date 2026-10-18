@@ -37,6 +37,9 @@ en:
   inspector:
     title: "Lane {n} of {total}"
     title_multi: "{n} lanes selected"
+    whole_road: Whole road
+    allowed: allowed
+    not_allowed: not allowed
     direction: Direction of travel
     turn: Turn arrows
     change: Lane change allowed
@@ -99,8 +102,9 @@ en:
     destination_ref: Destination road number
     access: Access
     width: Width (m)
-    maxwidth: Width limit
-    maxheight: Height limit
+    maxwidth: Width limit (m, or feet and inches)
+    maxheight: Height limit (m, or feet and inches)
+    maxweight: Weight limit (t)
     surface: Surface
   issue:
     count_mismatch: "{key} has {actual} values for {expected} lanes."
@@ -223,6 +227,10 @@ en:
     left: Left side
     right: Right side
     shoulder: Hard shoulder
+    shoulder_yes: There is a hard shoulder
+    shoulder_no: No hard shoulder
+    shoulder_width: Width (m)
+    shoulder_assumed: Drawn 2.5 m wide until a width is tagged.
     sidewalk: Pavement
     cycleway: Cycleway
     parking: Parking

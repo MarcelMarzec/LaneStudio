@@ -9,7 +9,7 @@ import {
     metricFrame, sub, add, scale, rightNormal, len, unit,
     dot, pointAlong, slicePolyline, offsetPolyline, cumulativeLengths, polylineLength, pointInPolygon, type MetricFrame
 } from './frame';
-import { laneLayout, parseWidth, type LaneLayout, type RoadsideKind } from './layout';
+import { laneLayout, parseWidth, type LaneLayout, type ParkingLayout, type RoadsideKind } from './layout';
 import { turningHead } from './turning_head';
 import { parseTurn, parseConnectivity, type LaneDirection } from '../model';
 
@@ -49,7 +49,7 @@ export interface RoadPiece {
     travel: LaneMark[];
     /** where lane labels go, one per lane in the middle of the piece */
     labels: LaneMark[];
-    roadside: { side: 'left' | 'right'; kind: RoadsideKind; assumed: boolean; polygon: Vec2[] }[];
+    roadside: { side: 'left' | 'right'; kind: RoadsideKind; assumed: boolean; polygon: Vec2[]; parking?: ParkingLayout }[];
     /** metres */
     length: number;
     /** whether this piece starts at the way's first node / ends at its last node */
@@ -764,8 +764,13 @@ function alignBranches(node: osmNode, graph: coreGraph, visuals: Map<string, Way
             if (Math.abs(exit.angle) > 60 || side.layout.model.lanes[armLaneDirection(side, true)].length) continue;
             const visual = visuals.get(side.way.id) ?? noVisual;
             if ((side.nodeIndex === 0 ? visual.start : visual.end) !== 0) continue;
-            const fromLanes = lanes.targets.flatMap((set, index) => (set.has(exit.j) ? [index] : []));
-            if (!fromLanes.length) continue;
+            let fromLanes = lanes.targets.flatMap((set, index) => (set.has(exit.j) ? [index] : []));
+            if (!fromLanes.length) {
+                // no lane is marked for it: the slip road peels off the outer lane on its side
+                const upCount = up.layout.model.lanes[lanes.upDirection].length;
+                if (!upCount) continue;
+                fromLanes = [exit.angle > 0 ? 0 : upCount - 1];
+            }
             const sideDirection = armLaneDirection(side, false);
             const pairs = zipLanes(fromLanes, side.layout.model.lanes[sideDirection].length, exit.angle > 0)
                 .filter(p => !p.merges);
@@ -777,12 +782,75 @@ function alignBranches(node: osmNode, graph: coreGraph, visuals: Map<string, Way
             if (!differences.length) continue;
             const mean = differences.reduce((x, y) => x + y, 0) / differences.length;
             const delta = sideDirection === 'backward' ? -mean : mean;
-            if (Math.abs(delta) < 0.05 || Math.abs(delta) > maxJoinShift) continue;
+            // a slip road leaves from the outer lane, which on a wide road is more than a lane from its centre
+            if (Math.abs(delta) < 0.05 || Math.abs(delta) > branchShiftLimit(up)) continue;
             const next = { ...visual };
             if (side.nodeIndex === 0) next.start = delta;
             else next.end = delta;
             visuals.set(side.way.id, next);
         }
+    }
+}
+
+/** The most a slip road is shifted to meet a road: as far as that road's outer edge */
+const branchShiftLimit = (arm: Arm) => Math.max(maxJoinShift, (arm.right - arm.left) / 2 + 0.5);
+
+/**
+ * Where a one-way road joins a road that carries on (a slip road onto a motorway), shifts its end so
+ * its lanes meet the lanes they become: the lanes gained on its side, or the outer lane it merges into.
+ */
+function alignMerges(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>) {
+    const arms = armsAt(node, graph, visuals);
+    if (arms.length < 3) return;
+    const through = throughPair(arms);
+    if (!through) return;
+    for (const [i, j] of [[through[0], through[1]], [through[1], through[0]]]) {
+        const up = arms[i];
+        const down = arms[j];
+        const upDirection = armLaneDirection(up, true);
+        const downDirection = armLaneDirection(down, false);
+        const downCount = down.layout.model.lanes[downDirection].length;
+        if (!up.layout.model.lanes[upDirection].length || !downCount) continue;
+
+        // the lanes ahead that the through road does not feed
+        const fed = new Set(continuationPairs(graph, up, down, node.id, false).map(p => p.to));
+        const free = Array.from({ length: downCount }, (_, k) => k).filter(k => !fed.has(k));
+
+        arms.forEach((side, k) => {
+            if (through.includes(k) || !side.isEnd || hasPlacement(side.way) || side.way.id === down.way.id) return;
+            const sideDirection = armLaneDirection(side, true);
+            const sideLanes = side.layout.model.lanes[sideDirection];
+            // only a one-way road arriving at a shallow angle, not a side road
+            if (!sideLanes.length || side.layout.model.lanes[armLaneDirection(side, false)].length) return;
+            const arriving = scale(side.direction, -1);
+            const angle = Math.acos(Math.max(-1, Math.min(1, dot(unit(arriving), unit(down.direction))))) * 180 / Math.PI;
+            if (angle > 60) return;
+            const visual = visuals.get(side.way.id) ?? noVisual;
+            if ((side.nodeIndex === 0 ? visual.start : visual.end) !== 0) return;
+
+            // joining on the left meets the leftmost lanes ahead (lane 0 is the left one), on the right the rightmost
+            const fromLeft = down.direction[0] * side.direction[1] - down.direction[1] * side.direction[0] > 0;
+            const onSide = fromLeft ? free.filter(f => f < downCount / 2) : free.filter(f => f >= downCount / 2);
+            const targets = onSide.length ? onSide : [fromLeft ? 0 : downCount - 1];
+            const n = sideLanes.length;
+            const pairs = sideLanes.map((_, from) => ({
+                from,
+                to: fromLeft ? targets[Math.min(from, targets.length - 1)] : targets[Math.max(0, targets.length - n + from)]
+            }));
+            const differences = pairs.flatMap(p => {
+                const d = travelOffset(down, downDirection, p.to);
+                const u = travelOffset(side, sideDirection, p.from);
+                return u === null || d === null ? [] : [d - u];
+            });
+            if (!differences.length) return;
+            const mean = differences.reduce((x, y) => x + y, 0) / differences.length;
+            const delta = sideDirection === 'backward' ? -mean : mean;
+            if (Math.abs(delta) < 0.05 || Math.abs(delta) > branchShiftLimit(down)) return;
+            const next = { ...visual };
+            if (side.nodeIndex === 0) next.start = delta;
+            else next.end = delta;
+            visuals.set(side.way.id, next);
+        });
     }
 }
 
@@ -1478,7 +1546,7 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
                 const inner = clip(offset(cursor), fromStart, fromEnd);
                 const outside = clip(offset(outer), fromStart, fromEnd);
                 if (inner.length > 1 && outside.length > 1) {
-                    roadside.push({ side, kind: strip.kind, assumed: strip.assumed, polygon: toLocs(frame, ring(inner, outside)) });
+                    roadside.push({ side, kind: strip.kind, assumed: strip.assumed, polygon: toLocs(frame, ring(inner, outside)), parking: strip.parking });
                 }
                 cursor = outer;
             }
@@ -1622,7 +1690,10 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
     }
     for (const [id] of joinNodes) alignAt(graph.entity(id as NodeId) as osmNode, graph, visuals);
     for (const [id, arms] of joinNodes) {
-        if (arms >= 3) alignBranches(graph.entity(id as NodeId) as osmNode, graph, visuals);
+        if (arms >= 3) {
+            alignBranches(graph.entity(id as NodeId) as osmNode, graph, visuals);
+            alignMerges(graph.entity(id as NodeId) as osmNode, graph, visuals);
+        }
     }
 
     // 2. junctions: pull-backs, areas and lane connections

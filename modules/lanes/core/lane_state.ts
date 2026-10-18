@@ -17,6 +17,9 @@ export interface LaneState {
     toggle(wayID: WayId, ref: LaneRef): void;
     clear(): void;
     isSelected(wayID: string, ref: LaneRef): boolean;
+    /** the hard shoulder picked on the map, edited in the sidebar; picking lanes drops it */
+    shoulder(): { wayID: WayId; side: 'left' | 'right' } | null;
+    selectShoulder(wayID: WayId, side: 'left' | 'right'): void;
     /** the roads of the look-ahead corridor, highlighted on the map */
     corridor(): Set<string>;
     setCorridor(ids: string[]): void;
@@ -37,6 +40,7 @@ export function laneState(context: iD.Context): LaneState {
 
     const dispatch = d3_dispatch('change', 'corridor');
     let _selected: LaneSelection | null = null;
+    let _shoulder: { wayID: WayId; side: 'left' | 'right' } | null = null;
     let _corridor = new Set<string>();
 
     const changed = () => dispatch.call('change', state);
@@ -46,6 +50,7 @@ export function laneState(context: iD.Context): LaneState {
 
         select(wayID, refs) {
             _selected = refs.length ? { wayID, refs } : null;
+            if (_selected) _shoulder = null;
             changed();
         },
 
@@ -61,8 +66,17 @@ export function laneState(context: iD.Context): LaneState {
         },
 
         clear() {
-            if (!_selected) return;
+            if (!_selected && !_shoulder) return;
             _selected = null;
+            _shoulder = null;
+            changed();
+        },
+
+        shoulder: () => _shoulder,
+
+        selectShoulder(wayID, side) {
+            _selected = null;
+            _shoulder = { wayID, side };
             changed();
         },
 
@@ -92,8 +106,9 @@ export function laneState(context: iD.Context): LaneState {
     context.on('enter.lane-state', () => {
         const ids = context.selectedIDs();
         if (_corridor.size && (ids.length !== 1 || !_corridor.has(ids[0]))) state.setCorridor([]);
-        if (!_selected) return;
-        if (context.mode()?.id !== 'select' || ids.length !== 1 || ids[0] !== _selected.wayID) state.clear();
+        const wayID = _selected?.wayID ?? _shoulder?.wayID;
+        if (!wayID) return;
+        if (context.mode()?.id !== 'select' || ids.length !== 1 || ids[0] !== wayID) state.clear();
     });
 
     // after an edit or undo, drop lanes that no longer exist (e.g. a lane was removed)

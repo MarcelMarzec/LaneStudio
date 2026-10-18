@@ -20,7 +20,8 @@ import { actionChangeLanes } from '../actions/change_lanes';
 import { laneDriveSide } from '../core/drive_side';
 import { laneState } from '../core/lane_state';
 import { laneTools } from '../core/lane_tools';
-import { laneField, laneSuggestions, laneArrowIcon } from './lane_fields';
+import { laneField, laneSuggestions, laneArrowIcon, laneChangeIcon } from './lane_fields';
+import { uiTooltip } from '../../ui/tooltip';
 import { isLaneRoad } from '../core/roads';
 import { isTrafficIsland } from '../model/street_features';
 import {
@@ -32,6 +33,9 @@ import {
 
 type Div = d3.Selection<HTMLDivElement>;
 
+/** iD's hover tooltip with a line of text (uiTooltip is plain JavaScript, so its setters are not typed) */
+const tooltip = (text: string) => (uiTooltip() as any).title(() => text).placement('top');
+
 /** Per-lane values edited as text in the inspector */
 const textFields: { id: string; key: string }[] = [
     { id: 'maxspeed', key: 'maxspeed:lanes' },
@@ -42,6 +46,7 @@ const textFields: { id: string; key: string }[] = [
     { id: 'width', key: 'width:lanes' },
     { id: 'maxwidth', key: 'maxwidth:lanes' },
     { id: 'maxheight', key: 'maxheight:lanes' },
+    { id: 'maxweight', key: 'maxweight:lanes' },
     { id: 'surface', key: 'surface:lanes' }
 ];
 
@@ -181,6 +186,9 @@ export function uiSectionLanes(context: iD.Context) {
         }
 
         if (selected.length) renderInspector(wrap, model, wayID, selected);
+        else renderRoadLimits(wrap, road);
+        const shoulder = state.shoulder();
+        if (shoulder?.wayID === wayID) renderShoulder(wrap, road, shoulder.side);
         const ring = roundaboutOf(road, graph);
         if (ring) renderRoundabout(wrap, road, ring);
         else renderLookAhead(wrap, road, model, selected);
@@ -327,6 +335,74 @@ export function uiSectionLanes(context: iD.Context) {
     }
 
 
+    /** Limits for the whole road, shown while no lane is selected */
+    function renderRoadLimits(wrap: Div, road: osmWay) {
+        const box = wrap.append('div').attr('class', 'lane-inspector road-limits');
+        box.append('h4').text(t('_lanes.inspector.whole_road'));
+        laneField(context, box, {
+            id: 'road-maxweight',
+            label: t('_lanes.field.maxweight'),
+            value: road.tags.maxweight ?? '',
+            suggestions: laneSuggestions(context, road, 'maxweight'),
+            onChange: value => {
+                const next = { ...road.tags };
+                if (value) next.maxweight = value;
+                else delete next.maxweight;
+                context.perform(actionChangeTags(road.id, next), t('_lanes.annotation.value'));
+            }
+        });
+    }
+
+
+    /** The hard shoulder picked on the map: whether it is there, and its width */
+    function renderShoulder(wrap: Div, road: osmWay, side: 'left' | 'right') {
+        const graph = context.graph();
+        const tags = road.tags;
+        const layout = laneLayout(road, graph);
+        const driveSide = laneDriveSide(road, graph);
+        const oneSide = layout.model.oneway === 'forward' ? driveSide
+            : layout.model.oneway === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
+        const retag = (next: Tags) => context.perform(actionChangeTags(road.id, next), t('_lanes.annotation.roadside'));
+
+        const box = wrap.append('div').attr('class', 'lane-inspector shoulder-inspector');
+        box.append('h4').text(`${t('_lanes.roadside.shoulder')} · ${t(`_lanes.roadside.${side}`)}`);
+
+        const current = shoulderValue(tags, side, oneSide);
+        const row = box.append('div').attr('class', 'lane-row');
+        const buttons = row.append('div').attr('class', 'lane-buttons');
+        for (const value of ['yes', 'no'] as const) {
+            buttons.append('button')
+                .attr('class', value === current ? 'active' : null)
+                .attr('aria-pressed', value === current)
+                .text(t(`_lanes.roadside.shoulder_${value}`))
+                .on('click', () => {
+                    if (value === current) return;
+                    const next = withShoulder(tags, side, value, oneSide);
+                    if (value === 'no') delete next[`shoulder:${side}:width`];
+                    retag(next);
+                });
+        }
+
+        const widthKey = `shoulder:${side}:width`;
+        const strip = layout.roadside[side].find(s => s.kind === 'shoulder');
+        laneField(context, box, {
+            id: 'shoulder-width',
+            label: t('_lanes.roadside.shoulder_width'),
+            value: tags[widthKey] ?? tags['shoulder:both:width'] ?? tags['shoulder:width'] ?? '',
+            suggestions: ['1', '1.5', '2', '2.5', '3', '3.3', '3.5'].map(v => ({ value: v, title: `${v} m` })),
+            disabled: !strip,
+            onChange: value => {
+                const next = { ...tags };
+                if (value) next[widthKey] = value;
+                else delete next[widthKey];
+                retag(next);
+            }
+        });
+        if (strip?.assumed) box.append('p').attr('class', 'lanes-note').text(t('_lanes.roadside.shoulder_assumed'));
+        box.node()?.scrollIntoView({ block: 'nearest' });
+    }
+
+
     /** Pavements and cycleways per side, with what separately mapped ways and kerbs suggest */
     function renderRoadside(wrap: Div, road: osmWay) {
         const graph = context.graph();
@@ -347,18 +423,21 @@ export function uiSectionLanes(context: iD.Context) {
             row.append('label').text(t(`_lanes.roadside.${side}`));
             const grid = row.append('div').attr('class', 'lanes-roadside-grid');
 
+            // one row of radio buttons per feature, "not tagged" first
             const pick = (label: string, values: string[], current: string | undefined, write: (v: string | undefined) => Tags) => {
-                grid.append('span').text(t(`_lanes.roadside.${label}`));
-                const select = grid.append('select')
-                    .on('change', function(this: HTMLSelectElement) { retag(write(this.value || undefined)); });
-                select.append('option').attr('value', '').text(t('_lanes.roadside.unknown')).property('selected', !current);
-                for (const value of values) {
-                    select.append('option').attr('value', value)
-                        .text(t(`_lanes.roadside.values.${value}`, { default: value }))
-                        .property('selected', value === current);
-                }
-                if (current && !values.includes(current)) {
-                    select.append('option').attr('value', current).text(current).property('selected', true);
+                const group = grid.append('div').attr('class', 'lanes-roadside-feature')
+                    .attr('role', 'radiogroup').attr('aria-label', t(`_lanes.roadside.${label}`));
+                group.append('span').attr('class', 'lanes-roadside-feature-name').text(t(`_lanes.roadside.${label}`));
+                const options = group.append('div').attr('class', 'lanes-radios');
+                const choices = ['', ...values, ...(current && !values.includes(current) ? [current] : [])];
+                for (const value of choices) {
+                    const option = options.append('label').attr('class', 'lanes-radio');
+                    option.append('input').attr('type', 'radio')
+                        .attr('name', `lanes-roadside-${road.id}-${side}-${label}`)
+                        .attr('value', value)
+                        .property('checked', (current ?? '') === value)
+                        .on('change', () => retag(write(value || undefined)));
+                    option.append('span').text(value ? t(`_lanes.roadside.values.${value}`, { default: value }) : t('_lanes.roadside.unknown'));
                 }
             };
             // a plain shoulder=yes on a one-way road is on its driving side
@@ -456,12 +535,16 @@ export function uiSectionLanes(context: iD.Context) {
             const active = current === undefined ? [] : parseTurn(current);
             const grid = turnRow.append('div').attr('class', 'lane-buttons turn-grid');
             for (const value of turnValues.filter(v => v !== 'none')) {
-                grid.append('button')
+                const name = t(`_lanes.turn.${value}`);
+                const button = grid.append('button')
                     .attr('class', `turn-${value}` + (active.includes(value) ? ' active' : ''))
                     .attr('aria-pressed', active.includes(value))
-                    .text(t(`_lanes.turn.${value}`))
+                    .attr('aria-label', name)
                     .on('click', () => perform(wayID, m => refs.reduce(
-                        (acc, ref) => setLaneValue(acc, ref, 'turn:lanes', toggleTurn(laneValue(acc, ref, 'turn:lanes'), value)), m), 'turn'));
+                        (acc, ref) => setLaneValue(acc, ref, 'turn:lanes', toggleTurn(laneValue(acc, ref, 'turn:lanes'), value)), m), 'turn'))
+                    .call(tooltip(name));
+                // the arrow as painted, pointing up the lane
+                laneArrowIcon(button as any, value, 'forward', 24);
             }
         }
 
@@ -471,19 +554,24 @@ export function uiSectionLanes(context: iD.Context) {
             const change = (current !== undefined ? parseChange(current) : undefined) ?? { toLeft: true, toRight: true };
             const row = inspector.append('div').attr('class', 'lane-row lane-change');
             row.append('label').text(t('_lanes.inspector.change'));
+            const buttons = row.append('div').attr('class', 'lane-buttons change-buttons');
             for (const side of ['toLeft', 'toRight'] as const) {
-                const label = row.append('label').attr('class', 'lane-check');
-                label.append('input').attr('type', 'checkbox')
-                    .property('checked', change[side])
-                    .property('indeterminate', current === undefined)
-                    .on('change', function(this: HTMLInputElement) {
-                        const checked = this.checked;
+                const allowed = change[side];
+                const name = t(side === 'toLeft' ? '_lanes.inspector.change_left' : '_lanes.inspector.change_right');
+                const state = t(current === undefined ? '_lanes.inspector.mixed' : allowed ? '_lanes.inspector.allowed' : '_lanes.inspector.not_allowed');
+                const button = buttons.append('button')
+                    .attr('class', `change-${side}` + (allowed && current !== undefined ? ' active' : '') + (current === undefined ? ' mixed' : ''))
+                    .attr('aria-pressed', current === undefined ? 'mixed' : allowed)
+                    .attr('aria-label', `${name}: ${state}`)
+                    .on('click', () => {
+                        const next = current === undefined ? true : !allowed;
                         perform(wayID, m => refs.reduce((acc, ref) => {
                             const was = parseChange(laneValue(acc, ref, 'change:lanes')) ?? { toLeft: true, toRight: true };
-                            return setLaneValue(acc, ref, 'change:lanes', formatChange({ ...was, [side]: checked }));
+                            return setLaneValue(acc, ref, 'change:lanes', formatChange({ ...was, [side]: next }));
                         }, m), 'change');
-                    });
-                label.append('span').text(t(side === 'toLeft' ? '_lanes.inspector.change_left' : '_lanes.inspector.change_right'));
+                    })
+                    .call(tooltip(`${name}: ${state}`));
+                laneChangeIcon(button as any, side === 'toLeft', allowed);
             }
         }
 

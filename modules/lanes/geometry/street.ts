@@ -83,7 +83,7 @@ export interface MarkingShape {
     variant?: string;
 }
 
-export type SymbolKind = 'stop_text' | 'give_way_triangle' | 'signals' | 'speed_limit';
+export type SymbolKind = 'stop_text' | 'give_way_triangle' | 'signals' | 'speed_limit' | 'min_speed';
 
 export interface SymbolShape {
     key: string;
@@ -590,8 +590,11 @@ function paintedLimit(value: string | undefined): string | null {
 }
 
 /**
- * Speed limit roundels where the limit changes: at the start of the new limit, on each lane that
- * enters it, only when the road before also had a limit (a limit appearing from nothing is not painted)
+ * Speed roundels painted on each lane at the start of a way:
+ *  - a red limit where the lane's limit changes from that lane on the road before (only when the road
+ *    before had a limit: a limit appearing from nothing is not painted), or where a lane has its own
+ *    limit (`maxspeed:lanes`) that differs from the road's
+ *  - a blue minimum speed (`minspeed`, `minspeed:lanes`) where one begins or changes
  */
 function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, WayVisual> | undefined, out: StreetGeometry) {
     const layout = cachedLayout(way, graph);
@@ -600,12 +603,15 @@ function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, W
     const cumulative = cumulativeLengths(points);
     const total = cumulative[cumulative.length - 1];
     if (total < 20) return;
-    const limitOf = (w: osmWay, direction: 'forward' | 'backward') => w.tags[`maxspeed:${direction}`] ?? w.tags.maxspeed;
+    const roadLimit = (w: osmWay, key: 'maxspeed' | 'minspeed', direction: 'forward' | 'backward') => w.tags[`${key}:${direction}`] ?? w.tags[key];
+    // a lane's own value, else the road's
+    const laneLimit = (w: osmWay, key: 'maxspeed' | 'minspeed', direction: 'forward' | 'backward', index: number) => {
+        const lane = cachedLayout(w, graph).lanes.find(l => l.ref.direction === direction && l.ref.index === index);
+        return paintedLimit(lane?.values[`${key}:lanes`] || roadLimit(w, key, direction));
+    };
 
     for (const direction of ['forward', 'backward'] as const) {
         if (!layout.lanes.some(lane => lane.ref.direction === direction)) continue;
-        const now = paintedLimit(limitOf(way, direction));
-        if (!now) continue;
         // the road traffic arrives from: the one other road ending here, or the one with the same name or ref
         const entryID = direction === 'forward' ? way.first() : way.last();
         const entry = graph.entity(entryID) as osmNode;
@@ -616,22 +622,43 @@ function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, W
             const same = others.filter(w => (way.tags.ref && w.tags.ref === way.tags.ref) || (way.tags.name && w.tags.name === way.tags.name));
             if (same.length === 1) previous = same[0];
         }
-        if (!previous) continue;
-        const before = paintedLimit(limitOf(previous, previous.last() === entryID ? 'forward' : 'backward'));
-        if (!before || before === now) continue;
+        const previousDirection = previous && previous.last() === entryID ? 'forward' : 'backward';
+        const previousCount = previous ? cachedLayout(previous, graph).model.lanes[previousDirection].length : 0;
+        // the lane before: the same lane counted from the kerb side traffic keeps to
+        const before = (key: 'maxspeed' | 'minspeed', index: number, count: number) => {
+            if (!previous) return null;
+            const keepLeft = layout.model.driveSide === 'left';
+            const i = keepLeft ? index : previousCount - (count - index);
+            return i >= 0 && i < previousCount ? laneLimit(previous, key, previousDirection, i) : paintedLimit(roadLimit(previous, key, previousDirection));
+        };
 
         const s = direction === 'forward' ? 10 : total - 10;
         const edges = edgesAt(layout, visuals?.get(way.id) ?? { start: 0, end: 0, taperStart: null, taperEnd: null }, s, total);
-        const at = pointAlong(points, s);
-        const travel = direction === 'forward' ? at.direction : scale(at.direction, -1);
+        const count = layout.model.lanes[direction].length;
         layout.lanes.forEach((lane, k) => {
             if (lane.ref.direction !== direction) return;
-            const centre = add(at.point, scale(rightNormal(at.direction), (edges[k] + edges[k + 1]) / 2));
-            out.symbols.push({
-                key: `${way.id}-speed-${direction}-${k}`, kind: 'speed_limit', text: now,
-                loc: frame.toLoc(centre), ahead: frame.toLoc(add(centre, travel)),
-                size: Math.min(lane.width * 0.85, 3)
-            });
+            const size = Math.min(lane.width * 0.85, 3);
+            const place = (along: number) => {
+                const at = pointAlong(points, direction === 'forward' ? s + along : s - along);
+                const travel = direction === 'forward' ? at.direction : scale(at.direction, -1);
+                const centre = add(at.point, scale(rightNormal(at.direction), (edges[k] + edges[k + 1]) / 2));
+                return { loc: frame.toLoc(centre), ahead: frame.toLoc(add(centre, travel)) };
+            };
+
+            const limit = laneLimit(way, 'maxspeed', direction, lane.ref.index);
+            const road = paintedLimit(roadLimit(way, 'maxspeed', direction));
+            const was = before('maxspeed', lane.ref.index, count);
+            const changed = !!limit && !!was && was !== limit;
+            const ownLimit = !!limit && !!lane.values['maxspeed:lanes'] && limit !== road;
+            if (changed || ownLimit) {
+                out.symbols.push({ key: `${way.id}-speed-${direction}-${k}`, kind: 'speed_limit', text: limit!, size, ...place(0) });
+            }
+
+            const minimum = laneLimit(way, 'minspeed', direction, lane.ref.index);
+            if (minimum && minimum !== before('minspeed', lane.ref.index, count)) {
+                // after the limit, further along the lane
+                out.symbols.push({ key: `${way.id}-minspeed-${direction}-${k}`, kind: 'min_speed', text: minimum, size, ...place(changed || ownLimit ? size + 1.5 : 0) });
+            }
         });
     }
 }

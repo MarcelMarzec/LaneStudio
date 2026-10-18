@@ -30,6 +30,14 @@ export interface RoadsideStrip {
     width: number;
     /** true when the width is a default rather than tagged */
     assumed: boolean;
+    /** parking: how cars stand, and whether they stand on the road or on the pavement */
+    parking?: ParkingLayout;
+}
+
+export interface ParkingLayout {
+    orientation: 'parallel' | 'diagonal' | 'perpendicular';
+    /** `lane` and `half_on_kerb` on the carriageway, `street_side` in a layby, `on_kerb` on the pavement */
+    position: 'lane' | 'street_side' | 'half_on_kerb' | 'on_kerb';
 }
 
 export interface LaneLayout {
@@ -129,16 +137,21 @@ function roadsideStrips(tags: Tags, side: 'left' | 'right', shoulderSide: 'left'
         strips.push({ kind: 'cycle_lane', width: 1.5, assumed: true });
     }
 
-    // on-street parking sits between the carriageway (or its cycle lane) and the kerb
+    // on-street parking sits between the carriageway (or its cycle lane) and the kerb (wiki: Key:parking)
     const parking = tags[`parking:${side}`] ?? tags['parking:both'];
+    const tagged = tags[`parking:${side}:orientation`] ?? tags['parking:both:orientation'];
+    const orientation = tagged === 'perpendicular' || tagged === 'diagonal' ? tagged : 'parallel';
+    const parkingWidth = orientation === 'perpendicular' ? 5 : orientation === 'diagonal' ? 4.5 : 2.2;
     if (parking === 'lane' || parking === 'street_side' || parking === 'half_on_kerb') {
-        const orientation = tags[`parking:${side}:orientation`] ?? tags['parking:both:orientation'];
-        const width = orientation === 'perpendicular' ? 5 : orientation === 'diagonal' ? 4.5 : 2.2;
-        strips.push({ kind: 'parking', width: parking === 'half_on_kerb' ? width / 2 : width, assumed: true });
+        strips.push({ kind: 'parking', width: parking === 'half_on_kerb' ? parkingWidth / 2 : parkingWidth, assumed: true, parking: { orientation, position: parking } });
     }
 
     if (cycleway === 'track' || cycleway === 'opposite_track') {
         strips.push({ kind: 'cycle_track', width: 2, assumed: true });
+    }
+    // parking on the pavement: beyond the kerb, before the walking space
+    if (parking === 'on_kerb') {
+        strips.push({ kind: 'parking', width: parkingWidth, assumed: true, parking: { orientation, position: 'on_kerb' } });
     }
 
     const sidewalk = sideValue(tags, 'sidewalk', side);

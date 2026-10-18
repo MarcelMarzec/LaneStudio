@@ -155,21 +155,21 @@ function drawSymbols(group: Group, data: SymbolShape[], projection: Projection) 
         .attr('dominant-baseline', 'central')
         .text('STOP');
     // a speed limit roundel: a red ring around the number
-    const roundel = enter.filter(d => d.kind === 'speed_limit');
+    const roundel = enter.filter(d => d.kind === 'speed_limit' || d.kind === 'min_speed');
     roundel.append('circle').attr('class', 'speed-ring');
     roundel.append('text').attr('class', 'speed-number')
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'central');
-    enter.filter(d => d.kind !== 'stop_text' && d.kind !== 'speed_limit').append('use');
+    enter.filter(d => d.kind !== 'stop_text' && d.kind !== 'speed_limit' && d.kind !== 'min_speed').append('use');
 
     const all = enter.merge(symbols)
         .attr('transform', d => d.transform);
     all.filter(d => d.kind === 'stop_text').select('text')
         .attr('font-size', d => (d.k * 0.55).toFixed(1));
-    all.filter(d => d.kind === 'speed_limit').select('circle')
+    all.filter(d => d.kind === 'speed_limit' || d.kind === 'min_speed').select('circle')
         .attr('r', d => (d.k / 2).toFixed(1))
         .attr('stroke-width', d => Math.max(1, d.k * 0.14).toFixed(1));
-    all.filter(d => d.kind === 'speed_limit').select('text')
+    all.filter(d => d.kind === 'speed_limit' || d.kind === 'min_speed').select('text')
         .attr('font-size', d => (d.k * 0.48).toFixed(1))
         .text(d => d.text ?? '');
     all.select('use')

@@ -270,11 +270,17 @@ export function drawSigns(group: (name: string) => Group, data: SignGeometry, pr
         .attr('class', function(d) { return withIdState(this, `lanes-sign lanes-sign-${d.kind} ${d.nodeID}`); });
 
     all.each(function(d) {
-        // (each sign is redrawn from scratch: there are few of them on screen)
         const root = d3Select(this);
-        root.selectAll('*').remove();
         const p = projection(d.anchor);
         root.attr('transform', `translate(${p[0].toFixed(1)},${p[1].toFixed(1)})`);
+
+        // a sign is rebuilt only when it changes: rebuilding the element under the pointer on every
+        // redraw starts a new hover, which redraws again, and the click never lands
+        const drawn = JSON.stringify([size, d.kind, d.facing, d.overhead, d.camera, d.faces]);
+        const node = this as SVGGElement & { __signDrawn?: string };
+        if (node.__signDrawn === drawn) return;
+        node.__signDrawn = drawn;
+        root.selectAll('*').remove();
 
         // which way it faces: a small wedge at its foot
         if (d.facing !== null) {
@@ -302,5 +308,11 @@ export function drawSigns(group: (name: string) => Group, data: SignGeometry, pr
             const g = root.append('g').attr('class', 'sign-face').attr('transform', `translate(${(r * 1.6).toFixed(1)},${(-post - r).toFixed(1)}) scale(0.7)`);
             speedLimit(g, r, d.faces[0]);
         }
+
+        // the whole picture, post and all, takes clicks and hover, not just its painted parts
+        const box = (this as SVGGElement).getBBox();
+        root.insert('rect', ':first-child').attr('class', 'sign-hit')
+            .attr('x', (box.x - 2).toFixed(1)).attr('y', (box.y - 2).toFixed(1))
+            .attr('width', (box.width + 4).toFixed(1)).attr('height', (box.height + 4).toFixed(1));
     });
 }

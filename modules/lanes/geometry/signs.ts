@@ -185,6 +185,15 @@ export function signGeometry(entities: OsmEntity[], graph: coreGraph): SignGeome
     const seenRelations = new Set<string>();
 
     for (const entity of entities) {
+        // an enforcement relation in view draws its section even with its cameras off screen
+        if (entity.type === 'relation') {
+            const relation = entity as osmRelation;
+            if (relation.tags.type === 'enforcement' && !seenRelations.has(relation.id)) {
+                seenRelations.add(relation.id);
+                sections.push(...enforcementSections(relation, graph));
+            }
+            continue;
+        }
         if (entity.type === 'way') {
             const way = entity as osmWay;
             if (way.tags.man_made === 'gantry' && way.nodes.length > 1) {

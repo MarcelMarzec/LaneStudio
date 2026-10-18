@@ -46,7 +46,12 @@ export function laneField(context: iD.Context, parent: Selection, options: LaneF
 
     if (!options.disabled && options.suggestions.length) {
         input.call((uiCombobox(context, `lane-${options.id}`) as any)
-            .data(options.suggestions.map(s => ({ value: s.value, title: s.title ?? s.value })))
+            // a title (a value with its unit) is what the list shows; the value is what is written
+            .data(options.suggestions.map(s => ({
+                value: s.value,
+                title: s.title ?? s.value,
+                display: s.title ? (label: Selection) => label.text(s.title!) : undefined
+            })))
             .minItems(1), field);
     }
 
@@ -66,12 +71,32 @@ const accessValues = ['yes', 'no', 'designated', 'permissive', 'destination', 'd
 const surfaceValues = ['asphalt', 'concrete', 'concrete:plates', 'paving_stones', 'sett', 'unhewn_cobblestone', 'compacted', 'fine_gravel', 'gravel', 'grass_paver'];
 const widthValues = ['2.5', '2.75', '3', '3.25', '3.5', '3.75', '4'];
 const limitValues = { maxwidth: ['2', '2.1', '2.2', '2.3', '2.5', '3'], maxheight: ['2.1', '3', '3.5', '4', '4.5', '5'] };
+/** Width and height limits as posted in feet and inches where roads are signed in mph */
+const imperialLimits = { maxwidth: ['6\'6"', '7\'0"', '7\'6"'], maxheight: ['7\'0"', '12\'0"', '13\'0"', '14\'6"', '16\'6"'] };
+/** Common weight limits in tonnes */
+const weightValues = ['3.5', '7.5', '16', '18', '44'];
+
+/** A feet-and-inches value (`14'6"`) in metres */
+function feetToMetres(value: string): number | null {
+    const m = value.match(/^(\d+)'(?:(\d+)")?$/);
+    return m ? (parseInt(m[1], 10) * 12 + parseInt(m[2] ?? '0', 10)) * 0.0254 : null;
+}
+
+/** Width or height limits with their units: metres, and feet and inches in mph countries */
+function limitSuggestions(key: 'maxwidth' | 'maxheight', way: osmWay, graph: coreGraph): { value: string; title: string }[] {
+    const metric = limitValues[key].map(value => ({ value, title: `${value} m` }));
+    if (!usesMph(way, graph)) return metric;
+    return [...metric, ...imperialLimits[key].map(value => ({ value, title: `${value} (${feetToMetres(value)!.toFixed(2)} m)` }))];
+}
+
+function usesMph(way: osmWay, graph: coreGraph): boolean {
+    const node = graph.hasEntity(way.nodes[Math.floor(way.nodes.length / 2)]) as osmNode | undefined;
+    return node ? countryCoder.roadSpeedUnit(node.loc) === 'mph' : false;
+}
 
 /** Speed values in the units used where the road is */
 function speedValues(way: osmWay, graph: coreGraph): string[] {
-    const node = graph.hasEntity(way.nodes[Math.floor(way.nodes.length / 2)]) as osmNode | undefined;
-    const mph = node ? countryCoder.roadSpeedUnit(node.loc) === 'mph' : false;
-    return mph
+    return usesMph(way, graph)
         ? [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70].map(v => `${v} mph`)
         : [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130].map(String);
 }
@@ -114,8 +139,9 @@ export function laneSuggestions(context: iD.Context, way: osmWay, key: string): 
         case 'bicycle': values = accessValues; break;
         case 'surface': values = surfaceValues; break;
         case 'width': values = widthValues; break;
-        case 'maxwidth': values = limitValues.maxwidth; break;
-        case 'maxheight': values = limitValues.maxheight; break;
+        case 'maxwidth':
+        case 'maxheight': return limitSuggestions(base, way, graph);
+        case 'maxweight': return weightValues.map(value => ({ value, title: `${value} t` }));
         case 'destination': values = nearbyValues(context, way, 'destination'); break;
         case 'destination:ref': values = [...new Set([...nearbyValues(context, way, 'destination:ref'), ...nearbyValues(context, way, 'ref')])]; break;
         default: values = nearbyValues(context, way, base);
@@ -156,5 +182,32 @@ export function laneArrowIcon(selection: Selection, turnSlot: string, direction:
         draw(0, 1);
         draw(180, 0.55);
     } else draw(0, 1);
+    return svg;
+}
+
+
+/**
+ * A lane change button's icon: a lane line beside the lane, dashed when traffic may cross it and solid
+ * when it may not, and an arrow moving over it to that side
+ */
+export function laneChangeIcon(selection: Selection, toLeft: boolean, allowed: boolean, size = 24) {
+    const svg = selection.append('svg')
+        .attr('class', 'lane-change-icon')
+        .attr('width', size)
+        .attr('height', size)
+        .attr('viewBox', '-12 -12 24 24');
+    const g = svg.append('g').attr('transform', toLeft ? null : 'scale(-1,1)');
+    g.append('path').attr('d', 'M-4 -11V11')
+        .attr('fill', 'none').attr('stroke', 'currentColor').attr('stroke-width', 2)
+        .attr('stroke-dasharray', allowed ? '3.5 2.5' : null);
+    g.append('path').attr('d', 'M6 10C6 2 2 -3 -8 -5M-8 -5L-4 -9M-8 -5L-4 -1')
+        .attr('fill', 'none').attr('stroke', 'currentColor').attr('stroke-width', 1.8)
+        .attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round')
+        .attr('opacity', allowed ? 1 : 0.45);
+    if (!allowed) {
+        // a cross over the arrow where it would meet the line
+        g.append('path').attr('d', 'M-8 -2L-1 5M-1 -2L-8 5')
+            .attr('stroke', '#d6342c').attr('stroke-width', 2).attr('stroke-linecap', 'round');
+    }
     return svg;
 }
