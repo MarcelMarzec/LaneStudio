@@ -752,7 +752,8 @@ function alignBranches(node: osmNode, graph: coreGraph, visuals: Map<string, Way
     const arms = armsAt(node, graph, visuals);
     if (arms.length < 3) return;
     const through = throughPair(arms);
-    if (!through) return;
+    // a roundabout's exits flare off the ring (see junctionAt) rather than carrying on one of its lanes
+    if (!through || through.some(k => isRing(arms[k].way))) return;
     for (const i of through) {
         const up = arms[i];
         const lanes = laneExits(arms, i, through);
@@ -766,9 +767,10 @@ function alignBranches(node: osmNode, graph: coreGraph, visuals: Map<string, Way
             if ((side.nodeIndex === 0 ? visual.start : visual.end) !== 0) continue;
             let fromLanes = lanes.targets.flatMap((set, index) => (set.has(exit.j) ? [index] : []));
             if (!fromLanes.length) {
-                // no lane is marked for it: the slip road peels off the outer lane on its side
+                // no lane is marked for it: a one-lane slip road peels off the outer lane on its side
+                // (a wider road leaving has no lane to line up with, and keeps to its way)
                 const upCount = up.layout.model.lanes[lanes.upDirection].length;
-                if (!upCount) continue;
+                if (!upCount || side.layout.model.lanes[armLaneDirection(side, false)].length !== 1) continue;
                 fromLanes = [exit.angle > 0 ? 0 : upCount - 1];
             }
             const sideDirection = armLaneDirection(side, false);
@@ -803,7 +805,8 @@ function alignMerges(node: osmNode, graph: coreGraph, visuals: Map<string, WayVi
     const arms = armsAt(node, graph, visuals);
     if (arms.length < 3) return;
     const through = throughPair(arms);
-    if (!through) return;
+    // a roundabout's entries flare into the ring (see junctionAt) rather than becoming one of its lanes
+    if (!through || through.some(k => isRing(arms[k].way))) return;
     for (const [i, j] of [[through[0], through[1]], [through[1], through[0]]]) {
         const up = arms[i];
         const down = arms[j];
@@ -831,6 +834,9 @@ function alignMerges(node: osmNode, graph: coreGraph, visuals: Map<string, WayVi
             // joining on the left meets the leftmost lanes ahead (lane 0 is the left one), on the right the rightmost
             const fromLeft = down.direction[0] * side.direction[1] - down.direction[1] * side.direction[0] > 0;
             const onSide = fromLeft ? free.filter(f => f < downCount / 2) : free.filter(f => f >= downCount / 2);
+            // with no lane gained on its side, only a one-lane slip road lines up with the outer lane it merges
+            // into; a wider road joining has no lanes to meet, and keeps to its way
+            if (!onSide.length && sideLanes.length !== 1) return;
             const targets = onSide.length ? onSide : [fromLeft ? 0 : downCount - 1];
             const n = sideLanes.length;
             const pairs = sideLanes.map((_, from) => ({

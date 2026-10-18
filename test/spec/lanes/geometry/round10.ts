@@ -73,3 +73,51 @@ describe('roads joining a roundabout', () => {
         expect(ring.every(p => p.boundaries.every(b => b.length > 1))).toBe(true);
     });
 });
+
+
+describe('entries and exits of a big roundabout (Exhall Interchange)', () => {
+    // a 4-lane ring split at its joins, with a 3-lane entry joining and a 2-lane exit leaving at a shallow angle
+    function interchange(ringTags: Tags) {
+        const nodes = [
+            new iD.osmNode({ id: 'n1', loc: at(-110, -60) }), new iD.osmNode({ id: 'n2', loc: at(-80, 0) }),
+            new iD.osmNode({ id: 'n3', loc: at(-60, 50) }), new iD.osmNode({ id: 'n4', loc: at(-20, 90) }),
+            new iD.osmNode({ id: 'n5', loc: at(-140, -100) }), new iD.osmNode({ id: 'n6', loc: at(-100, -40) }),
+            new iD.osmNode({ id: 'n7', loc: at(-110, 100) }), new iD.osmNode({ id: 'n8', loc: at(-170, 170) })
+        ];
+        const ways = [
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags: { highway: 'primary', lanes: '4', ...ringTags } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n2', 'n3'], tags: { highway: 'primary', lanes: '4', ...ringTags } }),
+            new iD.osmWay({ id: 'w3', nodes: ['n3', 'n4'], tags: { highway: 'primary', lanes: '4', ...ringTags } }),
+            new iD.osmWay({ id: 'w4', nodes: ['n5', 'n6', 'n2'], tags: { highway: 'primary', oneway: 'yes', lanes: '3' } }),
+            new iD.osmWay({ id: 'w5', nodes: ['n3', 'n7', 'n8'], tags: { highway: 'primary', oneway: 'yes', lanes: '2' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph([...nodes, ...ways]);
+        return roadGeometry(ways, graph).visuals;
+    }
+
+    it('keeps entries and exits on their way lines round a roundabout', () => {
+        const visuals = interchange({ junction: 'roundabout' });
+        for (const id of ['w4', 'w5']) {
+            const visual = visuals.get(id);
+            expect(Math.abs(visual?.start ?? 0)).toBeLessThan(0.05);
+            expect(Math.abs(visual?.end ?? 0)).toBeLessThan(0.05);
+        }
+    });
+
+    it('keeps a two-lane road leaving a motorway with no exit lane marked on its way line', () => {
+        const nodes = [
+            new iD.osmNode({ id: 'n1', loc: at(-300, 0) }), new iD.osmNode({ id: 'n2', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n3', loc: at(300, 0) }), new iD.osmNode({ id: 'n4', loc: at(100, 12) }),
+            new iD.osmNode({ id: 'n5', loc: at(200, 40) })
+        ];
+        const ways = [
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags: { highway: 'motorway', oneway: 'yes', lanes: '3' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n2', 'n3'], tags: { highway: 'motorway', oneway: 'yes', lanes: '3' } }),
+            new iD.osmWay({ id: 'w3', nodes: ['n2', 'n4', 'n5'], tags: { highway: 'motorway_link', oneway: 'yes', lanes: '2' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph([...nodes, ...ways]);
+        expect(Math.abs(roadGeometry(ways, graph).visuals.get('w3')?.start ?? 0)).toBeLessThan(0.05);
+    });
+});
