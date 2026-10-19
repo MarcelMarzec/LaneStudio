@@ -22,6 +22,8 @@ export const shortWayLength = 8;
 // one-way direction arrows: spacing along a lane, and how far they keep from junctions, in metres
 const travelSpacing = 45;
 const travelClearance = 15;
+// turn arrows line up behind a stop line, give-way line or signals this close to the junction, in metres
+const stopReach = 60;
 
 
 /** One drawable stretch of a road between junctions, everything in lon/lat */
@@ -660,7 +662,9 @@ function laneEnd(arm: Arm, trim: number, direction: LaneDirection, index: number
     const armOffset = arm.alongWay ? wayOffset : -wayOffset;
     const at = pointAlong(arm.line, Math.min(trim, polylineLength(arm.line)));
     const point = add(at.point, scale(rightNormal(at.direction), armOffset));
-    return { point, tangent: approach ? scale(at.direction, -1) : at.direction };
+    // an edge that is the road's outer edge, along the kerb
+    const kerb = !!edge && (wayOffset === arm.edges[0] || wayOffset === arm.edges[arm.edges.length - 1]);
+    return { point, tangent: approach ? scale(at.direction, -1) : at.direction, kerb };
 }
 
 /**
@@ -863,31 +867,43 @@ function alignMerges(node: osmNode, graph: coreGraph, visuals: Map<string, WayVi
 }
 
 
+/** Where roads join or leave a roundabout (see junctionAt) */
+interface RingFlare {
+    /** how far along each half of the ring (keyed `ring arm:side arm`) the mouth of a joining road reaches */
+    mouths: Map<string, number>;
+    /** roads leaving the ring at a shallow angle, whose lanes peel off the ring's outer lanes */
+    exits: Set<number>;
+}
+
 /**
  * Lines through a junction from each approaching lane to the lanes it leads to: from connectivity
  * relations where they exist, else guide lines worked out from turn lanes and the exit angles.
+ * Guide lines follow the lane edges; a relation's own line (lane centre to lane centre) is drawn for editing.
  */
-function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims: Map<string, number>, through: [number, number] | null): JunctionConnection[] {
+function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims: Map<string, number>, through: [number, number] | null,
+    ring?: RingFlare): JunctionConnection[] {
     const frame = metricFrame(node.loc);
     const result: JunctionConnection[] = [];
     const seen = new Set<string>();
     const trimOf = (arm: Arm) => trims.get(armKey(arm.way.id, arm.nodeIndex, arm.alongWay)) ?? 0;
     const isThrough = (i: number, j: number) => !!through && ((through[0] === i && through[1] === j) || (through[0] === j && through[1] === i));
+    const onRing = (i: number) => !!ring && !!through && through.includes(i);
 
     arms.forEach((up, i) => {
         const lanes = laneExits(arms, i, through);
         if (!lanes) return;
         const { upDirection, exits } = lanes;
+        const upCount = up.layout.model.lanes[upDirection].length;
 
         // connectivity relations say exactly which lanes lead where
-        const byExit = new Map<number, number[]>();
-        const relations = new Set<number>();
+        const byExit = new Map<number, LanePair[]>();
         for (const exit of exits) {
             const relation = up.isEnd && exit.down.isEnd ? connectivityRelation(graph, up.way.id, node.id, exit.down.way.id) : undefined;
             if (!relation) continue;
-            relations.add(exit.j);
             const downDirection = armLaneDirection(exit.down, false);
-            for (const p of relationPairs(relation)) {
+            const pairs = relationPairs(relation);
+            byExit.set(exit.j, pairs);
+            for (const p of pairs) {
                 const a = laneEnd(up, trimOf(up), upDirection, p.from, true);
                 const b = laneEnd(exit.down, trimOf(exit.down), downDirection, p.to, false);
                 if (!a || !b) continue;
@@ -899,37 +915,65 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
         }
         if (arms.length < 3) return;   // where two roads just join, lanes carry straight on
 
+        // otherwise worked out: lanes to the roads their arrows point to, lined up in order
+        const auto = new Map<number, number[]>();
         lanes.targets.forEach((targets, laneIndex) => {
-            for (const j of targets) {
-                if (relations.has(j)) continue;
-                byExit.set(j, [...(byExit.get(j) ?? []), laneIndex]);
-            }
+            for (const j of targets) auto.set(j, [...(auto.get(j) ?? []), laneIndex]);
         });
-
-        for (const [j, fromLanes] of byExit) {
+        const lanesOf = (count: number) => Array.from({ length: count }, (_, k) => k);
+        if (ring && !onRing(i)) {
+            // every lane entering a roundabout joins the ring
+            const onto = exits.find(x => onRing(x.j));
+            auto.clear();
+            if (onto) auto.set(onto.j, lanesOf(upCount));
+        } else if (ring) {
+            // the ring's outer lanes peel off into a road leaving at a shallow angle
+            for (const exit of exits.filter(x => ring.exits.has(x.j))) {
+                const count = Math.min(upCount, exit.down.layout.model.lanes[armLaneDirection(exit.down, false)].length);
+                const outer = exit.angle > 0 ? lanesOf(count) : lanesOf(count).map(k => upCount - count + k);
+                auto.set(exit.j, outer);
+            }
+        }
+        for (const [j, fromLanes] of auto) {
+            if (byExit.has(j)) continue;
             const exit = exits.find(x => x.j === j)!;
-            const down = exit.down;
-            const downDirection = armLaneDirection(down, false);
-            const downCount = down.layout.model.lanes[downDirection].length;
-            const pairs = isThrough(i, j)
-                ? continuationPairs(graph, up, down, node.id, false)
+            const downCount = exit.down.layout.model.lanes[armLaneDirection(exit.down, false)].length;
+            const pairs = isThrough(i, j) && !ring
+                ? continuationPairs(graph, up, exit.down, node.id, false)
                 : zipLanes(fromLanes, downCount, exit.angle > 0);   // turning left lines up on the left
-            // a turn off or onto the main road (which runs through untrimmed) starts or ends
-            // past the other road's kerb, so the curve has room to turn
-            const turning = !isThrough(i, j);
-            // a road running straight through with no gap needs no guide: its lanes join up by themselves
-            if (!turning && trimOf(up) === 0 && trimOf(down) === 0) continue;
-            const upTrim = turning ? Math.max(trimOf(up), (down.right - down.left) / 2) : trimOf(up);
-            const downTrim = turning ? Math.max(trimOf(down), (up.right - up.left) / 2) : trimOf(down);
+            byExit.set(j, pairs.filter(p => fromLanes.includes(p.from)));
+        }
+
+        for (const [j, pairs] of byExit) {
+            const down = arms[j];
+            const downDirection = armLaneDirection(down, false);
+            let upTrim: number;
+            let downTrim: number;
+            if (ring && onRing(i) !== onRing(j)) {
+                // onto or off a roundabout: the lines run between the joining road's end and where its mouth
+                // meets the ring
+                const [ringArm, side] = onRing(i) ? [i, j] : [j, i];
+                const along = ring.mouths.get(`${ringArm}:${side}`) ?? (arms[side].right - arms[side].left) / 2;
+                [upTrim, downTrim] = onRing(i) ? [along, trimOf(down)] : [trimOf(up), along];
+            } else {
+                // a turn off or onto the main road (which runs through untrimmed) starts or ends
+                // past the other road's kerb, so the curve has room to turn
+                const turning = !isThrough(i, j);
+                // a road running straight through with no gap needs no guide: its lanes join up by themselves
+                if (!turning && trimOf(up) === 0 && trimOf(down) === 0) continue;
+                upTrim = turning ? Math.max(trimOf(up), (down.right - down.left) / 2) : trimOf(up);
+                downTrim = turning ? Math.max(trimOf(down), (up.right - up.left) / 2) : trimOf(down);
+            }
             // guide lines follow the lane edges through the junction (each lane's left edge to the left
             // edge of the lane it leads to, and right to right); lanes turning side by side share a line
             for (const p of pairs) {
-                if (!fromLanes.includes(p.from)) continue;
                 for (const edge of ['left', 'right'] as const) {
                     const a = laneEnd(up, upTrim, upDirection, p.from, true, edge);
                     const b = laneEnd(down, downTrim, downDirection, p.to, false, edge);
                     // fragments shorter than 2 m only add clutter
                     if (!a || !b || len(sub(b.point, a.point)) < 2) continue;
+                    // onto or off a roundabout, the kerb is the line along the outside
+                    if (ring && a.kerb && b.kerb) continue;
                     const key = `${node.id}-g-${up.way.id}:${up.alongWay}-${down.way.id}:${down.alongWay}-` +
                         `${a.point[0].toFixed(1)},${a.point[1].toFixed(1)}-${b.point[0].toFixed(1)},${b.point[1].toFixed(1)}`;
                     if (seen.has(key)) continue;
@@ -1108,6 +1152,7 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
         // junctions, miss the ring's curve: wide or slanting roads then overlapped it or left a gap)
         const ringJoin = mouthOnly && !!through && through.every(k => isRing(arms[k].way));
         const crossings = new Map<number, { left: Vec2; right: Vec2; flare: number }>();
+        const ring: RingFlare | undefined = ringJoin ? { mouths: new Map(), exits: new Set() } : undefined;
         if (ringJoin) {
             const outerHalf = (arm: Arm) => {
                 const side = sideOf(arm) > 0 ? 'left' : 'right';
@@ -1152,6 +1197,13 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
             const direction = directionAt(arm, t);
             return { right: edgeAt(arm, t, 'right'), left: edgeAt(arm, t, 'left'), rightAt: t, leftAt: t, rightDirection: direction, leftDirection: direction };
         });
+        // round a roundabout: how far along the ring each joining road's mouth reaches, where lines onto and off
+        // the ring meet it
+        const recordMouth = (i: number, k: number, reach: number, exit: boolean) => {
+            if (!ring || onMain(k)) return;
+            ring.mouths.set(`${i}:${k}`, reach);
+            if (exit) ring.exits.add(k);
+        };
         // on the side a road joins, the main road's end of the box runs back to that road's corner, so a road
         // joining at a shallow angle meets a smooth wedge rather than a step
         if (through) {
@@ -1194,6 +1246,8 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
                         right: isExit(previous) ? Math.max(extended.right, mouth(ends[previous].left)) : 0
                     }
                     : extended;
+                recordMouth(i, next, Math.max(extended.left, mouth(ends[next].right)), isExit(next));
+                recordMouth(i, previous, Math.max(extended.right, mouth(ends[previous].left)), isExit(previous));
                 if (mark && (cut.left || cut.right)) {
                     const [wayLeft, wayRight] = arm.alongWay ? [cut.left, cut.right] : [cut.right, cut.left];
                     marks.set(key, { ...mark, left: Math.max(mark.left, wayLeft), right: Math.max(mark.right, wayRight) });
@@ -1247,7 +1301,7 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
         if ((arms.length >= 3 || mini) && !onlyAreaSides) {
             result.area = { nodeID: node.id, polygons: [wound(points.map(frame.toLoc))], kerbs, kind: mouthOnly ? 'flare' : 'junction' };
         }
-        result.connections = junctionConnections(node, graph, arms, trims, through);
+        result.connections = junctionConnections(node, graph, arms, trims, through, ring);
     }
 
     junctionCache.set(node, { deps, signature, result });
@@ -1473,6 +1527,69 @@ function withVerticesAt(points: Vec2[], distances: number[]): Vec2[] {
 
 
 /** Builds the pieces of one road, between the nodes where it meets two or more other roads */
+/**
+ * Where traffic travelling `direction` along a way stops at a stop line, give-way line or traffic
+ * signals on the way's node `index`: how far before the node the line is (as drawn by street.ts: at a
+ * junction it stands back by half the widest other road), or null if the node has none for that direction
+ */
+function stopLineBack(way: osmWay, index: number, direction: 'forward' | 'backward', graph: coreGraph): number | null {
+    const node = graph.entity(way.nodes[index]) as osmNode;
+    const highway = node.tags.highway;
+    if (highway !== 'stop' && highway !== 'give_way' && highway !== 'traffic_signals') return null;
+    const roads = graph.parentWays(node).filter(isLaneRoad) as osmWay[];
+    const armCount = roads.reduce((n, w) => {
+        const i = w.nodes.indexOf(node.id);
+        return n + (i > 0 ? 1 : 0) + (i < w.nodes.length - 1 ? 1 : 0);
+    }, 0);
+    const atJunction = armCount >= 3;
+    if (!(highway === 'traffic_signals' && atJunction)) {
+        // which way the line faces: the direction tag, the road's one-way direction, or towards the nearer end
+        const tagged = node.tags.direction ?? node.tags['traffic_signals:direction'] ?? node.tags['highway:direction'];
+        const oneway = cachedLayout(way, graph).model.oneway;
+        const last = way.nodes.length - 1;
+        const facing = tagged === 'forward' || tagged === 'backward' ? [tagged]
+            : tagged === 'both' || tagged === 'all' ? ['forward', 'backward']
+                : oneway ? [oneway]
+                    : [index === last || (index !== 0 && index >= last / 2) ? 'forward' : 'backward'];
+        if (!facing.includes(direction)) return null;
+    }
+    if (!atJunction) return 0;
+    const widest = Math.max(0, ...roads.filter(w => w.id !== way.id).map(w => cachedLayout(w, graph).total));
+    return widest / 2 + 1;
+}
+
+/**
+ * Where traffic travelling `direction` on the piece of a way from node `a` to node `b` stops before the end
+ * it approaches: the stop line, give-way line or signals' line nearest that end, as a distance along the
+ * piece (`along` gives each node's), moved back behind a pedestrian crossing just before it; null if none
+ */
+function stopBefore(way: osmWay, graph: coreGraph, a: number, b: number, along: (n: number) => number, pieceLength: number,
+    [trimStart, trimEnd]: [number, number], direction: 'forward' | 'backward'): number | null {
+    const sign = direction === 'forward' ? 1 : -1;
+    let best: number | null = null;
+    for (let n = a; n <= b; n++) {
+        const back = stopLineBack(way, n, direction, graph);
+        if (back === null) continue;
+        const s = along(n) - sign * back;
+        const fromEnd = direction === 'forward' ? pieceLength - s : s;
+        // (a line in the junction, where the road is pulled back, still counts)
+        if (fromEnd > stopReach || fromEnd < -(direction === 'forward' ? trimEnd : trimStart) - 0.01) continue;
+        if (best === null || sign * s > sign * best) best = s;
+    }
+    if (best === null) return null;
+    const crossings = Array.from({ length: b - a + 1 }, (_, k) => a + k).filter(n => {
+        const node = graph.entity(way.nodes[n]) as osmNode;
+        return node.tags.highway === 'crossing' || !!node.tags.crossing || graph.parentWays(node).some(w =>
+            w.tags.footway === 'crossing' || w.tags.cycleway === 'crossing' || w.tags.path === 'crossing');
+    }).map(along).sort((p, q) => sign * (q - p));
+    for (const c of crossings) {
+        // a crossing up to 10 m before the line (or on it): the line counts as just before the crossing
+        const before = sign * (best - c);
+        if (before > -0.5 && before < 10) best = c - sign * 2.5;
+    }
+    return best;
+}
+
 function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, visual: WayVisual,
     trimAt: (index: number, alongWay: boolean) => number,
     markAt: (index: number, alongWay: boolean) => MarkTrim | undefined,
@@ -1580,6 +1697,17 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             if (merges && taper?.lane === i) {
                 const beforeTaper = taper.length - (against ? trimStart : trimEnd) + 3;
                 if (beforeTaper < pieceLength - 4) first = Math.max(first, beforeTaper);
+            }
+            // at a stop line, give-way line or traffic signals near the end, the arrows of all lanes stand
+            // level just behind the line (straight across the road from the same point on it)
+            const stop = stopBefore(way, graph, a, b, n => cumulative[n] - cumulative[a] - trimStart, pieceLength, [trimStart, trimEnd],
+                against ? 'backward' : 'forward');
+            if (stop !== null) {
+                const gap = 2 + Math.min(lane.width * 1.4, 5) / 2;
+                const at = pointAlong(sliced, against ? stop + gap : stop - gap).point;
+                const s = projectOnto(centres[i], at);
+                const dist = against ? s : pieceLength - s;
+                if (dist > 0 && dist < pieceLength - 4) first = dist;
             }
             for (let dist = first; dist < pieceLength - 4; dist += 60) {
                 arrows.push(mark(against ? dist : pieceLength - dist, against));

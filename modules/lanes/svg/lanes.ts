@@ -541,15 +541,12 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             if (painted.length && lengthOf(painted) > lengthOf(line) * 0.98) return [];
             return [{ key: `${pieceKey(piece)}-through-${i}`, nodeID: piece.fromNode, kind: 'guide' as const, optional: false, line }];
         }));
-        // lanes connected by a connectivity relation are guided through the junction like any others; the
-        // blue editing line over them shows only while connecting lanes or with one of their roads selected
+        // lanes connected by a connectivity relation get guide lines along their edges like any others; the
+        // blue editing line from lane centre to lane centre shows only while connecting lanes or with one of
+        // their roads selected
         const editing = tools.tool() === 'connect';
-        const connectionLines = connections.flatMap(c => {
-            if (c.kind !== 'relation') return [c];
-            const guide = { ...c, key: `${c.key}-guide`, kind: 'guide' as const };
-            const shown = editing || (c.ways ?? []).some(id => selected.has(id as osmWay['id']));
-            return shown ? [guide, c] : [guide];
-        });
+        const connectionLines = connections.filter(c => c.kind !== 'relation' ||
+            editing || (c.ways ?? []).some(id => selected.has(id as osmWay['id'])));
         joinPaths(group('connectivity'), markings ? [...connectionLines, ...innerGuides, ...stoppedGuides] : [], d => d.key,
             d => (d.kind === 'relation' ? 'connectivity-curve' : 'junction-guide') + (d.optional ? ' optional' : ''),
             d => path(d.line, false));
