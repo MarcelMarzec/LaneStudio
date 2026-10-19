@@ -121,3 +121,39 @@ describe('entries and exits of a big roundabout (Exhall Interchange)', () => {
         expect(Math.abs(roadGeometry(ways, graph).visuals.get('w3')?.start ?? 0)).toBeLessThan(0.05);
     });
 });
+
+
+describe('roundabout edge line and lane connections', () => {
+    const lengthOf = (line: [number, number][]) => line.slice(1).reduce((sum, p, i) => sum + Math.hypot(...frame.toMetres(p).map((v, k) => v - frame.toMetres(line[i])[k]) as [number, number]), 0);
+
+    it('carries the ring edge line across entries and exits, but not across an exit leaving at a shallow angle', () => {
+        // the ring's outer edge is its left (clockwise, keep left): boundary 0 of its pieces
+        const outerPainted = (off: number, oneway: string) => {
+            const { geometry } = ringWithRoad(off, { highway: 'primary', lanes: '2', oneway });
+            return geometry.pieces.filter(p => p.wayID === 'w1').reduce((sum, p) => sum + lengthOf(p.lines[0]) - lengthOf(p.boundaries[0]), 0);
+        };
+        // w2 runs out from the ring: oneway=yes is an exit, oneway=-1 an entry; -65° leaves 25° off the ring's direction
+        expect(outerPainted(-65, '-1')).toBeCloseTo(0, 1);
+        expect(outerPainted(0, 'yes')).toBeCloseTo(0, 1);
+        expect(outerPainted(-65, 'yes')).toBeLessThan(-5);
+    });
+
+    it('records which roads a lane connection joins', () => {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-100, 0) }), new iD.osmNode({ id: 'n2', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n3', loc: at(100, 0) }), new iD.osmNode({ id: 'n4', loc: at(-80, 40) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags: { highway: 'primary', oneway: 'yes', lanes: '2' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n2', 'n3'], tags: { highway: 'primary', oneway: 'yes', lanes: '3' } }),
+            new iD.osmWay({ id: 'w3', nodes: ['n4', 'n2'], tags: { highway: 'primary', oneway: 'yes', lanes: '1' } }),
+            new iD.osmRelation({ id: 'r1', tags: { type: 'connectivity', connectivity: '1:1' }, members: [
+                { id: 'w3', type: 'way', role: 'from' }, { id: 'n2', type: 'node', role: 'via' }, { id: 'w2', type: 'way', role: 'to' }
+            ] })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const geometry = roadGeometry([graph.entity('w1'), graph.entity('w2'), graph.entity('w3')], graph);
+        const connections = geometry.connections.filter(c => c.kind === 'relation');
+        expect(connections).toHaveLength(1);
+        expect(connections[0].ways).toEqual(['w3', 'w2']);
+    });
+});

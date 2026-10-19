@@ -92,6 +92,8 @@ export interface JunctionConnection {
     kind: 'relation' | 'guide';
     optional: boolean;
     line: Vec2[];
+    /** for a relation: the roads it connects, from and to */
+    ways?: [string, string];
 }
 
 
@@ -891,7 +893,7 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
                 if (!a || !b) continue;
                 result.push({
                     key: `${node.id}-r-${up.way.id}-${exit.down.way.id}-${p.from}-${p.to}`, nodeID: node.id,
-                    kind: 'relation', optional: p.optional, line: curve(a, b).map(frame.toLoc)
+                    kind: 'relation', optional: p.optional, line: curve(a, b).map(frame.toLoc), ways: [up.way.id, exit.down.way.id]
                 });
             }
         }
@@ -1174,11 +1176,26 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
                 const previous = (i - 1 + arms.length) % arms.length;
                 if (!onMain(next)) extend('left', ends[next].right, next);
                 if (!onMain(previous)) extend('right', ends[previous].left, previous);
-                // the main road's kerb stops where the box's edge starts
+                // the main road's kerb stops where the box's edge starts; round a roundabout its edge line carries on
+                // across the mouths of its roads (the give-way line at entries), except across an exit leaving at a
+                // shallow angle, where it would run diagonally over the exit's lanes like a lane line
                 const key = armKey(arm.way.id, arm.nodeIndex, arm.alongWay);
                 const mark = marks.get(key);
-                if (mark && !isRing(arm.way)) {
-                    const [wayLeft, wayRight] = arm.alongWay ? [extended.left, extended.right] : [extended.right, extended.left];
+                const leaving = through.map(k => arms[k]).find(a => a.layout.model.lanes[armLaneDirection(a, false)].length > 0);
+                const isExit = (k: number) => !onMain(k) && !!leaving &&
+                    !arms[k].layout.model.lanes[armLaneDirection(arms[k], true)].length &&
+                    arms[k].layout.model.lanes[armLaneDirection(arms[k], false)].length > 0 &&
+                    angleBetween(arms[k].firstSegment, leaving.firstSegment) < 40;
+                // the line stops over the whole mouth: up to where the exit's own lanes begin
+                const mouth = (corner: Vec2) => Math.min(maxClearance, Math.max(0, projectOnto(arm.line, corner)));
+                const cut = isRing(arm.way)
+                    ? {
+                        left: isExit(next) ? Math.max(extended.left, mouth(ends[next].right)) : 0,
+                        right: isExit(previous) ? Math.max(extended.right, mouth(ends[previous].left)) : 0
+                    }
+                    : extended;
+                if (mark && (cut.left || cut.right)) {
+                    const [wayLeft, wayRight] = arm.alongWay ? [cut.left, cut.right] : [cut.right, cut.left];
                     marks.set(key, { ...mark, left: Math.max(mark.left, wayLeft), right: Math.max(mark.right, wayRight) });
                 }
                 // a mouth-only box keeps to the main road's edge on its side roads' side
