@@ -43,9 +43,10 @@ function ringWithRoad(off: number, tags: Tags) {
 describe('guide lines onto and off a roundabout', () => {
     it('guides each lane entering a roundabout into the ring, along its edges but not the kerb', () => {
         // w2 runs out from the ring: oneway=-1 is an entry. Its two lanes join the ring's two: the line between
-        // them carries on between the ring's lanes, and the outer edges run kerb to kerb (no line)
-        expect(ringWithRoad(0, { highway: 'primary', lanes: '2', oneway: '-1' })).toHaveLength(1);
-        expect(ringWithRoad(-40, { highway: 'primary', lanes: '2', oneway: '-1' })).toHaveLength(1);
+        // them carries on between the ring's lanes, the nearside edge runs along the kerb (no line), and the
+        // offside edge crosses the ring to its inner edge (Round 14)
+        expect(ringWithRoad(0, { highway: 'primary', lanes: '2', oneway: '-1' })).toHaveLength(2);
+        expect(ringWithRoad(-40, { highway: 'primary', lanes: '2', oneway: '-1' })).toHaveLength(2);
         // one lane joins the ring's outer lane: a line along its inner edge, into the line between the ring's lanes
         expect(ringWithRoad(0, { highway: 'primary', lanes: '1', oneway: '-1' })).toHaveLength(1);
     });

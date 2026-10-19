@@ -1,3 +1,5 @@
+import { difference, union } from 'polyclip-ts';
+
 import type { coreGraph } from '../../core/graph';
 import type { Vec2 } from '../../geo/vector';
 import type { NodeId, WayId } from '../../osm';
@@ -869,10 +871,10 @@ function alignMerges(node: osmNode, graph: coreGraph, visuals: Map<string, WayVi
 
 /** Where roads join or leave a roundabout (see junctionAt) */
 interface RingFlare {
-    /** how far along each half of the ring (keyed `ring arm:side arm`) the mouth of a joining road reaches */
-    mouths: Map<string, number>;
     /** roads leaving the ring at a shallow angle, whose lanes peel off the ring's outer lanes */
     exits: Set<number>;
+    /** how far along each half of the ring (keyed `ring arm:side arm`) the mouth of a joining road reaches */
+    mouths: Map<string, number>;
 }
 
 /**
@@ -881,7 +883,7 @@ interface RingFlare {
  * Guide lines follow the lane edges; a relation's own line (lane centre to lane centre) is drawn for editing.
  */
 function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims: Map<string, number>, through: [number, number] | null,
-    ring?: RingFlare): JunctionConnection[] {
+    ring?: RingFlare, surfaces: Vec2[][] = []): JunctionConnection[] {
     const frame = metricFrame(node.loc);
     const result: JunctionConnection[] = [];
     const seen = new Set<string>();
@@ -897,12 +899,14 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
 
         // connectivity relations say exactly which lanes lead where
         const byExit = new Map<number, LanePair[]>();
+        const related = new Set<number>();
         for (const exit of exits) {
             const relation = up.isEnd && exit.down.isEnd ? connectivityRelation(graph, up.way.id, node.id, exit.down.way.id) : undefined;
             if (!relation) continue;
             const downDirection = armLaneDirection(exit.down, false);
             const pairs = relationPairs(relation);
             byExit.set(exit.j, pairs);
+            related.add(exit.j);
             for (const p of pairs) {
                 const a = laneEnd(up, trimOf(up), upDirection, p.from, true);
                 const b = laneEnd(exit.down, trimOf(exit.down), downDirection, p.to, false);
@@ -949,12 +953,15 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
             const downDirection = armLaneDirection(down, false);
             let upTrim: number;
             let downTrim: number;
-            if (ring && onRing(i) !== onRing(j)) {
-                // onto or off a roundabout: the lines run between the joining road's end and where its mouth
-                // meets the ring
-                const [ringArm, side] = onRing(i) ? [i, j] : [j, i];
-                const along = ring.mouths.get(`${ringArm}:${side}`) ?? (arms[side].right - arms[side].left) / 2;
-                [upTrim, downTrim] = onRing(i) ? [along, trimOf(down)] : [trimOf(up), along];
+            const ringJoin = !!ring && onRing(i) !== onRing(j);
+            if (ringJoin) {
+                // onto or off a roundabout: the lines run between the ends of the lanes they join, as a relation's
+                // own line does, and meet the ring's lane lines where they start or stop; a road meeting the ring
+                // square on sweeps round into it, to where its mouth meets the ring
+                upTrim = trimOf(up);
+                downTrim = trimOf(down);
+                const steep = angleBetween(scale(up.firstSegment, -1), down.firstSegment) > 45;
+                if (steep && onRing(j)) downTrim = Math.max(downTrim, ring!.mouths.get(`${j}:${i}`) ?? 0);
             } else {
                 // a turn off or onto the main road (which runs through untrimmed) starts or ends
                 // past the other road's kerb, so the curve has room to turn
@@ -966,21 +973,32 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
             }
             // guide lines follow the lane edges through the junction (each lane's left edge to the left
             // edge of the lane it leads to, and right to right); lanes turning side by side share a line
+            const nearside = up.layout.model.driveSide === 'left' ? 'left' : 'right';
             for (const p of pairs) {
-                for (const edge of ['left', 'right'] as const) {
+                const edges = (['left', 'right'] as const).map(edge => {
                     const a = laneEnd(up, upTrim, upDirection, p.from, true, edge);
                     const b = laneEnd(down, downTrim, downDirection, p.to, false, edge);
+                    return a && b ? { edge, a, b, line: curve(a, b) } : null;
+                });
+                // the lanes are road all the way, wherever they run outside the junction's surface
+                if ((ringJoin || related.has(j)) && edges[0] && edges[1]) {
+                    surfaces.push([...edges[0].line, ...edges[1].line.slice().reverse()]);
+                }
+                for (const e of edges) {
+                    if (!e) continue;
+                    const { edge, a, b } = e;
                     // fragments shorter than 2 m only add clutter
-                    if (!a || !b || len(sub(b.point, a.point)) < 2) continue;
-                    // onto or off a roundabout, the kerb is the line along the outside
-                    if (ring && a.kerb && b.kerb) continue;
+                    if (len(sub(b.point, a.point)) < 2) continue;
+                    // onto or off a roundabout, the kerb is the line along the outside (the nearside, away from the
+                    // ring's middle); an offside edge running kerb to kerb crosses the ring, and is drawn
+                    if (ringJoin && a.kerb && b.kerb && edge === nearside) continue;
                     const key = `${node.id}-g-${up.way.id}:${up.alongWay}-${down.way.id}:${down.alongWay}-` +
                         `${a.point[0].toFixed(1)},${a.point[1].toFixed(1)}-${b.point[0].toFixed(1)},${b.point[1].toFixed(1)}`;
                     if (seen.has(key)) continue;
                     seen.add(key);
                     result.push({
                         key, nodeID: node.id,
-                        kind: 'guide', optional: false, line: curve(a, b).map(frame.toLoc)
+                        kind: 'guide', optional: false, line: e.line.map(frame.toLoc)
                     });
                 }
             }
@@ -996,6 +1014,42 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
  * round the point where the two kerbs would meet, as a kerb rounds a corner; a straight line when they
  * do not meet on the junction's side, or only far away (very sharp angles).
  */
+/**
+ * The kerb where a roundabout's outer lanes run on into an exit: from the end of the ring's road (`from`, its
+ * direction pointing back along the ring) sweeping on in the direction of travel into the exit's kerb (`to`)
+ */
+function peelCorner(from: Vec2, fromDirection: Vec2, to: Vec2, toDirection: Vec2): Vec2[] {
+    return curve({ point: from, tangent: scale(fromDirection, -1) }, { point: to, tangent: toDirection });
+}
+
+/**
+ * The parts of `shapes` that none of `covered` covers (all in metres), as rings to fill with the nonzero rule
+ * (holes wound the other way), leaving out slivers less than 0.3 m wide on average
+ */
+function uncovered(shapes: Vec2[][], covered: Vec2[][]): Vec2[][] {
+    // (to the millimetre, which keeps the clipping clear of near-coincident points)
+    const closed = (ring: Vec2[]): [number, number][] => [...ring, ring[0]].map(p => [Math.round(p[0] * 1000) / 1000, Math.round(p[1] * 1000) / 1000]);
+    let rest: [number, number][][][];
+    try {
+        const whole = union([closed(shapes[0])], ...shapes.slice(1).map(shape => [closed(shape)]));
+        rest = difference(whole, ...covered.filter(c => c.length > 2).map(c => [closed(c)]));
+    } catch {
+        return [];   // the clipping can fail on degenerate shapes: leave the surface as it is
+    }
+    return rest.flatMap(polygon => {
+        const outer = polygon[0].slice(0, -1) as Vec2[];
+        let area = 0;
+        let perimeter = 0;
+        outer.forEach((p, i) => {
+            const q = outer[(i + 1) % outer.length];
+            area += p[0] * q[1] - q[0] * p[1];
+            perimeter += len(sub(q, p));
+        });
+        // (twice the area over the perimeter is a thin shape's width)
+        return Math.abs(area) / Math.max(perimeter, 1e-6) < 0.3 ? [] : polygon.map(ring => ring.slice(0, -1) as Vec2[]);
+    });
+}
+
 /** A curve from `from` to `to` drawn towards `control` */
 function quadraticCurve(from: Vec2, control: Vec2, to: Vec2): Vec2[] {
     return Array.from({ length: 9 }, (_, i) => {
@@ -1152,7 +1206,7 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
         // junctions, miss the ring's curve: wide or slanting roads then overlapped it or left a gap)
         const ringJoin = mouthOnly && !!through && through.every(k => isRing(arms[k].way));
         const crossings = new Map<number, { left: Vec2; right: Vec2; flare: number }>();
-        const ring: RingFlare | undefined = ringJoin ? { mouths: new Map(), exits: new Set() } : undefined;
+        const ring: RingFlare | undefined = ringJoin ? { exits: new Set(), mouths: new Map() } : undefined;
         if (ringJoin) {
             const outerHalf = (arm: Arm) => {
                 const side = sideOf(arm) > 0 ? 'left' : 'right';
@@ -1197,82 +1251,117 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
             const direction = directionAt(arm, t);
             return { right: edgeAt(arm, t, 'right'), left: edgeAt(arm, t, 'left'), rightAt: t, leftAt: t, rightDirection: direction, leftDirection: direction };
         });
-        // round a roundabout: how far along the ring each joining road's mouth reaches, where lines onto and off
-        // the ring meet it
-        const recordMouth = (i: number, k: number, reach: number, exit: boolean) => {
-            if (!ring || onMain(k)) return;
-            ring.mouths.set(`${i}:${k}`, reach);
-            if (exit) ring.exits.add(k);
+        // where the ring's lanes run on into an exit (ring arm:exit arm), and the corner of the ring's road on
+        // that side: where its edge meets the bisector its end is cut on (see buildPieces)
+        const peeled = new Set<string>();
+        const cutCorner = (i: number, side: 'left' | 'right'): Vec2 => {
+            const p = edgeAt(arms[i], 0, side);
+            const u = arms[i].firstSegment;
+            const other = through!.find(k => k !== i);
+            const d = other === undefined ? [0, 0] as Vec2 : sub(u, arms[other].firstSegment);
+            if (len(d) < 1e-6) return p;
+            const c = rightNormal(unit(d));
+            const denominator = u[0] * c[1] - u[1] * c[0];
+            if (Math.abs(denominator) < 0.1) return p;
+            const t = -(p[0] * c[1] - p[1] * c[0]) / denominator;
+            return Math.abs(t) < 10 ? add(p, scale(u, t)) : p;
         };
         // on the side a road joins, the main road's end of the box runs back to that road's corner, so a road
         // joining at a shallow angle meets a smooth wedge rather than a step
-        if (through) {
-            for (const i of through) {
-                const arm = arms[i];
-                const length = polylineLength(arm.line);
-                const extended = { left: 0, right: 0 };
-                const extend = (side: 'left' | 'right', corner: Vec2, neighbour: number) => {
-                    // round a roundabout the ring's edge runs on past where the joining road's edge leaves it,
-                    // so the kerb curves smoothly from one to the other
-                    const crossing = crossings.get(neighbour);
-                    const leaving = crossing?.[side === 'left' ? 'right' : 'left'];
-                    const s = Math.min(maxClearance, leaving ? projectOnto(arm.line, leaving) + crossing!.flare : projectOnto(arm.line, corner));
-                    const key = side === 'left' ? 'leftAt' : 'rightAt';
-                    if (s <= ends[i][key] || s >= length) return;
-                    extended[side] = s;
-                    ends[i][key] = s;
-                    ends[i][side] = edgeAt(arm, s, side);
-                    ends[i][side === 'left' ? 'leftDirection' : 'rightDirection'] = directionAt(arm, s);
-                };
-                const next = (i + 1) % arms.length;
-                const previous = (i - 1 + arms.length) % arms.length;
-                if (!onMain(next)) extend('left', ends[next].right, next);
-                if (!onMain(previous)) extend('right', ends[previous].left, previous);
-                // the main road's kerb stops where the box's edge starts; round a roundabout its edge line carries on
-                // across the mouths of its roads (the give-way line at entries), except across an exit leaving at a
-                // shallow angle, where it would run diagonally over the exit's lanes like a lane line
-                const key = armKey(arm.way.id, arm.nodeIndex, arm.alongWay);
-                const mark = marks.get(key);
-                const leaving = through.map(k => arms[k]).find(a => a.layout.model.lanes[armLaneDirection(a, false)].length > 0);
-                const isExit = (k: number) => !onMain(k) && !!leaving &&
-                    !arms[k].layout.model.lanes[armLaneDirection(arms[k], true)].length &&
-                    arms[k].layout.model.lanes[armLaneDirection(arms[k], false)].length > 0 &&
-                    angleBetween(arms[k].firstSegment, leaving.firstSegment) < 40;
-                // the line stops over the whole mouth: up to where the exit's own lanes begin
-                const mouth = (corner: Vec2) => Math.min(maxClearance, Math.max(0, projectOnto(arm.line, corner)));
-                const cut = isRing(arm.way)
-                    ? {
-                        left: isExit(next) ? Math.max(extended.left, mouth(ends[next].right)) : 0,
-                        right: isExit(previous) ? Math.max(extended.right, mouth(ends[previous].left)) : 0
-                    }
-                    : extended;
-                recordMouth(i, next, Math.max(extended.left, mouth(ends[next].right)), isExit(next));
-                recordMouth(i, previous, Math.max(extended.right, mouth(ends[previous].left)), isExit(previous));
-                if (mark && (cut.left || cut.right)) {
-                    const [wayLeft, wayRight] = arm.alongWay ? [cut.left, cut.right] : [cut.right, cut.left];
-                    marks.set(key, { ...mark, left: Math.max(mark.left, wayLeft), right: Math.max(mark.right, wayRight) });
-                }
-                // a mouth-only box keeps to the main road's edge on its side roads' side
-                if (mouthOnly) {
-                    const facing = sideOf(arm) > 0 ? 'left' : 'right';
-                    const other = facing === 'left' ? 'right' : 'left';
-                    ends[i][other] = ends[i][facing];
-                    ends[i][other === 'left' ? 'leftAt' : 'rightAt'] = ends[i][facing === 'left' ? 'leftAt' : 'rightAt'];
-                    ends[i][other === 'left' ? 'leftDirection' : 'rightDirection'] = ends[i][facing === 'left' ? 'leftDirection' : 'rightDirection'];
-                }
+        const throughEnd = (i: number, through: [number, number]) => {
+            const arm = arms[i];
+            const length = polylineLength(arm.line);
+            const extended = { left: 0, right: 0 };
+            const extend = (side: 'left' | 'right', corner: Vec2, neighbour: number) => {
+                // round a roundabout the ring's edge runs on past where the joining road's edge leaves it,
+                // so the kerb curves smoothly from one to the other
+                const crossing = crossings.get(neighbour);
+                const leaving = crossing?.[side === 'left' ? 'right' : 'left'];
+                const s = Math.min(maxClearance, leaving ? projectOnto(arm.line, leaving) + crossing!.flare : projectOnto(arm.line, corner));
+                const key = side === 'left' ? 'leftAt' : 'rightAt';
+                if (s <= ends[i][key] || s >= length) return;
+                extended[side] = s;
+                ends[i][key] = s;
+                ends[i][side] = edgeAt(arm, s, side);
+                ends[i][side === 'left' ? 'leftDirection' : 'rightDirection'] = directionAt(arm, s);
+            };
+            const next = (i + 1) % arms.length;
+            const previous = (i - 1 + arms.length) % arms.length;
+            const leaving = through.map(k => arms[k]).find(a => a.layout.model.lanes[armLaneDirection(a, false)].length > 0);
+            const isExit = (k: number) => !onMain(k) && !!leaving &&
+                !arms[k].layout.model.lanes[armLaneDirection(arms[k], true)].length &&
+                arms[k].layout.model.lanes[armLaneDirection(arms[k], false)].length > 0 &&
+                angleBetween(arms[k].firstSegment, leaving.firstSegment) < 40;
+            // the ring's outer lanes run on into an exit leaving at a shallow angle: the ring's kerb carries on to
+            // the end of its road and sweeps from there into the exit's kerb (see peelCorner)
+            const peels = (k: number) => ringJoin && isRing(arm.way) && isExit(k) &&
+                arm.layout.model.lanes[armLaneDirection(arm, true)].length > 0;
+            if (!onMain(next) && !peels(next)) extend('left', ends[next].right, next);
+            if (!onMain(previous) && !peels(previous)) extend('right', ends[previous].left, previous);
+            for (const [k, side] of [[next, 'left'], [previous, 'right']] as const) {
+                if (!peels(k)) continue;
+                peeled.add(`${i}:${k}`);
+                ends[i][side] = cutCorner(i, side);
+                ends[i][side === 'left' ? 'leftAt' : 'rightAt'] = 0;
+                ends[i][side === 'left' ? 'leftDirection' : 'rightDirection'] = directionAt(arm, 0);
             }
-        }
+            // the main road's kerb stops where the box's edge starts; round a roundabout its edge line carries on
+            // across the mouths of its roads (the give-way line at entries), except across an exit leaving at a
+            // shallow angle, where it would run diagonally over the exit's lanes like a lane line
+            const key = armKey(arm.way.id, arm.nodeIndex, arm.alongWay);
+            const mark = marks.get(key);
+            // the line stops over the whole mouth: up to where the exit's own lanes begin
+            const mouth = (corner: Vec2) => Math.min(maxClearance, Math.max(0, projectOnto(arm.line, corner)));
+            const cut = isRing(arm.way)
+                ? {
+                    left: isExit(next) ? Math.max(extended.left, mouth(ends[next].right)) : 0,
+                    right: isExit(previous) ? Math.max(extended.right, mouth(ends[previous].left)) : 0
+                }
+                : extended;
+            // round a roundabout: the exits the ring's outer lanes are guided off into, and how far along the ring
+            // each road's mouth reaches
+            if (ring) {
+                for (const k of [next, previous]) if (isExit(k)) ring.exits.add(k);
+                ring.mouths.set(`${i}:${next}`, Math.max(extended.left, mouth(ends[next].right)));
+                ring.mouths.set(`${i}:${previous}`, Math.max(extended.right, mouth(ends[previous].left)));
+            }
+            if (mark && (cut.left || cut.right)) {
+                const [wayLeft, wayRight] = arm.alongWay ? [cut.left, cut.right] : [cut.right, cut.left];
+                marks.set(key, { ...mark, left: Math.max(mark.left, wayLeft), right: Math.max(mark.right, wayRight) });
+            }
+            // a mouth-only box keeps to the main road's edge on its side roads' side
+            if (mouthOnly) {
+                const facing = sideOf(arm) > 0 ? 'left' : 'right';
+                const other = facing === 'left' ? 'right' : 'left';
+                ends[i][other] = ends[i][facing];
+                ends[i][other === 'left' ? 'leftAt' : 'rightAt'] = ends[i][facing === 'left' ? 'leftAt' : 'rightAt'];
+                ends[i][other === 'left' ? 'leftDirection' : 'rightDirection'] = ends[i][facing === 'left' ? 'leftDirection' : 'rightDirection'];
+            }
+        };
+        if (through) for (const i of through) throughEnd(i, through);
         // the edge of a mouth-only box between the two halves of the main road follows its kerb, which curves
         // round a roundabout, from one half's end back past the node and out to the other's
-        const alongKerb = (from: Arm, fromAt: number, to: Arm, toAt: number): Vec2[] => {
+        // (at the node it takes in the corners where the two halves' roads are cut, on the bisector of their bend,
+        // so where one half is wider than the other the step between them is filled)
+        const alongKerb = (i: number, fromAt: number, j: number, toAt: number): Vec2[] => {
+            const [from, to] = [arms[i], arms[j]];
             const fromSide = sideOf(from) > 0 ? 'left' : 'right';
             const toSide = sideOf(to) > 0 ? 'left' : 'right';
             const points: Vec2[] = [];
             for (let s = fromAt; s > 0; s -= 2) points.push(edgeAt(from, s, fromSide));
-            points.push(edgeAt(from, 0, fromSide), edgeAt(to, 0, toSide));
+            points.push(edgeAt(from, 0, fromSide), cutCorner(i, fromSide), cutCorner(j, toSide), edgeAt(to, 0, toSide));
             for (let s = 2; s < toAt; s += 2) points.push(edgeAt(to, s, toSide));
             points.push(edgeAt(to, toAt, toSide));
             return points;
+        };
+
+        // the kerb from one road's end to the next's: sweeping on into an exit the ring's lanes run into, through
+        // where a road's edge crosses the ring's, or round the corner where the two edges would meet
+        const sideCorner = (i: number, j: number, end: End, next: End, crossing: Vec2 | undefined): Vec2[] => {
+            if (peeled.has(`${i}:${j}`)) return peelCorner(end.left, end.leftDirection, next.right, next.rightDirection);
+            if (peeled.has(`${j}:${i}`)) return peelCorner(next.right, next.rightDirection, end.left, end.leftDirection).reverse();
+            return crossing ? quadraticCurve(end.left, crossing, next.right)
+                : cornerCurve(end.left, end.leftDirection, next.right, next.rightDirection);
         };
 
         // arms are in counter-clockwise order, and each arm's right edge comes before its left, so the
@@ -1287,9 +1376,8 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
             // (the ring curves away from its tangent, so the two edges' straight lines may never meet)
             const crossing = !throughCorner && ringJoin ? (onMain(i) ? crossings.get(j)?.right : crossings.get(i)?.left) : undefined;
             const corner = throughCorner && mouthOnly
-                ? alongKerb(arms[i], end.leftAt, arms[j], next.rightAt)
-                : crossing ? quadraticCurve(end.left, crossing, next.right)
-                    : cornerCurve(end.left, end.leftDirection, next.right, next.rightDirection);
+                ? alongKerb(i, end.leftAt, j, next.rightAt)
+                : sideCorner(i, j, end, next, crossing);
             points.push(end.right, end.left, ...corner.slice(1, -1));
             // the corner is a kerb, except between the two halves of a road running straight through
             // (its own kerb is drawn) and round a mini-roundabout (its circle is the edge)
@@ -1301,7 +1389,23 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
         if ((arms.length >= 3 || mini) && !onlyAreaSides) {
             result.area = { nodeID: node.id, polygons: [wound(points.map(frame.toLoc))], kerbs, kind: mouthOnly ? 'flare' : 'junction' };
         }
-        result.connections = junctionConnections(node, graph, arms, trims, through, ring);
+        const surfaces: Vec2[][] = [];
+        result.connections = junctionConnections(node, graph, arms, trims, through, ring, surfaces);
+        if (result.area && surfaces.length) {
+            // the road surface under connected lanes, where neither the junction's box nor a road already is
+            const roads = arms.map(arm => {
+                const from = Math.min(trims.get(armKey(arm.way.id, arm.nodeIndex, arm.alongWay)) ?? 0, polylineLength(arm.line));
+                const to = Math.min(from + 80, polylineLength(arm.line));
+                const stations = Array.from({ length: Math.ceil((to - from) / 2) + 1 }, (_, k) => Math.min(to, from + k * 2));
+                return [...stations.map(t => edgeAt(arm, t, 'left')), ...stations.reverse().map(t => edgeAt(arm, t, 'right'))];
+            });
+            // where the two halves of the main road meet, on the bisector of their bend
+            const meeting = through ? (() => {
+                const corners = through.flatMap(k => [edgeAt(arms[k], 0, 'left'), edgeAt(arms[k], 0, 'right')]);
+                return corners.map((_, k) => corners.filter((__, m) => m !== k));
+            })() : [];
+            result.area.polygons.push(...uncovered(surfaces, [points, ...roads, ...meeting]).map(ring => ring.map(frame.toLoc)));
+        }
     }
 
     junctionCache.set(node, { deps, signature, result });
@@ -2020,4 +2124,4 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
 }
 
 // exported for tests
-export const _test = { throughPair, zipLanes, unit };
+export const _test = { throughPair, zipLanes, unit, uncovered };
