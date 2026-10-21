@@ -633,7 +633,7 @@ function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, W
         };
 
         const s = direction === 'forward' ? 10 : total - 10;
-        const edges = edgesAt(layout, visuals?.get(way.id) ?? { start: 0, end: 0, taperStart: null, taperEnd: null }, s, total);
+        const edges = edgesAt(layout, visuals?.get(way.id) ?? { start: 0, end: 0, taperStart: [], taperEnd: [] }, s, total);
         const count = layout.model.lanes[direction].length;
         layout.lanes.forEach((lane, k) => {
             if (lane.ref.direction !== direction) return;

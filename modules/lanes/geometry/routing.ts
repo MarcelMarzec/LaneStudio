@@ -238,6 +238,9 @@ interface Move {
     angle: number;
 }
 
+/** The least distance, in metres, in which a vehicle changes lanes */
+const laneChangeRoom = 30;
+
 interface Junction {
     node: osmNode;
     arms: Arm[];
@@ -272,7 +275,7 @@ function lanesOn(junction: Junction, i: number, graph: coreGraph): Map<number, M
     const nearsideLeft = up.layout.model.driveSide === 'left';
 
     // which roads each lane may turn into
-    const turns = upLanes.map(lane => parseTurn(lane.values['turn:lanes'] ?? ''));
+    const turns = up.turns;
     const anyTagged = turns.some(t => t.length);
     const n = upLanes.length;
     const targets = upLanes.map((_, lane) => {
@@ -444,8 +447,9 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
         if (i < 0) return finish(here, run, 'dead_end');
         const options = lanesOn(j, i, graph);
         const upWay = j.arms[i].way;
-        // keeping to its lane at the first junction; after that, any lane of the road it is on
-        const lanes = s.strict ? [s.enter.index] : options.map((_, lane) => lane)
+        // keeping to its lane at the first junction, and along a link too short to change lanes on (the stretch
+        // between the two halves of a dual carriageway crossroads); after that, any lane of the road it is on
+        const lanes = s.strict || length - s.length < laneChangeRoom ? [s.enter.index] : options.map((_, lane) => lane)
             .filter(lane => !laneClosed(j.arms[i].layout, { direction: s.enter.direction, index: lane }, upWay.tags, profile));
         // one way on per road reached, from the lane nearest the one driven in
         const byExit = new Map<number, { lane: number; move: Move }>();

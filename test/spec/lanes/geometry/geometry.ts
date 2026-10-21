@@ -445,7 +445,7 @@ describe('roadGeometry at joins and junctions', () => {
 
 describe('drawing shifts', () => {
     it('holds a join shift near the join, then fades it out along a long way', () => {
-        const visual = { start: 2, end: 0, taperStart: null, taperEnd: null };
+        const visual = { start: 2, end: 0, taperStart: [], taperEnd: [] };
         expect(visualShift(visual, 0, 1000)).toBeCloseTo(2);
         expect(visualShift(visual, 25, 1000)).toBeCloseTo(2);
         expect(visualShift(visual, 55, 1000)).toBeGreaterThan(0.5);
