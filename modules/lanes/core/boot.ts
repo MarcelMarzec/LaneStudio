@@ -4,6 +4,7 @@ import { coreValidatorAddRule } from '../../core/validator';
 import { prefs } from '../../core/preferences';
 import { uiEntityEditorAddSection } from '../../ui/entity_editor';
 import { uiInitAddPane } from '../../ui/init';
+import { uiTopToolbarAddTool } from '../../ui/top_toolbar';
 import { services } from '../../services';
 import { utilStringQs } from '../../util';
 import { laneKeys } from './lane_keys';
@@ -15,6 +16,7 @@ import { uiSectionSign } from '../ui/section_sign';
 import { uiSectionStreetFeature } from '../ui/section_street_feature';
 import { laneStudioSplash } from '../ui/splash';
 import { uiPaneLaneStudio } from '../ui/pane_settings';
+import { uiToolLaneModes } from '../ui/tool_lane_modes';
 import { laneSettings } from './lane_settings';
 import { laneStudioVersion } from '../version';
 
@@ -48,6 +50,9 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
 
     // Lane Studio's settings pane, first in the pane bar
     uiInitAddPane(uiPaneLaneStudio);
+
+    // Selection and Routing, in the top bar before iD's Point, Line and Area
+    uiTopToolbarAddTool(uiToolLaneModes);
 
     context.container().classed('lane-studio', true);
     laneSettings(context);

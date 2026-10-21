@@ -8,6 +8,8 @@ import { actionChangeLanes } from '../actions/change_lanes';
 import { actionAddMarking } from '../actions/add_marking';
 import { actionAddSign } from '../actions/add_sign';
 import { laneState } from '../core/lane_state';
+import { laneRouting } from '../core/lane_routing';
+import { drawRoutes } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
 import { roadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
 import type { LaneInfo, ParkingLayout } from '../geometry/layout';
@@ -127,6 +129,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     let _enabled = true;
     const state = laneState(context);
     const tools = laneTools(context);
+    const routing = laneRouting(context);
+    // the pieces last drawn, for redrawing routes alone as the pointer moves
+    let _pieces: RoadPiece[] = [];
 
     const path = (locs: Vec2[], closed: boolean) => {
         if (locs.length < 2) return '';
@@ -175,7 +180,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .data([
                 'areas', 'roadside', 'parking-bays', 'parking', 'paths', 'carriageway', 'lanes', 'works', 'junctions', 'heads', 'node-surfaces', 'islands', 'dividers', 'kerbs',
                 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs',
-                'shields', 'junction-labels', 'short', 'selection', 'connect-from',
+                'shields', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
                 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
             ])
             .enter()
@@ -582,6 +587,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .attr('d', d => path(d.polygon, true));
 
 
+        /* the Routing tool's routes */
+        _pieces = pieces;
+        drawRoutes(group('routes'), context, pieces, loc => projection(loc) as Vec2);
+
         /* click targets: lanes and shoulders wherever lanes are drawn, dividers of the selected road from the editing zoom */
         drawTargets(group('targets'), group('divider-targets'), pieces, markings, selected);
         // mini-roundabouts and turning heads select their node
@@ -647,10 +656,13 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         properties: { entity: osmWay };
         wayID: osmWay['id'];
         ref: LaneRef;
+        /** the node indexes the lane runs between, in the order it is driven */
+        routeFrom: number;
+        routeTo: number;
         d: string;
     }
 
-    interface DividerTarget extends Omit<LaneTarget, 'ref'> {
+    interface DividerTarget extends Omit<LaneTarget, 'ref' | 'routeFrom' | 'routeTo'> {
         /** boundary index left to right along the way: 0 is the left kerb */
         k: number;
         /** false for the kerbs and for lines between directions, which only the Width tool uses */
@@ -785,11 +797,17 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const laneTargets: LaneTarget[] = pieces.flatMap(piece => {
             const entity = graph.hasEntity(piece.wayID) as osmWay | undefined;
             if (!entity) return [];
+            // the stretch of road the piece runs, in the order its lanes are driven (for the Routing tool)
+            const nodes = entity.nodes as string[];
+            const start = piece.atWayStart ? 0 : nodes.indexOf(piece.fromNode);
+            const end = piece.atWayEnd ? nodes.length - 1 : nodes.indexOf(piece.toNode, start + 1);
             return piece.layout.lanes.map((lane, i) => ({
                 key: `${pieceKey(piece)}-${i}`,
                 properties: { entity },
                 wayID: piece.wayID,
                 ref: lane.ref,
+                routeFrom: lane.ref.direction === 'backward' ? end : start,
+                routeTo: lane.ref.direction === 'backward' ? start : end,
                 d: path(piece.lanes[i], true)
             }));
         });
@@ -800,6 +818,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         lanes.enter().append('path')
             .attr('class', 'lane-target')
             .on('click.lanes', (event: MouseEvent, d: LaneTarget) => {
+                // the Routing tool edits nothing: it pins the routes itself
+                if (routing.active()) return;
                 if (tools.tool() === 'paint') {
                     paintLane(d);
                     return;
@@ -972,6 +992,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     state.on('change.layer', draw);
     state.on('corridor.layer', draw);
     tools.on('change.layer', draw);
+    // the routes follow the pointer: only they are redrawn
+    routing.on('change.layer', () => {
+        if (!_layer.empty()) drawRoutes(_layer.select<SVGGElement>('g.lanes-routes'), context, _pieces, loc => projection(loc) as Vec2);
+    });
 
     drawLanes.enabled = function(val?: boolean) {
         if (!arguments.length) return _enabled;

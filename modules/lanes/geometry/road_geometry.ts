@@ -192,6 +192,28 @@ function lineLocs(way: osmWay, graph: coreGraph): Vec2[] {
 
 
 /**
+ * The middle of the roundabout a ring way is part of: the average of the nodes of all the ring's ways (a ring
+ * is often split into many short ways where roads join it, so one way's own nodes may all lie to one side)
+ */
+function ringMiddle(way: osmWay, graph: coreGraph): Vec2 {
+    const ways = new Set<osmWay>([way]);
+    const queue = [way];
+    while (queue.length && ways.size < 64) {
+        const current = queue.shift()!;
+        for (const id of [current.first(), current.last()]) {
+            for (const next of graph.parentWays(graph.entity(id)) as osmWay[]) {
+                if (ways.has(next) || !isRing(next)) continue;
+                ways.add(next);
+                queue.push(next);
+            }
+        }
+    }
+    const nodes = new Set([...ways].flatMap(w => w.nodes));
+    const locs = [...nodes].map(id => (graph.entity(id) as osmNode).loc);
+    return scale(locs.reduce((sum, p) => add(sum, p), [0, 0] as Vec2), 1 / locs.length);
+}
+
+/**
  * Lane boundary offsets from the way line at distance `s` along it (right positive): the layout's
  * edges, its placement shift, the drawing-only shift and any tapering outer lane.
  */
@@ -234,7 +256,7 @@ export function miniRoundaboutRadius(node: osmNode, graph: coreGraph): number | 
 
 /* ---------- junction arms ---------- */
 
-interface Arm {
+export interface Arm {
     way: osmWay;
     layout: LaneLayout;
     /** the node's position in `way.nodes` */
@@ -954,6 +976,8 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
             let upTrim: number;
             let downTrim: number;
             const ringJoin = !!ring && onRing(i) !== onRing(j);
+            // a ring without painted lanes (lane_markings=no): lanes joining it stop at its edge, with no lines on into it
+            if (ringJoin && !(onRing(i) ? up : down).layout.markings) continue;
             if (ringJoin) {
                 // onto or off a roundabout: the lines run between the ends of the lanes they join, as a relation's
                 // own line does, and meet the ring's lane lines where they start or stop; a road meeting the ring
@@ -1176,10 +1200,7 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
         const reach = Math.max(0, ...arms.filter((_, i) => !onMain(i)).map(arm => (arm.right - arm.left) / 2));
         // the side of a main road arm its side roads are on (1: its left, counter-clockwise; -1: its right),
         // or 0 when they are on both: round a roundabout, the outside of the ring
-        const ringCentre = (arm: Arm): Vec2 => {
-            const ring = lineLocs(arm.way, graph).map(frame.toMetres);
-            return scale(ring.slice(0, -1).reduce((sum, p) => add(sum, p), [0, 0] as Vec2), 1 / Math.max(1, ring.length - 1));
-        };
+        const ringCentre = (arm: Arm): Vec2 => frame.toMetres(ringMiddle(arm.way, graph));
         const sideOf = (arm: Arm): number => {
             if (isRing(arm.way)) {
                 const centre = ringCentre(arm);
@@ -2125,3 +2146,9 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
 
 // exported for tests
 export const _test = { throughPair, zipLanes, unit, uncovered };
+
+/** How lanes meet at junctions, for working out the routes through them (see routing.ts) */
+export const junctionRules = {
+    armsAt: (node: osmNode, graph: coreGraph) => armsAt(node, graph, new Map()),
+    throughPair, armLaneDirection, signedAngle, idealAngle, connectivityRelation, relationPairs, zipLanes, continuationPairs, isRing, curve
+};

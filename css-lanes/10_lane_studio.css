@@ -3,9 +3,24 @@
  * the same container (the CSS build prefixes every other selector with `.ideditor `).
  */
 
-/* a road editor: no point, area or note buttons */
-.ideditor.lane-studio .top-toolbar button.add-point,
-.ideditor.lane-studio .top-toolbar button.add-area,
+/* iD's Point, Line and Area are kept; notes are left to iD */
 .ideditor.lane-studio .top-toolbar button.add-note {
     display: none;
+}
+
+/* Selection and Routing in the top bar */
+.ideditor.lane-studio .top-toolbar .lanes-mode-button svg.icon {
+    flex: 0 0 auto;
+    margin-right: 4px;
+}
+.ideditor.lane-studio .top-toolbar .lanes-mode-button.active {
+    background: var(--active-button-bg, #7092ff);
+    color: #fff;
+}
+/* while routing, nothing can be edited: drawing, undo and save wait */
+.ideditor.lane-studio.lanes-routing .top-toolbar .add-button,
+.ideditor.lane-studio.lanes-routing .top-toolbar .undo-redo button,
+.ideditor.lane-studio.lanes-routing .top-toolbar .save button {
+    opacity: 0.4;
+    pointer-events: none;
 }

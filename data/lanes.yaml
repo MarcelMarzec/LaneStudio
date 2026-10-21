@@ -328,3 +328,36 @@ en:
     kind: Changed a lane's type.
     value: Changed a lane's tags.
     width: Changed lane widths.
+  toolbar:
+    tools: Tool
+    select:
+      title: Selection
+      tooltip: Select and edit roads, lanes and other features
+    routing:
+      title: Routing
+      tooltip: "See every route through a lane or footway. Editing is off while this is on; Esc leaves."
+  routing:
+    title: Routing
+    close: Back to Selection
+    vehicle: Vehicle
+    profiles:
+      car: Car
+      bus: Bus
+      bicycle: Bicycle
+      hgv: Lorry
+    hint: Hover over a lane to see where traffic in it can go and where it comes from, or over a footway or pavement to see where people can walk. Click to keep the routes on screen.
+    pinned: "Pinned: click the map to let go."
+    from: "{road}, lane {lane}"
+    lane_arrows: "arrows: {arrows}"
+    routes: Routes on
+    none: No way on for this vehicle.
+    incoming: Traffic comes from
+    blocked: Not allowed
+    length: "{n} m"
+    walk_title: "On foot from {road}"
+    walk_reach: "Within {n} m: {streets}"
+    walk_crossings: "{n} crossings"
+    unnamed: unnamed road
+    ends:
+      dead_end: road ends
+      blocked: no way on

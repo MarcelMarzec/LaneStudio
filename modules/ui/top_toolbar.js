@@ -6,7 +6,16 @@ import { debounce } from 'es-toolkit';
 import { uiToolDrawModes, uiToolNotes, uiToolSave, uiToolSidebarToggle, uiToolUndoRedo } from './tools';
 
 
+// tools added by an app built on iD (Lane Studio), shown before the add-feature buttons
+var _extraToolFactories = [];
+export function uiTopToolbarAddTool(factory) {
+    _extraToolFactories.push(factory);
+}
+
+
 export function uiTopToolbar(context) {
+
+    var extraTools = _extraToolFactories.map(function(factory) { return factory(context); });
 
     var sidebarToggle = uiToolSidebarToggle(context),
         modes = uiToolDrawModes(context),
@@ -39,9 +48,12 @@ export function uiTopToolbar(context) {
 
             var tools = [
                 sidebarToggle,
-                'spacer',
-                modes
+                'spacer'
             ];
+            extraTools.forEach(function(tool) {
+                tools.push(tool, 'spacer');
+            });
+            tools.push(modes);
 
             tools.push('spacer');
 
