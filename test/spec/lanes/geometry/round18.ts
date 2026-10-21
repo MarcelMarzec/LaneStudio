@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { metricFrame } from '../../../../modules/lanes/geometry/frame';
 import { roadGeometry } from '../../../../modules/lanes/geometry/road_geometry';
 import { vehicleRoutes } from '../../../../modules/lanes/geometry/routing';
@@ -199,5 +200,43 @@ describe('stop lines at pedestrian crossings', () => {
             const stop = street.markings.find(m => m.kind === 'stop_line')!;
             for (const x of xs(stop.points as [number, number][])) expect(x).toBeCloseTo(expected, 1);
         }
+    });
+});
+
+
+describe('routing round the Liquorpond Street Roundabout, Boston (OpenStreetMap)', () => {
+    // a tight ring mapped as six short ways without lane markings, which the links rule above must leave alone,
+    // with the roads round it for 300 m
+    function boston() {
+        const data = JSON.parse(fs.readFileSync('test/spec/lanes/fixtures/boston_roundabout_area.json', 'utf8')) as {
+            nodes: Record<string, [number, number]>;
+            ways: { id: string; nodes: string[]; tags: Tags }[];
+        };
+        const entities = [
+            ...Object.entries(data.nodes).map(([id, loc]) => new iD.osmNode({ id: id as `n${number}`, loc })),
+            ...data.ways.map(w => new iD.osmWay({ id: w.id as `w${number}`, nodes: w.nodes as `n${number}`[], tags: w.tags }))
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        return { data, graph: new iD.coreGraph(entities) as iD.Graph };
+    }
+
+    it('takes every lane entering it into the ring and out of it', () => {
+        const { data, graph } = boston();
+        const ringNodes = new Set(data.ways.filter(w => w.tags.junction === 'roundabout').flatMap(w => w.nodes));
+        const entries = data.ways.filter(w => w.tags.junction !== 'roundabout' && ringNodes.has(w.nodes[w.nodes.length - 1]));
+        expect(entries.length).toBeGreaterThanOrEqual(3);
+        for (const way of entries) {
+            for (let lane = 0; lane < +(way.tags.lanes ?? 1); lane++) {
+                const routes = vehicleRoutes(graph, way.id as WayID, { direction: 'forward', index: lane }, 0, way.nodes.length - 1, 'car').routes;
+                expect(routes.length, `${way.id} lane ${lane}`).toBeGreaterThan(0);
+                for (const route of routes) {
+                    expect(route.moves[0].ring).toBe('enter');
+                    expect(route.moves.some(move => move.ring === 'exit')).toBe(true);
+                }
+            }
+        }
+        // John Adams Way's right-hand lane (`right;reverse`) may go all the way round, back the way it came
+        const back = vehicleRoutes(graph, 'w29728122', { direction: 'forward', index: 2 }, 0, 1, 'car').routes;
+        expect(back.some(r => r.moves.some(move => move.toWayID === 'w5036608'))).toBe(true);
     });
 });

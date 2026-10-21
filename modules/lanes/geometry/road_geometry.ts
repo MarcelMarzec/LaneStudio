@@ -370,7 +370,8 @@ const inheritedTurns = new WeakMap<coreGraph, Map<string, string[][]>>();
 function wayTurns(way: osmWay, direction: LaneDirection, graph: coreGraph): string[][] {
     const lanes = cachedLayout(way, graph).model.lanes[direction];
     const own = lanes.map(lane => parseTurn(lane.values['turn:lanes'] ?? ''));
-    if (!lanes.length || own.some(t => t.length) || direction === 'both_ways') return own;
+    // a roundabout's lanes go round it, whatever the arrows of the roads joining it say
+    if (!lanes.length || own.some(t => t.length) || direction === 'both_ways' || isRing(way)) return own;
 
     let cache = inheritedTurns.get(graph);
     if (!cache) inheritedTurns.set(graph, cache = new Map());
@@ -388,7 +389,7 @@ function wayTurns(way: osmWay, direction: LaneDirection, graph: coreGraph): stri
     if (!link) return own;
     const linkIndex = arms.indexOf(link);
     // the road leading in: as many lanes, with arrows, and the straightest on into the link
-    const feeders = arms.filter(a => a !== link && a.isEnd && a.way.id !== way.id).flatMap(a => {
+    const feeders = arms.filter(a => a !== link && a.isEnd && a.way.id !== way.id && !isRing(a.way)).flatMap(a => {
         const upLanes = a.layout.model.lanes[armLaneDirection(a, true)];
         const turns = upLanes.map(lane => parseTurn(lane.values['turn:lanes'] ?? ''));
         if (upLanes.length !== lanes.length || !turns.some(t => t.length)) return [];

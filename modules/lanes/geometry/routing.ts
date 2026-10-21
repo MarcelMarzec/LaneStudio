@@ -455,7 +455,9 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
         const upWay = j.arms[i].way;
         // keeping to its lane at the first junction, and along a link too short to change lanes on (the stretch
         // between the two halves of a dual carriageway crossroads); after that, any lane of the road it is on
-        const lanes = s.strict || length - s.length < laneChangeRoom ? [s.enter.index] : options.map((_, lane) => lane)
+        // (round a roundabout, mapped as short ways, the lane to leave from is chosen by the exit: see ringArrows)
+        const short = length - s.length < laneChangeRoom && !junctionRules.isRing(s.way);
+        const lanes = s.strict || short ? [s.enter.index] : options.map((_, lane) => lane)
             .filter(lane => !laneClosed(j.arms[i].layout, { direction: s.enter.direction, index: lane }, upWay.tags, profile));
         // one way on per road reached, from the lane nearest the one driven in
         const byExit = new Map<number, { lane: number; move: Move }>();
