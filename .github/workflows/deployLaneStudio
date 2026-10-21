@@ -2,7 +2,10 @@ name: Deploy LaneStudio to server
 
 on:
   workflow_dispatch:
-
+  push:
+    paths:
+      - '.github/workflows/deployWebsite.yml'
+      
 permissions:
   contents: read
 
