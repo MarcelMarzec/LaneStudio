@@ -55,7 +55,8 @@ describe('routes through a junction', () => {
             members: [{ id: 'w1', type: 'way', role: 'from' }, { id: 'n0', type: 'node', role: 'via' }, { id: 'w3', type: 'way', role: 'to' }]
         });
         const banned = crossroads(marked, [restriction({ restriction: 'no_left_turn', except: 'bicycle' })]);
-        expect(firstRoads(banned, 0)).toEqual([]);
+        // a left-turn lane where turning left is banned is for a junction further on: it carries on ahead
+        expect(firstRoads(banned, 0)).toEqual(['w2']);
         const result = vehicleRoutes(banned, 'w1', { direction: 'forward', index: 0 }, 0, 1);
         expect(result.blocked.map(b => [b.toWayID, b.reason])).toEqual([['w3', 'no_left_turn']]);
         expect(firstRoads(banned, 0, 'bicycle')).toEqual(['w3']);

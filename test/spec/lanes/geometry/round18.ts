@@ -235,6 +235,13 @@ describe('routing round the Liquorpond Street Roundabout, Boston (OpenStreetMap)
                 }
             }
         }
+        // and every lane on the ring itself goes on round and out
+        for (const way of data.ways.filter(w => w.tags.junction === 'roundabout')) {
+            for (let lane = 0; lane < +(way.tags.lanes ?? 1); lane++) {
+                const routes = vehicleRoutes(graph, way.id as WayID, { direction: 'forward', index: lane }, 0, way.nodes.length - 1, 'car').routes;
+                expect(routes.some(route => route.moves.some(move => move.ring === 'exit')), `${way.id} lane ${lane}`).toBe(true);
+            }
+        }
         // John Adams Way's right-hand lane (`right;reverse`) may go all the way round, back the way it came
         const back = vehicleRoutes(graph, 'w29728122', { direction: 'forward', index: 2 }, 0, 1, 'car').routes;
         expect(back.some(r => r.moves.some(move => move.toWayID === 'w5036608'))).toBe(true);

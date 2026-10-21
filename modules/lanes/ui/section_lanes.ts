@@ -171,7 +171,7 @@ export function uiSectionLanes(context: iD.Context) {
                 })
                 .attr('title', turns.length ? turns.map(v => t(`_lanes.turn.${v}`, { default: v })).join(' + ') : t('_lanes.turn.none'))
                 .call(button => {
-                    laneArrowIcon(button as any, laneValue(model, ref, 'turn:lanes'), ref.direction);
+                    laneArrowIcon(button as any, laneValue(model, ref, 'turn:lanes'), ref.direction, 26, model.driveSide);
                 });
         });
 
@@ -280,7 +280,7 @@ export function uiSectionLanes(context: iD.Context) {
                 const ref = { direction, index };
                 cells.append('span')
                     .attr('class', `lanes-cell lane-${laneKindOf(stepModel, ref)}`)
-                    .call(cell => laneArrowIcon(cell as any, laneValue(stepModel, ref, 'turn:lanes'), 'travel', 18));
+                    .call(cell => laneArrowIcon(cell as any, laneValue(stepModel, ref, 'turn:lanes'), 'travel', 18, stepModel.driveSide));
             });
             if (stepModel.countSource === 'assumed') cells.classed('assumed', true);
         });
@@ -295,7 +295,7 @@ export function uiSectionLanes(context: iD.Context) {
                     .on('mouseenter', () => utilHighlightEntities([exit.way.id], true, context))
                     .on('mouseleave', () => utilHighlightEntities([exit.way.id], false, context));
                 const turnCell = li.append('span').attr('class', 'lanes-exit-turn');
-                laneArrowIcon(turnCell as any, exit.turn, 'travel', 18);
+                laneArrowIcon(turnCell as any, exit.turn, 'travel', 18, model.driveSide);
                 turnCell.append('span').text(t(`_lanes.turn.${exit.turn}`));
                 li.append('span').attr('class', 'lanes-exit-name')
                     .text((exit.exitNumber ? t('_lanes.lookahead.exit_number', { n: exit.exitNumber }) + ' ' : '') +
@@ -544,7 +544,7 @@ export function uiSectionLanes(context: iD.Context) {
                         (acc, ref) => setLaneValue(acc, ref, 'turn:lanes', toggleTurn(laneValue(acc, ref, 'turn:lanes'), value)), m), 'turn'))
                     .call(tooltip(name));
                 // the arrow as painted, pointing up the lane
-                laneArrowIcon(button as any, value, 'forward', 24);
+                laneArrowIcon(button as any, value, 'forward', 24, model.driveSide);
             }
         }
 

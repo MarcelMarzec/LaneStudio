@@ -23,10 +23,13 @@ const arrowShapes: Record<string, ArrowShape> = {
     merge_to_left: { stem: `${stem}M0 1V-1L-6 -7V-8.5`, head: 'M-9 -8.5L-6 -13L-3 -8.5Z' }
 };
 
-/** The symbol for one `turn` value, and whether to mirror it (right-hand turns) */
-export function turnArrowSymbol(value: string): { id: string; mirror: boolean } | undefined {
+/**
+ * The symbol for one `turn` value, and whether to mirror it: right-hand turns, and a U-turn (`reverse`)
+ * where traffic drives on the left, which turns round to the right, across the centre of the road
+ */
+export function turnArrowSymbol(value: string, driveSide: 'left' | 'right' = 'right'): { id: string; mirror: boolean } | undefined {
     const right = value.replace(/right/, 'left');
-    const mirror = value !== right;
+    const mirror = value === 'reverse' ? driveSide === 'left' : value !== right;
     return arrowShapes[right] ? { id: `lanes-arrow-${right}`, mirror } : undefined;
 }
 

@@ -263,7 +263,7 @@ function junctionOf(graph: coreGraph, nodeID: string): Junction {
  * turn to the side they are on (left turns from the left half of the road, right from the right) or go ahead.
  * Lanes entering a roundabout all join it; the ring's lanes may go round or leave from its outer side.
  */
-function lanesOn(junction: Junction, i: number, graph: coreGraph): Map<number, Move[]>[] {
+function lanesOn(junction: Junction, i: number, graph: coreGraph, profileID: RoutingProfile): Map<number, Move[]>[] {
     const { arms, through, ring, node } = junction;
     const up = arms[i];
     const upDirection = junctionRules.armLaneDirection(up, true);
@@ -275,7 +275,7 @@ function lanesOn(junction: Junction, i: number, graph: coreGraph): Map<number, M
     const nearsideLeft = up.layout.model.driveSide === 'left';
 
     // which roads each lane may turn into
-    const turns = up.turns;
+    const turns = up.arrows;
     const anyTagged = turns.some(t => t.length);
     const n = upLanes.length;
     const targets = upLanes.map((_, lane) => {
@@ -296,12 +296,28 @@ function lanesOn(junction: Junction, i: number, graph: coreGraph): Map<number, M
                 }
                 if (best && best.d < 70) result.add(best.j);
             }
+            // arrows only for turns banned here (for this vehicle) are for a junction further on: the lane
+            // carries on ahead too, and the banned turns stay to be shown as not allowed
+            const banned = (value: string) => {
+                const j = junctionRules.arrowExit(arms, up, value);
+                return j >= 0 && !!restrictionAt(graph, up.way, node.id, arms[j].way, profileID);
+            };
+            if (turns[lane].every(banned)) {
+                const straight = junctionRules.arrowExit(arms, up, 'through');
+                const ahead = exits.find(x => isThrough(x.j)) ?? exits.find(x => x.j === straight);
+                if (ahead) result.add(ahead.j);
+            }
         } else if (anyTagged) {
             // an unmarked lane on a road with arrows carries on
             const ahead = exits.find(x => isThrough(x.j)) ?? exits.reduce<typeof exits[number] | undefined>((a, x) => (!a || Math.abs(x.angle) < Math.abs(a.angle) ? x : a), undefined);
             if (ahead) result.add(ahead.j);
         } else {
             for (const x of exits) {
+                // every lane of a roundabout carries on round it, however tightly it bends
+                if (onRing(i) && onRing(x.j)) {
+                    result.add(x.j);
+                    continue;
+                }
                 // turning back, onto the other half of a dual carriageway, needs an arrow that says so
                 if (Math.abs(x.angle) > 140) continue;
                 // round a roundabout every exit is to the nearside: left in left-hand traffic
@@ -451,7 +467,7 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
         const j = junction(s.way.nodes[stop]);
         const i = arrivalArm(j.arms, s.way.id, stop, s.step);
         if (i < 0) return finish(here, run, 'dead_end');
-        const options = lanesOn(j, i, graph);
+        const options = lanesOn(j, i, graph, profileID);
         const upWay = j.arms[i].way;
         // keeping to its lane at the first junction, and along a link too short to change lanes on (the stretch
         // between the two halves of a dual carriageway crossroads); after that, any lane of the road it is on
@@ -594,7 +610,7 @@ function incomingRuns(graph: coreGraph, way: osmWay, ref: LaneRef, from: number,
     j.arms.forEach((up, i) => {
         if (i === departing) return;
         const upDirection = junctionRules.armLaneDirection(up, true);
-        const lanes = lanesOn(j, i, graph);
+        const lanes = lanesOn(j, i, graph, profileID);
         const into = lanes.map((byExit, lane) => ({ lane, moves: byExit.get(departing) ?? [] })).filter(x => x.moves.length);
         // lanes lined up with this one, else any lane leading onto the road (it can change lanes after)
         const exact = into.filter(x => x.moves.some(m => m.toLane === ref.index));

@@ -467,7 +467,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             // arrows are drawn in a 24 unit tall box pointing up; size them to the lane
             const k = Math.min(lane.width * 1.4, 5) * pxPerMetre / 24;
             return parseTurn(lane.turn).map(value => {
-                const symbol = turnArrowSymbol(value);
+                const symbol = turnArrowSymbol(value, piece.layout.model.driveSide);
                 return {
                     key: `${pieceKey(piece)}-${m}-${value}`,
                     href: symbol ? `#${symbol.id}` : '',

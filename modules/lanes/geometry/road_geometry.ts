@@ -288,9 +288,12 @@ export interface Arm {
     firstSegment: Vec2;
     /**
      * the turns of the lanes approaching the node, as followed through it (see laneTurnsAt): arrows that point
-     * to no road here carry on ahead, and a short link with no arrows of its own takes them from the road before
+     * to no road here, or only to turns banned for general traffic, carry on ahead, and a short link with no
+     * arrows of its own takes them from the road before
      */
     turns: string[][];
+    /** `turns` without the bans, for routing to apply each vehicle's own */
+    arrows: string[][];
 }
 
 const armKey = (wayID: string, nodeIndex: number, alongWay: boolean) => `${wayID}:${nodeIndex}:${alongWay}`;
@@ -332,7 +335,8 @@ function armsAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>
                     right: alongWay ? wayRight : -wayLeft,
                     sidesAt,
                     firstSegment: len(segment) > 0.01 ? unit(segment) : direction,
-                    turns: []
+                    turns: [],
+                    arrows: []
                 });
             };
             if (i < way.nodes.length - 1) push(true);
@@ -340,8 +344,28 @@ function armsAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>
         });
     }
     arms.sort((a, b) => a.angle - b.angle);
-    for (const arm of arms) arm.turns = laneTurnsAt(arms, arm, graph, inherit);
+    for (const arm of arms) {
+        arm.arrows = laneTurnsAt(arms, arm, node.id, graph, inherit, false);
+        arm.turns = laneTurnsAt(arms, arm, node.id, graph, inherit, true);
+    }
     return arms;
+}
+
+/**
+ * Whether a turn restriction (type=restriction, wiki: Relation:restriction) bans general traffic from one way into
+ * another at a node: `no_*` into its to-way, `only_*` into any other (routing.ts checks each vehicle's own rules)
+ */
+function turnBanned(graph: coreGraph, fromWay: osmWay, nodeID: string, toWay: osmWay): boolean {
+    for (const relation of graph.parentRelations(fromWay) as osmRelation[]) {
+        if (relation.tags.type !== 'restriction') continue;
+        const members = relation.members;
+        if (!members.some(m => m.role === 'from' && m.id === fromWay.id) || !members.some(m => m.role === 'via' && m.id === nodeID)) continue;
+        const value = relation.tags['restriction:motorcar'] ?? relation.tags.restriction;
+        if (!value || (relation.tags.except ?? '').split(';').map(v => v.trim()).includes('motorcar')) continue;
+        const to = members.find(m => m.role === 'to')?.id;
+        if ((value.startsWith('no_') && to === toWay.id) || (value.startsWith('only_') && to !== toWay.id)) return true;
+    }
+    return false;
 }
 
 /** The road an arrow `value` on arm `up` points to (by the turn angle), or -1 if it points to none of them */
@@ -401,7 +425,7 @@ function wayTurns(way: osmWay, direction: LaneDirection, graph: coreGraph): stri
     const inherited = turns.map(values => {
         const kept = values.filter(value => {
             const j = arrowExit(arms, arm, value);
-            return j === -1 || j === linkIndex;
+            return j === -1 || j === linkIndex || turnBanned(graph, arm.way, entry.id, arms[j].way);
         });
         return kept.length ? kept : ['through'];
     });
@@ -412,15 +436,20 @@ function wayTurns(way: osmWay, direction: LaneDirection, graph: coreGraph): stri
 /**
  * The turns of the lanes approaching a node on `arm`, as followed through it: the way's turns (see wayTurns), with
  * a lane whose arrows point to no road leaving here (a right-turn lane reaching the near half of a dual
- * carriageway crossroads) carrying on ahead, to the junction its arrows are for.
+ * carriageway crossroads), or only to roads a turn restriction bans from here, carrying on ahead, to the
+ * junction its arrows are for.
  */
-function laneTurnsAt(arms: Arm[], arm: Arm, graph: coreGraph, inherit: boolean): string[][] {
+function laneTurnsAt(arms: Arm[], arm: Arm, nodeID: string, graph: coreGraph, inherit: boolean, banned: boolean): string[][] {
     const direction = armLaneDirection(arm, true);
     const turns = inherit ? wayTurns(arm.way, direction, graph)
         : arm.layout.model.lanes[direction].map(lane => parseTurn(lane.values['turn:lanes'] ?? ''));
     if (arms.length < 3 || arms.some(a => isRing(a.way)) || !turns.some(t => t.length)) return turns;
     if (arrowExit(arms, arm, 'through') === -1) return turns;
-    return turns.map(values => (values.length && values.every(v => arrowExit(arms, arm, v) === -1) ? ['through'] : values));
+    const nowhere = (value: string) => {
+        const j = arrowExit(arms, arm, value);
+        return j === -1 || (banned && turnBanned(graph, arm.way, nodeID, arms[j].way));
+    };
+    return turns.map(values => (values.length && values.every(nowhere) ? ['through'] : values));
 }
 
 /** Lanes on an arm travelling towards the node (`approach`) or away from it */
@@ -652,13 +681,23 @@ function alignAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual
     if (hasPlacement(moved.way) || visuals.get(moved.way.id)?.fit) return;
 
     // where roads simply join, the lanes of the wider road that end taper away (first, so the lining up below
-    // sees where the lanes left are at the join)
+    // sees where the lanes left are at the join). At a junction, an outer lane gained or lost on a side no
+    // other road joins (a turn lane starting just past a junction on the far side from the side road) tapers
+    // from its kerb too; on a side a road joins, that road feeds or takes the lane, and on a roundabout the
+    // ring's lanes come and go with its entries and exits.
+    const sideRoads = arms.filter((_, i) => !pair.includes(i));
+    const sideFree = (wide: Arm, k: number) => {
+        const along = wide.alongWay ? wide.direction : scale(wide.direction, -1);
+        // the side of the way the lane's kerb is on: the way's left for its first lane, its right for its last
+        const kerb: Vec2 = k === 0 ? [-along[1], along[0]] : [along[1], -along[0]];
+        return !sideRoads.some(side => dot(side.direction, kerb) > 0.02);
+    };
     for (const [up, down] of [[a, b], [b, a]] as const) {
         const upDirection = armLaneDirection(up, true);
         const downDirection = armLaneDirection(down, false);
         const pairs = continuationPairs(graph, up, down, node.id, twoArms);
         if (!pairs.length) continue;
-        if (twoArms) {
+        if (twoArms || !(isRing(up.way) || isRing(down.way))) {
             const wide = count(up) > count(down) ? up : count(down) > count(up) ? down : null;
             if (wide) {
                 const direction = wide === up ? upDirection : downDirection;
@@ -670,6 +709,7 @@ function alignAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual
                     if (k < 0) return;
                     // an outer lane narrows from its kerb; an inner lane only when it merges into its neighbour, from the
                     // side away from the other direction's lanes (so the centre line runs straight on)
+                    if (!twoArms && ((k !== 0 && k !== n - 1) || !sideFree(wide, k))) return;
                     let shift: 'left' | 'right';
                     if (k === 0) shift = 'left';
                     else if (k === n - 1) shift = 'right';
@@ -2282,5 +2322,6 @@ export const _test = { throughPair, zipLanes, unit, uncovered };
 /** How lanes meet at junctions, for working out the routes through them (see routing.ts) */
 export const junctionRules = {
     armsAt: (node: osmNode, graph: coreGraph) => armsAt(node, graph, new Map()),
-    throughPair, armLaneDirection, signedAngle, idealAngle, connectivityRelation, relationPairs, zipLanes, continuationPairs, isRing, curve
+    throughPair, armLaneDirection, signedAngle, idealAngle, connectivityRelation, relationPairs, zipLanes, continuationPairs, isRing, curve,
+    arrowExit
 };

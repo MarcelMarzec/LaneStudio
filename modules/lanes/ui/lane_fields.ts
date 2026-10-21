@@ -156,7 +156,8 @@ export function laneSuggestions(context: iD.Context, way: osmWay, key: string): 
  * Draws a lane's turn arrows with the same symbols as the map, pointing the way its traffic travels
  * as seen looking along the road: up for forward lanes, down for backward lanes, both for centre lanes.
  */
-export function laneArrowIcon(selection: Selection, turnSlot: string, direction: LaneDirection | 'travel', size = 26) {
+export function laneArrowIcon(selection: Selection, turnSlot: string, direction: LaneDirection | 'travel', size = 26,
+    driveSide: 'left' | 'right' = 'right') {
     const svg = selection.append('svg')
         .attr('class', 'lane-arrow-icon')
         .attr('width', size)
@@ -172,7 +173,7 @@ export function laneArrowIcon(selection: Selection, turnSlot: string, direction:
             return;
         }
         for (const value of values) {
-            const symbol = turnArrowSymbol(value);
+            const symbol = turnArrowSymbol(value, driveSide);
             if (!symbol) continue;
             g.append('use').attr('href', `#${symbol.id}`).attr('transform', symbol.mirror ? 'scale(-1,1)' : null);
         }

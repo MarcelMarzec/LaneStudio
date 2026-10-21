@@ -5,9 +5,16 @@ lines, turn arrows, junctions, crossings, stop lines, pavements, islands and sig
 imagery. You edit lanes where they are drawn, and Lane Studio writes the OpenStreetMap tags
 (`lanes`, `turn:lanes`, `change:lanes`, `width:lanes`, `type=connectivity` relations and the rest).
 
-It is built on [iD](https://github.com/openstreetmap/iD), OpenStreetMap's in-browser editor, and keeps
-iD's map, history, imagery, validator and save flow. The website is Lane Studio only; iD's own page
-is still in the repository for development.
+> **Lane Studio is a fork of [iD](https://github.com/openstreetmap/iD)**, OpenStreetMap's in-browser
+> editor. It keeps iD's map, history, imagery, validator and save flow, and adds lane editing on top.
+> It is not made or supported by the iD project: report Lane Studio problems
+> [here](https://github.com/MarcelMarzec/iD/issues), not to iD.
+>
+> **Lane Studio was written with AI.** Its code, tests and documentation were written with
+> [Claude Code](https://claude.com/claude-code), Anthropic's AI coding tool, directed and reviewed by
+> the project's maintainer.
+
+The website is Lane Studio only; iD's own page is still in the repository for development.
 
 ## What it does
 
