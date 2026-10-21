@@ -26,8 +26,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build iD
+      # builds iD's assets, then packages Lane Studio as the whole site in dist-lanes/
+      - name: Build Lane Studio
         run: npm run all
+        env:
+          # logging in to OpenStreetMap from your own domain needs your own OAuth 2 application,
+          # registered at https://www.openstreetmap.org/oauth2/applications with the redirect URI
+          # https://<your domain>/land.html; put its client ID in the repository variable OSM_CLIENT_ID
+          ID_API_CONNECTION_URL: ${{ vars.OSM_CLIENT_ID && 'https://www.openstreetmap.org' || '' }}
+          ID_API_CONNECTION_API_URL: ${{ vars.OSM_CLIENT_ID && 'https://api.openstreetmap.org' || '' }}
+          ID_API_CONNECTION_CLIENT_ID: ${{ vars.OSM_CLIENT_ID }}
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0

@@ -72,6 +72,9 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
     // index; Lane Studio may also be served as /lanes.html, so point it at land.html next to the page
     const osm = services.osm;
     if (osm) {
+        // one OpenStreetMap server (the first configured: openstreetmap.org unless the build sets its own),
+        // so iD's footer has no live / dev switch
+        osm.apiConnections((osm.apiConnections() as { url: string }[]).slice(0, 1));
         const redirect = new URL('land.html', window.location.href);
         redirect.search = '';
         redirect.hash = '';

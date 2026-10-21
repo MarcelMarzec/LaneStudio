@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
 // Packages Lane Studio as a static site in dist-lanes/, ready to upload to any web host
-// (e.g. a cPanel document root). Run `npm run all` first so dist/ holds the built assets.
+// (e.g. a cPanel document root). `npm run all` runs this last, once dist/ holds every built asset
+// (the icon sprites, minified code, data and locales); on its own it needs a finished `npm run all`.
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { styleText } from 'node:util';
 
 const out = 'dist-lanes';
@@ -12,9 +12,6 @@ const copy = (from, to = from) => {
   fs.cpSync(from, path.join(out, to), { recursive: true });
   return true;
 };
-
-console.log(styleText('yellow', 'Building minified Lane Studio...'));
-execFileSync(process.execPath, ['config/esbuild.config.min.js'], { stdio: 'inherit' });
 
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(path.join(out, 'dist'), { recursive: true });
@@ -30,7 +27,11 @@ for (const file of ['iD.css', 'lanes.css', 'lanes.min.js']) {
   if (!copy(path.join('dist', file))) throw new Error(`dist/${file} is missing: run npm run all first`);
 }
 for (const dir of ['img', 'locales', 'data', 'mapillary-js', 'pannellum']) {
-  copy(path.join('dist', dir));
+  if (!copy(path.join('dist', dir))) throw new Error(`dist/${dir} is missing: run npm run all first`);
+}
+// the icon sprites are built by npm run dist; without them every button is blank
+for (const sprite of ['iD-sprite.svg', 'fa-sprite.svg', 'maki-sprite.svg', 'temaki-sprite.svg']) {
+  if (!fs.existsSync(path.join(out, 'dist', 'img', sprite))) throw new Error(`dist/img/${sprite} is missing: run npm run all first`);
 }
 
 // Apache settings for cPanel hosts: JSON and SVG types, compression, and caching
