@@ -1,8 +1,8 @@
 import type { Vec2 } from '../../geo/vector';
 import type { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
-import { laneRouting, routeColours, routesFor } from '../core/lane_routing';
-import { pointAlong, polylineLength } from '../geometry/frame';
+import { laneRouting, routeColours, routesFor, type RoutingFocus } from '../core/lane_routing';
+import { pointAlong, pointInPolygon, polylineLength } from '../geometry/frame';
 import type { LaneRun, Route } from '../geometry/routing';
 import { junctionRules, type RoadPiece } from '../geometry/road_geometry';
 import type { LaneRef } from '../model';
@@ -31,6 +31,53 @@ function laneCentre(pieces: RoadPiece[], way: osmWay, from: number, to: number, 
         points.push(...piece.centres[k]);
     }
     return points.length > 1 ? points : null;
+}
+
+/** How far a point is from a line, both on screen */
+function distanceTo(line: Vec2[], p: Vec2): number {
+    let best = Infinity;
+    for (let i = 1; i < line.length; i++) {
+        const [a, b] = [line[i - 1], line[i]];
+        const d: Vec2 = [b[0] - a[0], b[1] - a[1]];
+        const l2 = d[0] * d[0] + d[1] * d[1] || 1;
+        const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * d[0] + (p[1] - a[1]) * d[1]) / l2));
+        best = Math.min(best, Math.hypot(a[0] + d[0] * t - p[0], a[1] + d[1] * t - p[1]));
+    }
+    return best;
+}
+
+/**
+ * The lane drawn at a point on screen: the lane whose shape holds it, else the lane whose centre line passes
+ * within `tolerance` pixels; or, given a way, its lane nearest the point (over the way's line where its lanes are not
+ * drawn, as in a junction's mouth). Found from the drawn pieces, so whatever is drawn on top of a lane does not hide it.
+ */
+export function laneUnder(pieces: RoadPiece[], graph: iD.Graph, project: (loc: Vec2) => Vec2, point: Vec2, tolerance = 8,
+    wayID?: string): RoutingFocus | null {
+    let near: { piece: RoadPiece; k: number; d: number } | null = null;
+    let hit: { piece: RoadPiece; k: number } | null = null;
+    for (const piece of pieces) {
+        if (wayID && piece.wayID !== wayID) continue;
+        for (let k = 0; k < piece.lanes.length && !hit; k++) {
+            const shape = piece.lanes[k].map(project);
+            if (pointInPolygon(point, shape)) {
+                hit = { piece, k };
+                break;
+            }
+            const d = distanceTo(piece.centres[k].map(project), point);
+            if (d <= tolerance && (!near || d < near.d)) near = { piece, k, d };
+        }
+        if (hit) break;
+    }
+    const found = hit ?? near;
+    if (!found) return null;
+    const way = graph.hasEntity(found.piece.wayID) as osmWay | undefined;
+    if (!way) return null;
+    const [start, end] = pieceSpan(found.piece, way);
+    const ref = found.piece.layout.lanes[found.k].ref;
+    return {
+        kind: 'lane', wayID: found.piece.wayID, ref,
+        from: ref.direction === 'backward' ? end : start, to: ref.direction === 'backward' ? start : end
+    };
 }
 
 const smooth = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));

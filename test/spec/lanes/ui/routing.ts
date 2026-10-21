@@ -5,6 +5,10 @@ import { select as d3_select } from 'd3-selection';
 import { laneRouting } from '../../../../modules/lanes/core/lane_routing';
 import { routingPanel } from '../../../../modules/lanes/ui/routing_panel';
 import { uiToolLaneModes } from '../../../../modules/lanes/ui/tool_lane_modes';
+import { isDrag } from '../../../../modules/lanes/core/mode_routing';
+import { metricFrame } from '../../../../modules/lanes/geometry/frame';
+import { roadGeometry } from '../../../../modules/lanes/geometry/road_geometry';
+import { laneUnder } from '../../../../modules/lanes/svg/routing';
 
 // near Skegness (left-hand traffic); 1 m ≈ 1/111320° of latitude
 const m = 1 / 111320;
@@ -91,5 +95,31 @@ describe('Lane Studio routing tool', () => {
         // leaving gives the sidebar back
         panel.hide();
         expect(sidebarNode.select('.sidebar-component').empty()).toBe(true);
+    });
+
+    it('finds the lane under the pointer from the lanes drawn, or a road\'s nearest lane', () => {
+        const graph = context.graph();
+        const { pieces } = roadGeometry(['w1', 'w2', 'w3', 'w4'].map(id => graph.entity(id as `w${number}`) as InstanceType<typeof iD.osmWay>), graph);
+        // a screen 1 pixel to the metre, north up
+        const frame = metricFrame(at(0, 0));
+        const project = (loc: [number, number]): [number, number] => {
+            const p = frame.toMetres(loc);
+            return [p[0], -p[1]];
+        };
+        // High Street runs east to the junction: its left lane (lane 1) is the north one, its way line between the lanes
+        const north = laneUnder(pieces, graph, project, [-50, -1.8]);
+        expect(north).toMatchObject({ kind: 'lane', wayID: 'w1', ref: { direction: 'forward', index: 0 }, from: 0, to: 1 });
+        expect(laneUnder(pieces, graph, project, [-50, 1.8])).toMatchObject({ wayID: 'w1', ref: { index: 1 } });
+        // a few pixels beyond the kerb still finds the lane; far from any road finds nothing
+        expect(laneUnder(pieces, graph, project, [-50, -9])).toMatchObject({ wayID: 'w1', ref: { index: 0 } });
+        expect(laneUnder(pieces, graph, project, [-50, -40])).toBeNull();
+        // given the road (its line under the pointer), its nearest lane however far
+        expect(laneUnder(pieces, graph, project, [-50, -40], Infinity, 'w1')).toMatchObject({ wayID: 'w1', ref: { index: 0 } });
+    });
+
+    it('tells a click from the end of a drag', () => {
+        expect(isDrag([100, 100], [102, 101])).toBe(false);
+        expect(isDrag([100, 100], [140, 60])).toBe(true);
+        expect(isDrag(null, [140, 60])).toBe(false);
     });
 });

@@ -9,7 +9,7 @@ import { actionAddMarking } from '../actions/add_marking';
 import { actionAddSign } from '../actions/add_sign';
 import { laneState } from '../core/lane_state';
 import { laneRouting } from '../core/lane_routing';
-import { drawRoutes } from './routing';
+import { drawRoutes, laneUnder } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
 import { roadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
 import type { LaneInfo, ParkingLayout } from '../geometry/layout';
@@ -992,6 +992,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     state.on('change.layer', draw);
     state.on('corridor.layer', draw);
     tools.on('change.layer', draw);
+    // the Routing tool finds the lane under the pointer from the pieces drawn
+    routing.setLaneLocator((point, wayID) => laneUnder(_pieces, context.graph(), loc => projection(loc) as Vec2, point, wayID ? Infinity : 8, wayID));
     // the routes follow the pointer: only they are redrawn
     routing.on('change.layer', () => {
         if (!_layer.empty()) drawRoutes(_layer.select<SVGGElement>('g.lanes-routes'), context, _pieces, loc => projection(loc) as Vec2);

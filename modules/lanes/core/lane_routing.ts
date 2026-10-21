@@ -22,6 +22,9 @@ export interface LaneRouting {
     setPinned(focus: RoutingFocus | null): void;
     /** the pinned focus, else the hovered one */
     focus(): RoutingFocus | null;
+    /** the lane drawn at a point on screen, found by the lanes layer (whatever else is drawn on top of it); given a way, its nearest lane */
+    laneAt(point: [number, number], wayID?: string): RoutingFocus | null;
+    setLaneLocator(locator: ((point: [number, number], wayID?: string) => RoutingFocus | null) | null): void;
     on(type: `change${string}`, listener: (() => void) | null): LaneRouting;
 }
 
@@ -39,6 +42,7 @@ export function laneRouting(context: iD.Context): LaneRouting {
     let _profile: RoutingProfile = 'car';
     let _hovered: RoutingFocus | null = null;
     let _pinned: RoutingFocus | null = null;
+    let _locator: ((point: [number, number], wayID?: string) => RoutingFocus | null) | null = null;
     const changed = () => dispatch.call('change', routing);
 
     const routing: LaneRouting = {
@@ -69,6 +73,10 @@ export function laneRouting(context: iD.Context): LaneRouting {
             changed();
         },
         focus: () => _pinned ?? _hovered,
+        laneAt: (point, wayID) => _locator?.(point, wayID) ?? null,
+        setLaneLocator(locator) {
+            _locator = locator;
+        },
         on(type, listener) {
             dispatch.on(type as 'change', listener as () => void);
             return routing;

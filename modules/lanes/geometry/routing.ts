@@ -181,6 +181,41 @@ export function restrictionAt(graph: coreGraph, fromWay: osmWay, nodeID: string,
     return null;
 }
 
+/**
+ * A restriction via one or more ways (wiki: Relation:restriction): a route that has come from its from-road along
+ * its via-ways may not turn into its to-road (`no_*`), or into any road but its to-road (`only_*`), like a U-turn
+ * through the gap between the two carriageways of a dual carriageway. `path` is the ways driven, oldest first,
+ * ending with the way the route is on.
+ */
+export function viaWayRestriction(graph: coreGraph, path: string[], toWay: osmWay, profile: RoutingProfile): string | null {
+    const rules = routingProfiles[profile];
+    const relations = new Set<osmRelation>();
+    for (const id of path.slice(-4)) {
+        const way = graph.hasEntity(id as WayId);
+        if (way) for (const relation of graph.parentRelations(way) as osmRelation[]) relations.add(relation);
+    }
+    for (const relation of relations) {
+        if (relation.tags.type !== 'restriction') continue;
+        const via = relation.members.filter(m => m.role === 'via');
+        if (!via.length || via.some(m => m.type !== 'way')) continue;
+        // the ways driven just now are the via-ways, any order, and the one before them the from-road
+        const k = via.length;
+        if (path.length < k + 1) continue;
+        const viaIDs = new Set<string>(via.map(m => m.id));
+        const along = path.slice(-k);
+        if (new Set(along).size !== k || along.some(id => !viaIDs.has(id))) continue;
+        if (relation.members.find(m => m.role === 'from')?.id !== path[path.length - k - 1]) continue;
+        const value = rules.except.map(key => relation.tags[`restriction:${key}`]).find(Boolean) ?? relation.tags.restriction;
+        if (!value) continue;
+        const except = (relation.tags.except ?? '').split(';').map(v => v.trim());
+        if (rules.except.some(key => except.includes(key))) continue;
+        const to = relation.members.find(m => m.role === 'to')?.id;
+        if (value.startsWith('no_') && to === toWay.id) return value;
+        if (value.startsWith('only_') && to !== toWay.id) return value;
+    }
+    return null;
+}
+
 function turnWord(angle: number): TurnWord {
     const a = Math.abs(angle);
     if (a <= 25) return 'ahead';
@@ -437,7 +472,10 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
                 });
                 if (!fits) continue;
             }
-            const restriction = restrictionAt(graph, upWay, j.node.id, down.way, profileID);
+            // the ways driven so far, each once in a row, for restrictions via ways
+            const path = [...s.runs.map(r => r.wayID as string), s.way.id].filter((id, n, all) => id !== all[n - 1]);
+            const restriction = restrictionAt(graph, upWay, j.node.id, down.way, profileID) ??
+                viaWayRestriction(graph, path, down.way, profileID);
             if (restriction) {
                 blockMove(j, upWay, down, restriction);
                 continue;

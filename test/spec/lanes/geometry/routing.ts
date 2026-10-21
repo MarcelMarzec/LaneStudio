@@ -1,4 +1,4 @@
-import { describeMove, restrictionAt, vehicleRoutes, walkable, walkingRoutes } from '../../../../modules/lanes/geometry/routing';
+import { describeMove, restrictionAt, vehicleRoutes, viaWayRestriction, walkable, walkingRoutes } from '../../../../modules/lanes/geometry/routing';
 
 // near Skegness (left-hand traffic); 1 m ≈ 1/111320° of latitude
 const m = 1 / 111320;
@@ -92,6 +92,53 @@ describe('routes through a junction', () => {
         // from the west, turning left, and from the south, ahead
         expect(result.incoming.map(r => r.runs[0].wayID).sort()).toEqual(['w1', 'w4']);
         expect(result.incoming.find(r => r.runs[0].wayID === 'w1')!.runs[0]).toMatchObject({ from: 0, to: 1 });
+    });
+});
+
+
+describe('restrictions via ways', () => {
+    /**
+     * A dual carriageway: eastbound w1 on the north, westbound w2 on the south, a gap between them (w3) where a
+     * U-turn would go, and a side road south (w4) off the westbound carriageway at the gap
+     */
+    function dual(restriction?: Tags) {
+        return graphOf([
+            new iD.osmNode({ id: 'n11', loc: at(-100, 6) }), new iD.osmNode({ id: 'n10', loc: at(0, 6) }), new iD.osmNode({ id: 'n12', loc: at(100, 6) }),
+            new iD.osmNode({ id: 'n22', loc: at(100, -6) }), new iD.osmNode({ id: 'n20', loc: at(0, -6) }), new iD.osmNode({ id: 'n21', loc: at(-100, -6) }),
+            new iD.osmNode({ id: 'n31', loc: at(0, -100) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n11', 'n10', 'n12'], tags: { highway: 'trunk', oneway: 'yes', lanes: '1', name: 'Sleaford Road' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n22', 'n20', 'n21'], tags: { highway: 'trunk', oneway: 'yes', lanes: '1', name: 'Sleaford Road' } }),
+            new iD.osmWay({ id: 'w3', nodes: ['n10', 'n20'], tags: { highway: 'tertiary', lanes: '2' } }),
+            new iD.osmWay({ id: 'w4', nodes: ['n20', 'n31'], tags: { highway: 'tertiary', lanes: '2' } }),
+            ...(restriction ? [new iD.osmRelation({
+                id: 'r1', tags: { type: 'restriction', ...restriction },
+                members: [{ id: 'w1', type: 'way', role: 'from' }, { id: 'w3', type: 'way', role: 'via' }, { id: 'w2', type: 'way', role: 'to' }]
+            })] : [])
+        ]);
+    }
+    const second = (graph: iD.Graph) => vehicleRoutes(graph, 'w1', { direction: 'forward', index: 0 }, 0, 1)
+        .routes.filter(r => r.moves[0].toWayID === 'w3').map(r => r.moves[1]?.toWayID).sort();
+
+    it('turns back through the gap where nothing bans it', () => {
+        expect(second(dual())).toEqual(['w2', 'w4']);
+    });
+
+    it('keeps out of a U-turn banned via the gap, and says so', () => {
+        const graph = dual({ restriction: 'no_u_turn' });
+        expect(second(graph)).toEqual(['w4']);
+        const result = vehicleRoutes(graph, 'w1', { direction: 'forward', index: 0 }, 0, 1);
+        expect(result.blocked.map(b => [b.toWayID, b.reason])).toEqual([['w2', 'no_u_turn']]);
+        // only from the restriction's from-road: coming from elsewhere through the gap is not banned
+        expect(viaWayRestriction(graph, ['w4', 'w3'], graph.entity('w2') as InstanceType<typeof iD.osmWay>, 'car')).toBeNull();
+        expect(viaWayRestriction(graph, ['w1', 'w3'], graph.entity('w2') as InstanceType<typeof iD.osmWay>, 'car')).toBe('no_u_turn');
+    });
+
+    it('sends traffic only to the to-road of an only_ restriction via a way, unless it excepts the vehicle', () => {
+        const graph = dual({ restriction: 'only_u_turn', except: 'psv' });
+        expect(second(graph)).toEqual(['w2']);
+        const bus = vehicleRoutes(graph, 'w1', { direction: 'forward', index: 0 }, 0, 1, 'bus')
+            .routes.filter(r => r.moves[0].toWayID === 'w3').map(r => r.moves[1]?.toWayID).sort();
+        expect(bus).toEqual(['w2', 'w4']);
     });
 });
 
