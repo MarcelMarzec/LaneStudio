@@ -36,3 +36,12 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: dist-lanes/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: lanestudio-${{ github.run_number }}
+          name: LaneStudio Release ${{ github.run_number }}
+          target_commitish: mm/lane-studio-main
+          generate_release_notes: true
+          make_latest: true
