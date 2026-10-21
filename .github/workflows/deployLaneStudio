@@ -1,10 +1,7 @@
 name: Deploy LaneStudio to server
 
 on:
-  push:
-    branches:
-      - mm/lane-studio-main
-
+  workflow_dispatch:
 
 permissions:
   contents: read
