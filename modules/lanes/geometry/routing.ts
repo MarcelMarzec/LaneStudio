@@ -420,6 +420,12 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
         ringExits: number;
         /** entering a roundabout from a lane with arrows: the arrows, and the way the vehicle was heading, which pick its exits */
         ringArrows?: { values: string[]; heading: Vec2 };
+        /**
+         * the roads traffic in the starting lane may have come from, that the route so far has not ruled out: a
+         * route starting part way along a restriction's via-ways (on the link between the halves of a dual
+         * carriageway) is held to it when every road it may have come from is
+         */
+        feeders: string[][];
     }
 
     const finish = (s: State, run: LaneRun, end: Route['end']) => {
@@ -478,8 +484,14 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
             }
             // the ways driven so far, each once in a row, for restrictions via ways
             const path = [...s.runs.map(r => r.wayID as string), s.way.id].filter((id, n, all) => id !== all[n - 1]);
-            const restriction = restrictionAt(graph, upWay, j.node.id, down.way, profileID) ??
+            let restriction = restrictionAt(graph, upWay, j.node.id, down.way, profileID) ??
                 viaWayRestriction(graph, path, down.way, profileID);
+            let feeders = s.feeders;
+            if (!restriction && feeders.length) {
+                const bans = feeders.map(chain => viaWayRestriction(graph, [...chain, ...path], down.way, profileID));
+                feeders = feeders.filter((_, k) => !bans[k]);
+                if (!feeders.length) restriction = bans[0];
+            }
             if (restriction) {
                 blockMove(j, upWay, down, restriction);
                 continue;
@@ -518,21 +530,57 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
                 way: down.way, from: down.nodeIndex, step: nextStep,
                 enter: { direction: downDirection, index: open[0] }, strict: false,
                 runs: [...s.runs, { ...run, leave: { direction: s.enter.direction, index: lane } }],
-                moves: [...s.moves, moveInfo], length: length + 3, visited: new Set([...s.visited, key]), ringExits, ringArrows
+                moves: [...s.moves, moveInfo], length: length + 3, visited: new Set([...s.visited, key]), ringExits, ringArrows, feeders
             });
         }
         if (!went) finish(here, run, byExit.size ? 'blocked' : 'dead_end');
     };
 
+    const incoming = incomingRuns(graph, way, startRef, from, step, profileID);
     explore({
         way, from, step, enter: startRef, strict: true, runs: [], moves: [], length: 0,
-        visited: new Set([`${way.id}:${from}:${step}`]), ringExits: 0
+        visited: new Set([`${way.id}:${from}:${step}`]), ringExits: 0,
+        feeders: feederChains(graph, way, startRef, from, step, profileID)
     });
 
-    return { routes, incoming: incomingRuns(graph, way, startRef, from, step, profileID), blocked };
+    return { routes, incoming, blocked };
 }
 
 /** The runs leading into a lane from the junction behind it: every lane there whose moves lead into it */
+/**
+ * The ways traffic in a lane may have come along, oldest first, up to `depth` ways back: each way in that
+ * no restriction bans driving from, leaving out loops back through the lane's own way. Empty where nothing
+ * leads in.
+ */
+function feederChains(graph: coreGraph, way: osmWay, ref: LaneRef, from: number, step: number, profileID: RoutingProfile,
+    depth = 5): string[][] {
+    const chains: string[][] = [];
+    const seen = new Set<string>();
+    const grow = (chain: string[], on: osmWay, onRef: LaneRef, onFrom: number, onStep: number) => {
+        if (chains.length >= 64) return;
+        const incoming = chain.length < depth ? incomingRuns(graph, on, onRef, onFrom, onStep, profileID) : [];
+        if (!incoming.length) {
+            if (chain.length) chains.push(chain);
+            return;
+        }
+        for (const route of incoming) {
+            const run = route.runs[0];
+            const id = run.wayID as string;
+            const key = `${[id, ...chain].join(',')}:${run.enter.index}`;
+            if (id === way.id || chain.includes(id) || seen.has(key)) continue;
+            seen.add(key);
+            // a way in from which a restriction bans driving on along the rest
+            const sequence = [id, ...chain, way.id];
+            const banned = sequence.some((_, t) => t > 1 &&
+                viaWayRestriction(graph, sequence.slice(0, t), graph.entity(sequence[t] as WayId) as osmWay, profileID));
+            if (banned) continue;
+            grow([id, ...chain], graph.entity(id as WayId) as osmWay, run.enter, run.from, run.to > run.from ? 1 : -1);
+        }
+    };
+    grow([], way, ref, from, step);
+    return chains;
+}
+
 function incomingRuns(graph: coreGraph, way: osmWay, ref: LaneRef, from: number, step: number, profileID: RoutingProfile): Route[] {
     const nodeID = way.nodes[from];
     if (!isJunctionNode(graph, nodeID) && from !== 0 && from !== way.nodes.length - 1) return [];

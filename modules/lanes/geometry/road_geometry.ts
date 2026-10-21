@@ -1801,9 +1801,11 @@ function stopLineBack(way: osmWay, index: number, direction: 'forward' | 'backwa
         const tagged = node.tags.direction ?? node.tags['traffic_signals:direction'] ?? node.tags['highway:direction'];
         const oneway = cachedLayout(way, graph).model.oneway;
         const last = way.nodes.length - 1;
+        const signalCrossing = highway === 'traffic_signals' && !!node.tags.crossing && node.tags.crossing !== 'no';
         const facing = tagged === 'forward' || tagged === 'backward' ? [tagged]
             : tagged === 'both' || tagged === 'all' ? ['forward', 'backward']
                 : oneway ? [oneway]
+                    : signalCrossing ? ['forward', 'backward']
                     : [index === last || (index !== 0 && index >= last / 2) ? 'forward' : 'backward'];
         if (!facing.includes(direction)) return null;
     }
@@ -1833,7 +1835,7 @@ function stopBefore(way: osmWay, graph: coreGraph, a: number, b: number, along: 
     if (best === null) return null;
     const crossings = Array.from({ length: b - a + 1 }, (_, k) => a + k).filter(n => {
         const node = graph.entity(way.nodes[n]) as osmNode;
-        return node.tags.highway === 'crossing' || !!node.tags.crossing || graph.parentWays(node).some(w =>
+        return node.tags.highway === 'crossing' || (!!node.tags.crossing && node.tags.crossing !== 'no') || graph.parentWays(node).some(w =>
             w.tags.footway === 'crossing' || w.tags.cycleway === 'crossing' || w.tags.path === 'crossing');
     }).map(along).sort((p, q) => sign * (q - p));
     for (const c of crossings) {

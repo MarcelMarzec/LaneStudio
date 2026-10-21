@@ -359,10 +359,77 @@ function approachDirections(tags: Tags, cs: CrossSection): ('forward' | 'backwar
     if (tagged === 'both' || tagged === 'all') return ['forward', 'backward'];
     const oneway = cs.layout.model.oneway;
     if (oneway) return [oneway];
+    // signals for a crossing stop the traffic both ways
+    if (tags.highway === 'traffic_signals' && tags.crossing && tags.crossing !== 'no') return ['forward', 'backward'];
     const n = cs.way.nodes.length;
     if (cs.nodeIndex === n - 1) return ['forward'];
     if (cs.nodeIndex === 0) return ['backward'];
     return cs.nodeIndex >= (n - 1) / 2 ? ['forward'] : ['backward'];
+}
+
+
+/** A node where people cross a road: tagged as a crossing, or where a crossing path meets it */
+const isCrossingNode = (node: osmNode, graph: coreGraph) => node.tags.highway === 'crossing' ||
+    (!!node.tags.crossing && node.tags.crossing !== 'no') || graph.parentWays(node).some(w => isCrossingPath(w.tags));
+
+/**
+ * Where a stop, give-way or signals' line for traffic travelling `direction` towards node `index` of a road stands,
+ * in metres along the direction of travel from the node (negative: before it), given where it would be (`at`): a
+ * line on a pedestrian crossing, or up to 10 m past one, stands just before the crossing instead, where traffic
+ * waits (road_geometry's stopBefore puts the lane arrows to match)
+ */
+function lineBeforeCrossing(road: osmWay, index: number, graph: coreGraph, direction: 'forward' | 'backward', at: number): number {
+    const frame = metricFrame((graph.entity(road.nodes[index]) as osmNode).loc);
+    const cumulative = cumulativeLengths(road.nodes.map(id => frame.toMetres((graph.entity(id) as osmNode).loc)));
+    const sign = direction === 'forward' ? 1 : -1;
+    const crossings = road.nodes.flatMap((id, n) => (isCrossingNode(graph.entity(id) as osmNode, graph) ? [sign * (cumulative[n] - cumulative[index])] : []))
+        .sort((p, q) => q - p);
+    let line = at;
+    for (const c of crossings) {
+        const past = line - c;
+        if (past > -0.5 && past < 10) line = c - crossingClear;
+    }
+    return line;
+}
+
+// how far before the middle of a pedestrian crossing a line stands: half the crossing (1.5 m) and a metre clear
+const crossingClear = 2.5;
+
+/** A crossing mapped as a node on a road: its band, stripes or lines, island and signals */
+function crossingNodeMarkings(node: osmNode, cs: CrossSection, out: StreetGeometry, signalCrossing: boolean) {
+    const tags = node.tags;
+    const left = cs.edges[0];
+    const right = cs.edges[cs.edges.length - 1];
+    const markings = crossingMarkings(tags);
+    const half = 1.5;
+    out.markings.push({ key: `${node.id}-crossing`, kind: 'crossing', nodeID: node.id, closed: true, variant: markings, points: band(cs, -half, half, left, right) });
+    if (markings === 'zebra') {
+        for (let x = left + 0.25; x + 0.5 <= right; x += 1) {
+            out.markings.push({ key: `${node.id}-bar-${x.toFixed(2)}`, kind: 'zebra_bar', nodeID: node.id, closed: true, points: band(cs, -half, half, x, x + 0.5) });
+        }
+    } else if (markings === 'lines' || markings === 'dots') {
+        for (const along of [-half, half]) {
+            out.markings.push({
+                key: `${node.id}-line-${along}`, kind: 'crossing_line', nodeID: node.id, closed: false, variant: markings,
+                points: [add(scale(cs.direction, along), scale(cs.normal, left)), add(scale(cs.direction, along), scale(cs.normal, right))].map(cs.frame.toLoc)
+            });
+        }
+    }
+    if (tags['crossing:island'] === 'yes') {
+        // the island sits between the two directions, or in the middle
+        const forward = approachRange(cs, 'forward');
+        const backward = approachRange(cs, 'backward');
+        const middle = forward && backward
+            ? (cs.layout.model.driveSide === 'left' ? (forward[1] + backward[0]) / 2 : (backward[1] + forward[0]) / 2)
+            : (left + right) / 2;
+        out.markings.push({ key: `${node.id}-island`, kind: 'island', nodeID: node.id, closed: true, points: band(cs, -2.5, 2.5, middle - 0.75, middle + 0.75) });
+    }
+    if ((tags.crossing === 'traffic_signals' || tags['crossing:signals'] === 'yes') && !signalCrossing) {
+        for (const [x, side] of [[left - 0.6, 'l'], [right + 0.6, 'r']] as const) {
+            const loc = cs.frame.toLoc(add(scale(cs.direction, -half - 0.5), scale(cs.normal, x)));
+            out.symbols.push({ key: `${node.id}-signal-${side}`, kind: 'signals', loc, ahead: cs.frame.toLoc(add(scale(cs.direction, 0.5 - half), scale(cs.normal, x))), size: 1.5 });
+        }
+    }
 }
 
 
@@ -399,37 +466,10 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
 
     // crossings drawn as a crossing way are drawn with the way
     const crossingWay = parents.some(w => isCrossingPath(w.tags));
-    if ((highway === 'crossing' || (tags.crossing && !highway)) && !crossingWay) {
-        const markings = crossingMarkings(tags);
-        const half = 1.5;
-        out.markings.push({ key: `${node.id}-crossing`, kind: 'crossing', nodeID: node.id, closed: true, variant: markings, points: band(cs, -half, half, left, right) });
-        if (markings === 'zebra') {
-            for (let x = left + 0.25; x + 0.5 <= right; x += 1) {
-                out.markings.push({ key: `${node.id}-bar-${x.toFixed(2)}`, kind: 'zebra_bar', nodeID: node.id, closed: true, points: band(cs, -half, half, x, x + 0.5) });
-            }
-        } else if (markings === 'lines' || markings === 'dots') {
-            for (const along of [-half, half]) {
-                out.markings.push({
-                    key: `${node.id}-line-${along}`, kind: 'crossing_line', nodeID: node.id, closed: false, variant: markings,
-                    points: [add(scale(cs.direction, along), scale(cs.normal, left)), add(scale(cs.direction, along), scale(cs.normal, right))].map(cs.frame.toLoc)
-                });
-            }
-        }
-        if (tags['crossing:island'] === 'yes') {
-            // the island sits between the two directions, or in the middle
-            const forward = approachRange(cs, 'forward');
-            const backward = approachRange(cs, 'backward');
-            const middle = forward && backward
-                ? (cs.layout.model.driveSide === 'left' ? (forward[1] + backward[0]) / 2 : (backward[1] + forward[0]) / 2)
-                : (left + right) / 2;
-            out.markings.push({ key: `${node.id}-island`, kind: 'island', nodeID: node.id, closed: true, points: band(cs, -2.5, 2.5, middle - 0.75, middle + 0.75) });
-        }
-        if (tags.crossing === 'traffic_signals' || tags['crossing:signals'] === 'yes') {
-            for (const [x, side] of [[left - 0.6, 'l'], [right + 0.6, 'r']] as const) {
-                const loc = cs.frame.toLoc(add(scale(cs.direction, -half - 0.5), scale(cs.normal, x)));
-                out.symbols.push({ key: `${node.id}-signal-${side}`, kind: 'signals', loc, ahead: cs.frame.toLoc(add(scale(cs.direction, 0.5 - half), scale(cs.normal, x))), size: 1.5 });
-            }
-        }
+    // (a node tagged both as signals and as their crossing is drawn as the crossing, its line before it)
+    const signalCrossing = highway === 'traffic_signals' && !!tags.crossing && tags.crossing !== 'no';
+    if ((highway === 'crossing' || (tags.crossing && !highway) || signalCrossing) && !crossingWay) {
+        crossingNodeMarkings(node, cs, out, signalCrossing);
     }
 
     // signals, stop or give way tagged on a junction node itself: the lines go on the approaches, at the
@@ -451,7 +491,8 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
             if (!range) continue;
             // the line faces traffic coming towards the node
             const travel = direction === 'forward' ? cs.direction : scale(cs.direction, -1);
-            const at = (along: number, across: number) => cs.frame.toLoc(add(scale(travel, along - back), scale(cs.normal, across)));
+            const line = lineBeforeCrossing(road, cs.nodeIndex, graph, direction, -back);
+            const at = (along: number, across: number) => cs.frame.toLoc(add(scale(travel, along + line), scale(cs.normal, across)));
             out.markings.push({ key: `${node.id}-${kind}-${direction}`, kind, nodeID: node.id, closed: false, points: [at(0, range[0]), at(0, range[1])] });
 
             // painted STOP or give-way triangles on each approach lane, a few metres before the line
@@ -558,7 +599,8 @@ function junctionSignalLines(node: osmNode, roads: osmWay[], graph: coreGraph, o
             const range = approachRange(arm, side > 0 ? 'backward' : 'forward');
             if (!range) continue;
             const dir = scale(arm.direction, side);
-            const at = (across: number) => arm.frame.toLoc(add(scale(dir, back), scale(arm.normal, across)));
+            const line = lineBeforeCrossing(way, i, graph, side > 0 ? 'backward' : 'forward', -back);
+            const at = (across: number) => arm.frame.toLoc(add(scale(dir, -line), scale(arm.normal, across)));
             out.markings.push({
                 key: `${node.id}-signal_line-${way.id}-${side}`, kind: 'signal_line', nodeID: node.id, closed: false,
                 points: [at(range[0]), at(range[1])]
