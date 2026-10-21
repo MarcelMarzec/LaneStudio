@@ -5,6 +5,18 @@ iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop
 
 # Unreleased
 
+#### Routing tool
+* Every lane of a roundabout carries on round it: the outer lanes of tight rings mapped as short ways
+  (Liquorpond Street Roundabout) no longer route nowhere
+* A turn arrow for a turn banned at the first junction is for one further on: the lane carries on
+  ahead to the junction where that turn is allowed; the banned turn is still listed as not allowed,
+  and each vehicle's own exceptions apply
+
+#### Lanes and junctions
+* The U-turn arrow turns round to the right where traffic drives on the left
+* A lane gained or lost at a junction, on a side no other road joins (a turn lane starting just past
+  a junction), widens or narrows from the kerb instead of starting square
+
 
 # 0.2.0
 ##### 2026-Oct-21

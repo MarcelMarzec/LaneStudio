@@ -28,7 +28,8 @@ version number, a changelog entry and a deploy.
    npm run test:once
    ```
 
-2. Pick the version (`A.B.C`: B for new features, C for fixes only) and set it in
+2. Pick the version by the rules in [CLAUDE.md](CLAUDE.md) (while it is 0.x: the middle number for
+   new features, the last for fixes only) and set it in
    `modules/lanes/version.ts`. It is shown in the footer and written to every changeset as
    `created_by=LaneStudio A.B.C`.
 3. In [CHANGELOG.md](CHANGELOG.md), rename the Unreleased section to `A.B.C` with today's date, and add
