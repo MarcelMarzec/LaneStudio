@@ -52,7 +52,6 @@ export function modeLaneRouting(context: iD.Context) {
         description: t.append('_lanes.toolbar.routing.tooltip'),
         enter() {
             routing.setActive(true);
-            (context.ui().sidebar as any).select(null);
             keybinding.on('⎋', () => {
                 if (routing.pinned()) routing.setPinned(null);
                 else context.enter(modeBrowse(context) as any);

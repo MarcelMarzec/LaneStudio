@@ -26,7 +26,6 @@ describe('Lane Studio routing tool', () => {
     beforeEach(() => {
         context = iD.coreContext().assetPath('../dist/').init();
         container = d3_select(document.createElement('div'));
-        container.append('div').attr('class', 'main-content');
         (context as any).container(container);
         // a road splitting at a junction: ahead east, left north (the approach's left lane), right south
         context.history().merge([
@@ -52,29 +51,45 @@ describe('Lane Studio routing tool', () => {
         expect(container.classed('lanes-routing')).toBe(true);
     });
 
-    it('lists the routes from the lane pinned, in the order and colours drawn', () => {
+    it('lists the routes from the lane pinned in the sidebar, in place of the feature search', () => {
         const routing = laneRouting(context);
         routing.setActive(true);
+        // iD's sidebar, standing in for the rendered one: the panel replaces what it shows
+        const sidebarNode = d3_select(document.createElement('div'));
+        const sidebar = (context.ui() as any).sidebar;
+        let expanded = false;
+        sidebar.show = (component: any) => {
+            sidebarNode.selectAll('*').remove();
+            component(sidebarNode.append('div').attr('class', 'sidebar-component'));
+        };
+        sidebar.hide = () => sidebarNode.selectAll('*').remove();
+        sidebar.expand = () => { expanded = true; };
+
         const panel = routingPanel(context);
         panel.show();
-        const text = () => container.select('.lanes-routing-panel').text();
+        expect(expanded).toBe(true);
+        // built like iD's own sidebar panels: a header with a close button, then the body
+        expect(sidebarNode.select('.header h2').text()).toBe('Routing');
+        expect(sidebarNode.select('.header button.close').empty()).toBe(false);
+        const text = () => sidebarNode.select('.body').text();
         expect(text()).toContain('Hover over a lane');
 
         routing.setPinned({ kind: 'lane', wayID: 'w1', ref: { direction: 'forward', index: 0 }, from: 0, to: 1 });
-        const items = container.selectAll<HTMLLIElement, unknown>('.routing-list li').nodes().map(li => li.textContent ?? '');
+        const items = sidebarNode.selectAll<HTMLLIElement, unknown>('.routing-list li').nodes().map(li => li.textContent ?? '');
         expect(items).toHaveLength(2);
         expect(items.some(item => item.includes('left onto North Road'))).toBe(true);
         expect(items.some(item => item.includes('ahead onto East Road'))).toBe(true);
         expect(text()).toContain('High Street, lane 1');
         expect(text()).toContain('arrows: left, through');
-        expect(container.select('.routing-swatch').text()).toBe('1');
+        expect(sidebarNode.select('.routing-swatch').text()).toBe('1');
 
         // the vehicle buttons choose the vehicle
-        const bus = container.selectAll<HTMLButtonElement, unknown>('.routing-vehicles button').nodes()[1];
+        const bus = sidebarNode.selectAll<HTMLButtonElement, unknown>('.routing-vehicles button').nodes()[1];
         bus.click();
         expect(routing.profile()).toBe('bus');
-        expect(container.selectAll('.routing-vehicles button.active').text()).toBe('Bus');
+        expect(sidebarNode.selectAll('.routing-vehicles button.active').text()).toBe('Bus');
+        // leaving gives the sidebar back
         panel.hide();
-        expect(container.select('.lanes-routing-panel').empty()).toBe(true);
+        expect(sidebarNode.select('.sidebar-component').empty()).toBe(true);
     });
 });

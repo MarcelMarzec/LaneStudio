@@ -88,88 +88,69 @@
     pointer-events: none;
 }
 
-/* the panel, over the top left of the map */
-.ideditor.lane-studio .lanes-routing-panel {
-    position: absolute;
-    /* below the top bar */
-    top: 72px;
-    left: 10px;
-    z-index: 50;
-    width: 320px;
-    max-height: calc(100% - 80px);
-    overflow-y: auto;
-    padding: 10px 12px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-    font-size: 12px;
-    line-height: 1.4;
+/* the panel, in the sidebar in place of the feature search: iD's colours, so it follows iD's light and night themes */
+.ideditor.lane-studio .lanes-routing-sidebar {
+    padding: 20px;
+    color: var(--text-color);
 }
-.ideditor.lane-studio .lanes-routing-panel .routing-head {
+.ideditor.lane-studio .lanes-routing-sidebar .routing-section {
+    margin-bottom: 20px;
+}
+.ideditor.lane-studio .lanes-routing-sidebar .routing-section:last-child {
+    margin-bottom: 0;
+}
+.ideditor.lane-studio .lanes-routing-sidebar .routing-vehicles {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    gap: 0;
 }
-.ideditor.lane-studio .lanes-routing-panel h3 {
-    margin: 0;
-    font-size: 15px;
-}
-.ideditor.lane-studio .lanes-routing-panel h4 {
-    margin: 8px 0 4px;
-    font-size: 13px;
-}
-.ideditor.lane-studio .lanes-routing-panel .routing-arrows {
-    font-weight: normal;
-    color: #555;
-}
-.ideditor.lane-studio .lanes-routing-panel .routing-close {
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    font-size: 18px;
-    line-height: 1;
-    background: transparent;
-}
-.ideditor.lane-studio .lanes-routing-panel .routing-vehicles {
-    display: flex;
-    gap: 4px;
-    margin: 8px 0;
-}
-.ideditor.lane-studio .lanes-routing-panel .routing-vehicles button {
+.ideditor.lane-studio .lanes-routing-sidebar .routing-vehicles button {
     flex: 1 1 0;
-    height: 26px;
-    padding: 0 4px;
-    font-size: 12px;
-    background: #eee;
-    color: #333;
+    height: 30px;
+    border: 1px solid var(--border-color);
+    border-radius: 0;
 }
-.ideditor.lane-studio .lanes-routing-panel .routing-vehicles button.active {
-    background: #7092ff;
-    color: #fff;
+.ideditor.lane-studio .lanes-routing-sidebar .routing-vehicles button + button {
+    border-left: 0;
 }
-.ideditor.lane-studio .lanes-routing-panel .routing-hint,
-.ideditor.lane-studio .lanes-routing-panel .routing-pinned {
-    margin: 4px 0;
-    color: #555;
+.ideditor.lane-studio .lanes-routing-sidebar .routing-vehicles button:first-child {
+    border-radius: 4px 0 0 4px;
 }
-.ideditor.lane-studio .lanes-routing-panel .routing-label {
-    margin-top: 8px;
-    font-weight: bold;
-    color: #333;
+.ideditor.lane-studio .lanes-routing-sidebar .routing-vehicles button:last-child {
+    border-radius: 0 4px 4px 0;
 }
-.ideditor.lane-studio .lanes-routing-panel .routing-list,
-.ideditor.lane-studio .lanes-routing-panel .routing-blocked {
-    margin: 4px 0 0;
+.ideditor.lane-studio .lanes-routing-sidebar .routing-vehicles button.active {
+    border-color: var(--link-color);
+    color: var(--bg-color);
+}
+.ideditor.lane-studio .lanes-routing-sidebar .routing-hint {
+    color: var(--passive-text-color);
+}
+.ideditor.lane-studio .lanes-routing-sidebar .routing-arrows {
+    font-weight: normal;
+    color: var(--passive-text-color);
+}
+.ideditor.lane-studio .lanes-routing-sidebar .routing-list,
+.ideditor.lane-studio .lanes-routing-sidebar .routing-blocked {
+    margin: 0;
     padding: 0;
     list-style: none;
 }
-.ideditor.lane-studio .lanes-routing-panel .routing-list li {
+.ideditor.lane-studio .lanes-routing-sidebar .routing-list li {
     display: flex;
     align-items: baseline;
-    gap: 6px;
-    margin: 3px 0;
+    gap: 8px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    background: var(--bg-color-2);
+    border: 1px solid var(--border-color-2);
 }
-.ideditor.lane-studio .lanes-routing-panel .routing-swatch {
+.ideditor.lane-studio .lanes-routing-sidebar .routing-list li.routing-none {
+    display: block;
+    color: var(--passive-text-color);
+}
+/* the swatch is the route's colour on the map, dark text on it in either theme */
+.ideditor.lane-studio .lanes-routing-sidebar .routing-swatch {
     flex: 0 0 18px;
     height: 18px;
     border-radius: 9px;
@@ -179,15 +160,18 @@
     line-height: 18px;
     text-align: center;
 }
-.ideditor.lane-studio .lanes-routing-panel .routing-words {
+.ideditor.lane-studio .lanes-routing-sidebar .routing-words {
     flex: 1 1 auto;
 }
-.ideditor.lane-studio .lanes-routing-panel .routing-length {
+.ideditor.lane-studio .lanes-routing-sidebar .routing-length {
     flex: 0 0 auto;
-    color: #666;
+    color: var(--passive-text-color);
     white-space: nowrap;
 }
-.ideditor.lane-studio .lanes-routing-panel .routing-blocked li {
-    margin: 2px 0;
-    color: #b3261e;
+.ideditor.lane-studio .lanes-routing-sidebar .routing-blocked li {
+    padding: 4px 8px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    color: var(--error-text-color);
+    background: var(--error-bg-color);
 }

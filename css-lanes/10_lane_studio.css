@@ -13,9 +13,9 @@
     flex: 0 0 auto;
     margin-right: 4px;
 }
+/* iD's active button: its link colour, with the background colour for text (light on blue, dark on the night theme's blue) */
 .ideditor.lane-studio .top-toolbar .lanes-mode-button.active {
-    background: var(--active-button-bg, #7092ff);
-    color: #fff;
+    color: var(--bg-color);
 }
 /* while routing, nothing can be edited: drawing, undo and save wait */
 .ideditor.lane-studio.lanes-routing .top-toolbar .add-button,
