@@ -7,11 +7,20 @@ Lane Studio is a fork of iD. Its code is in `modules/lanes/`; see [LANES.md](LAN
 
 These rules are checked by `test/spec/lanes/version.ts`, which fails if they are broken.
 
+### What a version looks like
+
+- A version is the **date of the release**, `YY.MM.DD`: `26.10.21` is 21 October 2026. It is written
+  `v26.10.21` in the footer, the welcome screen, commit messages and git tags, and without the `v` in
+  code, in the changelog's headings and in the changeset tag `created_by=LaneStudio 26.10.21`.
+- A second release on the same day adds `r2` (`26.10.21r2`, shown `v26.10.21r2`), a third `r3`, and so on.
+  The first release of a day has no suffix.
+- Never use any other form (no `0.3.0`, no `26.10.21.2`, no `-dev`, no `-beta`).
+
 ### Where the version lives
 
-- Lane Studio's version is **only** in `modules/lanes/version.ts` (`laneStudioVersion`). The footer,
-  the changeset tag `created_by=LaneStudio <version>`, the welcome screen and `LaneStudio.version`
-  all read it from there. Never write the version anywhere else.
+- Lane Studio's version is **only** in `modules/lanes/version.ts` (`laneStudioVersion`, without the
+  `v`). The footer, the changeset tag, the welcome screen and `LaneStudio.version` all read it from
+  there. Never write the version anywhere else.
 - `version` in `package.json` is **iD's** version (`2.43.0-dev`). Never change it for Lane Studio.
 
 ### Every change goes in the changelog, not in the version
@@ -27,20 +36,17 @@ These rules are checked by `test/spec/lanes/version.ts`, which fails if they are
 
 Release only when the user asks for a release (or to bump the version). Then:
 
-1. Choose the new version from what is under `# Unreleased`:
-   - while the version is `0.x`: raise the **middle** number (`0.2.0` → `0.3.0`) if anything new was
-     added or behaviour changed; raise the **last** number (`0.2.0` → `0.2.1`) if it is fixes only;
-   - from `1.0.0` on: **MAJOR** for changes that break existing use (tags written differently,
-     removed features or URL parameters), **MINOR** for new features, **PATCH** for fixes only;
-   - `1.0.0` itself only when the user decides Lane Studio is ready for it.
+1. The new version is **today's date** as `YY.MM.DD` (check the date; don't guess it). If the
+   changelog already has a release with that date, add `r2`, or one more than the highest `r`
+   suffix that day (`26.10.21r3` after `26.10.21r2`).
 2. Set `laneStudioVersion` in `modules/lanes/version.ts`.
-3. In `CHANGELOG.md`, rename `# Unreleased` to the version with today's date on the next line
+3. In `CHANGELOG.md`, rename `# Unreleased` to the version (`# YY.MM.DD` or `# YY.MM.DDrN`) with the full date on the next line
    (`##### 2026-Oct-21`), and add a new empty `# Unreleased` above it.
 4. Run `npm run lint`, `npx tsc` and `npm run test:once`.
-5. Commit as `Lane Studio A.B.C` with only the version and changelog changes, tag it
-   `lane-studio-vA.B.C`, and push the branch and the tag.
+5. Commit as `Lane Studio vYY.MM.DD` with only the version and changelog changes, tag it
+   `vYY.MM.DD`, and push the branch and the tag.
 6. Tell the user to run the **Deploy LaneStudio to server** workflow. Deploying never changes the
-   version: a deploy without a release ships the same version number.
+   version: a deploy without a release ships the same version.
 
 If there is nothing under `# Unreleased`, there is nothing to release: say so instead of bumping.
 

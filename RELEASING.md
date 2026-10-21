@@ -1,7 +1,7 @@
 ## Releasing Lane Studio
 
 Lane Studio is deployed from the `mm/lane-studio-main` branch as a static website. A release is a
-version number, a changelog entry and a deploy.
+version (the release date), a changelog entry and a deploy.
 
 ### One-time setup
 
@@ -28,25 +28,24 @@ version number, a changelog entry and a deploy.
    npm run test:once
    ```
 
-2. Pick the version by the rules in [CLAUDE.md](CLAUDE.md) (while it is 0.x: the middle number for
-   new features, the last for fixes only) and set it in
-   `modules/lanes/version.ts`. It is shown in the footer and written to every changeset as
-   `created_by=LaneStudio A.B.C`.
-3. In [CHANGELOG.md](CHANGELOG.md), rename the Unreleased section to `A.B.C` with today's date, and add
-   a new empty Unreleased section above it.
-4. Commit (`Lane Studio A.B.C`), tag and push:
+2. The version is today's date as `YY.MM.DD` (`26.10.21` for 21 October 2026; a second release that day
+   is `26.10.21r2`). Set it in `modules/lanes/version.ts`. The footer shows it as `v26.10.21`, and every
+   changeset is tagged `created_by=LaneStudio 26.10.21`. The full rules are in [CLAUDE.md](CLAUDE.md).
+3. In [CHANGELOG.md](CHANGELOG.md), rename the Unreleased section to `# YY.MM.DD` with the full date on
+   the next line, and add a new empty Unreleased section above it.
+4. Commit, tag and push:
 
    ```sh
-   git commit -am "Lane Studio A.B.C"
-   git tag "lane-studio-vA.B.C" -m "Lane Studio A.B.C"
-   git push origin mm/lane-studio-main "lane-studio-vA.B.C"
+   git commit -am "Lane Studio vYY.MM.DD"
+   git tag "vYY.MM.DD" -m "Lane Studio vYY.MM.DD"
+   git push origin mm/lane-studio-main "vYY.MM.DD"
    ```
 
 5. Deploy: Actions → **Deploy LaneStudio to server** → Run workflow. It builds with `npm run all`
    (which ends by packaging `dist-lanes/`) and uploads `dist-lanes/` over FTP. The page loads its code
    and styles with a stamp of their contents, so visitors get the new version straight away.
 6. Check the live site: the footer shows the new version, you can log in, and a small test edit's
-   changeset on openstreetmap.org says `created_by=LaneStudio A.B.C`.
+   changeset on openstreetmap.org says `created_by=LaneStudio YY.MM.DD`.
 
 ### Taking in a new iD release
 

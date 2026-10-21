@@ -1,7 +1,9 @@
 # Lane Studio changelog
 
-What changed in each version of Lane Studio. Lane Studio is built on iD 2.43.0-dev; for the changes in
-iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
+What changed in each version of Lane Studio. A version is the date it was released, `YY.MM.DD`
+(`v26.10.21` is 21 October 2026), with `r2`, `r3` … for later releases on the same day (`v26.10.21r2`). Lane Studio is
+built on iD 2.43.0-dev; for the changes in iD itself, see
+[iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
 # Unreleased
 
@@ -18,8 +20,8 @@ iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop
   a junction), widens or narrows from the kerb instead of starting square
 
 
-# 0.2.0
-##### 2026-Oct-21
+# 26.10.21
+##### 2026-Oct-21 (first numbered 0.2.0)
 
 #### Website
 * The whole site is Lane Studio: `npm run all` ends by packaging `dist-lanes/` with every icon, data
@@ -65,8 +67,8 @@ iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop
 * iD's Point, Line and Area tools are back in the top bar
 
 
-# 0.1.0
-##### 2026-Oct-13
+# 26.10.13
+##### 2026-Oct-13 (first numbered 0.1.0)
 
 First version.
 

@@ -38,7 +38,7 @@ export function laneStudioSplash(context: iD.Context) {
 
         const section = body.append('div').attr('class', 'modal-section');
         const server = services.osm?.getUrlRoot?.() ?? 'OpenStreetMap';
-        section.append('p').text(t('_lanes.welcome.intro', { version: laneStudioVersion, idVersion: context.version, server }));
+        section.append('p').text(t('_lanes.welcome.intro', { version: `v${laneStudioVersion}`, idVersion: context.version, server }));
 
         const steps = section.append('ol');
         for (const step of ['zoom', 'click', 'tools', 'markings', 'save']) {

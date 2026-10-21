@@ -57,7 +57,7 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
 
     // the footer names Lane Studio's version, linking to its repository and changelog
     uiVersionSetProduct({
-        name: 'Lane Studio', version: laneStudioVersion, href: laneStudioRepository,
+        name: 'Lane Studio', version: `v${laneStudioVersion}`, href: laneStudioRepository,
         releaseHref: () => `${laneStudioRepository}/blob/mm/lane-studio-main/CHANGELOG.md`
     });
 
