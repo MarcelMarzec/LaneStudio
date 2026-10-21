@@ -1,14 +1,13 @@
 # Accessibility & Compatibility
 
-iD aims to make mapping as easy possible for as many people as possible. To this end,
-we recognize that everyone has different backgrounds, abilities, and technologies,
-and therefore different needs. Developing for the "average user" will inevitably
-fail to serve some proportion of mappers. Broadly speaking, iD should strive to
-follow [universal design](https://en.wikipedia.org/wiki/Universal_design) principles.
+Lane Studio aims to make lane mapping as easy as possible for as many people as possible. It is built
+on iD and inherits iD's accessibility work, which follows
+[universal design](https://en.wikipedia.org/wiki/Universal_design) principles: everyone has different
+backgrounds, abilities and technologies, and developing for the "average user" fails some mappers.
 
-This is a living document that details the usability of iD across a number of dimensions,
-with the intent of identifying and addressing problem areas. Since there are always more
-factors to consider, no part of this document should be considered complete.
+This is a living document. The first section covers Lane Studio's own features; the rest describes the
+iD editor Lane Studio is built on, and applies to Lane Studio too. No part of it should be considered
+complete.
 
 Symbols used in this document:
 
@@ -17,6 +16,20 @@ Symbols used in this document:
 - 🟠 Partial support
 - ❌ No appreciable support
 - 🤷 Unknown support, none is assumed
+
+<br/>
+
+## 🛣 Lane Studio's own features
+
+|   | Feature | Notes |
+|---|---|---|
+| ✅ | Light and dark themes | Lane Studio's panes, sidebar sections and Routing panel follow iD's themes and your system's setting |
+| ✅ | Lane fields | Standard form fields: usable with a keyboard and screen readers like iD's own fields |
+| 🟠 | Picking lanes | Lanes are picked on the map or in the sidebar's lane strip with a pointer; once one is selected, `[` and `]` step to the next lane and Delete removes the selected lanes |
+| 🟠 | Lane colours | Lane types are told apart by colour, with labels on each lane from zoom 19; the lane opacity setting (pane shortcut `K`) makes them stronger or fainter |
+| ❌ | Routing tool | Routes are shown for the lane under the pointer; there is no keyboard way to pick a lane in it yet |
+| 🤷 | Touch | Not yet tested on touch screens; the Routing tool relies on hovering |
+| ❌ | Translation | Lane Studio's own strings are English only; the rest of the editor uses iD's translations |
 
 <br/>
 

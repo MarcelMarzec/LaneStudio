@@ -1,43 +1,72 @@
-## iD Editor Privacy Policy
+## Lane Studio Privacy Policy
 
-iD Editor is an open source OpenStreetMap editor. You are not required to use iD in order to use or edit OpenStreetMap, and the OpenStreetMap Foundation does not operate iD. You can learn more about OpenStreetMap and the OpenStreetMap Foundation at [https://www.openstreetmap.org/about](https://www.openstreetmap.org/about) and [https://wiki.osmfoundation.org/wiki/Main_Page](https://wiki.osmfoundation.org/wiki/Main_Page). You can learn more about the iD Editor project and its maintainers at [https://github.com/openstreetmap/iD](https://github.com/openstreetmap/iD).
+Lane Studio is an open source OpenStreetMap editor built on [iD](https://github.com/openstreetmap/iD).
+You do not need Lane Studio to use or edit OpenStreetMap, and the OpenStreetMap Foundation does not
+operate it. You can learn more about OpenStreetMap and the OpenStreetMap Foundation at
+[https://www.openstreetmap.org/about](https://www.openstreetmap.org/about) and
+[https://wiki.osmfoundation.org/wiki/Main_Page](https://wiki.osmfoundation.org/wiki/Main_Page).
+The project's code and issues are at [https://github.com/MarcelMarzec/iD](https://github.com/MarcelMarzec/iD).
 
-### Source code and website ([http://ideditor.com/](http://ideditor.com/))
+### The website and source code
 
-If you choose to interact with the project GitHub page or website hosted by GitHub, you do so in accordance with [GitHub’s Privacy Policy](https://help.github.com/en/articles/github-privacy-statement). If you choose to interact with the pre-release version of iD at [http://preview.ideditor.com/release](http://preview.ideditor.com/release) or [http://preview.ideditor.com/master](http://preview.ideditor.com/master), that use is governed by [AWS’s privacy policy](https://aws.amazon.com/privacy/). If you choose any other communications medium to contact the maintainers of iD, that use is governed by the policies of those respective mediums. See [https://github.com/openstreetmap/iD](https://github.com/openstreetmap/iD) for more information. iD may use any feedback you provide.
+Lane Studio is a static website: it has no server-side code, accounts or database of its own, and
+runs entirely in your browser. The web server that hosts it keeps ordinary access logs (such as your
+IP address, the pages and files requested, and your browser's user agent), which are used only to keep
+the site running. If you interact with the project on GitHub, you do so under
+[GitHub's Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
-### Cookies
+### Storage in your browser
 
-iD use cookies, website logs and other similar data and technologies (i) to preserve information so you will not have to re-enter or re-encounter it during your visit or on subsequent visits; (ii) to maintain sessions for authenticated users; (iii) to monitor metrics about iD use such as the number of visitors and most used features; (iv) for internal diagnostic and analytic purposes (v) to improve the editor and related features, and (vi) to provide information to you about iD, editing, or OpenStreetMap. We have a legitimate interest in improving and informing you about iD, and certain data collection is necessary in order for iD to function. You may delete cookies from your computer, and most browsers provide the option to block cookies. However, if you block cookies, portions of iD may not work as intended. For example, you must be logged into your OpenStreetMap account in order to edit OpenStreetMap.
+Lane Studio does not set tracking cookies and does not collect analytics. It stores some information
+in your browser's local storage so you don't have to re-enter it: your settings (such as lane opacity
+and the map layers shown) and edits you have not saved yet, under keys starting with `lanes_`, and
+your OpenStreetMap login token, under a key named after the OpenStreetMap server. This stays on your
+device; you can delete it by clearing the site's data in your
+browser, which also logs you out and discards unsaved edits.
 
 ### Logging into OpenStreetMap
 
-In order to make edits using iD, you must be logged into your OpenStreetMap account. You may do so via the OpenStreetMap website or a number of third-party login services. That use is governed by the respective privacy policies of the login method you choose.
+To save edits you must log into your OpenStreetMap account. Logging in happens on openstreetmap.org
+(or a login service you choose there) and is governed by its privacy policy; Lane Studio never sees
+your password, only a token that lets it save edits on your behalf.
 
 ### Changeset information
 
-When you use iD to edit OpenStreetMap, iD uses the OpenStreetMap API to contribute edits. For quality control purposes, along with the information typically recorded for an OpenStreetMap edit, iD automatically adds tags to each changeset submitted with iD which identifies the changeset as one made with iD and information that indicates the user’s level of experience with iD editor and/or its walkthrough. See [here](https://github.com/openstreetmap/iD/blob/release/modules/ui/commit.js) for details. The [OSMF privacy policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy) governs the use of this data in the OpenStreetMap database.
+When you save, Lane Studio uploads your edits to OpenStreetMap with the OpenStreetMap API. Along with
+the information recorded for every OpenStreetMap edit, each changeset carries tags that identify the
+editor and help quality control: `created_by=LaneStudio <version>`, the page address it was made from
+(`host`), the language of the editor (`locale`), the imagery used (`imagery_used`), how many
+changesets you had made before (`changesets_count`), any warnings you saved with, and your progress
+through iD's walkthrough. See [modules/ui/commit.js](modules/ui/commit.js) for details. The
+[OSMF privacy policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy) governs this data in the
+OpenStreetMap database.
 
-### Editor experience tags
+### Background imagery and other third-party services
 
-Details on that are [here](https://github.com/openstreetmap/iD/blob/release/modules/ui/commit.js).
+Your browser fetches map data from the OpenStreetMap API, and, if you use them, background and
+street-level imagery from third-party hosts. Each host's privacy policy governs that use. The
+[Editor Layer Index](https://github.com/osmlab/editor-layer-index) lists the imagery sources.
+Searching uses OpenStreetMap's [Nominatim](https://nominatim.openstreetmap.org/), and tag suggestions
+use [taginfo](https://taginfo.openstreetmap.org/). If you do not wish to interact with these third
+parties, do not use these features.
 
-### Background imagery and other third party services
-
-If you use background or streetside imagery to aid your edits, your browser must fetch information and images from a third-party imagery host. That use is governed by the respective privacy policies of each imagery host. The [Editor Layer Index](https://github.com/osmlab/editor-layer-index) and [iD Editor GitHub code](https://github.com/openstreetmap/iD/blob/release/modules/ui/map_data.js) provides detailed information as to imagery layer available in iD. In addition, you may use third party services to assist your editing or check for errors. See [here](https://github.com/openstreetmap/iD/tree/release/modules/services) for details. If you do not wish to interact with these third parties, do not use these features.
-
-iD requires that your browser fetch some resources from the [JSDelivr](https://www.jsdelivr.com/) content delivery network (CDN). This usage is governed by the cdn.jsdelivr.net privacy policy located at [https://www.jsdelivr.com/terms/privacy-policy-jsdelivr-net](https://www.jsdelivr.com/terms/privacy-policy-jsdelivr-net).
+Lane Studio fetches some resources (tagging presets and indexes) from the [jsDelivr](https://www.jsdelivr.com/)
+content delivery network, governed by its
+[privacy policy](https://www.jsdelivr.com/terms/privacy-policy-jsdelivr-net).
 
 ### Name Suggestion Index
 
-The Name Suggestion Index is a feature in iD to aid users in consistently and accurately identifying the brand names of companies on the map. The NSI optionally fetches information and brand logos hosted on third party websites, including WikiData, Wikimedia Commons, and the brands’ respective Facebook and Twitter accounts. That use is governed by their respective privacy policies, including [https://foundation.wikimedia.org/wiki/Privacy_policy](https://foundation.wikimedia.org/wiki/Privacy_policy); [https://twitter.com/en/privacy](https://twitter.com/en/privacy); [https://www.facebook.com/about/privacy](https://www.facebook.com/about/privacy). Specific information about the information and images fetched for each brand may be found at [https://nsi.guide/](https://nsi.guide/). If you do not wish to interact with these third parties, you can deselect this feature in the User Preferences -> Privacy section.
+iD's Name Suggestion Index helps map brand names consistently. It can fetch information and brand
+logos from third-party sites, including Wikidata and Wikimedia Commons, governed by their privacy
+policies such as [https://foundation.wikimedia.org/wiki/Privacy_policy](https://foundation.wikimedia.org/wiki/Privacy_policy).
+You can turn this off in Preferences → Privacy.
 
 ### Contact
 
-If you believe that we hold information that would allow us to correct, amend, or delete inaccurate information about you or if you believe that information about you has been processed in violation of this privacy policy or applicable law, please email us at privacy@ideditor.org.
+If you believe information about you has been processed in violation of this policy or applicable
+law, or want to ask about it, open an issue at
+[https://github.com/MarcelMarzec/iD/issues](https://github.com/MarcelMarzec/iD/issues).
 
 ### Changelog
 
-* _2020-Dec-02_ - Add information about the JSDelivr CDN integration.
-* _2020-Apr-07_ - Update the iD GitHub repository file links to point to the `release` branch instead of the `master` branch.
-* _2019-Dec-17_ - Initial version.
+* _2026-Oct-21_ - Lane Studio's own policy, adapted from [iD's](https://github.com/openstreetmap/iD/blob/develop/PRIVACY.md).

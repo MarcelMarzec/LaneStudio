@@ -1,5 +1,6 @@
 ## ISC License
 
+Copyright (c) Lane Studio contributors
 Copyright (c) iD Contributors
 
 Permission to use, copy, modify, and/or distribute this software for any

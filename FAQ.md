@@ -1,71 +1,72 @@
-## How is "iD" pronounced?
+# Lane Studio FAQ
 
-Two syllables: "eye dee".
+## What is Lane Studio?
+
+A lane and road editor for OpenStreetMap. It draws roads lane by lane at their real width over aerial
+imagery, and lets you edit lanes, turn arrows, lane connections, junction markings, pavements and
+signs where they are drawn. It is built on [iD](https://github.com/openstreetmap/iD), so editing
+anything else works as it does in iD.
 
 
-## How can I help translate iD into another language or fix a mistranslation?
+## Do my edits go to the real OpenStreetMap?
 
-Please see [CONTRIBUTING.md](https://github.com/openstreetmap/iD/blob/develop/CONTRIBUTING.md#translating)
+Yes: once you log in, saving uploads a changeset to openstreetmap.org like any other editor, tagged
+`created_by=LaneStudio <version>`. Until you save, edits stay in your browser (and are offered back if
+you close the page). To practise, a development build can point at the OSM dev server instead (see
+[CONTRIBUTING.md](CONTRIBUTING.md)).
+
+
+## Why are lanes not drawn?
+
+Lanes, pavements and footways are drawn from zoom 17; lane lines, arrows, crossings and stop lines
+from zoom 18, where editing starts too. Roads are drawn from their tags: a road without `lanes=*` is
+drawn with the usual number of lanes for its type, so add the tags to get it right.
+
+
+## The lanes at a junction don't line up, or a route goes the wrong way. Is the data wrong?
+
+Sometimes. Lane Studio lines lanes up from `turn:lanes`, `type=connectivity` relations and turn
+restrictions, so missing or wrong arrows show up as lanes that don't meet, or as routes that turn from
+the wrong lane. Check the tags first; the Routing tool shows what Lane Studio reads from them. If the
+tags are right, please report it with an export of the junction (see [CONTRIBUTING.md](CONTRIBUTING.md)).
+
+
+## Does Lane Studio change tags I didn't edit?
+
+No. The junction drawing, lining up and tapers are drawing only. Tags are written only when you edit,
+and each edit is one undo step.
+
+
+## Which countries does it work for?
+
+Anywhere: lane tags are the same everywhere, and left- and right-hand traffic are both handled. Lane
+widths, sign drawings, road number shields and speed roundels follow UK conventions; elsewhere signs
+are drawn as a plate with their code.
 
 
 ## How can I report an issue with background imagery?
 
-To report an issue with missing or cloudy imagery:
-* _For Bing Satellite layer:_ Open the location in [Bing Maps](https://www.bing.com/maps), click the "Feedback" button and choose "Report a map problem" option.
-* _For Esri World Imagery:_ You can open a new issue using the [Imagery Map Feedback tool](https://www.arcgis.com/home/item.html?id=ebdfa4146680410bb952c7d532ea5407).
+Lane Studio uses iD's imagery list, from the [editor-layer-index](https://github.com/osmlab/editor-layer-index)
+project. For missing or cloudy imagery:
 
-iD's list of available background imagery sources come from the [editor-layer-index](https://github.com/osmlab/editor-layer-index)
-project.  If you know of a more recent imagery source that is licensed for this use,
-please open a request there with the link and license details.
-
-
-## I'm having trouble seeing some of the colors. Is there a way to customize or change them?
-
-Because iD uses CSS and SVG for all its rendering, users can override the colors
-with the [Stylish extension](https://en.wikipedia.org/wiki/Stylish_(software)) on Firefox or Chrome.
-Stylish also allows users to share custom styles with others. See also: https://github.com/openstreetmap/iD/issues/3095#issuecomment-224988925
+* _Bing:_ open the location in [Bing Maps](https://www.bing.com/maps), click "Feedback" and choose
+  "Report a map problem".
+* _Esri World Imagery:_ use the [Imagery Map Feedback tool](https://www.arcgis.com/home/item.html?id=ebdfa4146680410bb952c7d532ea5407).
 
 
-## Why not use canvas rather than SVG?
+## Can I change the colours?
 
-Using canvas rather than SVG would require implementing a scenegraph, hit-testing,
-event dispatch, animation, and other features provided natively by SVG. All that is
-a significant amount of work, would have meant a longer time for the initial release
-of iD, and would likely increase the ongoing costs of maintenance and new features.
-
-On the other hand, SVG is already fast enough in many or most hardware/browser/OS/editing
-region combinations, and will only get faster as hardware improves and browser vendors
-optimize their implementations and take better advantage of hardware acceleration.
-
-In other words, the decision to use SVG rather than canvas was a classic performance
-vs. implementation cost tradeoff with strong arguments for trading off performance to
-reduce implementation costs.
+The Lane Studio pane (shortcut `K`) sets how see-through lanes are and hides iD's own lines under
+them. Lane Studio follows your system's light or dark setting, like iD. Everything is drawn with CSS
+and SVG, so browser extensions that restyle pages can change any colour.
 
 
-## Can I use iD offline?
+## Can I use it offline?
 
-iD does not currently have an offline mode.
-
-To support offline usage requires caching or providing an offline proxy for the three
-main things iD uses the network for:
-
-* Downloading existing data -- this is done on demand as you pan around
-* Downloading tiles -- ditto
-* Uploading changes
-
-We've thought a little about [caching tiles](https://github.com/openstreetmap/iD/issues/127)
-and downloaded data, but haven't actively worked on it, nor on the data download/upload
-question.
+No. Like iD, it loads map data, imagery and presets as you pan, and saves straight to OpenStreetMap.
 
 
-## Can I use iD with my own OSM server?
+## Can I use it with my own OSM server?
 
-Yes, you can. You will need to [install](https://github.com/openstreetmap/openstreetmap-website/blob/master/doc/INSTALL.md)
-and [configure](https://github.com/openstreetmap/openstreetmap-website/blob/master/doc/CONFIGURE.md)
-an instance of the Rails Port, the server that runs the OpenStreetMap website and API.
-
-Once you have the Rails Port running, you may edit as normal using the version of iD that
-is bundled with it. Your changes will be saved to your own database. To use a standalone iD with your own api, you may edit the [osm.js](https://github.com/openstreetmap/iD/blob/develop/modules/services/osm.js) file.
-
-Depending on your requirements, you may also want to set up [cgimap](https://github.com/openstreetmap/cgimap)
-and/or a tile rendering stack, but neither of these are required for editing with iD.
+Yes. Build it with `ID_API_CONNECTION_URL`, `ID_API_CONNECTION_API_URL` and
+`ID_API_CONNECTION_CLIENT_ID` pointing at your server and its OAuth 2 application (see [API.md](API.md)).

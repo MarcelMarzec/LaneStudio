@@ -1,0 +1,16 @@
+name: 'Lane Studio: Feature, Idea, Question'
+description: You want a feature, have an idea, or have a question about Lane Studio.
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Description
+      description: What would you like Lane Studio to do, and where would it help? Name the OSM tags involved if you know them.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Screenshots or examples
+      description: Screenshots, photos or a location that show what you mean.
+    validations:
+      required: false

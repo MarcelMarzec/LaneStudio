@@ -5,6 +5,7 @@ import { prefs } from '../../core/preferences';
 import { uiEntityEditorAddSection } from '../../ui/entity_editor';
 import { uiInitAddPane } from '../../ui/init';
 import { uiTopToolbarAddTool } from '../../ui/top_toolbar';
+import { uiVersionSetProduct } from '../../ui/version';
 import { services } from '../../services';
 import { utilStringQs } from '../../util';
 import { laneKeys } from './lane_keys';
@@ -18,7 +19,7 @@ import { laneStudioSplash } from '../ui/splash';
 import { uiPaneLaneStudio } from '../ui/pane_settings';
 import { uiToolLaneModes } from '../ui/tool_lane_modes';
 import { laneSettings } from './lane_settings';
-import { laneStudioVersion } from '../version';
+import { laneStudioRepository, laneStudioVersion } from '../version';
 
 export interface LaneStudioOptions {
     /** where `dist/` is served from, relative to the page */
@@ -53,6 +54,12 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
 
     // Selection and Routing, in the top bar before iD's Point, Line and Area
     uiTopToolbarAddTool(uiToolLaneModes);
+
+    // the footer names Lane Studio's version, linking to its repository and changelog
+    uiVersionSetProduct({
+        name: 'Lane Studio', version: laneStudioVersion, href: laneStudioRepository,
+        releaseHref: () => `${laneStudioRepository}/blob/mm/lane-studio-main/CHANGELOG.md`
+    });
 
     context.container().classed('lane-studio', true);
     laneSettings(context);

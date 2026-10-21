@@ -1,4 +1,7 @@
-# Contributor Code of Conduct
+# Lane Studio Code of Conduct
+
+Everyone taking part in Lane Studio (issues, pull requests and discussions) is expected to follow
+this code.
 
 #### Guidelines
 
@@ -37,8 +40,10 @@ This means we may:
 This Code of Conduct applies both within project spaces and in public spaces when an
 individual is representing the project or its community.
 
-Instances of unacceptable behavior may be reported privately to the project [maintainers](https://github.com/openstreetmap/iD/blob/develop/CONTRIBUTING.md).
+Instances of unacceptable behavior may be reported privately to the project maintainer,
+[@MarcelMarzec](https://github.com/MarcelMarzec), through GitHub.
 
 #### See Also
 
-This Code of Conduct is adapted from the [Contributor Covenant](http://contributor-covenant.org).
+This Code of Conduct is adapted from [iD's](https://github.com/openstreetmap/iD/blob/develop/CODE_OF_CONDUCT.md),
+which is adapted from the [Contributor Covenant](https://www.contributor-covenant.org).

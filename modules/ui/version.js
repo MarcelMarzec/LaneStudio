@@ -9,10 +9,21 @@ var sawVersion = null;
 var isNewVersion = false;
 var isNewUser = false;
 
+// what the footer names: iD itself, unless an app built on it says otherwise
+var _product = null;
+
+/**
+ * Shows another app's version in the footer in place of iD's (call before the UI renders)
+ * @param {{ name: string, version: string, href: string, releaseHref: (version: string) => string } | null} product (null: iD again)
+ */
+export function uiVersionSetProduct(product) {
+    _product = product;
+}
+
 
 export function uiVersion(context) {
 
-    var currVersion = context.version;
+    var currVersion = _product ? _product.version : context.version;
     var matchedVersion = currVersion.match(/\d+\.\d+\.\d+.*/);
 
     if (sawVersion === null && matchedVersion !== null) {
@@ -28,11 +39,12 @@ export function uiVersion(context) {
     }
 
     return function(selection) {
-        selection
+        var link = selection
             .append('a')
             .attr('target', '_blank')
-            .attr('href', 'https://github.com/openstreetmap/iD')
+            .attr('href', _product ? _product.href : 'https://github.com/openstreetmap/iD')
             .text(currVersion);
+        if (_product) link.attr('title', `${_product.name} ${currVersion}, built on iD ${context.version}`);
 
         // only show new version indicator to users that have used iD before
         if (isNewVersion && !isNewUser) {
@@ -40,7 +52,7 @@ export function uiVersion(context) {
                 .append('a')
                 .attr('class', 'badge')
                 .attr('target', '_blank')
-                .attr('href', `https://github.com/openstreetmap/iD/releases/tag/v${currVersion}`)
+                .attr('href', _product ? _product.releaseHref(currVersion) : `https://github.com/openstreetmap/iD/releases/tag/v${currVersion}`)
                 .call(svgIcon('#maki-gift'))
                 .call(uiTooltip()
                     .title(() => t.append('version.whats_new', { version: currVersion }))

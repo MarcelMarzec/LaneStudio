@@ -1,41 +1,73 @@
-# iD - friendly JavaScript editor for [OpenStreetMap](https://www.openstreetmap.org/)
+# Lane Studio – a lane and road editor for [OpenStreetMap](https://www.openstreetmap.org/)
 
-[![build](https://github.com/openstreetmap/iD/workflows/build/badge.svg)](https://github.com/openstreetmap/iD/actions?query=workflow%3A%22build%22)
+Lane Studio draws roads the way they look from above: every lane at its real width, with its lane
+lines, turn arrows, junctions, crossings, stop lines, pavements, islands and signs, over aerial
+imagery. You edit lanes where they are drawn, and Lane Studio writes the OpenStreetMap tags
+(`lanes`, `turn:lanes`, `change:lanes`, `width:lanes`, `type=connectivity` relations and the rest).
 
-## Basics
+It is built on [iD](https://github.com/openstreetmap/iD), OpenStreetMap's in-browser editor, and keeps
+iD's map, history, imagery, validator and save flow. The website is Lane Studio only; iD's own page
+is still in the repository for development.
 
-* iD is a JavaScript [OpenStreetMap](https://www.openstreetmap.org/) editor.
-* It's intentionally simple. It lets you do the most basic tasks while not breaking other people's data.
-* It supports all popular modern desktop browsers: Chrome, Firefox, Safari, Opera, and Edge.
-* Data is rendered with [d3.js](https://d3js.org/).
+## What it does
 
-## Participate!
+* **Lanes on the map**: lanes by type (general, bus, PSV, taxi, HOV, cycle, pedestrian, variable,
+  no access) and hard shoulders, with kerbs, lane lines, turn arrows and labels, drawn at the tagged
+  widths.
+* **Lane editing**: click a lane to select it; add, remove and move lanes; set turn arrows, lane
+  changes, lane types, speeds, destinations, access, widths and limits; drag lane widths; paint
+  values onto lanes; connect lanes across junctions.
+* **Junctions and roundabouts**: the main road runs through, lanes that carry on line up, added and
+  dropped lanes taper, guide lines carry each lane to where it leads, and roundabout entries and
+  exits flare into the ring.
+* **Street features**: pavements, footways and crossings at their width, stop and give way lines,
+  traffic signals, islands, road markings, street parking, traffic signs, message signs, cameras,
+  bridges, tunnels and roads under construction.
+* **Routing**: hover a lane to see every route a car, bus, bicycle or lorry can take from it,
+  following turn arrows, lane connections and turn restrictions; hover a footway to see where people
+  can walk.
+* **Look ahead**: the roads a selected road leads on to, its exits and their destinations, and
+  copying lanes to the next road.
+* **Checks**: a lane tags rule in iD's Issues pane, with fixes where the answer is certain.
 
-* Read the project [Code of Conduct](CODE_OF_CONDUCT.md) and remember to be nice to one another.
-* Read up on [Contributing and the code style of iD](CONTRIBUTING.md).
-* See [open issues in the issue tracker](https://github.com/openstreetmap/iD/issues?state=open)
-if you're looking for something to do.
-* [Translate!](https://github.com/openstreetmap/iD/blob/develop/CONTRIBUTING.md#translating)
-* Test a prerelease version of iD:
-  * Stable mirror of `release` branch: https://ideditor-release.netlify.app
-  * Development mirror of `develop` branch + latest translations: https://ideditor.netlify.app
-* Expect regular update releases of iD about every month.
+The full guide (zoom levels, tools, what is drawn and how junctions work) is in [LANES.md](LANES.md).
 
-Come on in, the water's lovely. More help?
-* [OpenStreetMap US Slack](https://slack.openstreetmap.us/) (`#id` channel)
-* [OpenStreetMap Discord](https://discord.com/invite/openstreetmap) (`#id-and-rapid` channel)
-* [OpenStreetMap community forum](https://community.openstreetmap.org/)
+## Getting started
 
-## Installation
+```sh
+npm clean-install
+npm run all                         # builds styles, data, icons, code and the site (needs network)
+ID_API_CONNECTION=dev npm start     # edits go to the OSM dev server, not the live map
+```
 
-Follow the steps in the [how to get started guide](https://github.com/openstreetmap/iD/wiki/How-to-get-started#build-and-test-instructions) on how to install, build and run iD locally.
+Open http://127.0.0.1:8080/lanes.html. `npm start` rebuilds the code, styles and Lane Studio's
+strings when you save.
+
+Before pushing: `npm run lint`, `npx tsc` and `npm run test:once`.
+
+## Putting it online
+
+`npm run all` packages the site into `dist-lanes/`: upload its contents (including `.htaccess`) to
+your web root. The **Deploy LaneStudio to server** workflow in `.github/workflows/` builds
+`mm/lane-studio-main` and uploads it over FTP. Logging in from your own domain needs your own
+OpenStreetMap OAuth 2 application. [RELEASING.md](RELEASING.md) has the steps.
+
+## More
+
+* [LANES.md](LANES.md): the user and developer guide
+* [CHANGELOG.md](CHANGELOG.md): what changed in each version
+* [CONTRIBUTING.md](CONTRIBUTING.md): reporting issues and contributing code
+* [ARCHITECTURE.md](ARCHITECTURE.md): how Lane Studio and iD fit together
+* [API.md](API.md): URL parameters, build settings and embedding
+* [FAQ.md](FAQ.md), [PRIVACY.md](PRIVACY.md), [ACCESSIBILITY.md](ACCESSIBILITY.md),
+  [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
 ## License
 
-iD is available under the [ISC License](https://opensource.org/licenses/ISC).
-See the [LICENSE.md](LICENSE.md) file for more details.
+Lane Studio is available under the [ISC License](https://opensource.org/licenses/ISC), like iD.
+See [LICENSE.md](LICENSE.md).
 
-iD also bundles portions of the following open source software.
+Lane Studio includes iD, and iD bundles portions of the following open source software:
 
 * [D3.js (BSD-3-Clause)](https://github.com/d3/d3)
 * [CLDR (Unicode Consortium Terms of Use)](https://github.com/unicode-cldr/cldr-json)
@@ -49,7 +81,8 @@ iD also bundles portions of the following open source software.
 * [name-suggestion-index (BSD-3-Clause)](https://github.com/osmlab/name-suggestion-index)
 * [osm-community-index (ISC)](https://github.com/osmlab/osm-community-index)
 
-
 ## Thank you
 
-Initial development of iD was made possible by a [grant of the Knight Foundation](https://blog.mapbox.com/large-investment-in-openstreetmap-from-knight-foundation-cf7aa00534db).
+Lane Studio would not exist without iD and its contributors. Initial development of iD was made
+possible by a [grant of the Knight Foundation](https://blog.mapbox.com/large-investment-in-openstreetmap-from-knight-foundation-cf7aa00534db).
+Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).

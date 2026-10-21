@@ -1,6 +1,87 @@
-## iD Architecture
+# Lane Studio Architecture
 
-iD is written in a modular code style using ES6 modules.
+Lane Studio is a layer on top of iD. iD provides the editor (the graph of OSM data, undo history,
+modes, the OSM API, imagery, the validator, the sidebar and saving); Lane Studio adds a map layer
+that draws roads lane by lane, sidebar sections and tools that edit lane tags, and the Routing tool.
+iD's own code changes only through small hooks that keep iD's behaviour by default (listed in
+[LANES.md](LANES.md#how-it-fits-into-id)).
+
+Two rules run through it:
+
+* **The tags are the truth.** Everything drawn is worked out from the OSM data on every redraw.
+  Lining lanes up, tapers, junction boxes and guide lines are drawing only; tags are written only by
+  edits, each one an iD action and one undo step.
+* **Geometry is in metres.** Each road, junction or node is worked out in a local metric frame
+  (`metricFrame`, metres east and north of a point) and converted to map coordinates only to draw.
+
+### Modules (`modules/lanes/`)
+
+| Folder | What it holds |
+| --- | --- |
+| `model/` | The lane model: `parseLanes` reads `lanes`, `*:lanes`, `*:lanes:forward|backward|both_ways` and the direction tags into lanes per direction; `serialiseLanes` writes a model back as tags, touching only the keys that changed. Lane types, markings, signs, connectivity and street feature tags. Pure functions, no iD state. |
+| `actions/` | iD actions (graph in, graph out) for lane edits, markings, signs, copying lanes and lane connections. |
+| `geometry/` | Everything drawn, in metres: `laneLayout` (lane widths and order across the road), `roadGeometry` (roads, junctions, guide lines), `streetGeometry` (pavements, footways, crossings, stop lines, islands, parking, structures), `signGeometry` (signs, gantries, cameras), and `routing.ts` (the Routing tool's route finding). |
+| `svg/` | The `lanes` map layer (`svgLanes`): runs the geometry for the roads in view and draws it, plus click targets, signs and routes. |
+| `core/` | Lane Studio state with d3 dispatch events: the selected lanes (`laneState`), tools (`laneTools`), settings, the Routing tool's state (`laneRouting`) and mode, keyboard, and boot (`laneStudioInit`). |
+| `osm/` | Looking along roads: the corridor ahead, roundabouts and their exits. |
+| `ui/` | Sidebar sections (lanes, markings, signs, street features), the settings pane, the Routing panel, the top bar tools and the welcome screen. |
+| `validations/` | The lane tags rule in iD's Issues pane. |
+
+Styles are in `css-lanes/` (bundled into `dist/lanes.css`) and strings in `data/lanes.yaml` (built into
+`locales/lanes` by `scripts/build_lanes_strings.js`, read with `t('_lanes.…')`).
+
+### Drawing a frame
+
+`svgLanes` redraws when the map moves or the graph changes:
+
+1. It collects the lane roads, carriageway areas and street features in view.
+2. `roadGeometry(ways, graph, areas)` works out the roads, in order:
+   1. roads fitted into the mapped carriageway areas they lie in;
+   2. drawing-only shifts and tapers at each node where roads join (`alignAt`, `alignBranches`,
+      `alignMerges`), so the lanes that carry on line up. Which lanes carry on comes from
+      `type=connectivity` relations, else from the lanes' turns at the junction (`Arm.turns`: the
+      `turn:lanes` arrows, with arrows that point to no road carrying on ahead, and a short unmarked
+      link taking the arrows of the road leading into it);
+   3. junctions (`junctionAt`): the arms meeting at a node, the road running through, how far each
+      side road stops back, the junction box, and roundabout flares;
+   4. road pieces (`buildPieces`): lane boundaries, lane polygons, centre lines, painted lines,
+      arrows and labels, offset from each way's line by `edgesAt` (lane edges with the shifts and
+      tapers);
+   5. guide lines through junctions (`junctionConnections`) from each lane to the lanes it leads to.
+3. `streetGeometry` and `signGeometry` work out the rest, using the same shifts so markings stay on
+   their roads.
+4. The layer draws it all, with invisible click targets for lanes, lane lines, nodes and signs.
+
+Layouts are cached per way version (`cachedLayout`); everything else is recomputed, so drawing always
+matches the data.
+
+### Editing
+
+Clicking a lane selects it in `laneState`; the Lanes section reads the selected road's model and edits
+it through `setLaneValue`, `insertLane`, `removeLane` and the like, then `actionChangeLanes` writes the
+new tags in one iD action. Tools (`laneTools`) change what a click on the map does (paint a value, drag
+widths, place markings or signs, connect lanes); Esc returns to Select.
+
+### Routing
+
+The Routing tool enters its own iD mode (`lanes-routing`), which turns editing off and shows the
+Routing panel in the sidebar. `vehicleRoutes` explores from the lane under the pointer, junction by
+junction, using the same junction rules as the drawing (`junctionRules`: arms, the through road, lane
+turns, lane pairs), so routes follow the guide lines. Each vehicle profile has its access keys, lane
+types, height and weight limits; turn restrictions via nodes and via ways block moves, and are checked
+against the roads traffic in the starting lane may have come from.
+
+### Tests
+
+`test/spec/lanes/` has unit tests for the model, actions, geometry, routing and UI. Geometry and routing
+tests build small graphs in code, or load fixtures extracted from real OSM data
+(`test/spec/lanes/fixtures/`).
+
+
+## iD core
+
+Lane Studio runs on iD's core, described below. iD is written in a modular code style using ES6
+modules and TypeScript.
 iD eventually aims to be a reusable, modular library to kickstart other
 JavaScript-based tools for OpenStreetMap.
 

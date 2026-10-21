@@ -1,91 +1,55 @@
-## Release Checklist
+## Releasing Lane Studio
 
-### Prerelease (several days prior)
-- [Notify translators](https://app.transifex.com/openstreetmap/communication/?q=project%3Aid-editor) of the impending release
-- Notify TomH
+Lane Studio is deployed from the `mm/lane-studio-main` branch as a static website. A release is a
+version number, a changelog entry and a deploy.
 
-### Prep
-- If you don't have a `transifex.auth` file in the root of your iD checkout,
-you'll need to create a Transifex account, ask the project's maintainers for admin rights
-on the iD project, and then create this file with contents like
+### One-time setup
 
-  ````json
-  { "password": "<your-transifex-api-key>" }
-  ````
+1. **OpenStreetMap OAuth 2 application** (openstreetmap.org → My Account → OAuth 2 applications →
+   Register new application):
+   - Redirect URI: `https://<your domain>/land.html` (with the folder, if the site is in one)
+   - Confidential application: **no**. Lane Studio logs in from the browser with PKCE, so it uses
+     no client secret.
+   - Permissions: read user preferences, modify user preferences, modify the map, read GPS traces,
+     modify notes
+2. **GitHub repository settings** (Settings → Secrets and variables → Actions):
+   - Variables: `OSM_CLIENT_ID`, the application's client ID. It is built into the site, so it is
+     public by design and belongs in a variable, not a secret.
+   - Secrets: `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` for the web host.
 
-  where you insert your personal [transifex api token](https://app.transifex.com/user/settings/api/). This file is not version-controlled and will not be checked in.
+### Release checklist
 
-### Update `iD`
+1. On `mm/lane-studio-main`, make sure everything is merged and passing:
 
-#### Update `develop` branch
+   ```sh
+   npm clean-install
+   npm run lint
+   npx tsc
+   npm run test:once
+   ```
 
-```bash
-git checkout develop
-npm install --save-dev @openstreetmap/editor-layer-index --omit=dev
-npm clean-install
-npm run imagery
-npm run all
-git add . && git commit -m 'npm run imagery'
-npm run translations
-git add . && git commit -m 'npm run translations'
-```
+2. Pick the version (`A.B.C`: B for new features, C for fixes only) and set it in
+   `modules/lanes/version.ts`. It is shown in the footer and written to every changeset as
+   `created_by=LaneStudio A.B.C`.
+3. In [CHANGELOG.md](CHANGELOG.md), rename the Unreleased section to `A.B.C` with today's date, and add
+   a new empty Unreleased section above it.
+4. Commit (`Lane Studio A.B.C`), tag and push:
 
-- Check and finalize `CHANGELOG.md`
+   ```sh
+   git commit -am "Lane Studio A.B.C"
+   git tag "lane-studio-vA.B.C" -m "Lane Studio A.B.C"
+   git push origin mm/lane-studio-main "lane-studio-vA.B.C"
+   ```
 
-```bash
-ID_VERSION=A.B.C
-npm version --no-git-tag-version $ID_VERSION
-git add . && git commit -m "v$ID_VERSION"
-git push origin develop
-```
+5. Deploy: Actions → **Deploy LaneStudio to server** → Run workflow. It builds with `npm run all`
+   (which ends by packaging `dist-lanes/`) and uploads `dist-lanes/` over FTP. The page loads its code
+   and styles with a stamp of their contents, so visitors get the new version straight away.
+6. Check the live site: the footer shows the new version, you can log in, and a small test edit's
+   changeset on openstreetmap.org says `created_by=LaneStudio A.B.C`.
 
-#### Update and tag `release` branch
+### Taking in a new iD release
 
-```bash
-git checkout release
-git reset --hard develop
-npm run all
-git add -f dist
-git commit -m 'Check in build'
-git tag "v$ID_VERSION" -m "v$ID_VERSION" --sign
-git push origin -f release "v$ID_VERSION"
-```
-- Open https://github.com/openstreetmap/iD/tags
-- Click `•••` –> `Create Release`, paste version(vA.B.C) to `Release title` and copy/paste the relevant [`changelog`](https://github.com/openstreetmap/iD/blob/release/CHANGELOG.md) entries into the description of the release.
-
-#### Push release to npm
-
-```bash
-npm login
-npm publish
-```
-
-#### Prepare `develop` branch for further development
-
-```bash
-git checkout develop
-```
-
-Add section in `CHANGELOG.md` for new version number (e.g. `# Unreleased (AA.BB.0-dev)`).
-
-```bash
-npm version --no-git-tag-version vAA.BB.0-dev
-git add . && git commit -m 'Set development version number'
-git push origin develop
-```
-
-### Update `openstreetmap-website`
-
-- Create a PR branch that updates the version number of iD (`@openstreetmap/id`) in the [`package.json`](https://github.com/openstreetmap/openstreetmap-website/blob/master/package.json) file of the OpenStreetMap Website repository.
-```bash
-bundle install
-bundle exec bin/yarn add "@openstreetmap/id@$ID_VERSION"
-```
-- If there have been any changes to iD's [URL parameters](https://github.com/openstreetmap/iD/blob/develop/API.md#url-parameters), make sure they're reflected in [app/assets/javascripts/edit/id.js.erb](https://github.com/openstreetmap/openstreetmap-website/blob/master/app/assets/javascripts/edit/id.js.erb).
-- Test the new version locally:
-```bash
-bundle exec rails assets:precompile
-bundle exec rails server
-```
-- Open the pull request on github and link to the release on github in the issue text for the changelog.
-
+Lane Studio is built on iD and keeps iD's code close to upstream. To take in a new iD version, merge
+the iD release tag from https://github.com/openstreetmap/iD into a branch off `mm/lane-studio-main`,
+resolve conflicts in the hooked files (listed in [LANES.md](LANES.md)), then run the checks above and
+check a few junctions and roundabouts in the browser before merging.

@@ -1,22 +1,22 @@
 # Lane Studio
 
-Lane Studio is a road and lane editor for OpenStreetMap built on iD. It lives in this fork next to iD
-and shares iD's map, history, OSM API, imagery, validator and save flow; lanes, pavements and road
-markings are drawn on the map at their real width over aerial imagery and are edited where they
-are drawn.
+Lane Studio is a road and lane editor for OpenStreetMap built on iD. It shares iD's map, history,
+OSM API, imagery, validator and save flow; lanes, pavements and road markings are drawn on the map at
+their real width over aerial imagery and are edited where they are drawn. The website is Lane Studio
+only; iD's own page stays in the repository for development and comparison.
 
 ## Running it locally
 
 ```sh
 npm clean-install
-npm run all                         # builds CSS, data, icons and both apps (needs network)
+npm run all                         # builds CSS, data, icons, both apps and the site (needs network)
 ID_API_CONNECTION=dev npm start     # dev OSM server only, so test edits never reach the live map
 ```
 
 Then open:
 
 - http://127.0.0.1:8080/lanes.html for Lane Studio
-- http://127.0.0.1:8080/ for plain iD
+- http://127.0.0.1:8080/ for plain iD (development only; it is not part of the website)
 
 `npm start` rebuilds JavaScript, CSS and Lane Studio's strings (`data/lanes.yaml`) on save.
 
@@ -27,6 +27,19 @@ Before pushing: `npm run lint`, `npx tsc` and `npm run test:once`.
 Zoom levels: lanes, pavements, footways and mapped areas from zoom 17; lane lines, turn arrows,
 crossings, stop and give way lines from zoom 18 (also where editing starts); labels, painted STOP
 text and give-way triangles from zoom 19.
+
+**Top bar**: Selection (the default: select and edit roads, lanes and other features) and Routing,
+then iD's Point, Line and Area for adding features.
+
+**Routing** (top bar, or leave with Esc): editing is off and the sidebar shows the routes. Hover a lane
+to see every route a vehicle in it can take, up to 450 m and four junctions on, in numbered colours,
+with the lanes traffic comes from and the turns it may not take (red, with the reason); click to pin
+them (the pin survives panning; click the map again to let go). Pick Car, Bus, Bicycle or Lorry: each
+keeps to the lanes, access tags, height and weight limits and roads open to it. Routes follow turn
+arrows, lane connections and turn restrictions (via nodes and via ways, including U-turns through the
+gap of a dual carriageway), keep to their lane at the first junction and along links too short to
+change lanes on, and leave a roundabout only by the exits the entry lane's arrows point to. Hover a
+footway or pavement to see the streets reachable on foot and the crossings used.
 
 **Lanes** (sidebar section for a selected road)
 
@@ -57,6 +70,7 @@ text and give-way triangles from zoom 19.
 | Width | Drag lane lines and kerbs of the selected road; writes `width:lanes` in metres |
 | Markings | Click a road to place a crossing, stop or give way sign, traffic signals, traffic calming or a mini-roundabout |
 | Connect | Click the lane traffic comes from, then the lane on the next road; creates a `type=connectivity` relation (click the same pair again to remove it) |
+| Signs | Pick a sign (UK signs, a variable message sign or a camera), then click a lane to place it beside the road facing that lane's traffic |
 
 Esc, clicking empty map or selecting nothing returns to Select.
 
@@ -72,7 +86,14 @@ or destination lanes; one road per click).
 (`roundabout=turbo`, `change:lanes=no|no`), the segments still untagged, and the number of turn
 restrictions against the six a standard turbo roundabout needs.
 
-**Roadside**: pavement, cycleway and parking per side (`sidewalk:<side>`, `cycleway:<side>`,
+**Signs** (sidebar section for a selected sign or camera): which sign (`traffic_sign=GB:670[40]` and
+the rest; several on one post), the value on it, the way it faces (`direction=*`, with Turn round),
+and for cameras the enforced speed. UK signs are drawn as their pictures beside the road, other codes
+as a plate with the code; variable message signs stand on their gantry (`man_made=gantry`), and an
+average-speed camera system (`type=enforcement`) shows the stretch of road it covers.
+
+**Roadside**: hard shoulders (with width; drawn 2.5 m wide until one is tagged), and pavement,
+cycleway and parking per side (`sidewalk:<side>`, `cycleway:<side>`,
 `parking:<side>`). Lane Studio also looks at what is mapped next to the road:
 
 - a separately mapped pavement on a side → "Set to mapped separately" (or a double-mapping warning);
@@ -110,7 +131,9 @@ lane lines, turn arrows, labels; junctions; pavements and cycle and parking stri
 with unknown sides hatched; footways, paths, cycleways, steps and pedestrian streets at their real
 width; crossing ways with zebra bars or lines; `area:highway=*` areas, pedestrian areas and traffic
 islands; mapped kerbs styled by kerb height; crossings, stop and give way lines, signals, traffic
-calming and mini-roundabouts on road nodes; `road_marking=*` lines, areas and text; street parking
+calming and mini-roundabouts on road nodes (a stop, give way or signals' line on a pedestrian
+crossing, or up to 10 m past one, stands just before the crossing, and signals tagged as their
+crossing draw the crossing with a line each way); `road_marking=*` lines, areas and text; street parking
 with its bays and a layby joining it to the road; and lane connections. Everything else is drawn by
 iD as usual.
 
@@ -126,8 +149,9 @@ disc, and a give way line on each approach unless one is mapped); turning heads 
 a circle when untagged, sized by `diameter=*` or twice the road width): the road flares out into the
 head with its kerb carried round, a pavement on the road is carried round it too, and a knuckle bulges
 out on the outside of a bend. Hovering or clicking a mini-roundabout or turning head selects its node,
-like a road. Speed limit roundels where the limit changes between two
-roads that both have one; barriers on roads (gates and similar across the road, bollards and blocks
+like a road. Road numbers in shields (UK colours: motorways blue, primary routes green, other A and B
+roads white) and motorway junction numbers; speed limit roundels where the limit changes between two
+roads that both have one, and minimum speed roundels; barriers on roads (gates and similar across the road, bollards and blocks
 as posts, cattle grids) and on paths; fences, walls, guard rails, jersey barriers and hedges at their
 width; and small direction arrows on the lanes of one-way roads (iD's own arrows on the way line are
 hidden).
@@ -141,8 +165,14 @@ hidden).
   shifted (unless it has `placement` tags), an added or dropped outer lane tapers over 25 m, and a
   one-way slip road starts where the lane leading into it ends. Which lanes carry on comes from a
   `type=connectivity` relation, else from `turn:lanes`; a lane marked `merge_to_left` or
-  `merge_to_right` is the one that ends, and its arrow sits just before its taper. A shift holds for 30 m from the join, then fades out over
-  50 m.
+  `merge_to_right` is the one that ends, narrowing into the lane beside it from the side away from
+  the centre line (`slight_*` arrows are not merges), and its arrow sits just before its taper. A
+  shift holds for 30 m from the join, then fades out over 50 m.
+- A link of 40 m or less with no arrows of its own (the stretch between the two halves of a dual
+  carriageway crossroads) takes the arrows of the road leading into it, less the turns taken where it
+  begins; an arrow that points to no road at a junction carries on ahead to the junction it is for.
+  So the lanes going ahead line up straight through and a turning lane turns off at the far half.
+  Roundabouts keep their own lanes.
 - A mapped carriageway area belongs to the road lying mostly inside it (an area of ordinary road
   surface, asphalt or untagged, is drawn in the road colour): that road is shifted to sit in
   the middle of it (stop, give way and signal lines, symbols and crossings move with it), the area is
@@ -174,39 +204,44 @@ hidden).
 counts, lane counts, unknown turn values, deprecated values, `hov=lane`, `destination` on two-way
 roads) and offers a fix where the answer is certain.
 
-## Putting it online (cPanel)
+## Putting it online
 
-Lane Studio is a static site: no server code, just files.
+Lane Studio is a static site: no server code, just files. `npm run all` ends by packaging it into
+`dist-lanes/`: `index.html` (the Lane Studio page), `land.html` (where logins return), `dist/` (code,
+styles, icons, data and translations) and an `.htaccess` for Apache hosts. The page loads its code and
+styles with a stamp of their contents (`lanes.min.js?v=…`), so visitors get a new version as soon as
+it is uploaded.
 
 1. **Register an OAuth 2 application** on openstreetmap.org (My Account → OAuth 2 applications →
    Register new application):
    - Name: Lane Studio
-   - Redirect URI: `https://lanestudio.marcelmarzec.com/land.html` (or
-     `https://marcelmarzec.com/lanestudio/land.html` if it lives in a folder)
-   - Confidential application: **no** (it runs in the browser)
+   - Redirect URI: `https://<your domain>/land.html` (with the folder, if the site is in one)
+   - Confidential application: **no**. Lane Studio runs in the browser and logs in with PKCE, so it
+     has no client secret; anything built into the site is public.
    - Permissions: read user preferences, modify user preferences, modify the map, read GPS traces,
      modify notes (the scopes iD asks for)
 
-   Do the same on https://api06.dev.openstreetmap.org first, to test against the dev server.
-2. **Build** with your client ID, in a `.env` file (git-ignored) or on the command line:
+   Register one on https://api06.dev.openstreetmap.org too if you want to test against the dev server.
+2. **Deploy** with the **Deploy LaneStudio to server** workflow (Actions tab → Run workflow). It builds
+   `mm/lane-studio-main` and uploads `dist-lanes/` over FTP. It needs:
+   - repository **variable** `OSM_CLIENT_ID`: the application's client ID (Settings → Secrets and
+     variables → Actions → Variables)
+   - repository **secrets** `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`
+
+   To build by hand instead, set the client ID in a `.env` file (git-ignored) or on the command line,
+   and upload the contents of `dist-lanes/` (including the hidden `.htaccess`) to the web root:
 
    ```sh
    ID_API_CONNECTION_URL=https://www.openstreetmap.org \
    ID_API_CONNECTION_API_URL=https://api.openstreetmap.org \
    ID_API_CONNECTION_CLIENT_ID=<your client id> \
-   npm run all && npm run dist:lanes
+   npm run all
    ```
+3. Open the site, log in, make one small test edit and check the changeset on openstreetmap.org:
+   it should say `created_by=LaneStudio <version>` (the version in the footer).
 
-   For the dev server use `ID_API_CONNECTION_URL=https://api06.dev.openstreetmap.org` and the dev
-   client ID.
-3. **Upload** the contents of `dist-lanes/` (including the hidden `.htaccess`) to the subdomain's
-   document root with cPanel's File Manager or FTP. `index.html` must stay the page and `land.html`
-   must sit next to it.
-4. Open the site, log in, make one small test edit and check the changeset on openstreetmap.org:
-   it should say `created_by=LaneStudio 0.1.0`.
-
-Before going live: add a short privacy note to the site (adapted from iD's `PRIVACY.md`) and a wiki
-page for Lane Studio that names its `created_by` value, and list it on the wiki's Editors page.
+The site's privacy note is [PRIVACY.md](PRIVACY.md). Still worth doing: a wiki page for Lane Studio
+that names its `created_by` value, listed on the wiki's Editors page.
 
 ## How it fits into iD
 
@@ -223,10 +258,14 @@ page for Lane Studio that names its `created_by` value, and list it on the wiki'
 | Lane tags validation rule | `modules/lanes/validations/` |
 | Styles (built into `dist/lanes.css`) | `css-lanes/` |
 | Strings (read as `t('_lanes.…')`) | `data/lanes.yaml` |
-| Site packaging | `scripts/build_lanes_site.js` |
+| Version shown in the footer and written to changesets | `modules/lanes/version.ts` |
+| Routing | `modules/lanes/geometry/routing.ts`, `modules/lanes/core/lane_routing.ts`, `modules/lanes/core/mode_routing.ts`, `modules/lanes/ui/routing_panel.ts`, `modules/lanes/svg/routing.ts` |
+| Site packaging (`npm run site`, the last step of `npm run all`) | `scripts/build_lanes_site.js` |
 | Tests | `test/spec/lanes/` |
 
-iD itself needed only small, default-preserving hooks, so iD at `index.html` behaves exactly as before:
+iD itself needed only small, default-preserving hooks, so iD at `index.html` (development only) behaves
+as before, except that every build packages the Lane Studio site and offers one OSM server when one is
+configured:
 
 | Hook | File | Default |
 | --- | --- | --- |
@@ -236,6 +275,8 @@ iD itself needed only small, default-preserving hooks, so iD at `index.html` beh
 | `localizer.addLocaleDir()` and `localizer.mergeStrings()` | `modules/core/localizer.ts` | none |
 | `uiEntityEditorAddSection()` for extra sidebar sections | `modules/ui/entity_editor.js` | none |
 | `uiInitAddPane()` for extra map panes | `modules/ui/init.js` | none |
+| `uiTopToolbarAddTool()` for extra top bar tools | `modules/ui/top_toolbar.js` | none |
+| `uiVersionSetProduct()` for the version in the footer | `modules/ui/version.js` | iD's version |
 | `coreValidatorAddRule()` for extra validation rules | `modules/core/validator.js` | none |
 | Second esbuild entry, CSS bundle and strings file (`scripts/build_lanes_strings.js`) | `config/`, `scripts/` | iD unchanged |
 
@@ -244,17 +285,10 @@ preferences under a `lanes_` prefix, and writes `none` for unmarked lanes in new
 
 ## Status
 
-| Phase | State |
-| --- | --- |
-| 0. Shell and seams | Done |
-| 1. Lane model | Done |
-| 2. Lane rendering | Done |
-| 3. Core map editing | Done |
-| 4. Look ahead and destinations | Done |
-| 5. Junctions, roundabouts, roadside editing | Done |
-| 6. Validation and polish | Done |
-| 7. Release | Packaging done; register OAuth apps, upload, privacy note and wiki page still to do |
+Lane Studio is in use and deployed from `mm/lane-studio-main`; see [CHANGELOG.md](CHANGELOG.md) for
+what each version added.
 
 Not built yet: `+` handles on the map itself, a full replacement of iD's sidebar, detailed turbo
 roundabouts with one way per lane (drawn, not specially handled), `:conditional` lane tags (kept and
-shown, not edited), and tests in a real browser against the dev server.
+shown, not edited), translations of Lane Studio's own strings (English only), and tests in a real
+browser against the dev server.

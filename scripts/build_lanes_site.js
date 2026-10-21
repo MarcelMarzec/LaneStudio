@@ -4,6 +4,7 @@
 // (the icon sprites, minified code, data and locales); on its own it needs a finished `npm run all`.
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { styleText } from 'node:util';
 
 const out = 'dist-lanes';
@@ -16,9 +17,15 @@ const copy = (from, to = from) => {
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(path.join(out, 'dist'), { recursive: true });
 
-// the page itself, served as the folder index (iD's login redirect expects that)
-const page = fs.readFileSync('lanes.html', 'utf8').replace('\'dist/lanes.js\'', '\'dist/lanes.min.js\'');
-if (!page.includes('dist/lanes.min.js')) throw new Error('lanes.html no longer loads dist/lanes.js');
+// the page itself, served as the folder index (iD's login redirect expects that). The code and styles it loads
+// carry a stamp of their contents, so browsers fetch them again after a deploy rather than using a cached copy
+const stamp = file => createHash('sha256').update(fs.readFileSync(path.join('dist', file))).digest('hex').slice(0, 10);
+let page = fs.readFileSync('lanes.html', 'utf8');
+for (const [from, to] of [['dist/lanes.js', 'lanes.min.js'], ['dist/iD.css', 'iD.css'], ['dist/lanes.css', 'lanes.css']]) {
+  if (!fs.existsSync(path.join('dist', to))) throw new Error(`dist/${to} is missing: run npm run all first`);
+  if (!page.includes(`'${from}'`)) throw new Error(`lanes.html no longer loads ${from}`);
+  page = page.replace(`'${from}'`, `'dist/${to}?v=${stamp(to)}'`);
+}
 fs.writeFileSync(path.join(out, 'index.html'), page);
 copy('land.html');
 

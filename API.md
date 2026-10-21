@@ -1,12 +1,40 @@
-This file documents efforts toward establishing a public API for iD.
+# Lane Studio API
+
+How to start Lane Studio on a page, configure a build, and drive it with URL parameters. Lane Studio
+runs on iD's core, so iD's URL parameters, CSS classes and customisation hooks below work in Lane
+Studio too.
+
+## Starting Lane Studio on a page
+
+The `lanes.js` (or `lanes.min.js`) bundle defines two globals: `LaneStudio`, and `iD` (the iD core
+Lane Studio runs on). `lanes.html` is the reference page; the site build copies it to `index.html`.
+
+```html
+<link rel='stylesheet' href='dist/iD.css'>
+<link rel='stylesheet' href='dist/lanes.css'>
+<div id='id-container'></div>
+<script src='dist/lanes.min.js'></script>
+<script>
+  var context = LaneStudio.init(document.getElementById('id-container'), { assetPath: 'dist/' });
+</script>
+```
+
+* __`LaneStudio.init(container, options)`__ boots iD's core with Lane Studio's map layer, sidebar
+  sections, tools, settings pane and validation rule, and returns the iD context.
+  * `options.assetPath`: where the `dist/` folder (icons, data, translations) is served from,
+    relative to the page. Default `'dist/'`.
+* __`LaneStudio.version`__: Lane Studio's version, as shown in the footer and written to changesets
+  (`created_by=LaneStudio <version>`).
+
+Logins return to `land.html` next to the page, so serve `land.html` from the same folder.
+
+Lane Studio keeps its preferences and unsaved edits in local storage under a `lanes_` prefix, so it
+does not share them with a plain iD on the same site.
 
 ## URL parameters
 
-##### iD Standalone
-
-iD supports several URL parameters. When constructing a URL to a standalone instance
-of iD (e.g. `https://ideditor-release.netlify.app`), the following parameters are available
-**in the hash portion of the URL**:
+Lane Studio supports iD's URL parameters. The following are available **in the hash portion of the
+URL** (`https://<your domain>/#map=19/52.9740/-0.0276&background=EsriWorldImagery`):
 
 * __`background`__ - The value of the `id` property of the source in iD's
   [imagery list](https://github.com/openstreetmap/iD/blob/develop/data/imagery.json),
@@ -64,57 +92,20 @@ of iD (e.g. `https://ideditor-release.netlify.app`), the following parameters ar
   _Example:_ `validationWarning=crossing_ways/highway*,crossing_ways/tunnel*`
 * __`validationError`__ - The issues identified by these types/subtypes will be treated as errors (i.e. Issues will be surfaced to the user but will block changeset upload). Each parameter value should contain a comma-separated list of type/subtype match rules.  An asterisk `*` may be used as a wildcard.<br/>
   _Example:_ `validationError=crossing_ways/highway*,crossing_ways/tunnel*`
-* __`walkthrough=true`__ - Start the walkthrough automatically
+* __`walkthrough=true`__ - Start iD's walkthrough automatically
 
 Pass these parameters as a `x-www-form-urlencoded` string in the _hash_ portion of the URL, similarly to how a _query_ string of a URL is typically constructed. Input strings have to be [percent encoded](https://en.wikipedia.org/wiki/Percent-encoding) (spaces can be represented either as `+` or `%20`), for example using [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams/toString) in Javascript.
 
 
-##### iD on openstreetmap.org (Rails Port)
-
-When constructing a URL to an instance of iD embedded on the [OpenStreetMap website](https://github.com/openstreetmap/openstreetmap-website/) (e.g. `https://www.openstreetmap.org/edit?editor=id`), the following parameters
-are available as **URL hash parameters**.
-_Example:_ `https://www.openstreetmap.org/edit?editor=id#gpx=https://gist.githubusercontent.com/answerquest/9445352b60ca5b44714675eae00f243a/raw/56a6343a29223318f4a697bfd16cbb2c3b8155ad/sample_boundary.gpx`
-
-* __`map`__
-* __`gpx`__
-* __`background`__
-* __`comment`__
-* __`disable_features`__
-* __`hashtags`__
-* __`locale`__
-* __`notes`__
-* __`offset`__
-* __`photo`__
-* __`photo_dates`__
-* __`photo_overlay`__
-* __`photo_username`__
-* __`presets`__
-* __`source`__
-* __`validationDisable`__
-* __`validationWarning`__
-* __`validationError`__
-
-For a description of these parameters, refer to the [_iD standalone_ section](#id-standalone) above.
-
-In addition, the following parameters are available as **URL query parameters**:
-
-* __`lat`__, __`lon`__, __`zoom`__<br/>
-  _Example:_ `https://www.openstreetmap.org/edit?editor=id&lat=46.4705&lon=11.2423&zoom=16`<br/>
-* __`node`__, __`way`__, __`relation`__ - Selects the specified OSM object (similar to the `id` parameter of the standalone version of iD).<br/>
-  _Example:_ `https://www.openstreetmap.org/edit?editor=id&node=1`<br/>
-* __`locale`__ - Same as standalone, but the default locale is set by the language settings in your OSM user account.<br/>
-  _Example:_ `https://www.openstreetmap.org/edit?editor=id&locale=de`<br/>
-* __`gpx`__ - Expects a trace ID of a [public gps trace](https://www.openstreetmap.org/traces) uploaded on OpenStreetMap.<br/>
-  _Example:_ `https://www.openstreetmap.org/edit?editor=id&gpx=4009513`<br/>
-
-
 ## Environment variables
 
-Environment variables or a dotenv file can be used to configure certain aspects of iD at build time.
+Environment variables or a dotenv file (`.env`, git-ignored) configure a build. The deploy workflow sets
+the first three from the repository variable `OSM_CLIENT_ID` (see [RELEASING.md](RELEASING.md)).
 
 * __`ID_API_CONNECTION_URL`__, [__`ID_API_CONNECTION_API_URL`__,] __`ID_API_CONNECTION_CLIENT_ID`__  - Custom [OAuth2](https://wiki.openstreetmap.org/wiki/OAuth#OAuth_2.0_2) connection details to an OSM API server.
 * __`ID_API_CONNECTION_API_URL`__ Optional url to use for OSM API calls after the initial authentication is complete when using a custom OAuth2 connection (see above). If unspecified, `ID_API_CONNECTION_URL` will be used for both the authentication and subsequent API calls.
-* __`ID_API_CONNECTION`__ - Either `live` or `dev`, if only either one should be made offered for editing.
+* __`ID_API_CONNECTION`__ - Either `live` or `dev`: which of iD's built-in OSM servers to edit (live
+  when unset). Lane Studio always offers one server, so there is no live / dev switch in its footer.
 * __`ID_PRESETS_CDN_URL`__ - The URL where iD should fetch its tagging presets from. Needs to point to a CORS-enabled web server which is serving the `package.json` and `dist` folder of a repository built on [`@ideditor/schema-builder`](https://github.com/ideditor/schema-builder).
 * __`ENV__ID_OCI_CDN_URL`__ - URL to a hosted version of the [osm-community-index](https://github.com/osmlab/osm-community-index)
 * __`ENV__ID_NSI_CDN_URL`__ - URL to a hosted version of the [name-suggestion-index](https://github.com/osmlab/name-suggestion-index)
@@ -124,7 +115,8 @@ Environment variables or a dotenv file can be used to configure certain aspects 
 
 ## CSS selectors
 
-iD has a documented and stable set of classes that can be used to apply style or
+Lane Studio's own drawing is in the `.lanes-layer` layer and styled in `css-lanes/`; its classes are
+not a stable API yet. Underneath, iD has a documented and stable set of classes that can be used to apply style or
 attach behavior to the visual representation of map data via CSS selectors.
 These classes relate to the vocabulary of the OSM data model, a related geometric
 vocabulary established by iD, and to the tags present on OSM entities.
@@ -220,10 +212,13 @@ class.
 
 ## Customized Deployments
 
+These iD hooks work in Lane Studio too: make the changes to the `iD` global after the bundle loads and
+before calling `LaneStudio.init`.
+
 iD may be used to edit maps in a non-OpenStreetMap environment.  This requires
 certain parts of the iD code to be replaced at runtime by custom code or data.
 
-iD is written in a modular style and bundled with [rollup.js](http://rollupjs.org/),
+iD is written in a modular style and bundled with [esbuild](https://esbuild.github.io/),
 which makes hot code replacement tricky.  (ES6 module exports are
 [immutable live bindings](https://web.archive.org/web/20251130073344/https://2ality.com/2015/07/es6-module-exports.html)).
 Because of this, the parts of iD which are designed for customization are exported
