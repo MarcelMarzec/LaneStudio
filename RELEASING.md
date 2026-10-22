@@ -31,8 +31,9 @@ version (the release date), a changelog entry and a deploy.
 2. The version is today's date as `YY.MM.DD` (`26.10.21` for 21 October 2026; a second release that day
    is `26.10.21r2`). Set it in `modules/lanes/version.ts`. The footer shows it as `v26.10.21`, and every
    changeset is tagged `created_by=LaneStudio 26.10.21`. The full rules are in [CLAUDE.md](CLAUDE.md).
-3. In [CHANGELOG.md](CHANGELOG.md), rename the Unreleased section to `# YY.MM.DD` with the full date on
-   the next line, and add a new empty Unreleased section above it.
+3. In [CHANGELOG.md](CHANGELOG.md), rename the Unreleased section to the version (`# YY.MM.DD`, or
+   `# YY.MM.DDr#`), put the release date on the next line, keep the day headings (`### 2026-Oct-22`)
+   under it, and add a new empty Unreleased section above it.
 4. Commit, tag and push:
 
    ```sh

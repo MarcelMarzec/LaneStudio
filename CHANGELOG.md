@@ -1,90 +1,197 @@
 # Lane Studio changelog
 
-What changed in each version of Lane Studio. A version is the date it was released, `YY.MM.DD`
-(`v26.10.21` is 21 October 2026), with `r2`, `r3` … for later releases on the same day (`v26.10.21r2`). Lane Studio is
-built on iD 2.43.0-dev; for the changes in iD itself, see
-[iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
+What changed in Lane Studio, day by day. A version is the date it was released, `YY.MM.DD`
+(`v26.10.21` is 21 October 2026), with `r2`, `r3` … for later releases on the same day
+(`v26.10.21r2`). Work not yet released is under Unreleased, a heading per day it was done on.
+
+Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.2.0 (briefly on
+21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
+for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
 # Unreleased
 
-#### Routing tool
-* Every lane of a roundabout carries on round it: the outer lanes of tight rings mapped as short ways
-  (Liquorpond Street Roundabout) no longer route nowhere
-* A turn arrow for a turn banned at the first junction is for one further on: the lane carries on
-  ahead to the junction where that turn is allowed; the banned turn is still listed as not allowed,
-  and each vehicle's own exceptions apply
-
-#### Lanes and junctions
-* The U-turn arrow turns round to the right where traffic drives on the left
-* A lane gained or lost at a junction, on a side no other road joins (a turn lane starting just past
-  a junction), widens or narrows from the kerb instead of starting square
-
 
 # 26.10.21
-##### 2026-Oct-21 (first numbered 0.2.0)
+##### 2026-Oct-21
 
-#### Website
-* The whole site is Lane Studio: `npm run all` ends by packaging `dist-lanes/` with every icon, data
-  file and translation, after the rest of the build (it used to race the icon build and miss icons)
-* The page loads its code and styles with a stamp of their contents, so a deploy reaches visitors
-  straight away instead of after the browser cache expires
-* The footer shows Lane Studio's version, linking to this repository
-* One OpenStreetMap server: the live / dev switch is gone from the footer
-* The deploy workflow builds with the site's own OAuth 2 client (`OSM_CLIENT_ID`)
-
-#### Routing tool
-* New Routing tool in the top bar, next to Selection: hover a lane to see every route from it for a
-  car, bus, bicycle or lorry, the lanes traffic comes from, and the turns it may not take; hover a
-  footway to see where people can walk; click to pin
-* The routes are listed in the sidebar, in iD's light and night themes
-* Turn restrictions via ways (U-turns through the gap of a dual carriageway), including for a route
-  that starts part way along them
-* Lanes keep to themselves along links too short to change lanes on; roundabout exits follow the
+#### Routing tool (new)
+* A Routing tool in the top bar, next to Selection: editing is off, and hovering a lane shows every
+  route a vehicle in it can take through the junctions ahead, in numbered colours, with the lanes
+  traffic comes from and the turns it may not take (and why); hovering a footway or pavement shows
+  where people can walk within 250 m and the crossings used. Click to pin the routes
+* Car, bus, bicycle and lorry each keep to the lanes, roads, height and weight limits open to them
+* Routes follow turn arrows, lane connections and turn restrictions, including those via ways (a
+  U-turn through the gap of a dual carriageway) and their exceptions; roundabout exits follow the
   arrows of the lane the route entered on
-* Easier lane picking under the pointer, and pinned routes survive panning
+* The routes are listed in the sidebar, in place of the feature search, in iD's light and night themes
+* The lane under the pointer is found whatever is drawn over it; pinned routes stay while the map is
+  panned
+* Routes keep to their lane along a link too short to change lanes on, and a route starting on such a
+  link is held to the turn bans of the road leading into it
+* A turn arrow for a turn banned at the first junction is for one further on: the lane carries on to
+  the junction where that turn is allowed (John Adams Way past South Square to South End); the banned
+  turn is still listed, and each vehicle's own exceptions apply
+* Every lane of a roundabout carries on round it: the outer lanes of tight rings mapped as short ways
+  (Liquorpond Street Roundabout, Boston) no longer route nowhere
 
 #### Lanes and junctions
-* Lanes marked `merge_to_left` / `merge_to_right` narrow into the lane beside them from the side away
-  from the centre line
+* Tight roundabouts mapped as many short ways: roads joining them stop clear of the ring instead of
+  running across it, and on a ring tagged `lane_markings=no` joining lanes stop at its edge
+* A lane marked `merge_to_left` or `merge_to_right` narrows into the lane beside it from the side away
+  from the centre line, which runs straight on (`slight_*` arrows are not merges); two tapers ending
+  together no longer splay the kerbs
 * A short link with no arrows (the stretch between the two halves of a dual carriageway crossroads)
   takes the arrows of the road leading into it, so the lanes going ahead line up straight through and
-  a turning lane gets its own path; an arrow that points to no road at a junction carries on ahead
-* Stop, give way and signal lines stand before a pedestrian crossing on the same spot or just before
-  it; signals tagged as their crossing draw the crossing with a line each way
-* Tight roundabouts mapped as many short ways: roads joining them stop outside the ring, lanes join the
-  right ring lane, and unmarked rings get no guide lines
-* Roads join roundabouts cleanly at any angle and width; smooth kerbs into shallow exits; guide lines on
-  lane edges onto and off roundabouts, following lane connections
-* Turn arrows line up along the stop line
+  a turning lane gets its own path (Spilsby Road and Freiston Road, Boston); an arrow that points to no
+  road at a junction carries on ahead
+* A lane gained or lost at a junction, on a side no other road joins (a turn lane starting just past a
+  junction), widens or narrows from the kerb instead of starting square
+* Stop, give way and signal lines on a pedestrian crossing, or up to 10 m past one, stand before it;
+  signals tagged as their crossing draw the crossing, with a line each way
+* The U-turn arrow turns round to the right where traffic drives on the left
+
+#### Website
+* Selection (the default) and Routing in the top bar, before iD's Point, Line and Area, which are back
+* The site build packages every icon (they could go missing), offers one OpenStreetMap server (no live
+  / dev switch), and logs in with the site's own OAuth application
+* Code and styles load with a stamp of their contents, so a deploy reaches visitors straight away
+* The footer shows Lane Studio's version (`v26.10.21`), linking to its repository
+* The README, guides, privacy policy and issue forms describe Lane Studio, a fork of iD written with
+  Claude Code
+
+
+# 26.10.19
+##### 2026-Oct-19
+
+#### Lanes and junctions
+* Lanes joined by a lane connection keep their white dashed guide lines along both lane edges; the blue
+  editing line shows only while connecting lanes or with one of the roads selected (connecting lanes
+  by hand made the markings disappear)
+* Every lane entering a roundabout is guided into the ring, and the ring's outer lanes peel off into
+  exits leaving at a shallow angle
+* At a shallow roundabout exit, the ring's kerb sweeps smoothly into the exit's kerb, and the ring's
+  edge line no longer runs across the exit's lanes (Exhall Interchange, M6 J3)
+* Guide lines onto a ring at a shallow angle (a spiral) end where the lanes they join start
+* No gap where two halves of a ring of different widths meet; road surface under connected lanes
+* Turn arrows stand just behind a stop line, give way line or traffic signals, and behind a crossing
+  just before them
+
+
+# 26.10.18
+##### 2026-Oct-18
 
 #### Roads and signs
-* Hard shoulders and variable-access lanes, drawn and edited
-* Traffic signs (UK drawings, other codes as plates), variable message signs on gantries, speed and red
-  light cameras, and average-speed sections; new Signs tool and sign section
-* Road number shields and motorway junction numbers; minimum speed and lane speed roundels
-* UK default lane widths; units for width and height limits, and weight limit fields
-* Motorway slip roads, parking and sidebar icons for turns and lane changes
-* iD's Point, Line and Area tools are back in the top bar
+* Hard shoulders, drawn beside the carriageway with an edge line, and edited by clicking them or in
+  the Roadside section
+* Variable-access lanes (opened by signs), with their own hatched style and lane type
+* Traffic signs: UK signs drawn as their pictures, other codes on a plate, growing with zoom and
+  standing at the near-side kerb of their traffic; variable message signs on their gantries; speed
+  and red light cameras; average-speed sections
+* A Signs tool to place signs, message signs and cameras facing a lane's traffic, and a sidebar
+  section to change the sign, its value, a camera's limit and the way it faces
+* Road number shields (motorways blue, primary routes green, other A and B roads white) and motorway
+  junction numbers with their names
+* Minimum speed roundels, and a lane's own speed limit where it differs
+* Width and height limits show their units; weight limits per lane and for the road
+* On-street parking drawn as road surface with bay markings; on-kerb parking on the pavement
+* UK lane widths when none is tagged (3.65 m on motorways and main roads down to 2.75 m on
+  residential streets)
+
+#### Lanes and junctions
+* Lanes and hard shoulders can be clicked wherever they are drawn, from zoom 17
+* Slip roads leave from and join the outer lane of wide roads
+* Roads join roundabouts cleanly at any angle and width, with smooth flares, and no seam shows where a
+  road is split into pieces
+* Roundabout entries and exits keep to their own lines instead of being shifted towards the ring
+
+#### Editing
+* Turn arrows and lane changes are icon buttons in the sidebar; roadside choices are radio buttons
+* Signs, cameras and junction labels take clicks over their whole picture
 
 
 # 26.10.13
-##### 2026-Oct-13 (first numbered 0.1.0)
+##### 2026-Oct-13
 
-First version.
+#### Lanes and junctions
+* Junction corners curve from one road's kerb to the next, with a kerb line; roads bending at a node
+  are cut on the bisector, so their lanes and pavements meet exactly
+* Junction boxes have their own colour and meet each road where it actually ends; where no traffic
+  crosses the main road (roundabouts, one-way slip roads) only the mouth is drawn, and where two roads
+  just join there is no box
+* No pinched box where a dual carriageway runs into a two-way road; a road joining at a shallow angle
+  meets a smooth wedge; roundabout kerbs and lane lines run all the way round
+* Shifts to line lanes up are capped at one lane; a mapped carriageway area belongs to the road mostly
+  inside it
+* No guide lines for roads running straight through, or shorter than 2 m; no spikes at piece ends
+* A merging lane's arrow sits just before its taper
 
-* Lane model: parse, edit and write `*:lanes` tags; lanes on the map at their real width, with lane
-  lines, turn arrows and labels
-* Select and edit lanes on the map and in the sidebar: counts, direction, position, turn arrows, lane
-  change, type, speeds, destinations, access, widths and limits; Paint, Width, Markings and Connect
-  tools
-* Junctions: the main road runs through, lanes that carry on line up, added and dropped lanes taper,
-  slip roads start where their lane ends, junction clusters and forks, kerb-curve corners, guide lines
-* Look ahead along the road: the roads it leads on to, exits, destinations, copying lanes on
-* Roundabouts, lane connections (`type=connectivity`) and turbo roundabout tagging
-* Pavements, cycleways and parking per side; footways, crossings, stop and give way lines, signals,
-  kerbs, traffic islands, `road_marking=*`, street parking laybys
-* Surfaces, roads mapped as areas, fitting roads into mapped carriageways
-* Mini-roundabouts, turning heads, speed limit roundels, barriers, bridges, tunnels, cuttings,
-  embankments, fords and roads under construction
-* Lane Studio settings pane: lane opacity, hiding iD's own lines under lanes
-* Lane tags rule in iD's Issues pane, welcome screen, and packaging as a static site
+#### Roads
+* Turning circles, loops and hammerheads shaped by `turning_circle=*`, flaring out of the road with
+  the kerb and pavement carried round; they and mini-roundabouts select like roads
+* Bridges with parapets, tunnels and covered ways faded with walls, cuttings and embankments with
+  slopes, and fords
+* Roads and paths under construction drawn as what they will be, faded, with work stripes
+* Footways and pavements in stronger colours that follow the opacity setting
+
+#### Editing
+* With iD's lines hidden, the selected road keeps a thin line and its nodes, so it can be reshaped
+
+
+# 26.10.12
+##### 2026-Oct-12
+
+First day: Lane Studio created on top of iD.
+
+#### Lanes on the map
+* Every lane drawn at its real width from zoom 17, with lane lines from `change:lanes` and turn arrows
+  from zoom 18 and labels from zoom 19; pavements, cycle lanes and parking strips from the road's tags
+* Lane types (bus, PSV, taxi, HOV, cycle, pedestrian, no access) by colour; surfaces (asphalt,
+  concrete, paving, setts, gravel, unpaved, grass, wood, metal) as textures, per lane too
+* Turn arrows share one stem, so combined arrows read as one; small direction arrows on the lanes of
+  one-way roads
+
+#### Editing lanes
+* Click a lane to select it (shift-click for more); `[` and `]` step between lanes; Delete removes the
+  selected lanes, never the road; lanes can be reordered
+* A Lanes section: lane counts per direction, a lane strip, and an inspector for direction, turn
+  arrows, lane change, type, speed, destination, access, width, limits, surface and any other lane
+  tag, with iD-style fields and suggestions
+* Click the line between two lanes to cycle its marking
+* Paint, Width, Markings and Connect tools; Esc or clicking empty map returns to Select; every edit is
+  one undo step
+
+#### Junctions
+* The main road or roundabout runs through; side roads stop at its kerb, where its kerb and lane lines
+  stop too
+* Lanes that carry on line up; added or dropped outer lanes taper; slip roads start where their lane
+  ends; a lane marked to merge is the one that ends
+* Junctions joined by roads under 25 m drawn as one box following the roads; forks; guide lines carry
+  each lane through along its edges
+* Signals and stop lines on a junction node go on its approaches
+* Very short roads get an outline and a marker to click
+
+#### Street features
+* Footways, paths, cycleways, steps and pedestrian streets at their real width; shared and segregated
+  paths; crossing ways with zebra stripes or lines
+* Crossings, stop and give way lines (with painted STOP and triangles), signals and traffic calming on
+  road nodes, edited in a Road markings section
+* Mapped areas: `area:highway=*`, pedestrian areas, traffic islands by surface; kerbs by height;
+  `road_marking=*` lines, areas and text
+* Street parking strips, parking areas with bays and laybys
+* Mini-roundabouts, turning circles, speed limit roundels where the limit changes, and barriers (gates,
+  bollards, cattle grids, fences, walls, guard rails, hedges)
+* Roads mapped as areas, and roads fitted into mapped carriageway areas (their markings follow)
+
+#### Look ahead and roundabouts
+* Look ahead: the roads a selected road leads on to, its exits with a suggested turn and destination
+  (a roundabout's exits numbered), and copying lanes to the next road
+* Selecting a roundabout shows the whole ring, a turbo toggle, untagged segments and the turn
+  restrictions a turbo roundabout needs
+* Lane connections (`type=connectivity`) drawn, and made with the Connect tool
+
+#### Checks, settings and site
+* A lane tags rule in iD's Issues pane, with fixes where the answer is certain
+* A Lane Studio welcome screen
+* A Lane Studio pane (`K`): lane opacity, and hiding iD's own lines under what Lane Studio draws;
+  hovering and selecting highlight Lane Studio's drawing; the sidebar follows iD's light and dark themes
+* Packaged as a static website, with logins returning to the site

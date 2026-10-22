@@ -52,6 +52,27 @@ describe('Lane Studio version', () => {
         }
     });
 
+    it('lists the work in each section under the days it was done, newest first', () => {
+        // each `# ` section: its `### YYYY-Mon-DD` day headings
+        const sections = changelog.split(/^# /m).slice(2);
+        for (const section of sections) {
+            const name = section.split('\n')[0].trim();
+            const days = [...section.matchAll(/^### (.+)$/gm)].map(match => match[1].trim());
+            const times = days.map(day => {
+                const match = day.match(/^(\d{4})-([A-Z][a-z]{2})-(\d{2})$/);
+                expect(match, `${name}: day heading "${day}"`).not.toBeNull();
+                const month = months.indexOf(match![2]);
+                expect(month, `${name}: month in "${day}"`).toBeGreaterThanOrEqual(0);
+                return Date.UTC(Number(match![1]), month, Number(match![3]));
+            });
+            for (let i = 1; i < times.length; i++) expect(times[i - 1], `${name}: days newest first`).toBeGreaterThan(times[i]);
+            // a release has no work dated after it
+            const release = name === 'Unreleased' ? null : parseVersion(name);
+            const releasedOn = release ? Date.UTC(release.year, release.month - 1, release.day) : Infinity;
+            expect(times.every(t => t <= releasedOn), `${name}: work dated after its release`).toBe(true);
+        }
+    });
+
     it('leaves package.json with iD\'s version', () => {
         const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')) as { version: string };
         expect(pkg.version).not.toBe(laneStudioVersion);
