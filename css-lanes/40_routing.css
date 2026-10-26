@@ -175,3 +175,87 @@
     color: var(--error-text-color);
     background: var(--error-bg-color);
 }
+
+
+/* the Speed Limit tool: lanes coloured by their limit, and roads with none in an error red */
+.ideditor.lane-studio {
+    --speed-10: #00cec9;
+    --speed-20: #0984e3;
+    --speed-30: #00b894;
+    --speed-40: #fdcb6e;
+    --speed-50: #e17055;
+    --speed-60: #a29bfe;
+    --speed-70: #6c5ce7;
+    --speed-other: #b2bec3;
+    --speed-missing: #ff1744;
+}
+.ideditor.lane-studio.lanes-speed .lanes-layer path.lane[class*=' speed-'] {
+    fill-opacity: 0.85;
+    stroke: rgba(0, 0, 0, 0.35);
+    stroke-width: 0.5;
+}
+.ideditor.lane-studio.lanes-speed .lanes-layer path.lane.speed-missing {
+    stroke: #fff;
+    stroke-width: 1;
+    stroke-dasharray: 4 3;
+}
+.ideditor.lane-studio .lanes-layer path.lane.speed-10, .ideditor.lane-studio .speed-swatch.speed-10 { fill: var(--speed-10); background: var(--speed-10); }
+.ideditor.lane-studio .lanes-layer path.lane.speed-20, .ideditor.lane-studio .speed-swatch.speed-20 { fill: var(--speed-20); background: var(--speed-20); }
+.ideditor.lane-studio .lanes-layer path.lane.speed-30, .ideditor.lane-studio .speed-swatch.speed-30 { fill: var(--speed-30); background: var(--speed-30); }
+.ideditor.lane-studio .lanes-layer path.lane.speed-40, .ideditor.lane-studio .speed-swatch.speed-40 { fill: var(--speed-40); background: var(--speed-40); }
+.ideditor.lane-studio .lanes-layer path.lane.speed-50, .ideditor.lane-studio .speed-swatch.speed-50 { fill: var(--speed-50); background: var(--speed-50); }
+.ideditor.lane-studio .lanes-layer path.lane.speed-60, .ideditor.lane-studio .speed-swatch.speed-60 { fill: var(--speed-60); background: var(--speed-60); }
+.ideditor.lane-studio .lanes-layer path.lane.speed-70, .ideditor.lane-studio .speed-swatch.speed-70 { fill: var(--speed-70); background: var(--speed-70); }
+.ideditor.lane-studio .lanes-layer path.lane.speed-other, .ideditor.lane-studio .speed-swatch.speed-other { fill: var(--speed-other); background: var(--speed-other); }
+.ideditor.lane-studio .lanes-layer path.lane.speed-missing, .ideditor.lane-studio .speed-swatch.speed-missing { fill: var(--speed-missing); background: var(--speed-missing); }
+/* with a limit picked, the lane under the pointer shows where a click lands */
+.ideditor.lane-studio.lanes-speed .lanes-layer .lane-target:hover {
+    fill: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+}
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-divider-targets,
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-node-targets,
+.ideditor.lane-studio.lanes-speed .layer-osm .layer-points,
+.ideditor.lane-studio.lanes-speed .layer-osm .vertices {
+    pointer-events: none;
+}
+.ideditor.lane-studio .speed-key,
+.ideditor.lane-studio .speed-missing-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.ideditor.lane-studio .speed-key li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+}
+.ideditor.lane-studio .speed-key li.none-in-view {
+    opacity: 0.5;
+}
+.ideditor.lane-studio .speed-swatch {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 12px;
+    border-radius: 3px;
+}
+.ideditor.lane-studio .speed-key-label {
+    flex: 1 1 auto;
+}
+.ideditor.lane-studio .speed-key-count {
+    color: var(--text-color-muted, #777);
+    font-size: 12px;
+}
+.ideditor.lane-studio .speed-missing-road {
+    width: 100%;
+    text-align: left;
+    padding: 4px 8px;
+    margin: 2px 0;
+    height: auto;
+    border-left: 4px solid var(--speed-missing);
+}
+.ideditor.lane-studio .speed-missing-road {
+    display: flex;
+    justify-content: space-between;
+}

@@ -3,11 +3,13 @@ import { modeBrowse } from '../../modes/browse';
 import { uiTooltip } from '../../ui/tooltip';
 import { laneRouting } from '../core/lane_routing';
 import { modeLaneRouting } from '../core/mode_routing';
+import { laneSpeed } from '../core/lane_speed';
+import { modeLaneSpeed } from '../core/mode_speed';
 
 type Div = d3.Selection<HTMLDivElement>;
 
 interface ModeButton {
-    id: 'select' | 'routing';
+    id: 'select' | 'routing' | 'speed';
     /** an icon drawn in a 20 unit box */
     icon: string;
     active: () => boolean;
@@ -15,11 +17,13 @@ interface ModeButton {
 }
 
 /**
- * The Selection and Routing buttons in the top bar, before iD's Point, Line and Area: Selection (the default)
- * selects and edits as iD does; Routing turns editing off and shows the routes through lanes and footways.
+ * The Selection, Routing and Speed Limit buttons in the top bar, before iD's Point, Line and Area: Selection (the
+ * default) selects and edits as iD does; Routing turns editing off and shows the routes through lanes and footways;
+ * Speed Limit colours the lanes by their limit and sets limits with a click.
  */
 export function uiToolLaneModes(context: iD.Context) {
     const routing = laneRouting(context);
+    const speed = laneSpeed(context);
     const drawing = () => /^(add|draw)/.test(context.mode()?.id ?? '');
 
     const buttons: ModeButton[] = [
@@ -27,9 +31,9 @@ export function uiToolLaneModes(context: iD.Context) {
             id: 'select',
             // a pointer
             icon: '<path d="M5 2.5v14l3.6-3.4 2.6 5.6 2.4-1.1-2.6-5.5h5z" fill="currentColor"/>',
-            active: () => !routing.active() && !drawing(),
+            active: () => !routing.active() && !speed.active() && !drawing(),
             click: () => {
-                if (routing.active() || drawing()) context.enter(modeBrowse(context) as any);
+                if (routing.active() || speed.active() || drawing()) context.enter(modeBrowse(context) as any);
             }
         },
         {
@@ -41,6 +45,17 @@ export function uiToolLaneModes(context: iD.Context) {
             click: () => {
                 if (routing.active()) context.enter(modeBrowse(context) as any);
                 else context.enter(modeLaneRouting(context) as any);
+            }
+        },
+        {
+            id: 'speed',
+            // a speed limit roundel
+            icon: '<circle cx="10" cy="10" r="7.6" fill="none" stroke="currentColor" stroke-width="2.6"/>' +
+                '<text x="10" y="13.4" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor">30</text>',
+            active: () => speed.active(),
+            click: () => {
+                if (speed.active()) context.enter(modeBrowse(context) as any);
+                else context.enter(modeLaneSpeed(context) as any);
             }
         }
     ];
@@ -71,6 +86,7 @@ export function uiToolLaneModes(context: iD.Context) {
             };
             context.on('enter.lane-modes', update);
             routing.on('change.lane-modes', update);
+            speed.on('change.lane-modes', update);
             update();
         }
     };

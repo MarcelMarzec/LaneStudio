@@ -17,6 +17,12 @@
     fill-opacity: var(--lanes-road-alpha, 0.545);
     stroke: none;
 }
+/* the lanes of a junction holding traffic islands, drawn over its box between the islands: in the road colour, so
+   each lane's path through the junction stands out from the box */
+.ideditor.lane-studio .lanes-layer .lane.lane-general.lane-channelled {
+    fill: var(--lanes-road-fill, rgb(67, 72, 82));
+    fill-opacity: var(--lanes-road-alpha, 0.545);
+}
 /* the widening mouth of a road where no traffic crosses the main road (a roundabout entry or exit, a slip road): road */
 .ideditor.lane-studio .lanes-layer .junction-area.junction-flare {
     fill: var(--lanes-road-fill, rgb(67, 72, 82));

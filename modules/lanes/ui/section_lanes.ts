@@ -24,6 +24,7 @@ import { laneField, laneSuggestions, laneArrowIcon, laneChangeIcon } from './lan
 import { uiTooltip } from '../../ui/tooltip';
 import { isLaneRoad } from '../core/roads';
 import { isTrafficIsland } from '../model/street_features';
+import { mphLimits, mphOf, roadSpeedPick, speedRoundels, withRoadSpeed, type SpeedPick } from './speed_roundels';
 import {
     parseLanes, laneRefsInWayOrder, laneCount, insertLane, removeLane, moveLane, setLaneValue, laneValue,
     turnValues, parseTurn, toggleTurn, parseChange, formatChange, laneDirections,
@@ -335,10 +336,40 @@ export function uiSectionLanes(context: iD.Context) {
     }
 
 
+    /** A field label laid out like iD's, over a row of speed limit roundels */
+    function speedField(parent: Div, label: string, tagged: string | undefined, roundel: (row: Div) => void) {
+        const field = parent.append('div').attr('class', 'form-field lane-form-field form-field-speed');
+        field.append('label').attr('class', 'field-label')
+            .append('span').attr('class', 'label-text')
+            .append('span').attr('class', 'label-textvalue').text(label);
+        roundel(field);
+        // a value no roundel shows (25 mph, mixed lanes) is named, so it is not lost from sight
+        if (tagged) field.append('p').attr('class', 'speed-tagged').text(t('_lanes.speed.tagged', { value: tagged }));
+    }
+
+    /** The speed limit of the selected lanes, picked from roundels; no roundel clears the lanes' own limit */
+    function renderLaneSpeed(parent: Div, wayID: WayId, refs: LaneRef[], value: string | undefined) {
+        const mph = mphOf(value);
+        const current: SpeedPick | undefined = value === undefined ? undefined : !value ? { kind: 'none' } : mph === null ? undefined : { kind: 'mph', mph };
+        const unusual = value === undefined ? t('_lanes.inspector.mixed') :
+            value && (mph === null || !mphLimits.includes(mph) || !/mph/i.test(value)) ? value : undefined;
+        speedField(parent, t('_lanes.speed.lanes_label'), unusual, row => speedRoundels(row, {
+            current, none: true, noneLabel: t('_lanes.speed.lanes_none'),
+            onPick: pick => perform(wayID, m => setLaneValue(m, refs, 'maxspeed:lanes', pick.kind === 'mph' ? `${pick.mph} mph` : ''), 'value')
+        }));
+    }
+
     /** Limits for the whole road, shown while no lane is selected */
     function renderRoadLimits(wrap: Div, road: osmWay) {
         const box = wrap.append('div').attr('class', 'lane-inspector road-limits');
         box.append('h4').text(t('_lanes.inspector.whole_road'));
+        const pick = roadSpeedPick(road.tags);
+        const tagged = road.tags.maxspeed;
+        const unusual = tagged && pick.kind === 'mph' && (!mphLimits.includes(pick.mph) || !/mph/i.test(tagged)) ? tagged : undefined;
+        speedField(box, t('_lanes.speed.road_label'), unusual, row => speedRoundels(row, {
+            current: pick, national: true, none: true,
+            onPick: next => context.perform(actionChangeTags(road.id, withRoadSpeed(road.tags, next)), t('_lanes.annotation.speed'))
+        }));
         laneField(context, box, {
             id: 'road-maxweight',
             label: t('_lanes.field.maxweight'),
@@ -601,7 +632,11 @@ export function uiSectionLanes(context: iD.Context) {
             disabledReason: t('_lanes.inspector.readonly', { key }),
             onChange: value => perform(wayID, m => setLaneValue(m, refs, key, value), 'value')
         });
-        for (const field of textFields) fieldFor(field.id, field.key, t(`_lanes.field.${field.id}`));
+        for (const field of textFields) {
+            // the speed limit is picked from roundels, unless the road's lane speeds can't be edited here
+            if (field.id === 'maxspeed' && !readonly(field.key)) renderLaneSpeed(inspector, wayID, refs, shared(field.key));
+            else fieldFor(field.id, field.key, t(`_lanes.field.${field.id}`));
+        }
 
         /* other lane keys on the road, so nothing is hidden */
         const others = Object.values(model.keys).filter(key => !handledKeys.has(key.id));

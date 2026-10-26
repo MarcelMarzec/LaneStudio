@@ -25,7 +25,7 @@ export function isDrag(down: [number, number] | null, up: [number, number]): boo
 }
 
 /** The road a map element under the pointer belongs to: iD's line for it, or a shape the lanes layer drew for it */
-function roadOf(target: EventTarget | null): string | null {
+export function roadOf(target: EventTarget | null): string | null {
     if (!(target instanceof Element)) return null;
     const datum = d3_select(target).datum() as { properties?: { entity?: unknown } } | undefined;
     const entity = (datum?.properties?.entity ?? datum) as Partial<osmWay> | undefined;

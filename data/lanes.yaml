@@ -95,6 +95,14 @@ en:
     merge_to_left: Merge left
     merge_to_right: Merge right
     none: No arrow
+  speed:
+    mph: "{n} mph"
+    national: National speed limit (60 mph, 70 mph on a dual carriageway)
+    none: No speed limit tagged
+    lanes_label: Speed limit of these lanes
+    lanes_none: Same as the road
+    road_label: Speed limit
+    tagged: "Tagged: {value}"
   field:
     maxspeed: Speed limit
     minspeed: Minimum speed
@@ -314,6 +322,7 @@ en:
     not_joined: No road with lanes nearby to join to.
   annotation:
     marking: Changed a road marking.
+    speed: Changed the speed limit.
     sign: Changed a traffic sign.
     street_feature: Changed a street feature.
     roadside: Changed the roadside.
@@ -336,6 +345,24 @@ en:
     routing:
       title: Routing
       tooltip: "See every route through a lane or footway. Editing is off while this is on; Esc leaves."
+    speed:
+      title: Speed Limit
+      tooltip: "Colour lanes by their speed limit and set limits by clicking roads. Keys 1 to 7 pick 10 to 70 mph; Esc leaves."
+  brand:
+    tooltip: Lane Studio, a lane editor for OpenStreetMap
+  speed_tool:
+    title: Speed Limit
+    apply: Limit to apply
+    remove: Remove the speed limit
+    hint: Pick a limit, then click roads to set it. Lanes are coloured by their limit; roads with none are red.
+    hint_picked: Click a road to set this limit on the whole road; shift-click a lane to set it on that lane only. Esc lets go.
+    key: On the map
+    other: Another limit
+    missing: No speed limit
+    roads: "{n} in view"
+    missing_title: "No speed limit ({n} in view)"
+    more: "and {n} more"
+    ways: "{n} ways"
   routing:
     title: Routing
     close: Back to Selection

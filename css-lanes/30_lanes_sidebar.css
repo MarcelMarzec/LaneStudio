@@ -319,3 +319,41 @@
     height: auto;
     padding: 3px 8px;
 }
+
+/* speed limit roundels: the limits as UK signs, the one tagged now ringed in iD's highlight colour */
+.ideditor.lane-studio .speed-roundels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 0 2px;
+}
+.ideditor.lane-studio .speed-roundel {
+    width: auto;
+    height: auto;
+    padding: 2px;
+    border-radius: 50%;
+    background: transparent;
+    border: 2px solid transparent;
+    line-height: 0;
+}
+.ideditor.lane-studio .speed-roundel:hover {
+    background: var(--bg-color-2, rgba(0, 0, 0, 0.06));
+}
+.ideditor.lane-studio .speed-roundel.active {
+    border-color: var(--link-color);
+    background: var(--bg-color-2, rgba(0, 0, 0, 0.06));
+    box-shadow: 0 0 0 2px var(--link-color);
+}
+.ideditor.lane-studio .speed-roundel svg { display: block; }
+.ideditor.lane-studio .speed-roundel .roundel-disc { fill: #fff; }
+.ideditor.lane-studio .speed-roundel .roundel-ring { fill: none; stroke: #d4202a; stroke-width: 3; }
+.ideditor.lane-studio .speed-roundel .roundel-number { fill: #111; font-weight: bold; font-family: Arial, Helvetica, sans-serif; }
+.ideditor.lane-studio .speed-roundel .roundel-band { fill: #111; }
+.ideditor.lane-studio .speed-roundel .roundel-edge { fill: none; stroke: #111; stroke-width: 0.8; }
+.ideditor.lane-studio .speed-roundel .roundel-none { fill: none; stroke: var(--passive-text-color); stroke-width: 1.5; stroke-dasharray: 3 2.5; }
+.ideditor.lane-studio .speed-roundel .roundel-none-text { fill: var(--passive-text-color); font-size: 12px; }
+.ideditor.lane-studio .speed-tagged {
+    margin: 4px 0 0;
+    color: var(--passive-text-color);
+    font-size: 12px;
+}

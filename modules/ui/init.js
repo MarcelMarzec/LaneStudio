@@ -56,6 +56,14 @@ export function uiInitAddPane(factory) {
     _extraPaneFactories.push(factory);
 }
 
+// a header drawn at the top of the sidebar by apps built on iD (e.g. Lane Studio's logo); none in iD itself
+var _sidebarHeader = null;
+
+/** Sets a component drawn at the top of the sidebar, above what it shows; call before the UI is built */
+export function uiInitSetSidebarHeader(component) {
+    _sidebarHeader = component;
+}
+
 
 export function uiInit(context) {
     var _initCounter = 0;
@@ -150,7 +158,10 @@ export function uiInit(context) {
         container
             .append('div')
             .attr('class', 'sidebar')
-            .call(ui.sidebar);
+            .call(ui.sidebar)
+            .call(function(sidebar) {
+                if (_sidebarHeader) sidebar.classed('sidebar-with-header', true).call(_sidebarHeader);
+            });
 
         var content = container
             .append('div')

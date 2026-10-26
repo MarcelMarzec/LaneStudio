@@ -24,3 +24,47 @@
     opacity: 0.4;
     pointer-events: none;
 }
+
+/* Lane Studio's name and mark, top left above the sidebar; what the sidebar shows starts below it */
+.ideditor.lane-studio .sidebar .lanes-brand {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden;
+    white-space: nowrap;
+    user-select: none;
+}
+.ideditor.lane-studio .sidebar .lanes-brand-mark svg {
+    display: block;
+    width: 28px;
+    height: 28px;
+}
+.ideditor.lane-studio .sidebar .lanes-brand-name {
+    font-size: 17px;
+    letter-spacing: 0.01em;
+}
+.ideditor.lane-studio .sidebar .lanes-brand-name strong {
+    font-weight: 700;
+    margin-right: 3px;
+}
+.ideditor.lane-studio .sidebar .lanes-brand-name span {
+    font-weight: 400;
+    opacity: 0.75;
+}
+.ideditor.lane-studio .sidebar.sidebar-with-header > .sidebar-component {
+    top: 48px;
+}
+.ideditor.lane-studio .sidebar.sidebar-with-header {
+    padding-top: 48px;
+    box-sizing: border-box;
+}

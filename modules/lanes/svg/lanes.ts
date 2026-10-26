@@ -9,6 +9,7 @@ import { actionAddMarking } from '../actions/add_marking';
 import { actionAddSign } from '../actions/add_sign';
 import { laneState } from '../core/lane_state';
 import { laneRouting } from '../core/lane_routing';
+import { laneSpeed, speedClassOf } from '../core/lane_speed';
 import { drawRoutes, laneUnder } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
 import { roadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
@@ -27,7 +28,7 @@ import { actionConnectLanes, connectionNode } from '../actions/connect_lanes';
 import { streetGeometry, isCarriagewayArea } from '../geometry/street';
 import { parkingGeometry } from '../geometry/parking';
 import { roadMarkingGeometry } from '../geometry/road_marking';
-import { isStreetParking, surfaceGroup } from '../model/street_features';
+import { isStreetParking, isTrafficIsland, surfaceGroup } from '../model/street_features';
 import { metricFrame, pointAlong, pointInPolygon, polylineLength } from '../geometry/frame';
 import { edgeStructures, isCovered, ringEdges, type StructureShape } from '../geometry/structures';
 import { signGeometry } from '../geometry/signs';
@@ -130,6 +131,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     const state = laneState(context);
     const tools = laneTools(context);
     const routing = laneRouting(context);
+    const speed = laneSpeed(context);
     // the pieces last drawn, for redrawing routes alone as the pointer moves
     let _pieces: RoadPiece[] = [];
 
@@ -178,7 +180,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'roadside', 'parking-bays', 'parking', 'paths', 'carriageway', 'lanes', 'works', 'junctions', 'heads', 'node-surfaces', 'islands', 'dividers', 'kerbs',
+                'areas', 'roadside', 'parking-bays', 'parking', 'paths', 'carriageway', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'islands', 'dividers', 'kerbs',
                 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs',
                 'shields', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
                 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
@@ -206,9 +208,16 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .filter(entity => !features.isHidden(entity, graph, entity.geometry(graph)));
         const ways = visible.filter(isLaneRoad);
         const carriagewayAreas = visible.filter(isCarriagewayArea) as osmWay[];
-        const { visuals, pieces, innerPieces, junctions, connections, heads, areaRoads } = roadGeometry(ways, graph, carriagewayAreas);
-        // short links inside a junction cluster are drawn only as lane guide lines (still clickable)
+        const islands = visible.filter(entity => entity.type === 'way' && (entity as osmWay).isClosed() && isTrafficIsland(entity.tags)) as osmWay[];
+        const { visuals, pieces, innerPieces, channelled, junctions, connections, heads, areaRoads } = roadGeometry(ways, graph, carriagewayAreas, islands);
+        // short links inside a junction cluster are drawn only as lane guide lines (still clickable), except in a
+        // junction holding traffic islands, where they are drawn whole over the junction, running between the islands
         const shown = pieces.filter(piece => !innerPieces.has(piece));
+        const sameLink = (a: RoadPiece, b: RoadPiece) => a.wayID === b.wayID && a.fromNode === b.fromNode && a.toNode === b.toNode;
+        const replaced = new Set([...innerPieces].filter(piece => channelled.some(c => sameLink(c, piece))));
+        const islandRings = islands.map(island => island.nodes.map(id => (graph.entity(id) as osmNode).loc as Vec2));
+        // a guide line through a junction never crosses an island
+        const clearOfIslands = (line: Vec2[]) => !islandRings.some(ring => line.some(p => pointInPolygon(p, ring)));
         const selected = new Set(context.selectedIDs());
         const corridor = context.mode()?.id === 'select' ? state.corridor() : new Set<string>();
         const group = groups();
@@ -230,7 +239,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const coveredTag = (id: string) => isCovered(tagsOf(id)) ? ' lanes-covered' : '';
         // roads being built are drawn as they will be, faded and striped, without markings
         const building = (piece: RoadPiece) => isUnderConstruction(tagsOf(piece.wayID));
-        const marked = shown.filter(piece => !building(piece));
+        const marked = [...shown, ...channelled].filter(piece => !building(piece));
         const parking = parkingGeometry(visible, graph);
         const roadMarkings = markings ? roadMarkingGeometry(visible, graph) : { lines: [], areas: [], texts: [] };
         drawStreet(group, street, projection, zoom, laneZooms, areaRoads);
@@ -335,10 +344,15 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* lane ribbons */
         // (each lane of a road in one path, as for carriageways)
+        // (the Speed Limit tool colours each lane by its limit)
+        const speedClass = (piece: RoadPiece, lane: LaneInfo) => {
+            const road = speed.active() ? graph.hasEntity(piece.wayID) as osmWay | undefined : undefined;
+            return road ? ` speed-${speedClassOf(lane.values['maxspeed:lanes'], road)}` : '';
+        };
         const laneClass = (piece: RoadPiece, lane: LaneInfo) => {
             const surface = surfaceGroup(lane.values['surface:lanes']) ?? surfaceOf(piece);
             return `lane lane-${lane.kind} lane-${lane.ref.direction}` + (surface ? ` surface-${surface}` : '') + coveredTag(piece.wayID) +
-                (building(piece) ? ' lanes-construction' : '');
+                (building(piece) ? ' lanes-construction' : '') + speedClass(piece, lane);
         };
         const laneShapes = new Map<string, { key: string; cls: string; polygons: Vec2[][] }>();
         for (const piece of shown) {
@@ -351,6 +365,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 laneShapes.set(key, shape);
             });
         }
+        const channelShapes = channelled.flatMap(piece => piece.layout.lanes.map((lane, i) => ({
+            key: `${pieceKey(piece)}-${i}`, cls: laneClass(piece, lane) + ' lane-channelled', polygons: [piece.lanes[i]]
+        })));
+        joinPaths(group('channel-lanes'), channelShapes, d => d.key, d => d.cls, d => d.polygons.map(polygon => path(polygon, true)).join(''));
         const ribbons = group('lanes').selectAll<SVGPathElement, { key: string; cls: string; polygons: Vec2[][] }>('path')
             .data([...laneShapes.values()], d => d.key);
         ribbons.exit().remove();
@@ -533,7 +551,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         /* lane connections from type=connectivity relations */
         // and guide lines carrying lanes through the junction box
         // a short road inside a merged junction: its lane edges carry on through the box as guide lines
-        const innerGuides = [...innerPieces].flatMap(piece => piece.boundaries.slice(1, -1).map((line, i) => ({
+        const innerGuides = [...innerPieces].filter(piece => !replaced.has(piece)).flatMap(piece => piece.boundaries.slice(1, -1).map((line, i) => ({
             key: `${pieceKey(piece)}-inner-${i}`, nodeID: piece.fromNode, kind: 'guide' as const, optional: false, line
         })));
         // and where a road's lane lines stop at a junction box, they carry on through it as guide lines
@@ -552,7 +570,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const editing = tools.tool() === 'connect';
         const connectionLines = connections.filter(c => c.kind !== 'relation' ||
             editing || (c.ways ?? []).some(id => selected.has(id as osmWay['id'])));
-        joinPaths(group('connectivity'), markings ? [...connectionLines, ...innerGuides, ...stoppedGuides] : [], d => d.key,
+        const guideLines = [...connectionLines, ...innerGuides, ...stoppedGuides].filter(d => d.kind === 'relation' || clearOfIslands(d.line));
+        joinPaths(group('connectivity'), markings ? guideLines : [], d => d.key,
             d => (d.kind === 'relation' ? 'connectivity-curve' : 'junction-guide') + (d.optional ? ' optional' : ''),
             d => path(d.line, false));
 
@@ -592,7 +611,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         drawRoutes(group('routes'), context, pieces, loc => projection(loc) as Vec2);
 
         /* click targets: lanes and shoulders wherever lanes are drawn, dividers of the selected road from the editing zoom */
-        drawTargets(group('targets'), group('divider-targets'), pieces, markings, selected);
+        drawTargets(group('targets'), group('divider-targets'), [...pieces.filter(piece => !replaced.has(piece)), ...channelled], markings, selected);
         // mini-roundabouts and turning heads select their node
         drawEntityTargets(group('node-targets'), [
             ...street.surfaces.map(surface => ({ key: surface.key, entityID: surface.nodeID, d: path(surface.points, true) })),
@@ -819,7 +838,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .attr('class', 'lane-target')
             .on('click.lanes', (event: MouseEvent, d: LaneTarget) => {
                 // the Routing tool edits nothing: it pins the routes itself
-                if (routing.active()) return;
+                // (nor does the Speed Limit tool: it sets limits itself)
+                if (routing.active() || speed.active()) return;
                 if (tools.tool() === 'paint') {
                     paintLane(d);
                     return;
@@ -992,6 +1012,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     state.on('change.layer', draw);
     state.on('corridor.layer', draw);
     tools.on('change.layer', draw);
+    speed.on('change.layer', draw);
     // the Routing tool finds the lane under the pointer from the pieces drawn
     routing.setLaneLocator((point, wayID) => laneUnder(_pieces, context.graph(), loc => projection(loc) as Vec2, point, wayID ? Infinity : 8, wayID));
     // the routes follow the pointer: only they are redrawn

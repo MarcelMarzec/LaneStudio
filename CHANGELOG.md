@@ -10,6 +10,33 @@ for the changes in iD itself, see [iD's changelog](https://github.com/openstreet
 
 # Unreleased
 
+### 2026-Oct-26
+
+#### Speed Limit tool (new)
+* A Speed Limit tool in the top bar, next to Routing: every lane is coloured by its speed limit (its
+  own `maxspeed:lanes`, else its road's `maxspeed`), and roads with no limit are drawn in red with a
+  dashed edge. Footways and pedestrian ways are not coloured
+* Pick a limit in the sidebar (or press 1 to 7 for 10 to 70 mph), then click a road to set it on that
+  road; shift-click a lane to set it on that lane only. The national speed limit sets 60 mph
+  (`GB:nsl_single`), or 70 mph on a dual carriageway (`GB:nsl_dual`). Esc lets go of the limit, then
+  leaves the tool
+* The sidebar shows how many roads in view have each limit, and lists the roads in view with no limit
+  by name; click one to go to it. Limits are in mph only for now
+
+#### Editing
+* Speed limits are picked from a row of UK speed limit roundels (10 to 70 mph, the national speed
+  limit, and none) in place of a text box, for the whole road and for selected lanes; the limit
+  tagged now is highlighted, and a limit no roundel shows is written beside them
+
+#### Lanes and junctions
+* Lanes now run between traffic islands at a junction instead of being lost in one grey junction box:
+  a link between two junctions with islands beside it (`area:highway=traffic_island`, as at Ratby
+  Lane and Wembley Road, Leicester) is drawn as whole lanes with their arrows and lane lines, can be
+  clicked, and the islands are cut out of the junction's surface
+
+#### Website
+* A Lane Studio logo (a three-lane road with turn arrows) and name at the top left, above the
+  sidebar, and as the page's icon in the browser tab
 
 # 26.10.21
 ##### 2026-Oct-21

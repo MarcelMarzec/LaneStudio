@@ -2095,6 +2095,20 @@ const pieceCache = new WeakMap<osmWay, { nodes: osmNode[]; signature: string; pi
 
 /* ---------- junction clusters ---------- */
 
+/** The distance in metres from a point to a polygon's outline (0 inside it) */
+function distanceToPolygon(p: Vec2, polygon: Vec2[]): number {
+    if (pointInPolygon(p, polygon)) return 0;
+    let best = Infinity;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const a = polygon[j];
+        const segment = sub(polygon[i], a);
+        const l2 = dot(segment, segment);
+        const t = l2 > 0 ? Math.max(0, Math.min(1, dot(sub(p, a), segment) / l2)) : 0;
+        best = Math.min(best, len(sub(p, add(a, scale(segment, t)))));
+    }
+    return best;
+}
+
 // junction nodes joined by a road shorter than this form one junction, in metres
 export const clusterLink = 25;
 
@@ -2148,6 +2162,11 @@ export interface RoadGeometry {
     pieces: RoadPiece[];
     /** short pieces inside a junction cluster: drawn only as lane guide lines */
     innerPieces: Set<RoadPiece>;
+    /**
+     * the links inside a junction holding traffic islands (a channelised junction), whole and untrimmed: their
+     * lanes are drawn over the junction, running between the islands, in place of guide lines
+     */
+    channelled: RoadPiece[];
     junctions: JunctionArea[];
     connections: JunctionConnection[];
     /** turning circles, loops and hammerheads at road ends */
@@ -2156,8 +2175,31 @@ export interface RoadGeometry {
     areaRoads: Map<string, string>;
 }
 
+/** Whether a traffic island lies inside a junction's polygons or within 3 m of them (beside one of its links) */
+function holdsIsland(islandRings: Vec2[][], polygons: Vec2[][]): boolean {
+    return islandRings.some(ring => {
+        const frame = metricFrame(ring[0]);
+        const shapes = polygons.map(polygon => polygon.map(frame.toMetres));
+        return ring.some(loc => shapes.some(shape => distanceToPolygon(frame.toMetres(loc), shape) < 3));
+    });
+}
+
+/** Cuts the traffic islands out of the junctions' surfaces */
+function cutIslands(junctions: Map<string, JunctionArea>, islandRings: Vec2[][]) {
+    if (!islandRings.length) return;
+    const holes = islandRings.map(ring => [ring.map(p => [p[0], p[1]] as [number, number])]);
+    for (const [key, area] of junctions) {
+        try {
+            const left = difference(area.polygons.map(polygon => [polygon.map(p => [p[0], p[1]] as [number, number])]), ...holes);
+            junctions.set(key, { ...area, polygons: left.flatMap(shape => shape.map(ring => ring as Vec2[])) });
+        } catch {
+            // a box that can't be cut is drawn whole
+        }
+    }
+}
+
 /** Lane geometry for a set of roads, reusing everything whose inputs have not changed */
-export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas: osmWay[] = []): RoadGeometry {
+export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas: osmWay[] = [], islands: osmWay[] = []): RoadGeometry {
     const pieces: RoadPiece[] = [];
     const junctions = new Map<string, JunctionArea>();
     const connections = new Map<string, JunctionConnection[]>();
@@ -2284,6 +2326,10 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         const a = clusters.get(piece.fromNode);
         if (a && a === clusters.get(piece.toNode) && piece.fromNode !== piece.toNode && piece.length < clusterLink) innerPieces.add(piece);
     }
+    // the traffic islands' outlines, to find the junctions holding one: an island inside the junction or within
+    // 3 m of it (beside one of its links)
+    const islandRings = islands.map(island => lineLocs(island, graph));
+    const channelledRoots = new Set<string>();
     for (const [root, ids] of members) {
         if (ids.length < 2) continue;
         // the nodes' boxes and the short roads joining them, filled as one shape
@@ -2305,11 +2351,26 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         if (polygons.length) {
             const key = `cluster-${ids.slice().sort().join('-')}`;
             junctions.set(key, { nodeID: key, polygons, kerbs, kind });
+            if (holdsIsland(islandRings, polygons)) channelledRoots.add(root);
         }
     }
 
+    // 5. channelised junctions (traffic islands inside): the links between the islands are drawn whole, so their
+    // lanes run round the islands, and the islands are cut out of the junction boxes
+    const channelled: RoadPiece[] = [];
+    const links = new Map<string, RoadPiece[]>();
+    for (const piece of innerPieces) {
+        if (channelledRoots.has(clusters.get(piece.fromNode) ?? '')) links.set(piece.wayID, [...(links.get(piece.wayID) ?? []), piece]);
+    }
+    for (const [wayID, inner] of links) {
+        const way = graph.entity(wayID as WayId) as osmWay;
+        const whole = buildPieces(way, graph, cutNodes, visuals.get(wayID) ?? noVisual, () => 0, () => undefined);
+        channelled.push(...whole.filter(piece => inner.some(p => p.fromNode === piece.fromNode && p.toNode === piece.toNode)));
+    }
+    cutIslands(junctions, islandRings);
+
     return {
-        visuals, pieces, innerPieces,
+        visuals, pieces, innerPieces, channelled,
         junctions: [...junctions.values()], connections: [...connections.values()].flat(),
         heads: [...heads.values()].map(h => h.head),
         areaRoads: new Map([...owners].map(([areaID, way]) => [areaID, way.id]))
