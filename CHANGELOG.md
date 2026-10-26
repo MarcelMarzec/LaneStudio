@@ -12,6 +12,21 @@ for the changes in iD itself, see [iD's changelog](https://github.com/openstreet
 
 ### 2026-Oct-26
 
+#### Railways (new)
+* Railways, the Underground and tram lines are drawn as track: grey ballast, concrete sleepers (timber on
+  heritage and narrow gauge lines) and the rails at their gauge, `gauge` if tagged, else standard gauge
+  (1435 mm) for main lines, the Underground, light rail and trams, 600 mm for narrow gauge and 184 mm for
+  miniature lines. `tracks=2` and more lay tracks side by side, and conductor rails show where a line is
+  `electrified=rail` (third rail) or `electrified=4th_rail` (the Underground)
+* Tram rails are set in the road, drawn over its lanes with no ballast (unless tagged `embedded=no`);
+  railways in tunnels are faded, disused track faded with rusty rails, and track being built striped
+* Sleepers appear from zoom 18; railways pass under roads at level crossings
+
+#### Performance
+* The map is much quicker to use with lanes shown, most of all in busy towns: moving the pointer over the
+  map no longer redraws every lane (about three times quicker on a dense test map), selecting a lane or
+  changing tool reuses the lanes already worked out, and only shapes that changed are redrawn
+
 #### Speed Limit tool (new)
 * A Speed Limit tool in the top bar, next to Routing: every lane is coloured by its speed limit (its
   own `maxspeed:lanes`, else its road's `maxspeed`), and roads with no limit are drawn in red with a
@@ -29,6 +44,8 @@ for the changes in iD itself, see [iD's changelog](https://github.com/openstreet
   tagged now is highlighted, and a limit no roundel shows is written beside them
 
 #### Lanes and junctions
+* Footways, paths, cycleways and pedestrian ways are drawn over the roads, so where a path meets or
+  crosses a road it shows; those in a tunnel or below ground (`layer` < 0) stay under the road
 * Lanes now run between traffic islands at a junction instead of being lost in one grey junction box:
   a link between two junctions with islands beside it (`area:highway=traffic_island`, as at Ratby
   Lane and Wembley Road, Leicester) is drawn as whole lanes with their arrows and lane lines, can be

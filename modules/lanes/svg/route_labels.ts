@@ -2,7 +2,7 @@ import { select as d3Select } from 'd3-selection';
 
 import type { Projection } from '../../geo/raw_mercator';
 import type { JunctionLabel, ShieldPlacement, ShieldStyle } from '../geometry/route_labels';
-import { withIdState } from './street';
+import { withIdState, attrChanged } from './street';
 
 type Group = d3.Selection<SVGGElement>;
 
@@ -23,9 +23,9 @@ export function drawShields(group: Group, placements: ShieldPlacement[], zoom: n
         .data(placements, d => d.key);
     shields.exit().remove();
     shields.enter().append('g')
-        .attr('class', 'road-shield')
+        .each(attrChanged('class', 'road-shield'))
         .merge(shields)
-        .attr('transform', d => `translate(${d.point[0].toFixed(1)},${d.point[1].toFixed(1)})`)
+        .each(attrChanged('transform', d => `translate(${d.point[0].toFixed(1)},${d.point[1].toFixed(1)})`))
         .each(function(d) {
             const root = d3Select(this);
             const drawn = JSON.stringify([height, d.refs]);
@@ -39,13 +39,13 @@ export function drawShields(group: Group, placements: ShieldPlacement[], zoom: n
             let x = -total / 2;
             d.refs.forEach((ref, i) => {
                 const colours = shieldColours[ref.style];
-                root.append('rect').attr('class', `shield-plate shield-${ref.style}`)
-                    .attr('x', x.toFixed(1)).attr('y', (-height / 2).toFixed(1))
-                    .attr('width', widths[i].toFixed(1)).attr('height', height.toFixed(1))
+                root.append('rect').each(attrChanged('class', `shield-plate shield-${ref.style}`))
+                    .each(attrChanged('x', x.toFixed(1))).each(attrChanged('y', (-height / 2).toFixed(1)))
+                    .each(attrChanged('width', widths[i].toFixed(1))).each(attrChanged('height', height.toFixed(1)))
                     .attr('rx', (height * 0.18).toFixed(1))
                     .attr('fill', colours.fill).attr('stroke', colours.stroke).attr('stroke-width', 1.2);
-                root.append('text').attr('class', 'shield-text')
-                    .attr('x', (x + widths[i] / 2).toFixed(1)).attr('dy', '0.35em')
+                root.append('text').each(attrChanged('class', 'shield-text'))
+                    .each(attrChanged('x', (x + widths[i] / 2).toFixed(1))).attr('dy', '0.35em')
                     .attr('text-anchor', 'middle').attr('font-size', (height * 0.68).toFixed(1))
                     .attr('fill', colours.text)
                     .text(ref.text);
@@ -62,11 +62,11 @@ export function drawJunctionLabels(group: Group, labels: (JunctionLabel & { prop
     items.exit().remove();
     items.enter().append('g')
         .merge(items)
-        .attr('class', function(d) { return withIdState(this, `junction-label ${d.nodeID}`); })
-        .attr('transform', d => {
+        .each(attrChanged('class', function(d) { return withIdState(this, `junction-label ${d.nodeID}`); }))
+        .each(attrChanged('transform', d => {
             const p = projection(d.anchor);
             return `translate(${p[0].toFixed(1)},${p[1].toFixed(1)})`;
-        })
+        }))
         .each(function(d) {
             const root = d3Select(this);
             const drawn = JSON.stringify([height, d.ref, d.name]);
@@ -79,23 +79,23 @@ export function drawJunctionLabels(group: Group, labels: (JunctionLabel & { prop
             if (d.ref) {
                 const width = Math.max(height, d.ref.length * height * 0.6 + height * 0.4);
                 x = -width / 2;
-                root.append('rect').attr('class', 'junction-box')
-                    .attr('x', x.toFixed(1)).attr('y', (-height / 2).toFixed(1))
-                    .attr('width', width.toFixed(1)).attr('height', height.toFixed(1)).attr('rx', 1.5);
-                root.append('text').attr('class', 'junction-number')
+                root.append('rect').each(attrChanged('class', 'junction-box'))
+                    .each(attrChanged('x', x.toFixed(1))).each(attrChanged('y', (-height / 2).toFixed(1)))
+                    .each(attrChanged('width', width.toFixed(1))).each(attrChanged('height', height.toFixed(1))).attr('rx', 1.5);
+                root.append('text').each(attrChanged('class', 'junction-number'))
                     .attr('dy', '0.35em').attr('text-anchor', 'middle').attr('font-size', (height * 0.72).toFixed(1))
                     .text(d.ref);
                 x += width;
             }
             if (d.name) {
-                root.append('text').attr('class', 'junction-name')
-                    .attr('x', (x + 4).toFixed(1)).attr('dy', '0.35em').attr('font-size', (height * 0.62).toFixed(1))
+                root.append('text').each(attrChanged('class', 'junction-name'))
+                    .each(attrChanged('x', (x + 4).toFixed(1))).attr('dy', '0.35em').attr('font-size', (height * 0.62).toFixed(1))
                     .text(d.name);
             }
             // the whole label takes clicks, selecting the junction node
             const box = (this as SVGGElement).getBBox();
-            root.insert('rect', ':first-child').attr('class', 'junction-hit')
-                .attr('x', (box.x - 2).toFixed(1)).attr('y', (box.y - 2).toFixed(1))
-                .attr('width', (box.width + 4).toFixed(1)).attr('height', (box.height + 4).toFixed(1));
+            root.insert('rect', ':first-child').each(attrChanged('class', 'junction-hit'))
+                .each(attrChanged('x', (box.x - 2).toFixed(1))).each(attrChanged('y', (box.y - 2).toFixed(1)))
+                .each(attrChanged('width', (box.width + 4).toFixed(1))).each(attrChanged('height', (box.height + 4).toFixed(1)));
         });
 }

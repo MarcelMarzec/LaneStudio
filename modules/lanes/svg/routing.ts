@@ -6,6 +6,7 @@ import { pointAlong, pointInPolygon, polylineLength } from '../geometry/frame';
 import type { LaneRun, Route } from '../geometry/routing';
 import { junctionRules, type RoadPiece } from '../geometry/road_geometry';
 import type { LaneRef } from '../model';
+import { attrChanged } from './street';
 
 type Group = d3.Selection<SVGGElement>;
 
@@ -225,8 +226,8 @@ export function drawRoutes(group: Group, context: iD.Context, pieces: RoadPiece[
     const entered = paths.enter().append('path');
     entered.append('title');
     entered.merge(paths)
-        .attr('class', d => `route ${d.cls}`)
-        .attr('d', d => d.d)
+        .each(attrChanged('class', d => `route ${d.cls}`))
+        .each(attrChanged('d', d => d.d))
         .style('stroke', d => (d.colour && d.cls === 'route-line' ? d.colour : null))
         .style('fill', d => (d.colour && d.cls === 'route-head' ? d.colour : null))
         .order()
@@ -234,11 +235,11 @@ export function drawRoutes(group: Group, context: iD.Context, pieces: RoadPiece[
 
     const badges = group.selectAll<SVGGElement, typeof labels[number]>('g.route-number').data(labels, d => d.key);
     badges.exit().remove();
-    const badge = badges.enter().append('g').attr('class', 'route-number');
-    badge.append('circle').attr('r', 9);
+    const badge = badges.enter().append('g').each(attrChanged('class', 'route-number'));
+    badge.append('circle').each(attrChanged('r', 9));
     badge.append('text').attr('dy', '0.35em').attr('text-anchor', 'middle');
     badge.merge(badges)
-        .attr('transform', d => `translate(${d.at[0].toFixed(1)},${(d.at[1] - 16).toFixed(1)})`)
+        .each(attrChanged('transform', d => `translate(${d.at[0].toFixed(1)},${(d.at[1] - 16).toFixed(1)})`))
         .call(g => g.select('circle').style('fill', d => d.colour))
         .call(g => g.select('text').text(d => d.text));
 }

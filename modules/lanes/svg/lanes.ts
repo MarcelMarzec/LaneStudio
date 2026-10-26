@@ -12,7 +12,7 @@ import { laneRouting } from '../core/lane_routing';
 import { laneSpeed, speedClassOf } from '../core/lane_speed';
 import { drawRoutes, laneUnder } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
-import { roadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
+import { roadGeometry, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
 import type { LaneInfo, ParkingLayout } from '../geometry/layout';
 import { t } from '../../core/localizer';
 import {
@@ -23,9 +23,9 @@ import { laneTools } from '../core/lane_tools';
 import { laneLayout } from '../geometry/layout';
 import { offsetFromWay } from '../geometry/measure';
 import { svgLaneDefs, turnArrowSymbol } from './defs';
-import { drawStreet, drawParking, drawRoadMarkings, joinPaths, withIdState } from './street';
+import { drawStreet, drawParking, drawRoadMarkings, joinPaths, pathFor, classChanged, withIdState, attrChanged } from './street';
 import { actionConnectLanes, connectionNode } from '../actions/connect_lanes';
-import { streetGeometry, isCarriagewayArea } from '../geometry/street';
+import { streetGeometry, isCarriagewayArea, type StreetGeometry } from '../geometry/street';
 import { parkingGeometry } from '../geometry/parking';
 import { roadMarkingGeometry } from '../geometry/road_marking';
 import { isStreetParking, isTrafficIsland, surfaceGroup } from '../model/street_features';
@@ -33,6 +33,8 @@ import { metricFrame, pointAlong, pointInPolygon, polylineLength } from '../geom
 import { edgeStructures, isCovered, ringEdges, type StructureShape } from '../geometry/structures';
 import { signGeometry } from '../geometry/signs';
 import { drawSigns } from './signs';
+import { drawRailways } from './railway';
+import { railGeometry } from '../geometry/railway';
 import { junctionLabels, placeShields, shieldRefs } from '../geometry/route_labels';
 import { drawJunctionLabels, drawShields } from './route_labels';
 import type { AreaShape } from '../geometry/street';
@@ -135,13 +137,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     // the pieces last drawn, for redrawing routes alone as the pointer moves
     let _pieces: RoadPiece[] = [];
 
-    const path = (locs: Vec2[], closed: boolean) => {
-        if (locs.length < 2) return '';
-        return 'M' + locs.map(loc => {
-            const p = projection(loc);
-            return p[0].toFixed(1) + ',' + p[1].toFixed(1);
-        }).join('L') + (closed ? 'Z' : '');
-    };
+    const path = pathFor(projection);
 
     const pieceKey = (piece: RoadPiece) => `${piece.wayID}-${piece.index}`;
 
@@ -153,6 +149,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     }
 
     function clear() {
+        _marked = null;
         _layer.selectAll('g.lanes-group > *').remove();
         hideIdLabels([]);
         markSurface(false);
@@ -180,21 +177,47 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'roadside', 'parking-bays', 'parking', 'paths', 'carriageway', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'islands', 'dividers', 'kerbs',
-                'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs',
+                'areas', 'rail-beds', 'rail-sleepers', 'rails', 'roadside', 'parking-bays', 'parking', 'paths', 'carriageway', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'islands', 'dividers', 'tram-rails', 'kerbs',
+                'paths-over', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs',
                 'shields', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
                 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
             ])
             .enter()
             .append('g')
-            .attr('class', (d: string) => `lanes-group lanes-${d}`);
+            .each(attrChanged('class', (d: string) => `lanes-group lanes-${d}`));
         return (name: string) => _layer.select<SVGGElement>(`g.lanes-${name}`);
     }
 
 
+    /**
+     * What a draw depends on beyond the graph: the view, the selection, the mode and the features shown. iD reports a
+     * map draw for every feature the pointer passes over; with none of these changed, there is nothing to redraw.
+     */
+    const drawnKey = () => {
+        const map = context.map();
+        const t = projection.transform();
+        return [t.k, t.x, t.y, map.dimensions(), map.editableDataEnabled(), context.mode()?.id, context.selectedIDs(),
+            context.features().hidden()].join('|');
+    };
+    let _drawn: { graph: iD.Graph; key: string } | null = null;
+    let _marked: { drawn: Set<string>; drawnWays: Set<string>; drawnNodes: Set<string> } | null = null;
+    let _geometry: { graph: iD.Graph; ids: string; roads: RoadGeometry; street: StreetGeometry } | null = null;
+    let _frame = 0;
+
+    /** Redraws once a frame at most, and only when something the lanes depend on changed */
+    function drawWhenChanged() {
+        if (_frame) return;
+        _frame = requestAnimationFrame(() => {
+            _frame = 0;
+            if (_drawn && _drawn.graph === context.graph() && _drawn.key === drawnKey()) markIdFeatures();
+            else draw();
+        });
+    }
+
     function draw() {
         _layer = host();
         if (_layer.empty()) return;
+        _drawn = { graph: context.graph(), key: drawnKey() };
         const map = context.map();
         const zoom = map.zoom() as number;
         if (!_enabled || zoom < laneZooms.ribbons || !map.editableDataEnabled()) {
@@ -209,7 +232,14 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const ways = visible.filter(isLaneRoad);
         const carriagewayAreas = visible.filter(isCarriagewayArea) as osmWay[];
         const islands = visible.filter(entity => entity.type === 'way' && (entity as osmWay).isClosed() && isTrafficIsland(entity.tags)) as osmWay[];
-        const { visuals, pieces, innerPieces, channelled, junctions, connections, heads, areaRoads } = roadGeometry(ways, graph, carriagewayAreas, islands);
+        // the geometry is in map coordinates, so it holds while the graph and the features in view are the same (a new
+        // selection, tool or mode redraws without working it out again)
+        const visibleIDs = visible.map(entity => entity.id).join(',');
+        if (!_geometry || _geometry.graph !== graph || _geometry.ids !== visibleIDs) {
+            const roads = roadGeometry(ways, graph, carriagewayAreas, islands);
+            _geometry = { graph, ids: visibleIDs, roads, street: streetGeometry(visible, graph, roads.visuals) };
+        }
+        const { pieces, innerPieces, channelled, junctions, connections, heads, areaRoads } = _geometry.roads;
         // short links inside a junction cluster are drawn only as lane guide lines (still clickable), except in a
         // junction holding traffic islands, where they are drawn whole over the junction, running between the islands
         const shown = pieces.filter(piece => !innerPieces.has(piece));
@@ -227,7 +257,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         markSurface(true);
 
         /* footways, mapped areas and kerbs, road markings on nodes */
-        const street = streetGeometry(visible, graph, visuals);
+        const street = _geometry.street;
         // roads lying inside their own road mapped as an area: the area is their surface, so they draw
         // no carriageway, kerbs, roadside or general lane fill of their own (a road it only touches is left alone)
         const roadAreas = street.areas.filter(a => a.kind === 'carriageway');
@@ -243,6 +273,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const parking = parkingGeometry(visible, graph);
         const roadMarkings = markings ? roadMarkingGeometry(visible, graph) : { lines: [], areas: [], texts: [] };
         drawStreet(group, street, projection, zoom, laneZooms, areaRoads);
+
+        /* railways, the Underground and trams (sleepers once they can be seen) */
+        const tracks = railGeometry(visible, graph, markings);
+        drawRailways(group, tracks, projection);
         drawParking(group('parking'), parking, projection, markings);
         drawRoadMarkings(group('road-markings'), roadMarkings, projection, labels);
 
@@ -275,11 +309,11 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         stripPaths.exit().remove();
         stripPaths.enter().append('path')
             .merge(stripPaths)
-            .attr('class', d => `roadside roadside-${d.kind}` + (d.assumed ? ' assumed' : '') + (d.wayID ? coveredTag(d.wayID) : '') +
+            .each(attrChanged('class', d => `roadside roadside-${d.kind}` + (d.assumed ? ' assumed' : '') + (d.wayID ? coveredTag(d.wayID) : '') +
                 (d.parking ? ` parking-${d.parking.position}` : '') +
                 (d.kind === 'shoulder' && state.shoulder()?.wayID === d.wayID && state.shoulder()?.side === (d as { side?: string }).side ? ' selected' : '') +
-                (d.wayID && isUnderConstruction(tagsOf(d.wayID)) ? ' lanes-construction' : ''))
-            .attr('d', d => path(d.polygon, true));
+                (d.wayID && isUnderConstruction(tagsOf(d.wayID)) ? ' lanes-construction' : '')))
+            .each(attrChanged('d', d => path(d.polygon, true)));
 
         // parking bays: a dashed line along the edge of the bays, and a line between each pair of bays
         const bayData = !markings ? [] : strips.flatMap(strip => {
@@ -295,8 +329,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         bays.exit().remove();
         bays.enter().append('path')
             .merge(bays)
-            .attr('class', d => d.cls)
-            .attr('d', d => d.d);
+            .each(attrChanged('class', d => d.cls))
+            .each(attrChanged('d', d => d.d));
 
 
         /* carriageways */
@@ -309,15 +343,15 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         carriageways.enter().append('path')
             .merge(carriageways)
             // the way id as a class: iD's hover and select behaviours highlight everything with it
-            .attr('class', function(d) {
+            .each(attrChanged('class', function(d) {
                 const piece = d.piece;
                 return withIdState(this, `carriageway ${piece.wayID}` + coveredTag(piece.wayID) + (building(piece) ? ' lanes-construction' : '') +
                     (piece.layout.assumed ? ' assumed' : '') +
                     (surfaceOf(piece) ? ` surface-${surfaceOf(piece)}` : '') +
                     (selected.has(piece.wayID) ? ' selected' : '') +
                     (corridor.has(piece.wayID) && !selected.has(piece.wayID) ? ' corridor' : ''));
-            })
-            .attr('d', d => d.polygons.map(polygon => path(polygon, true)).join(''));
+            }))
+            .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')));
 
 
         /* junction areas (not inside a road mapped as an area, which is their surface) */
@@ -330,8 +364,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         areas.exit().remove();
         areas.enter().append('path')
             .merge(areas)
-            .attr('class', d => 'junction-area' + (d.kind === 'flare' ? ' junction-flare' : ''))
-            .attr('d', d => d.polygons.map(polygon => path(polygon, true)).join(''));
+            .each(attrChanged('class', d => 'junction-area' + (d.kind === 'flare' ? ' junction-flare' : '')))
+            .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')));
 
 
         /* turning circles, loops and hammerheads: road surface carried on from the road's end */
@@ -374,8 +408,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         ribbons.exit().remove();
         ribbons.enter().append('path')
             .merge(ribbons)
-            .attr('class', d => d.cls)
-            .attr('d', d => d.polygons.map(polygon => path(polygon, true)).join(''));
+            .each(attrChanged('class', d => d.cls))
+            .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')));
 
 
         /* roads and paths being built: work stripes over them */
@@ -411,8 +445,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         dividers.exit().remove();
         dividers.enter().append('path')
             .merge(dividers)
-            .attr('class', d => `divider ${d.style}`)
-            .attr('d', d => d.line);
+            .each(attrChanged('class', d => `divider ${d.style}`))
+            .each(attrChanged('d', d => d.line));
 
 
         /* kerbs */
@@ -445,9 +479,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         kerbs.exit().remove();
         kerbs.enter().append('path')
             .merge(kerbs)
-            .attr('class', d => ('shoulder' in d && d.shoulder ? 'shoulder-edge' : 'kerb') + (d.assumed ? ' assumed' : '') +
-                ('construction' in d && d.construction ? ' construction' : ''))
-            .attr('d', d => path(d.line, false));
+            .each(attrChanged('class', d => ('shoulder' in d && d.shoulder ? 'shoulder-edge' : 'kerb') + (d.assumed ? ' assumed' : '') +
+                ('construction' in d && d.construction ? ' construction' : '')))
+            .each(attrChanged('d', d => path(d.line, false)));
 
 
         /* structures: bridge parapets, tunnel walls, cutting and embankment slopes, fords */
@@ -467,8 +501,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         ];
         joinPaths(group('structures'), structures, d => d.key,
             d => `structure structure-${d.kind}` + (d.variant ? ` ${d.variant}` : ''), d => path(d.points, d.closed));
-        group('paths').selectAll<SVGPathElement, { key: string }>('path.street-path')
-            .classed('lanes-covered', d => !!d && isCovered(tagsOf(d.key)));
+        _layer.selectAll<SVGPathElement, { key: string }>('g.lanes-paths path.street-path, g.lanes-paths-over path.street-path')
+            .each(classChanged('lanes-covered', d => !!d && isCovered(tagsOf(d.key))));
 
 
         /* turn arrows */
@@ -510,9 +544,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         arrows.exit().remove();
         arrows.enter().append('use')
             .merge(arrows)
-            .attr('class', d => (d.href === '#lanes-arrow-travel' ? 'travel-arrow' : 'turn-arrow'))
-            .attr('href', d => d.href)
-            .attr('transform', d => d.transform);
+            .each(attrChanged('class', d => (d.href === '#lanes-arrow-travel' ? 'travel-arrow' : 'turn-arrow')))
+            .each(attrChanged('href', d => d.href))
+            .each(attrChanged('transform', d => d.transform));
 
 
         /* labels: destination and speed */
@@ -539,12 +573,12 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .data(labelData, d => d.key);
         texts.exit().remove();
         texts.enter().append('text')
-            .attr('class', 'lane-label')
+            .each(attrChanged('class', 'lane-label'))
             .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'central')
             .merge(texts)
             .attr('font-size', d => d.size.toFixed(1))
-            .attr('transform', d => d.transform)
+            .each(attrChanged('transform', d => d.transform))
             .text(d => d.text);
 
 
@@ -601,9 +635,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .data(selectionData, d => d.key);
         highlights.exit().remove();
         highlights.enter().append('path')
-            .attr('class', 'lane-selected')
+            .each(attrChanged('class', 'lane-selected'))
             .merge(highlights)
-            .attr('d', d => path(d.polygon, true));
+            .each(attrChanged('d', d => path(d.polygon, true)));
 
 
         /* the Routing tool's routes */
@@ -635,28 +669,42 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         for (const a of roadMarkings.areas) drawnWays.add(a.id);
         const drawnNodes = new Set<string>([...street.markings, ...street.surfaces, ...signData.signs, ...junctionData].map(m => m.nodeID));
         for (const gantry of signData.gantries) drawnWays.add(gantry.id);
+        for (const track of tracks) drawnWays.add(track.id);
         for (const text of roadMarkings.texts) drawnNodes.add(text.id);
         for (const id of drawnWays) {
             const way = graph.hasEntity(id as osmWay['id']) as osmWay | undefined;
             if (way?.type === 'way') way.nodes.forEach(n => drawnNodes.add(n));
         }
+        _marked = { drawn, drawnWays, drawnNodes };
+        markIdFeatures();
+    }
+
+
+    /**
+     * Marks iD's own drawing of what the lanes layer draws: road lines are thinned, and the "hide iD's lines and
+     * points" setting hides all of it. Run after every draw of iD's, which can add elements without the lanes changing.
+     */
+    function markIdFeatures() {
+        if (!_marked) return;
+        const { drawn, drawnWays, drawnNodes } = _marked;
+        const graph = context.graph();
         const surface = context.surface();
         // (iD draws lines below ground, like tunnels and cuttings, in its `covered` group rather than `lines`)
         surface.selectAll<SVGPathElement, { id: string }>('.layer-osm path.line')
-            .classed('lanes-drawn', d => !!d && drawn.has(d.id))
-            .classed('lanes-drawn-feature', d => !!d && drawnWays.has(d.id));
+            .each(classChanged('lanes-drawn', d => !!d && drawn.has(d.id)))
+            .each(classChanged('lanes-drawn-feature', d => !!d && drawnWays.has(d.id)));
         surface.selectAll<SVGPathElement, { id: string }>('.layer-osm.areas path')
-            .classed('lanes-drawn-feature', d => !!d && drawnWays.has(d.id));
+            .each(classChanged('lanes-drawn-feature', d => !!d && drawnWays.has(d.id)));
         surface.selectAll<SVGGElement, OsmEntity>('.layer-osm .vertices g.vertex, .layer-osm .points g.point')
-            .classed('lanes-drawn-feature', d => !!d && drawnNodes.has(d.id))
+            .each(classChanged('lanes-drawn-feature', d => !!d && drawnNodes.has(d.id)))
             // street-side parking mapped as a point on a road is already shown by the road's parking strip
-            .classed('lanes-redundant', d => !!d && isStreetParking(d.tags) && graph.parentWays(d).some(isLaneRoad));
+            .each(classChanged('lanes-redundant', d => !!d && isStreetParking(d.tags) && graph.parentWays(d).some(isLaneRoad)));
         // iD's one-way markers on the way line are replaced by arrows on the lanes themselves
         surface.selectAll<SVGPathElement, { id: string }>('.layer-osm .onewaygroup path')
-            .classed('lanes-drawn-oneway', d => !!d && drawn.has(d.id));
+            .each(classChanged('lanes-drawn-oneway', d => !!d && drawn.has(d.id)));
         // and iD's cutting and embankment triangles by the slopes drawn beside them
         surface.selectAll<SVGPathElement, { id: string }>('.layer-osm .sidedgroup path')
-            .classed('lanes-drawn-oneway', d => !!d && drawnWays.has(d.id));
+            .each(classChanged('lanes-drawn-oneway', d => !!d && drawnWays.has(d.id)));
     }
 
 
@@ -835,7 +883,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .data(laneTargets, d => d.key);
         lanes.exit().remove();
         lanes.enter().append('path')
-            .attr('class', 'lane-target')
+            .each(attrChanged('class', 'lane-target'))
             .on('click.lanes', (event: MouseEvent, d: LaneTarget) => {
                 // the Routing tool edits nothing: it pins the routes itself
                 // (nor does the Speed Limit tool: it sets limits itself)
@@ -866,7 +914,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 }
             })
             .merge(lanes)
-            .attr('d', d => d.d);
+            .each(attrChanged('d', d => d.d));
 
         // hard shoulders: a click selects the road and opens the shoulder in the sidebar
         const shoulderTargets: ShoulderTarget[] = pieces.flatMap(piece => {
@@ -884,7 +932,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .data(shoulderTargets, d => d.key);
         shoulders.exit().remove();
         shoulders.enter().append('path')
-            .attr('class', 'shoulder-target')
+            .each(attrChanged('class', 'shoulder-target'))
             .on('click.lanes', (_event: MouseEvent, d: ShoulderTarget) => {
                 if (tools.tool() !== 'select') return;
                 const ids = context.selectedIDs();
@@ -892,7 +940,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 state.selectShoulder(d.wayID, d.side);
             })
             .merge(shoulders)
-            .attr('d', d => d.d);
+            .each(attrChanged('d', d => d.d));
 
         const widthTool = tools.tool() === 'width';
         const dividerTargets: DividerTarget[] = !editable ? [] : pieces.filter(piece => selected.has(piece.wayID)).flatMap(piece => {
@@ -937,8 +985,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 );
             })
             .merge(dividers)
-            .attr('class', d => 'divider-target' + (d.clickable ? '' : ' width-only'))
-            .attr('d', d => d.d);
+            .each(attrChanged('class', d => 'divider-target' + (d.clickable ? '' : ' width-only')))
+            .each(attrChanged('d', d => d.d));
     }
 
 
@@ -956,9 +1004,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .data(data, d => d.key);
         targets.exit().remove();
         targets.enter().append('path')
-            .attr('class', 'entity-target')
+            .each(attrChanged('class', 'entity-target'))
             .merge(targets)
-            .attr('d', d => d.d);
+            .each(attrChanged('d', d => d.d));
     }
 
 
@@ -975,11 +1023,11 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .data(data, d => d.key);
         markers.exit().remove();
         markers.enter().append('circle')
-            .attr('r', 7)
+            .each(attrChanged('r', 7))
             .merge(markers)
-            .attr('class', d => 'short-way-marker' + (selected.has(d.wayID) ? ' selected' : ''))
-            .attr('cx', d => d.p[0].toFixed(1))
-            .attr('cy', d => d.p[1].toFixed(1));
+            .each(attrChanged('class', d => 'short-way-marker' + (selected.has(d.wayID) ? ' selected' : '')))
+            .each(attrChanged('cx', d => d.p[0].toFixed(1)))
+            .each(attrChanged('cy', d => d.p[1].toFixed(1)));
     }
 
 
@@ -995,8 +1043,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         if (osm.empty()) return osm as Selection;
         let g = osm.select<SVGGElement>(':scope > g.lanes-layer');
         if (g.empty()) {
-            g = osm.insert<SVGGElement>('g', ':first-child').attr('class', 'lanes-layer');
-            g.append('defs').attr('class', 'lanes-defs').call(svgLaneDefs);
+            g = osm.insert<SVGGElement>('g', ':first-child').each(attrChanged('class', 'lanes-layer'));
+            g.append('defs').each(attrChanged('class', 'lanes-defs')).call(svgLaneDefs);
         }
         return g as Selection;
     }
@@ -1007,8 +1055,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         draw();
     }
 
-    // iD redraws edited features without redrawing layers, so follow every map draw
-    context.map().on('drawn.lanes', draw);
+    // iD redraws edited features without redrawing layers, so follow map draws (those that change anything)
+    context.map().on('drawn.lanes', drawWhenChanged);
     state.on('change.layer', draw);
     state.on('corridor.layer', draw);
     tools.on('change.layer', draw);

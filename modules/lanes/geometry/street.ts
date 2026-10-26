@@ -47,6 +47,8 @@ export interface PathShape {
     marks: Vec2[][];
     /** being built (`highway=construction`) */
     construction?: boolean;
+    /** in a tunnel or below ground (`layer` < 0): drawn under the roads, where other paths are drawn over them */
+    below?: boolean;
 }
 
 export type AreaKind = 'island' | 'pavement' | 'cycleway' | 'carriageway' | 'other';
@@ -271,6 +273,7 @@ function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisua
     const shape: PathShape = {
         id: way.id, kind, assumed: tagged === undefined, markings, marks, construction: isUnderConstruction(way.tags),
         surface: surfaceGroup(tags.surface), use, divider, footHalf,
+        below: (!!tags.tunnel && tags.tunnel !== 'no') || Number(tags.layer) < 0,
         polygon: [...left, ...right.reverse()].map(frame.toLoc)
     };
     pathCache.set(way, { nodes, stretch, shape });

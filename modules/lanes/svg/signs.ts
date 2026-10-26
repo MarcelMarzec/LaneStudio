@@ -2,7 +2,7 @@ import { select as d3Select } from 'd3-selection';
 
 import type { Projection } from '../../geo/raw_mercator';
 import type { SignFace, SignGeometry, SignShape } from '../geometry/signs';
-import { pathFor, pxPerMetre, withIdState } from './street';
+import { pathFor, pxPerMetre, withIdState, attrChanged } from './street';
 
 type Group = d3.Selection<SVGGElement>;
 type G = d3.Selection<SVGGElement>;
@@ -28,42 +28,42 @@ export function signSize(zoom: number): number {
 type Drawing = (g: G, r: number, face: SignFace) => void;
 
 const circle = (g: G, r: number, fill: string, stroke?: string, ring = 0) => g.append('circle')
-    .attr('r', r - ring / 2).attr('fill', fill).attr('stroke', stroke ?? 'none').attr('stroke-width', ring);
+    .each(attrChanged('r', r - ring / 2)).attr('fill', fill).attr('stroke', stroke ?? 'none').attr('stroke-width', ring);
 const text = (g: G, value: string, size: number, fill = black, y = 0) => g.append('text')
-    .attr('class', 'sign-text').attr('y', y).attr('dy', '0.35em').attr('text-anchor', 'middle')
+    .each(attrChanged('class', 'sign-text')).each(attrChanged('y', y)).attr('dy', '0.35em').attr('text-anchor', 'middle')
     .attr('font-size', size.toFixed(1)).attr('font-weight', 700).attr('fill', fill).text(value);
 const redRing = (g: G, r: number) => circle(g, r, white, red, r * 0.24);
 const polygon = (g: G, points: [number, number][], fill: string, stroke?: string, width = 0) => g.append('path')
-    .attr('d', 'M' + points.map(p => p.map(v => v.toFixed(1)).join(',')).join('L') + 'Z')
+    .each(attrChanged('d', 'M' + points.map(p => p.map(v => v.toFixed(1)).join(',')).join('L') + 'Z'))
     .attr('fill', fill).attr('stroke', stroke ?? 'none').attr('stroke-width', width).attr('stroke-linejoin', 'round');
 /** An arrow pointing up, rotated by `angle` degrees, `size` long */
 const arrow = (g: G, size: number, fill: string, angle = 0) => {
     const s = size / 2;
     const w = size * 0.16;
     return g.append('path')
-        .attr('d', `M0,${-s} L${s * 0.55},${-s * 0.2} L${w},${-s * 0.2} L${w},${s} L${-w},${s} L${-w},${-s * 0.2} L${-s * 0.55},${-s * 0.2} Z`)
-        .attr('fill', fill).attr('transform', angle ? `rotate(${angle})` : null);
+        .each(attrChanged('d', `M0,${-s} L${s * 0.55},${-s * 0.2} L${w},${-s * 0.2} L${w},${s} L${-w},${s} L${-w},${-s * 0.2} L${-s * 0.55},${-s * 0.2} Z`))
+        .attr('fill', fill).each(attrChanged('transform', angle ? `rotate(${angle})` : null));
 };
 /** A bent arrow turning right (or left when `left`) */
 const turnArrow = (g: G, size: number, fill: string, left = false) => {
     const s = size / 2;
     const w = size * 0.13;
     const d = `M${-w},${s} L${-w},${-s * 0.15} Q${-w},${-s * 0.45} ${s * 0.15},${-s * 0.45} L${s * 0.3},${-s * 0.45} L${s * 0.3},${-s * 0.75} L${s * 0.8},${-s * 0.3} L${s * 0.3},${s * 0.15} L${s * 0.3},${-s * 0.15} L${s * 0.15},${-s * 0.15} Q${w},${-s * 0.15} ${w},${s * 0.1} L${w},${s} Z`;
-    return g.append('path').attr('d', d).attr('fill', fill).attr('transform', left ? 'scale(-1,1)' : null);
+    return g.append('path').each(attrChanged('d', d)).attr('fill', fill).each(attrChanged('transform', left ? 'scale(-1,1)' : null));
 };
 const prohibitionBar = (g: G, r: number) => g.append('line')
-    .attr('x1', -r * 0.62).attr('y1', -r * 0.62).attr('x2', r * 0.62).attr('y2', r * 0.62)
+    .each(attrChanged('x1', -r * 0.62)).each(attrChanged('y1', -r * 0.62)).each(attrChanged('x2', r * 0.62)).each(attrChanged('y2', r * 0.62))
     .attr('stroke', red).attr('stroke-width', r * 0.2);
 const bicycle = (g: G, r: number, fill: string, y = 0) => {
-    const b = g.append('g').attr('transform', `translate(0,${y})`).attr('fill', 'none').attr('stroke', fill).attr('stroke-width', Math.max(1, r * 0.09));
-    b.append('circle').attr('cx', -r * 0.38).attr('cy', r * 0.12).attr('r', r * 0.24);
-    b.append('circle').attr('cx', r * 0.38).attr('cy', r * 0.12).attr('r', r * 0.24);
-    b.append('path').attr('d', `M${-r * 0.38},${r * 0.12} L${-r * 0.1},${-r * 0.25} L${r * 0.22},${-r * 0.25} L${r * 0.38},${r * 0.12} M${-r * 0.1},${-r * 0.25} L${0},${r * 0.12} L${r * 0.22},${-r * 0.25}`);
+    const b = g.append('g').each(attrChanged('transform', `translate(0,${y})`)).attr('fill', 'none').attr('stroke', fill).attr('stroke-width', Math.max(1, r * 0.09));
+    b.append('circle').each(attrChanged('cx', -r * 0.38)).each(attrChanged('cy', r * 0.12)).each(attrChanged('r', r * 0.24));
+    b.append('circle').each(attrChanged('cx', r * 0.38)).each(attrChanged('cy', r * 0.12)).each(attrChanged('r', r * 0.24));
+    b.append('path').each(attrChanged('d', `M${-r * 0.38},${r * 0.12} L${-r * 0.1},${-r * 0.25} L${r * 0.22},${-r * 0.25} L${r * 0.38},${r * 0.12} M${-r * 0.1},${-r * 0.25} L${0},${r * 0.12} L${r * 0.22},${-r * 0.25}`));
 };
 const person = (g: G, r: number, fill: string, x = 0, y = 0) => {
-    const p = g.append('g').attr('transform', `translate(${x},${y})`);
-    p.append('circle').attr('cy', -r * 0.32).attr('r', r * 0.12).attr('fill', fill);
-    p.append('path').attr('d', `M0,${-r * 0.18} L0,${r * 0.15} M0,${r * 0.15} L${-r * 0.15},${r * 0.45} M0,${r * 0.15} L${r * 0.15},${r * 0.45} M${-r * 0.18},${-r * 0.05} L${r * 0.18},${-r * 0.05}`)
+    const p = g.append('g').each(attrChanged('transform', `translate(${x},${y})`));
+    p.append('circle').each(attrChanged('cy', -r * 0.32)).each(attrChanged('r', r * 0.12)).attr('fill', fill);
+    p.append('path').each(attrChanged('d', `M0,${-r * 0.18} L0,${r * 0.15} M0,${r * 0.15} L${-r * 0.15},${r * 0.45} M0,${r * 0.15} L${r * 0.15},${r * 0.45} M${-r * 0.18},${-r * 0.05} L${r * 0.18},${-r * 0.05}`))
         .attr('stroke', fill).attr('stroke-width', Math.max(1, r * 0.09)).attr('fill', 'none');
 };
 
@@ -101,7 +101,7 @@ export const ukSignDrawings: Record<string, { name: string; draw: Drawing }> = {
         name: 'No U-turn',
         draw: (g, r) => {
             redRing(g, r);
-            g.append('path').attr('d', `M${r * 0.25},${r * 0.45} L${r * 0.25},${-r * 0.1} A${r * 0.25},${r * 0.25} 0 0 0 ${-r * 0.25},${-r * 0.1} L${-r * 0.25},${r * 0.2}`)
+            g.append('path').each(attrChanged('d', `M${r * 0.25},${r * 0.45} L${r * 0.25},${-r * 0.1} A${r * 0.25},${r * 0.25} 0 0 0 ${-r * 0.25},${-r * 0.1} L${-r * 0.25},${r * 0.2}`))
                 .attr('fill', 'none').attr('stroke', black).attr('stroke-width', r * 0.16);
             polygon(g, [[-r * 0.45, r * 0.15], [-r * 0.05, r * 0.15], [-r * 0.25, r * 0.45]], black);
             prohibitionBar(g, r);
@@ -111,7 +111,7 @@ export const ukSignDrawings: Record<string, { name: string; draw: Drawing }> = {
         name: 'No entry',
         draw: (g, r) => {
             circle(g, r, red, white, r * 0.06);
-            g.append('rect').attr('x', -r * 0.65).attr('y', -r * 0.17).attr('width', r * 1.3).attr('height', r * 0.34).attr('fill', white);
+            g.append('rect').each(attrChanged('x', -r * 0.65)).each(attrChanged('y', -r * 0.17)).each(attrChanged('width', r * 1.3)).each(attrChanged('height', r * 0.34)).attr('fill', white);
         }
     },
     'GB:617': { name: 'All vehicles prohibited', draw: (g, r) => { redRing(g, r); } },
@@ -119,8 +119,8 @@ export const ukSignDrawings: Record<string, { name: string; draw: Drawing }> = {
         name: 'No motor vehicles',
         draw: (g, r) => {
             redRing(g, r);
-            g.append('rect').attr('x', -r * 0.45).attr('y', -r * 0.12).attr('width', r * 0.9).attr('height', r * 0.3).attr('rx', r * 0.06).attr('fill', black);
-            g.append('rect').attr('x', -r * 0.25).attr('y', -r * 0.32).attr('width', r * 0.45).attr('height', r * 0.24).attr('rx', r * 0.06).attr('fill', black);
+            g.append('rect').each(attrChanged('x', -r * 0.45)).each(attrChanged('y', -r * 0.12)).each(attrChanged('width', r * 0.9)).each(attrChanged('height', r * 0.3)).attr('rx', r * 0.06).attr('fill', black);
+            g.append('rect').each(attrChanged('x', -r * 0.25)).each(attrChanged('y', -r * 0.32)).each(attrChanged('width', r * 0.45)).each(attrChanged('height', r * 0.24)).attr('rx', r * 0.06).attr('fill', black);
         }
     },
     'GB:626.2': { name: 'Weight limit', draw: (g, r, face) => { redRing(g, r); text(g, face.value ? `${face.value}` : 'T', r * 0.6); } },
@@ -130,14 +130,14 @@ export const ukSignDrawings: Record<string, { name: string; draw: Drawing }> = {
         name: 'No overtaking',
         draw: (g, r) => {
             redRing(g, r);
-            g.append('rect').attr('x', -r * 0.5).attr('y', -r * 0.2).attr('width', r * 0.4).attr('height', r * 0.5).attr('rx', r * 0.08).attr('fill', red);
-            g.append('rect').attr('x', r * 0.1).attr('y', -r * 0.2).attr('width', r * 0.4).attr('height', r * 0.5).attr('rx', r * 0.08).attr('fill', black);
+            g.append('rect').each(attrChanged('x', -r * 0.5)).each(attrChanged('y', -r * 0.2)).each(attrChanged('width', r * 0.4)).each(attrChanged('height', r * 0.5)).attr('rx', r * 0.08).attr('fill', red);
+            g.append('rect').each(attrChanged('x', r * 0.1)).each(attrChanged('y', -r * 0.2)).each(attrChanged('width', r * 0.4)).each(attrChanged('height', r * 0.5)).attr('rx', r * 0.08).attr('fill', black);
         }
     },
     'GB:652': {
         name: 'One way',
         draw: (g, r) => {
-            g.append('rect').attr('x', -r).attr('y', -r * 0.55).attr('width', r * 2).attr('height', r * 1.1).attr('fill', blue).attr('stroke', white).attr('stroke-width', r * 0.06);
+            g.append('rect').each(attrChanged('x', -r)).each(attrChanged('y', -r * 0.55)).each(attrChanged('width', r * 2)).each(attrChanged('height', r * 1.1)).attr('fill', blue).attr('stroke', white).attr('stroke-width', r * 0.06);
             arrow(g, r * 1.6, white, 90);
         }
     },
@@ -146,7 +146,7 @@ export const ukSignDrawings: Record<string, { name: string; draw: Drawing }> = {
         name: 'National speed limit',
         draw: (g, r) => {
             circle(g, r, white, black, r * 0.06);
-            g.append('line').attr('x1', -r * 0.55).attr('y1', r * 0.55).attr('x2', r * 0.55).attr('y2', -r * 0.55)
+            g.append('line').each(attrChanged('x1', -r * 0.55)).each(attrChanged('y1', r * 0.55)).each(attrChanged('x2', r * 0.55)).each(attrChanged('y2', -r * 0.55))
                 .attr('stroke', black).attr('stroke-width', r * 0.3);
         }
     },
@@ -154,8 +154,8 @@ export const ukSignDrawings: Record<string, { name: string; draw: Drawing }> = {
     'GB:674': {
         name: '20 zone',
         draw: (g, r, face) => {
-            g.append('rect').attr('x', -r * 0.85).attr('y', -r).attr('width', r * 1.7).attr('height', r * 2).attr('rx', r * 0.12).attr('fill', white).attr('stroke', black).attr('stroke-width', r * 0.06);
-            const ring = g.append('g').attr('transform', `translate(0,${-r * 0.25}) scale(0.62)`);
+            g.append('rect').each(attrChanged('x', -r * 0.85)).each(attrChanged('y', -r)).each(attrChanged('width', r * 1.7)).each(attrChanged('height', r * 2)).attr('rx', r * 0.12).attr('fill', white).attr('stroke', black).attr('stroke-width', r * 0.06);
+            const ring = g.append('g').each(attrChanged('transform', `translate(0,${-r * 0.25}) scale(0.62)`));
             speedLimit(ring, r, { code: 'GB:670', value: face.value ?? '20' });
             text(g, 'ZONE', r * 0.38, black, r * 0.65);
         }
@@ -165,7 +165,7 @@ export const ukSignDrawings: Record<string, { name: string; draw: Drawing }> = {
         name: 'Shared path',
         draw: (g, r) => {
             circle(g, r, blue, white, r * 0.06);
-            const top = g.append('g').attr('transform', `translate(0,${-r * 0.35}) scale(0.6)`);
+            const top = g.append('g').each(attrChanged('transform', `translate(0,${-r * 0.35}) scale(0.6)`));
             bicycle(top, r, white);
             person(g, r, white, 0, r * 0.4);
         }
@@ -174,8 +174,8 @@ export const ukSignDrawings: Record<string, { name: string; draw: Drawing }> = {
         name: 'Segregated path',
         draw: (g, r) => {
             circle(g, r, blue, white, r * 0.06);
-            g.append('line').attr('y1', -r).attr('y2', r).attr('stroke', white).attr('stroke-width', r * 0.08);
-            const left = g.append('g').attr('transform', `translate(${-r * 0.42},0) scale(0.55)`);
+            g.append('line').each(attrChanged('y1', -r)).each(attrChanged('y2', r)).attr('stroke', white).attr('stroke-width', r * 0.08);
+            const left = g.append('g').each(attrChanged('transform', `translate(${-r * 0.42},0) scale(0.55)`));
             bicycle(left, r, white);
             person(g, r, white, r * 0.42, 0);
         }
@@ -194,7 +194,7 @@ export function signDrawing(code: string): { name: string; draw: Drawing } | und
 function plate(g: G, r: number, face: SignFace) {
     const label = face.code.replace(/^[A-Z]{2,3}:/, '') + (face.value ? ` ${face.value}` : '');
     const width = Math.max(2 * r, label.length * r * 0.55 + r * 0.5);
-    g.append('rect').attr('x', -width / 2).attr('y', -r * 0.6).attr('width', width).attr('height', r * 1.2).attr('rx', r * 0.15)
+    g.append('rect').each(attrChanged('x', -width / 2)).each(attrChanged('y', -r * 0.6)).each(attrChanged('width', width)).each(attrChanged('height', r * 1.2)).attr('rx', r * 0.15)
         .attr('fill', white).attr('stroke', black).attr('stroke-width', Math.max(1, r * 0.08));
     text(g, label, r * 0.6);
 }
@@ -207,20 +207,20 @@ export function drawFace(g: G, r: number, face: SignFace) {
 }
 
 function messagePanel(g: G, r: number) {
-    g.append('rect').attr('x', -r * 1.4).attr('y', -r * 0.7).attr('width', r * 2.8).attr('height', r * 1.4).attr('rx', r * 0.08)
+    g.append('rect').each(attrChanged('x', -r * 1.4)).each(attrChanged('y', -r * 0.7)).each(attrChanged('width', r * 2.8)).each(attrChanged('height', r * 1.4)).attr('rx', r * 0.08)
         .attr('fill', '#141414').attr('stroke', '#777').attr('stroke-width', Math.max(1, r * 0.08));
-    g.append('rect').attr('x', -r * 1.2).attr('y', -r * 0.5).attr('width', r * 2.4).attr('height', r * 1.0).attr('fill', 'url(#lanes-message-dots)');
+    g.append('rect').each(attrChanged('x', -r * 1.2)).each(attrChanged('y', -r * 0.5)).each(attrChanged('width', r * 2.4)).each(attrChanged('height', r * 1.0)).attr('fill', 'url(#lanes-message-dots)');
 }
 
 function camera(g: G, r: number, sign: SignShape) {
-    g.append('rect').attr('x', -r * 0.85).attr('y', -r * 0.55).attr('width', r * 1.7).attr('height', r * 1.1).attr('rx', r * 0.15)
+    g.append('rect').each(attrChanged('x', -r * 0.85)).each(attrChanged('y', -r * 0.55)).each(attrChanged('width', r * 1.7)).each(attrChanged('height', r * 1.1)).attr('rx', r * 0.15)
         .attr('fill', '#2c2f36').attr('stroke', '#f2c400').attr('stroke-width', Math.max(1, r * 0.1));
     if (sign.camera === 'red_light') {
-        g.append('circle').attr('cx', r * 0.3).attr('r', r * 0.32).attr('fill', '#e53935');
-        g.append('circle').attr('cx', -r * 0.35).attr('r', r * 0.18).attr('fill', '#9ea3ad');
+        g.append('circle').each(attrChanged('cx', r * 0.3)).each(attrChanged('r', r * 0.32)).attr('fill', '#e53935');
+        g.append('circle').each(attrChanged('cx', -r * 0.35)).each(attrChanged('r', r * 0.18)).attr('fill', '#9ea3ad');
     } else {
-        g.append('circle').attr('cx', r * 0.2).attr('r', r * 0.32).attr('fill', '#9ea3ad');
-        g.append('circle').attr('cx', r * 0.2).attr('r', r * 0.15).attr('fill', '#14161a');
+        g.append('circle').each(attrChanged('cx', r * 0.2)).each(attrChanged('r', r * 0.32)).attr('fill', '#9ea3ad');
+        g.append('circle').each(attrChanged('cx', r * 0.2)).each(attrChanged('r', r * 0.15)).attr('fill', '#14161a');
     }
     if (sign.camera === 'average_speed') text(g, 'AVG', r * 0.36, '#f2c400', -r * 0.85);
 }
@@ -241,8 +241,8 @@ export function drawSigns(group: (name: string) => Group, data: SignGeometry, pr
     gantries.exit().remove();
     gantries.enter().append('path')
         .merge(gantries)
-        .attr('class', function(d) { return withIdState(this, `gantry ${d.id}`); })
-        .attr('d', d => path(d.line, false))
+        .each(attrChanged('class', function(d) { return withIdState(this, `gantry ${d.id}`); }))
+        .each(attrChanged('d', d => path(d.line, false)))
         .attr('stroke-width', Math.max(4, 1.2 * metres).toFixed(1));
 
     // average-speed sections: a band along the road, with a marker at each end
@@ -258,8 +258,8 @@ export function drawSigns(group: (name: string) => Group, data: SignGeometry, pr
     sections.exit().remove();
     sections.enter().append('path')
         .merge(sections)
-        .attr('class', function(d) { return withIdState(this, d.cls); })
-        .attr('d', d => d.d);
+        .each(attrChanged('class', function(d) { return withIdState(this, d.cls); }))
+        .each(attrChanged('d', d => d.d));
 
     // the signs themselves, upright on a post
     const signs = group('signs').selectAll<SVGGElement, SignShape>('g.lanes-sign')
@@ -267,12 +267,12 @@ export function drawSigns(group: (name: string) => Group, data: SignGeometry, pr
     signs.exit().remove();
     const all = signs.enter().append('g')
         .merge(signs)
-        .attr('class', function(d) { return withIdState(this, `lanes-sign lanes-sign-${d.kind} ${d.nodeID}`); });
+        .each(attrChanged('class', function(d) { return withIdState(this, `lanes-sign lanes-sign-${d.kind} ${d.nodeID}`); }));
 
     all.each(function(d) {
         const root = d3Select(this);
         const p = projection(d.anchor);
-        root.attr('transform', `translate(${p[0].toFixed(1)},${p[1].toFixed(1)})`);
+        root.each(attrChanged('transform', `translate(${p[0].toFixed(1)},${p[1].toFixed(1)})`));
 
         // a sign is rebuilt only when it changes: rebuilding the element under the pointer on every
         // redraw starts a new hover, which redraws again, and the click never lands
@@ -288,31 +288,31 @@ export function drawSigns(group: (name: string) => Group, data: SignGeometry, pr
             const dx = Math.sin(a);
             const dy = -Math.cos(a);
             const w = Math.max(4, r * 0.35);
-            root.append('path').attr('class', 'sign-facing')
-                .attr('d', `M${(-dy * w * 0.5).toFixed(1)},${(dx * w * 0.5).toFixed(1)} L${(dx * w * 1.4).toFixed(1)},${(dy * w * 1.4).toFixed(1)} L${(dy * w * 0.5).toFixed(1)},${(-dx * w * 0.5).toFixed(1)}Z`);
+            root.append('path').each(attrChanged('class', 'sign-facing'))
+                .each(attrChanged('d', `M${(-dy * w * 0.5).toFixed(1)},${(dx * w * 0.5).toFixed(1)} L${(dx * w * 1.4).toFixed(1)},${(dy * w * 1.4).toFixed(1)} L${(dy * w * 0.5).toFixed(1)},${(-dx * w * 0.5).toFixed(1)}Z`));
         }
         const post = d.overhead ? 0 : Math.max(6, r * 0.9);
-        if (post) root.append('line').attr('class', 'sign-post').attr('y2', -post);
+        if (post) root.append('line').each(attrChanged('class', 'sign-post')).each(attrChanged('y2', -post));
 
         // several signs on one post stack upwards
         const faces: SignFace[] = d.kind === 'sign' ? d.faces : [{ code: d.kind }];
         faces.forEach((face, i) => {
             const y = -post - r - i * (size + 2);
-            const g = root.append('g').attr('class', 'sign-face').attr('transform', `translate(0,${(d.overhead ? 0 : y).toFixed(1)})`);
+            const g = root.append('g').each(attrChanged('class', 'sign-face')).each(attrChanged('transform', `translate(0,${(d.overhead ? 0 : y).toFixed(1)})`));
             if (d.kind === 'message') messagePanel(g, r);
             else if (d.kind === 'camera') camera(g, r, d);
             else drawFace(g, r, face);
         });
         // a camera's limit beside it
         if (d.kind === 'camera' && d.faces[0]?.value) {
-            const g = root.append('g').attr('class', 'sign-face').attr('transform', `translate(${(r * 1.6).toFixed(1)},${(-post - r).toFixed(1)}) scale(0.7)`);
+            const g = root.append('g').each(attrChanged('class', 'sign-face')).each(attrChanged('transform', `translate(${(r * 1.6).toFixed(1)},${(-post - r).toFixed(1)}) scale(0.7)`));
             speedLimit(g, r, d.faces[0]);
         }
 
         // the whole picture, post and all, takes clicks and hover, not just its painted parts
         const box = (this as SVGGElement).getBBox();
-        root.insert('rect', ':first-child').attr('class', 'sign-hit')
-            .attr('x', (box.x - 2).toFixed(1)).attr('y', (box.y - 2).toFixed(1))
-            .attr('width', (box.width + 4).toFixed(1)).attr('height', (box.height + 4).toFixed(1));
+        root.insert('rect', ':first-child').each(attrChanged('class', 'sign-hit'))
+            .each(attrChanged('x', (box.x - 2).toFixed(1))).each(attrChanged('y', (box.y - 2).toFixed(1)))
+            .each(attrChanged('width', (box.width + 4).toFixed(1))).each(attrChanged('height', (box.height + 4).toFixed(1)));
     });
 }

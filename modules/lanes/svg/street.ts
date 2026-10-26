@@ -18,24 +18,65 @@ export function withIdState(element: Element, className: string): string {
         (list.contains('selected') && !/\bselected\b/.test(className) ? ' selected' : '');
 }
 
+/**
+ * Sets an attribute only where its value changed, for `selection.each`: the lanes are redrawn whenever the map is,
+ * and rewriting an unchanged path still makes the browser parse and paint it again. The value is a constant or a
+ * function of the datum, as for `selection.attr`; null removes the attribute.
+ */
+type AttrValue = string | number | boolean | null | undefined;
+export function attrChanged<E, T>(name: string, value: AttrValue | ((this: E, datum: T, index: number) => AttrValue)) {
+    return function(this: E, datum: T, index: number) {
+        const v = typeof value === 'function' ? value.call(this, datum, index) : value;
+        const element = this as unknown as Element;
+        if (v === null || v === undefined) {
+            if (element.hasAttribute(name)) element.removeAttribute(name);
+            return;
+        }
+        const text = String(v);
+        if (element.getAttribute(name) !== text) element.setAttribute(name, text);
+    };
+}
+
 /** Draws `data` as `<path>`s in `group`, keyed, with a class and path data per item */
 export function joinPaths<T>(group: Group, data: T[], key: (d: T) => string, className: (d: T) => string, d: (d: T) => string) {
     const paths = group.selectAll<SVGPathElement, T>('path').data(data, key);
     paths.exit().remove();
     paths.enter().append('path')
         .merge(paths)
-        .attr('class', function(datum) { return withIdState(this, className(datum)); })
-        .attr('d', d);
+        .each(attrChanged('class', function(datum) { return withIdState(this, className(datum)); }))
+        .each(attrChanged('d', d));
 }
 
 /** Projects lon/lat points into an SVG path */
 export function pathFor(projection: Projection) {
     return (locs: Vec2[], closed: boolean) => {
         if (locs.length < 2) return '';
-        return 'M' + locs.map(loc => {
+        // the same shape in the same view gives the same path: shapes are kept while the map data is unchanged, so a
+        // redraw for a new selection or tool reuses their paths
+        const view = viewKey(projection);
+        const cached = projectedPaths.get(locs);
+        if (cached && cached.view === view && cached.closed === closed) return cached.d;
+        const d = 'M' + locs.map(loc => {
             const p = projection(loc);
             return p[0].toFixed(1) + ',' + p[1].toFixed(1);
         }).join('L') + (closed ? 'Z' : '');
+        projectedPaths.set(locs, { view, closed, d });
+        return d;
+    };
+}
+
+const projectedPaths = new WeakMap<Vec2[], { view: string; closed: boolean; d: string }>();
+const viewKey = (projection: Projection) => {
+    const t = projection.transform();
+    return `${t.k},${t.x},${t.y}`;
+};
+
+/** Adds or removes a class only where that changes it, for `selection.each` (as `attrChanged` for attributes) */
+export function classChanged<E, T>(name: string, value: (this: E, datum: T, index: number) => boolean) {
+    return function(this: E, datum: T, index: number) {
+        const list = (this as unknown as Element).classList;
+        const on = value.call(this, datum, index);
+        if (on !== list.contains(name)) list.toggle(name, on);
     };
 }
 
@@ -83,18 +124,20 @@ export function drawStreet(
     joinPaths(group('islands'), street.areas.filter(a => a.kind === 'island'), d => d.id,
         d => `street-area street-area-island ${d.id} surface-${d.surface ?? 'concrete'}`, d => path(d.polygon, true));
 
-    // paths by kind, surface and use; segregated foot and cycle paths get a line down the middle
+    // paths by kind, surface and use; segregated foot and cycle paths get a line down the middle. Footways, paths and
+    // pedestrian ways are drawn over the roads (where they meet one, the path shows), those in tunnels under them
     const sidePaths = street.paths.filter(p => p.kind !== 'crossing');
     const pathShapes = sidePaths.flatMap(p => [
         {
-            key: p.id, d: path(p.polygon, true),
+            key: p.id, d: path(p.polygon, true), below: p.below,
             cls: `street-path street-path-${p.kind} ${p.id}` + (p.assumed ? ' assumed' : '') +
                 (p.surface ? ` surface-${p.surface}` : '') + (p.use ? ` use-${p.use}` : '') + (p.construction ? ' lanes-construction' : '')
         },
-        ...(p.footHalf ? [{ key: `${p.id}-foot`, cls: 'street-path-foot-half', d: path(p.footHalf, true) }] : []),
-        ...(p.divider && markings ? [{ key: `${p.id}-divider`, cls: 'street-path-divider', d: path(p.divider, false) }] : [])
+        ...(p.footHalf ? [{ key: `${p.id}-foot`, cls: 'street-path-foot-half', d: path(p.footHalf, true), below: p.below }] : []),
+        ...(p.divider && markings ? [{ key: `${p.id}-divider`, cls: 'street-path-divider', d: path(p.divider, false), below: p.below }] : [])
     ]);
-    joinPaths(group('paths'), pathShapes, d => d.key, d => d.cls, d => d.d);
+    joinPaths(group('paths'), pathShapes.filter(p => p.below), d => d.key, d => d.cls, d => d.d);
+    joinPaths(group('paths-over'), pathShapes.filter(p => !p.below), d => d.key, d => d.cls, d => d.d);
 
     // crossings sit on top of the road they cross
     const crossings = street.paths.filter(p => p.kind === 'crossing');
@@ -122,8 +165,8 @@ export function drawStreet(
     barriers.exit().remove();
     barriers.enter().append('path')
         .merge(barriers)
-        .attr('class', function(d) { return withIdState(this, `street-barrier barrier-${d.kind} ${d.id}`); })
-        .attr('d', d => path(d.line, false))
+        .each(attrChanged('class', function(d) { return withIdState(this, `street-barrier barrier-${d.kind} ${d.id}`); }))
+        .each(attrChanged('d', d => path(d.line, false)))
         .attr('stroke-width', d => Math.max(1.2, d.width * metres).toFixed(1));
 
     // node markings, with the bands under the bars and lines
@@ -149,32 +192,32 @@ function drawSymbols(group: Group, data: SymbolShape[], projection: Projection) 
         .data(items, d => d.key);
     symbols.exit().remove();
     const enter = symbols.enter().append('g')
-        .attr('class', d => `street-symbol symbol-${d.kind}`);
+        .each(attrChanged('class', d => `street-symbol symbol-${d.kind}`));
     enter.filter(d => d.kind === 'stop_text').append('text')
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'central')
         .text('STOP');
     // a speed limit roundel: a red ring around the number
     const roundel = enter.filter(d => d.kind === 'speed_limit' || d.kind === 'min_speed');
-    roundel.append('circle').attr('class', 'speed-ring');
-    roundel.append('text').attr('class', 'speed-number')
+    roundel.append('circle').each(attrChanged('class', 'speed-ring'));
+    roundel.append('text').each(attrChanged('class', 'speed-number'))
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'central');
     enter.filter(d => d.kind !== 'stop_text' && d.kind !== 'speed_limit' && d.kind !== 'min_speed').append('use');
 
     const all = enter.merge(symbols)
-        .attr('transform', d => d.transform);
+        .each(attrChanged('transform', d => d.transform));
     all.filter(d => d.kind === 'stop_text').select('text')
         .attr('font-size', d => (d.k * 0.55).toFixed(1));
     all.filter(d => d.kind === 'speed_limit' || d.kind === 'min_speed').select('circle')
-        .attr('r', d => (d.k / 2).toFixed(1))
+        .each(attrChanged('r', d => (d.k / 2).toFixed(1)))
         .attr('stroke-width', d => Math.max(1, d.k * 0.14).toFixed(1));
     all.filter(d => d.kind === 'speed_limit' || d.kind === 'min_speed').select('text')
         .attr('font-size', d => (d.k * 0.48).toFixed(1))
         .text(d => d.text ?? '');
     all.select('use')
-        .attr('href', d => (d.kind === 'signals' ? '#lanes-signals' : '#lanes-giveway'))
-        .attr('transform', d => `scale(${(d.k / 20).toFixed(3)})`);
+        .each(attrChanged('href', d => (d.kind === 'signals' ? '#lanes-signals' : '#lanes-giveway')))
+        .each(attrChanged('transform', d => `scale(${(d.k / 20).toFixed(3)})`));
 }
 
 
@@ -222,8 +265,8 @@ export function drawRoadMarkings(group: Group, data: RoadMarkings, projection: P
     areas.exit().remove();
     areas.enter().append('path')
         .merge(areas)
-        .attr('class', function(d) { return withIdState(this, `road-marking-area ${d.id}`); })
-        .attr('d', d => path(d.polygon, true))
+        .each(attrChanged('class', function(d) { return withIdState(this, `road-marking-area ${d.id}`); }))
+        .each(attrChanged('d', d => path(d.polygon, true)))
         .attr('stroke', d => markingColourValues[d.style.colour])
         .attr('stroke-width', d => px(d.style.width))
         .attr('fill', d => {
@@ -240,8 +283,8 @@ export function drawRoadMarkings(group: Group, data: RoadMarkings, projection: P
     lines.enter().append('path')
         .attr('fill', 'none')
         .merge(lines)
-        .attr('class', function(d) { return withIdState(this, `road-marking-line ${d.id}`); })
-        .attr('d', d => path(d.line, false))
+        .each(attrChanged('class', function(d) { return withIdState(this, `road-marking-line ${d.id}`); }))
+        .each(attrChanged('d', d => path(d.line, false)))
         .attr('stroke', d => markingColourValues[d.style.colour])
         .attr('stroke-width', d => px(d.style.width))
         .attr('stroke-dasharray', d => {
@@ -253,15 +296,15 @@ export function drawRoadMarkings(group: Group, data: RoadMarkings, projection: P
         .data(showText ? data.texts : [], d => d.key);
     texts.exit().remove();
     texts.enter().append('text')
-        .attr('class', 'road-marking-text')
+        .each(attrChanged('class', 'road-marking-text'))
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'central')
         .merge(texts)
         .text(d => d.text)
         .attr('fill', d => markingColourValues[d.style.colour])
         .attr('font-size', () => px(1.6))
-        .attr('transform', d => {
+        .each(attrChanged('transform', d => {
             const { p, angle } = screenPlacement(projection, d.loc, d.ahead);
             return `translate(${p[0].toFixed(1)},${p[1].toFixed(1)}) rotate(${(angle + 90).toFixed(1)})`;
-        });
+        }));
 }

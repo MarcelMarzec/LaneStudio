@@ -149,7 +149,9 @@
    on carriageways and lanes */
 .ideditor.lane-studio .lanes-layer .street-area,
 .ideditor.lane-studio .lanes-layer .street-path,
-.ideditor.lane-studio .lanes-layer .street-path-foot-half {
+.ideditor.lane-studio .lanes-layer .street-path-foot-half,
+.ideditor.lane-studio .lanes-layer .rail-bed,
+.ideditor.lane-studio .lanes-layer .rail-sleepers {
     fill-opacity: calc(var(--lanes-a, 1) * var(--lanes-low, 1) + (1 - var(--lanes-a, 1)) * var(--lanes-high, 0));
 }
 /* a road mapped as an area is that road's surface, in the colour the road shows (already scaled by the setting) */
@@ -399,5 +401,48 @@
 }
 .ideditor.lane-studio .lanes-layer .junction-label.selected .junction-box {
     stroke: #f6634f;
+    stroke-width: 2;
+}
+
+
+/* Railways, the Underground and trams: grey stone ballast, concrete sleepers (timber on heritage lines) and steel
+   rails at their gauge; tram rails set in the road over its lanes. Disused track is faded and its rails rusted. */
+.ideditor.lane-studio .lanes-layer .rail-bed {
+    fill: rgb(122, 116, 108); --lanes-a: 0.85;
+    stroke: rgba(60, 55, 50, 0.6);
+    stroke-width: 1;
+}
+.ideditor.lane-studio .lanes-layer .rail-bed.rail-tram,
+.ideditor.lane-studio .lanes-layer .rail-bed.rail-light_rail { fill: rgb(112, 108, 102); }
+.ideditor.lane-studio .lanes-layer .rail-sleepers {
+    fill: rgb(184, 182, 175); --lanes-a: 0.9;
+    stroke: none;
+}
+.ideditor.lane-studio .lanes-layer .rail-sleepers.rail-preserved,
+.ideditor.lane-studio .lanes-layer .rail-sleepers.rail-narrow_gauge,
+.ideditor.lane-studio .lanes-layer .rail-sleepers.rail-miniature { fill: rgb(116, 86, 60); }
+.ideditor.lane-studio .lanes-layer .rail-rails,
+.ideditor.lane-studio .lanes-layer .rail-conductor {
+    fill: none;
+    stroke: rgb(62, 64, 70);
+    stroke-linecap: butt;
+    stroke-linejoin: round;
+}
+/* the rails' polished running surface catches the light */
+.ideditor.lane-studio .lanes-layer .rail-rails {
+    filter: drop-shadow(0 0 0.7px rgba(235, 240, 248, 0.95));
+}
+/* tram rails in the road: bright steel against the road surface */
+.ideditor.lane-studio .lanes-layer .lanes-tram-rails .rail-rails {
+    stroke: rgb(200, 205, 212);
+    filter: drop-shadow(0 0 0.6px rgba(0, 0, 0, 0.9));
+}
+/* conductor rails, live: picked out in yellow as their covers are */
+.ideditor.lane-studio .lanes-layer .rail-conductor { stroke: rgb(236, 196, 80); }
+.ideditor.lane-studio .lanes-layer .rail-disused { opacity: 0.55; }
+.ideditor.lane-studio .lanes-layer .rail-rails.rail-disused { stroke: rgb(156, 98, 62); }
+.ideditor.lane-studio .lanes-layer .rail-bed.hover,
+.ideditor.lane-studio .lanes-layer .rail-bed.selected {
+    stroke: var(--lanes-hover, rgb(255, 255, 255));
     stroke-width: 2;
 }
