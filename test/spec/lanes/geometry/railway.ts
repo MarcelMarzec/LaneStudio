@@ -30,7 +30,7 @@ describe('railway track', () => {
         expect(railKind({ railway: 'disused', 'disused:railway': 'tram' })).toEqual({ kind: 'tram', status: 'disused' });
         expect(railKind({ railway: 'construction', construction: 'light_rail' })).toEqual({ kind: 'light_rail', status: 'construction' });
         expect(railKind({ railway: 'rail', usage: 'tourism' })).toEqual({ kind: 'rail', status: 'preserved' });
-        expect(railKind({ railway: 'abandoned' })).toBeNull();
+        expect(railKind({ railway: 'abandoned' })).toEqual({ kind: 'rail', status: 'abandoned' });
         expect(railKind({ railway: 'platform' })).toBeNull();
     });
 

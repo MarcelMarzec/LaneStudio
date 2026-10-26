@@ -8,6 +8,30 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.26r5
+##### 2026-Oct-26
+
+#### Railways
+* Level crossings (`railway=level_crossing`) are drawn over the road: panels across it with the rails
+  through them, barriers by `crossing:barrier` (`full`, `half`, `double_half`, `gates`), red lights and
+  stop lines. Where a road crosses several tracks (Sleaford Road at Boston station) the barriers stand
+  outside them all
+* Crossings for people over the line (`railway=crossing`) get their panels, and tram crossings
+  (`railway=tram_level_crossing`) their rails across the road
+* Platforms (`railway=platform`) are drawn with a white edge and a yellow safety line on the side that
+  faces the track
+* Buffer stops, switches (with their point motor), derailers, signals (beside the line on the side
+  tagged, facing the trains) and stop markers are drawn at the track
+* Turntables and traversers are drawn as pits, a turntable with its bridge and rails
+* The old course of an abandoned or razed line and a proposed line are drawn as a dashed trackbed,
+  a monorail as its beam, and `railway:preserved=yes` lines as heritage lines (timber sleepers)
+
+#### Roads and signs
+* Parking spaces mapped as areas of their own (`amenity=parking_space`) are drawn with white bay lines
+  on every side but the one facing the aisle or road, and coloured by `parking_space=*` (blue disabled
+  bays with yellow lines and a wheelchair, green charging bays with a bolt, purple parent and child
+  bays); car parks (`amenity=parking`, `parking=surface`) are drawn as asphalt
+
 # 26.10.26r4
 ##### 2026-Oct-26
 

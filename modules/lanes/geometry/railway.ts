@@ -7,13 +7,16 @@ import { isCovered } from './structures';
 import { add, metricFrame, offsetPolyline, pointAlong, polylineLength, rightNormal, scale } from './frame';
 
 /** The kinds of railway drawn as track */
-export type RailKind = 'rail' | 'light_rail' | 'subway' | 'tram' | 'narrow_gauge' | 'miniature' | 'funicular';
+export type RailKind = 'rail' | 'light_rail' | 'subway' | 'tram' | 'narrow_gauge' | 'miniature' | 'funicular' | 'monorail';
 
 export interface TrackShape {
     id: string;
     kind: RailKind;
-    /** in use, out of use, being built, or kept as a heritage line */
-    status: 'active' | 'disused' | 'construction' | 'preserved';
+    /**
+     * in use, out of use, being built, or kept as a heritage line; or only its course left (`abandoned`, `razed`) or
+     * planned (`proposed`), drawn as the trackbed's outline without track
+     */
+    status: 'active' | 'disused' | 'construction' | 'preserved' | 'abandoned' | 'proposed';
     /** rails set in the road surface (most tram lines): no ballast or sleepers, drawn over the road */
     embedded: boolean;
     /** in a tunnel or under a roof: drawn faded */
@@ -29,7 +32,7 @@ export interface TrackShape {
     conductors: Vec2[][];
 }
 
-const kinds = new Set<RailKind>(['rail', 'light_rail', 'subway', 'tram', 'narrow_gauge', 'miniature', 'funicular']);
+const kinds = new Set<RailKind>(['rail', 'light_rail', 'subway', 'tram', 'narrow_gauge', 'miniature', 'funicular', 'monorail']);
 
 /**
  * Gauges (mm) when a way has no `gauge` tag. Great Britain's main lines, the London Underground, light rail and
@@ -37,17 +40,22 @@ const kinds = new Set<RailKind>(['rail', 'light_rail', 'subway', 'tram', 'narrow
  * tunnels, not its track); Britain's narrow gauge lines are mostly about 600 mm, miniature lines 7¼ in (184 mm).
  */
 const defaultGauge: Record<RailKind, number> = {
-    rail: 1435, light_rail: 1435, subway: 1435, tram: 1435, funicular: 1435, narrow_gauge: 600, miniature: 184
+    rail: 1435, light_rail: 1435, subway: 1435, tram: 1435, funicular: 1435, narrow_gauge: 600, miniature: 184,
+    // a monorail's beam, about as wide as a standard gauge track
+    monorail: 1435
 };
 
 /** A track's kind and status from its tags; none for what has no track (abandoned, razed, platforms…) */
 export function railKind(tags: Tags): { kind: RailKind; status: TrackShape['status'] } | null {
     const railway = tags.railway ?? '';
-    if (kinds.has(railway as RailKind)) return { kind: railway as RailKind, status: tags.usage === 'tourism' ? 'preserved' : 'active' };
+    const heritage = tags.usage === 'tourism' || tags['railway:preserved'] === 'yes';
+    if (kinds.has(railway as RailKind)) return { kind: railway as RailKind, status: heritage ? 'preserved' : 'active' };
     if (railway === 'preserved') return { kind: 'rail', status: 'preserved' };
     const was = (value: string | undefined) => kinds.has(value as RailKind) ? value as RailKind : 'rail';
     if (railway === 'disused') return { kind: was(tags['disused:railway']), status: 'disused' };
     if (railway === 'construction') return { kind: was(tags.construction ?? tags['construction:railway']), status: 'construction' };
+    if (railway === 'abandoned' || railway === 'razed') return { kind: was(tags['abandoned:railway'] ?? tags['razed:railway']), status: 'abandoned' };
+    if (railway === 'proposed') return { kind: was(tags.proposed ?? tags['proposed:railway']), status: 'proposed' };
     return null;
 }
 
@@ -90,9 +98,12 @@ export function trackShape(way: osmWay, graph: coreGraph, sleepers: boolean): Tr
     const centres = Array.from({ length: count }, (_, i) => (i - (count - 1) / 2) * spacing);
     const at = (offset: number) => offsetPolyline(points, points.map(() => offset));
 
-    const rails = centres.flatMap(c => [at(c - gauge / 2), at(c + gauge / 2)]);
+    // only a course left or planned: the trackbed's outline; a monorail: its beam
+    const courseOnly = status === 'abandoned' || status === 'proposed';
+    const beam = kind === 'monorail';
+    const rails = courseOnly || beam ? [] : centres.flatMap(c => [at(c - gauge / 2), at(c + gauge / 2)]);
     const conductors: Vec2[][] = [];
-    for (const c of centres) {
+    for (const c of courseOnly || beam ? [] : centres) {
         // third rail beside the track (Britain's south: 750 V DC); fourth rail in the middle and beside (the Underground)
         if (tags.electrified === 'rail') conductors.push(at(c + gauge / 2 + 0.41));
         if (tags.electrified === '4th_rail') conductors.push(at(c), at(c - gauge / 2 - 0.41));
@@ -100,12 +111,14 @@ export function trackShape(way: osmWay, graph: coreGraph, sleepers: boolean): Tr
 
     let bed: Vec2[] | undefined;
     const ties: Vec2[][] = [];
-    if (!embedded) {
+    if (beam) {
+        bed = [...at(centres[0] - 0.4), ...at(centres[centres.length - 1] + 0.4).reverse()];
+    } else if (!embedded) {
         const half = sleeperLength / 2 + 0.5 * k;
         const left = at(centres[0] - half);
         const right = at(centres[centres.length - 1] + half);
         bed = [...left, ...right.reverse()];
-        if (sleepers) {
+        if (sleepers && !courseOnly) {
             const length = polylineLength(points);
             const step = 0.65 * k;
             const width = 0.26 * k;

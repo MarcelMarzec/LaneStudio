@@ -33,8 +33,11 @@ import { metricFrame, pointAlong, pointInPolygon, polylineLength } from '../geom
 import { edgeStructures, isCovered, ringEdges, type StructureShape } from '../geometry/structures';
 import { signGeometry } from '../geometry/signs';
 import { drawSigns } from './signs';
-import { drawRailways } from './railway';
+import { drawRailFeatures, drawRailways } from './railway';
 import { railGeometry } from '../geometry/railway';
+import { railFeatures } from '../geometry/rail_features';
+import { parkingSpaceGeometry } from '../geometry/parking_spaces';
+import { drawParkingSpaces } from './parking_spaces';
 import { junctionLabels, placeShields, shieldRefs } from '../geometry/route_labels';
 import { drawJunctionLabels, drawShields } from './route_labels';
 import type { AreaShape } from '../geometry/street';
@@ -177,7 +180,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'rail-beds', 'rail-sleepers', 'rails', 'roadside', 'parking-bays', 'parking', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'islands', 'dividers', 'tram-rails', 'kerbs',
+                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'islands', 'dividers', 'tram-rails', 'rail-over-road', 'kerbs',
                 'paths-over', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs',
                 'shields', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
                 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
@@ -277,6 +280,12 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         /* railways, the Underground and trams (sleepers once they can be seen) */
         const tracks = railGeometry(visible, graph, markings);
         drawRailways(group, tracks, projection);
+        const rail = railFeatures(visible, graph);
+        drawRailFeatures(group, rail, projection);
+
+        /* car parks and the parking spaces mapped in them */
+        const parkingSpaces = parkingSpaceGeometry(visible, graph);
+        drawParkingSpaces(group, parkingSpaces.spaces, parkingSpaces.carParks, projection, markings);
         drawParking(group('parking'), parking, projection, markings);
         drawRoadMarkings(group('road-markings'), roadMarkings, projection, labels);
 
@@ -681,6 +690,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const drawnNodes = new Set<string>([...street.markings, ...street.surfaces, ...signData.signs, ...junctionData].map(m => m.nodeID));
         for (const gantry of signData.gantries) drawnWays.add(gantry.id);
         for (const track of tracks) drawnWays.add(track.id);
+        for (const space of [...parkingSpaces.spaces, ...parkingSpaces.carParks]) drawnWays.add(space.id);
+        for (const shape of [...rail.ground, ...rail.trackside, ...rail.overRoad]) (shape.id.startsWith('n') ? drawnNodes : drawnWays).add(shape.id);
         for (const text of roadMarkings.texts) drawnNodes.add(text.id);
         for (const id of drawnWays) {
             const way = graph.hasEntity(id as osmWay['id']) as osmWay | undefined;

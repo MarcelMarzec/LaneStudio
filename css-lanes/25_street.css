@@ -446,3 +446,66 @@
     stroke: var(--lanes-hover, rgb(255, 255, 255));
     stroke-width: 2;
 }
+/* the old course of an abandoned or razed line, and a proposed one: the trackbed's outline only */
+.ideditor.lane-studio .lanes-layer .rail-bed.rail-abandoned,
+.ideditor.lane-studio .lanes-layer .rail-bed.rail-proposed {
+    fill: rgb(122, 116, 108); --lanes-a: 0.25;
+    stroke: rgba(200, 192, 180, 0.7);
+    stroke-dasharray: 4 4;
+}
+/* a monorail's concrete beam */
+.ideditor.lane-studio .lanes-layer .rail-bed.rail-monorail { fill: rgb(196, 194, 188); --lanes-a: 0.95; }
+
+/* platforms: paving, a white coping at the track edge and the yellow safety line behind it */
+.ideditor.lane-studio .lanes-layer .rail-platform {
+    fill: rgb(176, 172, 164);
+    fill-opacity: 0.9;
+    stroke: rgba(80, 76, 70, 0.8);
+    stroke-width: 1;
+}
+.ideditor.lane-studio .lanes-layer .rail-platform-edge { fill: none; stroke: #f4f4f0; stroke-width: 3; }
+.ideditor.lane-studio .lanes-layer .rail-platform-safety { fill: none; stroke: #f5c400; stroke-width: 2; }
+/* turntable and traverser pits, and a turntable's bridge with its rails */
+.ideditor.lane-studio .lanes-layer .rail-turntable-pit,
+.ideditor.lane-studio .lanes-layer .rail-traverser-pit { fill: rgb(46, 44, 42); stroke: rgb(150, 146, 140); stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .rail-turntable-bridge { fill: rgb(96, 92, 88); }
+.ideditor.lane-studio .lanes-layer .rail-turntable-rail { fill: none; stroke: rgb(214, 219, 226); stroke-width: 1.5; }
+
+/* level crossings: panels across the road with the rails through them, red and white barriers, red lights and
+   stop lines; crossings for people over the line get the panels */
+.ideditor.lane-studio .lanes-layer .rail-crossing-deck { fill: rgb(150, 148, 142); fill-opacity: 0.85; stroke: rgba(40, 40, 40, 0.6); stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-rail { fill: none; stroke: rgb(210, 214, 220); stroke-width: 2; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-arm { fill: #e8e8e8; stroke: #d01c1c; stroke-width: 2; stroke-dasharray: 5 5; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-gate { fill: #f2f2ee; stroke: #333; stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-light { fill: #ff2a2a; stroke: #111; stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-stop-line { fill: #fff; fill-opacity: 0.9; }
+
+/* track equipment */
+.ideditor.lane-studio .lanes-layer .rail-buffer-stop { fill: #d01c1c; stroke: #fff; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .rail-derail { fill: #f5c400; stroke: #222; stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .rail-switch-motor { fill: rgb(70, 74, 80); stroke: #ddd; stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .rail-switch-bar { fill: none; stroke: rgb(200, 204, 210); stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .rail-signal-post { fill: none; stroke: #ddd; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .rail-signal-head { fill: #111; stroke: #fff; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .rail-signal-aspect { fill: #ff2a2a; }
+.ideditor.lane-studio .lanes-layer .rail-stop-board { fill: #fff; stroke: #111; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer [class*='rail-'].hover { filter: drop-shadow(0 0 2px #fff); }
+
+/* car parks and their parking spaces: asphalt, white bay lines, and colours for bays kept for some (blue for
+   disabled bays, green for charging, purple for parents) */
+.ideditor.lane-studio .lanes-layer .car-park { fill: rgb(52, 56, 64); --lanes-a: 0.5; stroke: none; }
+.ideditor.lane-studio .lanes-layer .parking-space { fill: rgb(60, 64, 72); --lanes-a: 0.6; stroke: none; }
+.ideditor.lane-studio .lanes-layer .parking-space.parking-space-disabled { fill: rgb(40, 90, 190); --lanes-a: 0.55; }
+.ideditor.lane-studio .lanes-layer .parking-space.parking-space-charging { fill: rgb(30, 150, 80); --lanes-a: 0.55; }
+.ideditor.lane-studio .lanes-layer .parking-space.parking-space-parent { fill: rgb(140, 70, 170); --lanes-a: 0.55; }
+.ideditor.lane-studio .lanes-layer .parking-space.parking-space-motorcycle { fill: rgb(170, 120, 40); --lanes-a: 0.55; }
+.ideditor.lane-studio .lanes-layer .parking-space-lines { fill: none; stroke: #f2f2f2; stroke-width: 1.5; stroke-linecap: square; }
+.ideditor.lane-studio .lanes-layer .parking-space-lines.parking-space-disabled { stroke: #ffd400; }
+.ideditor.lane-studio .lanes-layer .parking-space-symbol { fill: none; stroke: #fff; stroke-width: 0.9; stroke-linecap: round; stroke-linejoin: round; }
+.ideditor.lane-studio .lanes-layer .parking-space-symbol-charging { fill: #fff; stroke: none; }
+.ideditor.lane-studio .lanes-layer .parking-space.hover,
+.ideditor.lane-studio .lanes-layer .parking-space.selected { stroke: #fff; stroke-width: 2; }
+.ideditor.lane-studio .lanes-layer .car-park,
+.ideditor.lane-studio .lanes-layer .parking-space {
+    fill-opacity: calc(var(--lanes-a, 1) * var(--lanes-low, 1) + (1 - var(--lanes-a, 1)) * var(--lanes-high, 0));
+}

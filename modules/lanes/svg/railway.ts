@@ -1,6 +1,7 @@
 import type { Projection } from '../../geo/raw_mercator';
 import type { Vec2 } from '../../geo/vector';
 import type { TrackShape } from '../geometry/railway';
+import type { RailFeatures, RailShape } from '../geometry/rail_features';
 import { attrChanged, joinPaths, pathFor, pxPerMetre } from './street';
 
 type Group = d3.Selection<SVGGElement>;
@@ -34,3 +35,15 @@ export function drawRailways(group: (name: string) => Group, tracks: TrackShape[
     }
 }
 
+
+/**
+ * Railway features besides the track: platforms, pits and track equipment beside the track (under the roads),
+ * and level crossings over the road they cross
+ */
+export function drawRailFeatures(group: (name: string) => Group, features: RailFeatures, projection: Projection) {
+    const path = pathFor(projection);
+    const cls = (shape: RailShape) => `rail-${shape.part} ${shape.id}`;
+    joinPaths(group('rail-ground'), features.ground, s => s.key, cls, s => path(s.points, s.closed));
+    joinPaths(group('rail-trackside'), features.trackside, s => s.key, cls, s => path(s.points, s.closed));
+    joinPaths(group('rail-over-road'), features.overRoad, s => s.key, cls, s => path(s.points, s.closed));
+}
