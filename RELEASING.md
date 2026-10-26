@@ -1,7 +1,8 @@
 ## Releasing Lane Studio
 
-Lane Studio is deployed from the `mm/lane-studio-main` branch as a static website. A release is a
-version (the release date), a changelog entry and a deploy.
+Lane Studio is deployed from the `mm/lane-studio-main` branch as a static website. Every commit is a
+version of its own (its date, `YY.MM.DD`, then `r2`, `r3` … later that day) with its own changelog
+section, so a deploy simply ships the version the branch is at.
 
 ### One-time setup
 
@@ -17,35 +18,37 @@ version (the release date), a changelog entry and a deploy.
      public by design and belongs in a variable, not a secret.
    - Secrets: `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` for the web host.
 
-### Release checklist
+### Every commit
 
-1. On `mm/lane-studio-main`, make sure everything is merged and passing:
+1. Make sure the checks pass:
 
    ```sh
-   npm clean-install
    npm run lint
    npx tsc
    npm run test:once
    ```
 
-2. The version is today's date as `YY.MM.DD` (`26.10.21` for 21 October 2026; a second release that day
-   is `26.10.21r2`). Set it in `modules/lanes/version.ts`. The footer shows it as `v26.10.21`, and every
-   changeset is tagged `created_by=LaneStudio 26.10.21`. The full rules are in [CLAUDE.md](CLAUDE.md).
-3. In [CHANGELOG.md](CHANGELOG.md), rename the Unreleased section to the version (`# YY.MM.DD`, or
-   `# YY.MM.DDr#`), put the release date on the next line, keep the day headings (`### 2026-Oct-22`)
-   under it, and add a new empty Unreleased section above it.
-4. Commit, tag and push:
+2. The version is today's date as `YY.MM.DD` (`26.10.21` for 21 October 2026; a second commit that day
+   is `26.10.21r2`, then `r3` …). Set it in `modules/lanes/version.ts`. The footer shows it as
+   `v26.10.21`, and every changeset is tagged `created_by=LaneStudio 26.10.21`.
+3. Add the version's section at the top of [CHANGELOG.md](CHANGELOG.md): `# YY.MM.DD`, the date on the
+   next line (`##### 2026-Oct-21`), then what changed under `####` headings. The app's what's new menu
+   shows these sections to people coming back after an update.
+4. Commit with the version first in the title, and push:
 
    ```sh
-   git commit -am "Lane Studio vYY.MM.DD"
-   git tag "vYY.MM.DD" -m "Lane Studio vYY.MM.DD"
-   git push origin mm/lane-studio-main "vYY.MM.DD"
+   git commit -am "vYY.MM.DD: what changed"
+   git push origin mm/lane-studio-main
    ```
 
-5. Deploy: Actions → **Deploy LaneStudio to server** → Run workflow. It builds with `npm run all`
-   (which ends by packaging `dist-lanes/`) and uploads `dist-lanes/` over FTP. The page loads its code
-   and styles with a stamp of their contents, so visitors get the new version straight away.
-6. Check the live site: the footer shows the new version, you can log in, and a small test edit's
+The full rules are in [CLAUDE.md](CLAUDE.md), and `test/spec/lanes/version.ts` checks them.
+
+### Deploying
+
+1. Actions → **Deploy LaneStudio to server** → Run workflow. It builds with `npm run all` (which ends
+   by packaging `dist-lanes/`) and uploads `dist-lanes/` over FTP. The page loads its code and styles
+   with a stamp of their contents, so visitors get the new version straight away.
+2. Check the live site: the footer shows the version, you can log in, and a small test edit's
    changeset on openstreetmap.org says `created_by=LaneStudio YY.MM.DD`.
 
 ### Taking in a new iD release

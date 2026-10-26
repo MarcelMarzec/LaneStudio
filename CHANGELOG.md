@@ -1,16 +1,19 @@
 # Lane Studio changelog
 
-What changed in Lane Studio, day by day. A version is the date it was released, `YY.MM.DD`
-(`v26.10.21` is 21 October 2026), with `r2`, `r3` … for later releases on the same day
-(`v26.10.21r2`). Work not yet released is under Unreleased, a heading per day it was done on.
+What changed in Lane Studio, newest first. Every change is a new version, named by its date,
+`YY.MM.DD` (`v26.10.21` is 21 October 2026), with `r2`, `r3` … for later changes the same day
+(`v26.10.21r2`). Versions up to 26.10.21 were releases gathering several days of work, listed by day.
 
 Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.2.0 (briefly on
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
-# Unreleased
+# 26.10.26
+##### 2026-Oct-26
 
-### 2026-Oct-26
+#### Versions
+* Every change to Lane Studio is now a version of its own (`v26.10.26`, `v26.10.26r2` …), shown in the
+  footer and listed here; this version gathers everything since v26.10.21
 
 #### Railways (new)
 * Railways, the Underground and tram lines are drawn as track: grey ballast, concrete sleepers (timber on

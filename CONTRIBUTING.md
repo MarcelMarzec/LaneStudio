@@ -75,7 +75,8 @@ For drawing changes, also look at the result in the browser on real data before 
 
 1. Branch from `mm/lane-studio-main` with a descriptive name.
 2. Make the change, with tests, and check it in the browser.
-3. Add a line to the Unreleased section of [CHANGELOG.md](CHANGELOG.md).
+3. Give the commit its version and changelog section, and put the version first in its title (see
+   [RELEASING.md](RELEASING.md)).
 4. Commit with a message that says what changed and why.
 5. Open a pull request against `mm/lane-studio-main`.
 
