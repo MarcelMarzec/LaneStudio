@@ -33,14 +33,14 @@ Some words.
 * A Routing tool
 `;
 
-describe(`what's new`, () => {
+describe('what\'s new', () => {
     afterEach(() => {
         prefs('lanes-lastVersion', null);
         prefs('lanes-sawWelcome', null);
         prefs('lanes-whatsNew', null);
     });
 
-    it(`reads each version's headings and lines from the changelog`, () => {
+    it('reads each version\'s headings and lines from the changelog', () => {
         const versions = parseChangelog(sample);
         expect(versions.map(v => v.version)).toEqual(['26.10.26r2', '26.10.26', '26.10.21']);
         expect(versions[0].date).toBe('2026-Oct-26');
