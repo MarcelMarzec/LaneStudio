@@ -80,7 +80,7 @@ describe('lane connections', () => {
         const relation = geometry.connections.find(c => c.kind === 'relation')!;
         const start = relation.line[0];
         // the guide lines of the connected lane: they start beside the relation's line, at the joining road's end
-        const guides = geometry.connections.filter(c => c.kind === 'guide' && distance(c.line[0], start) < 3);
+        const guides = geometry.connections.filter(c => c.kind === 'guide' && !c.inferred && distance(c.line[0], start) < 3);
         return { relation, guides };
     }
 

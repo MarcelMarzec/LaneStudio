@@ -78,7 +78,7 @@ function roundedRect(origin: Vec2, u: Vec2, v: Vec2, u0: number, u1: number, v0:
 }
 
 /** The convex hull of a set of points, counter-clockwise */
-function hull(points: Vec2[]): Vec2[] {
+export function hull(points: Vec2[]): Vec2[] {
     const sorted = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
     const cross = (o: Vec2, a: Vec2, b: Vec2) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
     const lower: Vec2[] = [];

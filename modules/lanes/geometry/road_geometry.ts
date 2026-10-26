@@ -12,7 +12,7 @@ import {
     dot, pointAlong, slicePolyline, offsetPolyline, cumulativeLengths, polylineLength, pointInPolygon, type MetricFrame
 } from './frame';
 import { laneLayout, parseWidth, type LaneLayout, type ParkingLayout, type RoadsideKind } from './layout';
-import { turningHead } from './turning_head';
+import { hull, turningHead } from './turning_head';
 import { parseTurn, parseConnectivity, type LaneDirection } from '../model';
 
 // Longest distance a road is pulled back from a junction, in metres
@@ -95,6 +95,8 @@ export interface JunctionConnection {
     /** `relation`: from a type=connectivity relation; `guide`: worked out from turn lanes */
     kind: 'relation' | 'guide';
     optional: boolean;
+    /** a guide worked out with no turn arrows to go by: where lanes probably lead */
+    inferred?: boolean;
     line: Vec2[];
     /** for a relation: the roads it connects, from and to */
     ways?: [string, string];
@@ -355,7 +357,7 @@ function armsAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>
  * Whether a turn restriction (type=restriction, wiki: Relation:restriction) bans general traffic from one way into
  * another at a node: `no_*` into its to-way, `only_*` into any other (routing.ts checks each vehicle's own rules)
  */
-function turnBanned(graph: coreGraph, fromWay: osmWay, nodeID: string, toWay: osmWay): boolean {
+function turnBanned(graph: coreGraph, fromWay: osmWay, nodeID: string, toWay: osmWay, angle?: number): boolean {
     for (const relation of graph.parentRelations(fromWay) as osmRelation[]) {
         if (relation.tags.type !== 'restriction') continue;
         const members = relation.members;
@@ -363,9 +365,20 @@ function turnBanned(graph: coreGraph, fromWay: osmWay, nodeID: string, toWay: os
         const value = relation.tags['restriction:motorcar'] ?? relation.tags.restriction;
         if (!value || (relation.tags.except ?? '').split(';').map(v => v.trim()).includes('motorcar')) continue;
         const to = members.find(m => m.role === 'to')?.id;
-        if ((value.startsWith('no_') && to === toWay.id) || (value.startsWith('only_') && to !== toWay.id)) return true;
+        // given the turn's angle (left positive), a to-way passing through the node is only the side the turn names
+        const named = angle === undefined || turnMatches(value, angle);
+        if ((value.startsWith('no_') && to === toWay.id && named) || (value.startsWith('only_') && (to !== toWay.id || !named))) return true;
     }
     return false;
+}
+
+/** Whether a turn of `angle` degrees (left positive) is the turn a restriction's value names */
+function turnMatches(value: string, angle: number): boolean {
+    if (/left_turn$/.test(value)) return angle > 20 && angle < 160;
+    if (/right_turn$/.test(value)) return angle < -20 && angle > -160;
+    if (/straight_on$/.test(value)) return Math.abs(angle) <= 45;
+    if (/u_turn$/.test(value)) return Math.abs(angle) >= 150;
+    return true;
 }
 
 /** The road an arrow `value` on arm `up` points to (by the turn angle), or -1 if it points to none of them */
@@ -904,10 +917,17 @@ interface LaneExits {
     exits: { down: Arm; j: number; angle: number }[];
     /** for each approaching lane, the arms it leads to */
     targets: Set<number>[];
+    /** no lane has turn arrows: the targets of a side road's lanes are a guess from the exits' order */
+    inferred: boolean;
 }
 
-/** Where each lane approaching a junction on arm `i` leads: by its turn arrows and the exit angles */
-function laneExits(arms: Arm[], i: number, through: [number, number] | null): LaneExits | null {
+/**
+ * Where each lane approaching a junction on arm `i` leads: by its turn arrows and the exit angles. With no arrows,
+ * lanes on the main road carry on along it, and lanes of a side road (or at a junction with no main road) lead to
+ * the exits not banned to them, shared out from left to right: one lane to every exit, the left lane of several to
+ * the left turn and the right lane to the right turn (`banned` says which exits a restriction bans).
+ */
+function laneExits(arms: Arm[], i: number, through: [number, number] | null, banned?: (j: number) => boolean): LaneExits | null {
     const up = arms[i];
     const upDirection = armLaneDirection(up, true);
     const upLanes = up.layout.model.lanes[upDirection];
@@ -919,6 +939,19 @@ function laneExits(arms: Arm[], i: number, through: [number, number] | null): La
     const isThrough = (j: number) => !!through && ((through[0] === i && through[1] === j) || (through[0] === j && through[1] === i));
     const turns = up.turns;
     const anyTagged = turns.some(t => t.length);
+    if (!anyTagged && banned && !(through && through.includes(i))) {
+        // no U-turns, and nothing a restriction bans; left turns first (lane 0 is the left lane)
+        const open = exits.filter(x => Math.abs(x.angle) < 150 && !banned(x.j)).sort((a, b) => b.angle - a.angle);
+        const n = turns.length;
+        const m = open.length;
+        const shared = turns.map(() => new Set<number>());
+        open.forEach((x, r) => {
+            const from = Math.floor(r * n / m);
+            const to = Math.max(from + 1, Math.floor((r + 1) * n / m));
+            for (let k = from; k < to; k++) shared[k].add(x.j);
+        });
+        return { upDirection, exits, targets: shared, inferred: true };
+    }
     const targets = turns.map(values => {
         const result = new Set<number>();
         if (!anyTagged || (!values.length && through)) {
@@ -939,7 +972,7 @@ function laneExits(arms: Arm[], i: number, through: [number, number] | null): La
         }
         return result;
     });
-    return { upDirection, exits, targets };
+    return { upDirection, exits, targets, inferred: false };
 }
 
 /**
@@ -1082,9 +1115,14 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
     const onRing = (i: number) => !!ring && !!through && through.includes(i);
 
     arms.forEach((up, i) => {
-        const lanes = laneExits(arms, i, through);
+        const banned = (j: number) => turnBanned(graph, up.way, node.id, arms[j].way,
+            signedAngle(scale(up.direction, -1), arms[j].direction));
+        // (a roundabout's lanes go by the ring, and traffic goes round a mini-roundabout's circle, not a guess)
+        const lanes = laneExits(arms, i, through, ring || miniRoundaboutRadius(node, graph) ? undefined : banned);
         if (!lanes) return;
         const { upDirection, exits } = lanes;
+        // a guide with no arrows or connection to go by is a guess
+        const guessed = (j: number) => (lanes.inferred && !related.has(j)) || undefined;
         const upCount = up.layout.model.lanes[upDirection].length;
 
         // connectivity relations say exactly which lanes lead where
@@ -1190,7 +1228,7 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
                     seen.add(key);
                     result.push({
                         key, nodeID: node.id,
-                        kind: 'guide', optional: false, line: e.line.map(frame.toLoc)
+                        kind: 'guide', optional: false, inferred: guessed(j), line: e.line.map(frame.toLoc)
                     });
                 }
             }
@@ -1287,6 +1325,24 @@ function visualSignature(ways: osmWay[], visuals: Map<string, WayVisual>): strin
     }).join('|');
 }
 
+/**
+ * Where a two-way road divides into two roads carrying on from it at a shallow angle, at least one of them one way
+ * (where a dual carriageway or a road round an island starts, as Oak Spinney Park at Ratby Lane, Leicester): the
+ * two-way road and the two branches, or none. No traffic crosses there, so it is no junction: the roads meet at
+ * the node.
+ */
+export function splitAt(arms: Arm[]): { stem: Arm; branches: [Arm, Arm] } | null {
+    if (arms.length !== 3 || new Set(arms.map(arm => arm.way.id)).size !== 3) return null;
+    for (const stem of arms) {
+        const branches = arms.filter(arm => arm !== stem) as [Arm, Arm];
+        const ahead = scale(stem.direction, -1);
+        if (branches.some(arm => angleBetween(arm.direction, ahead) > 50)) continue;
+        if (stem.layout.model.oneway || !branches.some(arm => arm.layout.model.oneway)) return null;
+        return { stem, branches };
+    }
+    return null;
+}
+
 /** How far each road is pulled back at a node, the junction area that fills the gap, and the lane connections */
 function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>, areaRoads: Set<string> = new Set()): Junction {
     const parents = graph.parentWays(node).filter(isLaneRoad) as osmWay[];
@@ -1302,6 +1358,34 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
     const marks = new Map<string, MarkTrim>();
     const partners = new Map<string, Vec2>();
     const result: Junction = { trims, marks, partners, connections: [] };
+
+    const split = miniRoundaboutRadius(node, graph) ? null : splitAt(arms);
+    if (split) {
+        // the roads run up to the node; the wedges between their square ends are road surface, not a junction box
+        // the stem runs up to the node; each branch starts where it clears the other (the nose of the island
+        // between them), and the road between is filled
+        const frame = metricFrame(node.loc);
+        const s = arms.indexOf(split.stem);
+        const [a, b] = [arms[(s + 1) % 3], arms[(s + 2) % 3]];
+        const apart = Math.min(maxClearance, Math.max(edgeMeeting(a, a.left, b, b.right) ?? 0, edgeMeeting(b, b.right, a, a.left) ?? 0));
+        const corners = arms.flatMap(arm => {
+            const t = Math.min(arm === split.stem ? 0 : apart, polylineLength(arm.line));
+            trims.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), t);
+            const at = pointAlong(arm.line, t);
+            const normal = rightNormal(at.direction);
+            const [left, right] = arm.sidesAt(t);
+            return [add(at.point, scale(normal, left)), add(at.point, scale(normal, right))];
+        });
+        // the kerbs run on from the stem's edges to the branches' outer edges
+        const corner = (arm: Arm, side: 0 | 1) => corners[arms.indexOf(arm) * 2 + side];
+        const assumed = split.stem.layout.assumed || a.layout.assumed || b.layout.assumed;
+        const kerbs = [[corner(split.stem, 0), corner(a, 1)], [corner(b, 0), corner(split.stem, 1)]]
+            .filter(([p, q]) => len(sub(p, q)) > 0.3)
+            .map(line => ({ line: line.map(frame.toLoc), assumed }));
+        result.area = { nodeID: node.id, polygons: [wound(hull(corners).map(frame.toLoc))], kerbs, kind: 'flare' };
+        junctionCache.set(node, { deps, signature, result });
+        return result;
+    }
 
     if (arms.length >= 2) {
         // round a mini-roundabout nothing runs straight through: every arm stops at its circle

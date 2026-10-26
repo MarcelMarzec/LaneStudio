@@ -270,7 +270,7 @@ describe('roadGeometry at joins and junctions', () => {
         // one-way main road west to east with a left-turn lane into the side road to the north
         const graph = tJunction({ highway: 'primary', oneway: 'yes', lanes: '2', 'turn:lanes': 'left|through' });
         const { connections } = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
-        const guides = connections.filter(c => c.kind === 'guide');
+        const guides = connections.filter(c => c.kind === 'guide' && !c.inferred);
         // the left lane turns into the side road, guided along both its edges (3.5 m apart where it
         // starts); the through lane carries straight on (no gap to draw)
         expect(guides).toHaveLength(2);

@@ -8,6 +8,23 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.26r4
+##### 2026-Oct-26
+
+#### Lanes and junctions
+* A two-way road dividing round an island into one-way roads (as Oak Spinney Park at Ratby Lane,
+  Leicester) is drawn as the road widening into its two halves, with its kerbs carried on, instead of
+  a small junction box with notches between the roads
+* Junctions are drawn a shade lighter than the road rather than blue, so a junction with many links
+  and islands (Ratby Lane and Wembley Road) reads as one road surface, not a patchwork
+* Dashed guide lines show where a side road's lanes lead through a junction even with no turn arrows
+  tagged: one lane to every road it can turn into, or several lanes shared out from left to right.
+  They are a little fainter than guide lines from turn arrows, and leave out turns a restriction bans
+  (`no_right_turn`, `only_left_turn` … now also on a road passing through the junction)
+
+#### Behind the scenes
+* The changelog copied into the build for the what's new menu is no longer kept in the repository
+
 # 26.10.26r3
 ##### 2026-Oct-26
 

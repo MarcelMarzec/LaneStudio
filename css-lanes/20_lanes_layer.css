@@ -11,9 +11,9 @@
 .ideditor.lane-studio .lanes-layer .carriageway.selected {
     fill: rgb(40, 44, 52); --lanes-a: 0.5;
 }
-/* junction boxes: a little lighter and bluer than the road, so they stand apart from it (set by core/lane_settings.ts) */
+/* junction boxes: a shade lighter than the road (set by core/lane_settings.ts) */
 .ideditor.lane-studio .lanes-layer .junction-area {
-    fill: var(--lanes-junction-fill, rgb(85, 96, 120));
+    fill: var(--lanes-junction-fill, rgb(74, 80, 94));
     fill-opacity: var(--lanes-road-alpha, 0.545);
     stroke: none;
 }
@@ -252,6 +252,10 @@
     stroke-linecap: round;
     stroke-opacity: 0.55;
 }
+/* guide lines with no turn arrows to go by: where the lanes probably lead, a little fainter */
+.ideditor.lane-studio .lanes-layer .junction-guide.inferred {
+    stroke-opacity: 0.4;
+}
 
 /* very short roads between junctions */
 .ideditor.lane-studio .lanes-layer .short-way {
@@ -281,6 +285,30 @@
 .ideditor.lane-studio.lanes-tool-marking .lanes-layer .short-way-marker,
 .ideditor.lane-studio.lanes-tool-sign .lanes-layer .short-way-marker {
     pointer-events: none;
+}
+
+/* the road's surfaces are drawn solid and faded as a whole layer, so where the roads, links and lanes of a junction
+   overlap, the road is one even colour rather than see-through shapes stacked into patches */
+.ideditor.lane-studio .lanes-layer .lanes-carriageway {
+    --lanes-a: 0.35;
+    opacity: calc(var(--lanes-a) * var(--lanes-low, 1) + (1 - var(--lanes-a)) * var(--lanes-high, 0));
+}
+.ideditor.lane-studio .lanes-layer .lanes-general-lanes {
+    --lanes-a: 0.3;
+    opacity: calc(var(--lanes-a) * var(--lanes-low, 1) + (1 - var(--lanes-a)) * var(--lanes-high, 0));
+}
+.ideditor.lane-studio .lanes-layer .lanes-channel-lanes {
+    opacity: var(--lanes-road-alpha, 0.545);
+}
+.ideditor.lane-studio .lanes-layer .lanes-carriageway .carriageway,
+.ideditor.lane-studio .lanes-layer .lanes-general-lanes .lane,
+.ideditor.lane-studio .lanes-layer .lanes-channel-lanes .lane {
+    fill-opacity: 1;
+}
+/* the Speed Limit tool's colours are not faded with the road */
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-general-lanes,
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-channel-lanes {
+    opacity: 1;
 }
 
 /* settings: lane surface opacity. Each surface sets its default transparency as --lanes-a;

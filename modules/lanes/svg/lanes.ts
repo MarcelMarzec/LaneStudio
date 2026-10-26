@@ -177,7 +177,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'rail-beds', 'rail-sleepers', 'rails', 'roadside', 'parking-bays', 'parking', 'paths', 'carriageway', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'islands', 'dividers', 'tram-rails', 'kerbs',
+                'areas', 'rail-beds', 'rail-sleepers', 'rails', 'roadside', 'parking-bays', 'parking', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'islands', 'dividers', 'tram-rails', 'kerbs',
                 'paths-over', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs',
                 'shields', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
                 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
@@ -359,8 +359,13 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const node = graph.hasEntity(j.nodeID as NodeId) as osmNode | undefined;
             return !node || !roadAreas.some(a => pointInPolygon(node.loc, a.polygon));
         }) : junctions;
-        const areas = group('junctions').selectAll<SVGPathElement, typeof junctions[number]>('path')
-            .data(shownJunctions, d => d.nodeID);
+        // all junctions of a kind in one path, so where they overlap the surface is one even colour rather than
+        // see-through boxes stacked on each other
+        const junctionKinds = (['junction', 'flare'] as const).map(kind => ({
+            kind, polygons: shownJunctions.filter(j => j.kind === kind).flatMap(j => j.polygons)
+        })).filter(k => k.polygons.length);
+        const areas = group('junctions').selectAll<SVGPathElement, typeof junctionKinds[number]>('path')
+            .data(junctionKinds, d => d.kind);
         areas.exit().remove();
         areas.enter().append('path')
             .merge(areas)
@@ -403,13 +408,18 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             key: `${pieceKey(piece)}-${i}`, cls: laneClass(piece, lane) + ' lane-channelled', polygons: [piece.lanes[i]]
         })));
         joinPaths(group('channel-lanes'), channelShapes, d => d.key, d => d.cls, d => d.polygons.map(polygon => path(polygon, true)).join(''));
-        const ribbons = group('lanes').selectAll<SVGPathElement, { key: string; cls: string; polygons: Vec2[][] }>('path')
-            .data([...laneShapes.values()], d => d.key);
-        ribbons.exit().remove();
-        ribbons.enter().append('path')
-            .merge(ribbons)
-            .each(attrChanged('class', d => d.cls))
-            .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')));
+        // general traffic lanes in a layer of their own, faded as a whole (see 20_lanes_layer.css): where the roads
+        // of a junction overlap, their lanes stay one even colour
+        const general = (shape: { cls: string }) => /\blane-general\b/.test(shape.cls);
+        for (const [name, shapes] of [['general-lanes', [...laneShapes.values()].filter(general)], ['lanes', [...laneShapes.values()].filter(d => !general(d))]] as const) {
+            const ribbons = group(name).selectAll<SVGPathElement, { key: string; cls: string; polygons: Vec2[][] }>('path')
+                .data(shapes, d => d.key);
+            ribbons.exit().remove();
+            ribbons.enter().append('path')
+                .merge(ribbons)
+                .each(attrChanged('class', d => d.cls))
+                .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')));
+        }
 
 
         /* roads and paths being built: work stripes over them */
@@ -606,7 +616,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             editing || (c.ways ?? []).some(id => selected.has(id as osmWay['id'])));
         const guideLines = [...connectionLines, ...innerGuides, ...stoppedGuides].filter(d => d.kind === 'relation' || clearOfIslands(d.line));
         joinPaths(group('connectivity'), markings ? guideLines : [], d => d.key,
-            d => (d.kind === 'relation' ? 'connectivity-curve' : 'junction-guide') + (d.optional ? ' optional' : ''),
+            d => (d.kind === 'relation' ? 'connectivity-curve' : 'junction-guide') + (d.optional ? ' optional' : '') +
+                ('inferred' in d && d.inferred ? ' inferred' : ''),
             d => path(d.line, false));
 
 

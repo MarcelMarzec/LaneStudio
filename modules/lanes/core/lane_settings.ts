@@ -51,8 +51,9 @@ export function laneSettings(context: iD.Context): LaneSettings {
             : c);
         container.style('--lanes-road-fill', `rgb(${colour.join(', ')})`);
         container.style('--lanes-road-alpha', String(Math.round(alpha * 1000) / 1000));
-        // junction boxes: lighter and bluer than the road, so they read as a different surface
-        const junction = colour.map((c, i) => Math.min(255, c + [18, 24, 38][i]));
+        // junction boxes: a shade lighter than the road, so they can be told apart, but read as the same road (a
+        // strong tint made junctions with many links and islands, as at Ratby Lane, Leicester, a patchwork)
+        const junction = colour.map((c, i) => Math.min(255, c + [7, 8, 12][i]));
         container.style('--lanes-junction-fill', `rgb(${junction.join(', ')})`);
         container.classed('lanes-hide-originals', _hide);
     }

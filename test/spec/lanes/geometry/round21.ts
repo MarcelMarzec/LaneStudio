@@ -54,7 +54,7 @@ describe('a turn arrow for a junction past one where that turn is banned', () =>
     it('draws its guide line on ahead, not into the banned turn', () => {
         const { geometry } = johnAdamsWay();
         // the guides from n0 that end south of the road would be the banned turn into South Square
-        const south = geometry.connections.filter(c => c.kind === 'guide' && c.nodeID === 'n0' &&
+        const south = geometry.connections.filter(c => c.kind === 'guide' && !c.inferred && c.nodeID === 'n0' &&
             frame.toMetres(c.line[c.line.length - 1])[1] < -3);
         expect(south).toHaveLength(0);
     });
