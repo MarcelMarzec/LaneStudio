@@ -19,6 +19,7 @@ import { laneStudioSplash } from '../ui/splash';
 import { uiPaneLaneStudio } from '../ui/pane_settings';
 import { uiToolLaneModes } from '../ui/tool_lane_modes';
 import { uiLaneStudioLogo } from '../ui/logo';
+import { laneStudioWhatsNew } from '../ui/whats_new';
 import { laneSettings } from './lane_settings';
 import { laneStudioRepository, laneStudioVersion } from '../version';
 
@@ -70,6 +71,8 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
     context.init();
     // after init (it needs the UI), but before iD's UI renders and decides on its own splash
     laneStudioSplash(context);
+    // after an update, what changed since the version last used
+    laneStudioWhatsNew(context);
 
     // iD's Issues pane looks up rule names under `issues.<rule>` in its general strings
     // (merged as soon as strings load, before iD's UI first renders)

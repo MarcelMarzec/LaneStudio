@@ -357,3 +357,92 @@
     color: var(--passive-text-color);
     font-size: 12px;
 }
+
+/* What's new after an update: each version's headings and lines, in a scrolling list */
+.ideditor.lane-studio .lanes-whats-new-list {
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-top: 0;
+}
+.ideditor.lane-studio .lanes-whats-new-version {
+    padding: 10px 0;
+    border-top: 1px solid var(--border-color);
+}
+.ideditor.lane-studio .lanes-whats-new-version:first-child { border-top: none; }
+.ideditor.lane-studio .lanes-whats-new-version h4 {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+.ideditor.lane-studio .lanes-whats-new-number { font-size: 15px; }
+.ideditor.lane-studio .lanes-whats-new-date {
+    font-weight: normal;
+    color: var(--text-color-muted, #777);
+    font-size: 12px;
+}
+.ideditor.lane-studio .lanes-whats-new-version h5 {
+    margin: 8px 0 2px;
+    font-size: 13px;
+    color: var(--link-color);
+}
+.ideditor.lane-studio .lanes-whats-new-version ul {
+    margin: 0;
+    padding: 0 0 0 18px;
+    list-style: disc outside;
+}
+.ideditor.lane-studio .lanes-whats-new-version li {
+    margin: 3px 0;
+    line-height: 1.4;
+}
+.ideditor.lane-studio .lanes-whats-new-version code {
+    font-size: 11px;
+    padding: 0 3px;
+    border-radius: 3px;
+    background: var(--bg-color-2, rgba(0, 0, 0, 0.06));
+}
+.ideditor.lane-studio .lanes-whats-new-footer {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-top: 1px solid var(--border-color);
+}
+.ideditor.lane-studio .lanes-whats-new-footer .lanes-whats-new-option { flex: 1 1 auto; }
+.ideditor.lane-studio .lanes-whats-new-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ideditor.lane-studio .lanes-whats-new-option input { margin: 0; }
+.ideditor.lane-studio .lanes-whats-new-close {
+    padding: 0 16px;
+    height: 32px;
+    border-radius: 4px;
+    background: var(--link-color);
+    color: var(--bg-color, #fff);
+    font-weight: bold;
+}
+
+/* About Lane Studio, in the settings pane */
+.ideditor.lane-studio .lanes-show-whats-new {
+    margin: 6px 0 4px;
+    padding: 0;
+    height: auto;
+    background: none;
+    color: var(--link-color);
+}
+.ideditor.lane-studio .lanes-about-links {
+    list-style: none;
+    margin: 6px 0;
+    padding: 0;
+}
+.ideditor.lane-studio .lanes-about-links li { margin: 4px 0; }
+.ideditor.lane-studio .lanes-about-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.ideditor.lane-studio .lanes-about-version {
+    color: var(--text-color-muted, #777);
+    font-size: 12px;
+}

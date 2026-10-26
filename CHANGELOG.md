@@ -8,6 +8,15 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.26r2
+##### 2026-Oct-26
+
+#### Website
+* After an update, a what's new menu lists every version since the one you last used, with what changed
+  in each; tick "Don't show what's new after updates" to stop it
+* The Lane Studio settings have a new About Lane Studio section: show what's new after an update (on or
+  off), see what's new at any time, and links to the website, privacy policy and contact page
+
 # 26.10.26
 ##### 2026-Oct-26
 

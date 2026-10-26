@@ -6,6 +6,10 @@ import { uiPane } from '../../ui/pane';
 import { uiSection } from '../../ui/section';
 import { uiTooltip } from '../../ui/tooltip';
 import { laneSettings, defaultSurfaceOpacity } from '../core/lane_settings';
+import { laneStudioLinks } from '../core/links';
+import { setWhatsNewEnabled, whatsNewEnabled } from '../core/whats_new';
+import { laneStudioVersion } from '../version';
+import { loadChangelog, showWhatsNew } from './whats_new';
 
 type Div = d3.Selection<HTMLDivElement>;
 
@@ -90,6 +94,60 @@ function uiSectionLaneDisplay(context: iD.Context) {
 }
 
 
+/** "About Lane Studio": the what's new menu (and whether it shows after updates), and links to the website,
+ *  privacy policy and contact page */
+function uiSectionLaneAbout(context: iD.Context) {
+    const section = (uiSection('lanes-about', context) as any)
+        .label(() => t.append('_lanes.settings.about'))
+        .disclosureContent(render);
+
+    function render(selection: Div) {
+        let container = selection.selectAll<HTMLDivElement, number>('.lanes-about-container').data([0]);
+        const enter = container.enter().append('div').attr('class', 'lanes-about-container lanes-settings');
+
+        const list = enter.append('ul').attr('class', 'layer-list lanes-settings-list');
+        const item = list.append('li')
+            .attr('class', 'lanes-whats-new-setting')
+            .call((uiTooltip() as any).title(() => t.append('_lanes.settings.whats_new_tip')).placement('top'));
+        const label = item.append('label');
+        label.append('input')
+            .attr('type', 'checkbox')
+            .on('change', function(this: HTMLInputElement) {
+                setWhatsNewEnabled(this.checked);
+                section.reRender();
+            });
+        label.append('span').text(t('_lanes.settings.whats_new_option'));
+
+        enter.append('button')
+            .attr('class', 'button-link lanes-show-whats-new')
+            .text(t('_lanes.settings.show_whats_new'))
+            .on('click', () => {
+                loadChangelog(context)
+                    .then(versions => showWhatsNew(context, versions.slice(0, 10)))
+                    .catch(() => (context.ui() as any).flash.label(t.append('_lanes.whats_new.failed'))());
+            });
+
+        const links = enter.append('ul').attr('class', 'lanes-about-links');
+        for (const key of ['website', 'privacy', 'contact'] as const) {
+            links.append('li').append('a')
+                .attr('href', laneStudioLinks[key]).attr('target', '_blank').attr('rel', 'noopener')
+                .call(svgIcon('#iD-icon-out-link', 'inline') as any)
+                .append('span').text(t(`_lanes.settings.${key}`));
+        }
+        enter.append('p').attr('class', 'lanes-about-version').text(`Lane Studio v${laneStudioVersion}`);
+
+        // update
+        container = enter.merge(container);
+        container.select('.lanes-whats-new-setting')
+            .classed('active', whatsNewEnabled())
+            .select('input')
+            .property('checked', whatsNewEnabled());
+    }
+
+    return section;
+}
+
+
 /** The Lane Studio pane, beside iD's Background, Map Data and Issues panes */
 export function uiPaneLaneStudio(context: iD.Context) {
     ensurePaneIcon();
@@ -98,5 +156,5 @@ export function uiPaneLaneStudio(context: iD.Context) {
         .label(t.append('_lanes.settings.title'))
         .description(t.append('_lanes.settings.description'))
         .iconName('lanes-icon-pane')
-        .sections([uiSectionLaneDisplay(context)]);
+        .sections([uiSectionLaneDisplay(context), uiSectionLaneAbout(context)]);
 }

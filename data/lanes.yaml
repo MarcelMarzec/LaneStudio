@@ -291,6 +291,22 @@ en:
     reset_opacity: Reset lane surface opacity
     hide_originals: Hide iD's lines and points under lanes
     hide_originals_tip: Hides iD's own way lines, vertices, points and direction cones for roads, paths, markings and areas Lane Studio draws. They can still be clicked.
+    about: About Lane Studio
+    whats_new_option: Show what's new after an update
+    whats_new_tip: After Lane Studio is updated, list what changed since the version you last used.
+    show_whats_new: See what's new
+    website: Website
+    privacy: Privacy policy
+    contact: Contact and feedback
+  whats_new:
+    title: What's new in Lane Studio
+    since: "What changed since you last used Lane Studio ({since}). You are now on {version}."
+    current: "The latest changes to Lane Studio. You are on {version}."
+    more: "… and {n} older versions in the full changelog."
+    hide: Don't show what's new after updates
+    full: Full changelog
+    close: Carry on mapping
+    failed: The changelog could not be loaded.
   street_feature:
     island: Traffic island
     road_marking: Painted marking

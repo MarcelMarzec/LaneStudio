@@ -30,7 +30,7 @@ fs.writeFileSync(path.join(out, 'index.html'), page);
 copy('land.html');
 
 // built assets Lane Studio loads at runtime
-for (const file of ['iD.css', 'lanes.css', 'lanes.min.js']) {
+for (const file of ['iD.css', 'lanes.css', 'lanes.min.js', 'lanes-changelog.md']) {
   if (!copy(path.join('dist', file))) throw new Error(`dist/${file} is missing: run npm run all first`);
 }
 for (const dir of ['img', 'locales', 'data', 'mapillary-js', 'pannellum']) {
