@@ -60,8 +60,9 @@ website, its build or its deploy alike):
 4. **Title the commit with the version first:** `v26.10.21r2: Lanes run between traffic islands`.
 5. Run the checks below, then commit and push.
 
-Deploying (the **Deploy LaneStudio to server** workflow) ships whatever version the branch is at; it
-never changes the version. Tell the user to run it when they want the site updated.
+Deploying (the **Deploy LaneStudio to server** workflow for the editor, **Deploy Lane Studio website to
+server** for the pages in `LanesWebsite/`) ships whatever version the branch is at; it never changes the
+version. Tell the user to run them when they want the site updated.
 
 ## Keep the documents accurate
 

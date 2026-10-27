@@ -68,6 +68,11 @@ your web root. The **Deploy LaneStudio to server** workflow in `.github/workflow
 `mm/lane-studio-main` and uploads it over FTP. Logging in from your own domain needs your own
 OpenStreetMap OAuth 2 application. [RELEASING.md](RELEASING.md) has the steps.
 
+The pages about Lane Studio (overview, changelog and privacy policy) are a small PHP site in
+`LanesWebsite/`, served at the root of lanestudio.marcelmarzec.com with the editor in `/editor/`. The
+**Deploy Lane Studio website to server** workflow uploads it over FTP. To try it locally, run
+`php -S localhost:8000 router.php` in `LanesWebsite/`.
+
 ## More
 
 * [LANES.md](LANES.md): the user and developer guide

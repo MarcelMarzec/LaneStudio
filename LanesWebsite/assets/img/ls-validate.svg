@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" width="400" height="260" role="img"
+     aria-label="Illustration of a validation panel flagging that a lane count and a turn-lane list disagree, with the offending values highlighted.">
+  <title>Validation before upload</title>
+  <rect width="400" height="260" fill="#121212"/>
+
+  <!-- Panel -->
+  <rect x="24.5" y="28.5" width="351" height="203" rx="12" fill="#161616" stroke="#2a2a2a"/>
+  <path d="M24.5 66h351" stroke="#2a2a2a"/>
+  <text x="44" y="53" font-family="Inter, system-ui, sans-serif" font-size="11.5" font-weight="600"
+        letter-spacing="0.06em" fill="#8a8a8a">BEFORE UPLOAD</text>
+
+  <!-- Warning row -->
+  <rect x="42.5" y="84.5" width="315" height="54" rx="10" fill="#1d1403" stroke="#4a3310"/>
+  <g transform="translate(66 111)" stroke="#ff922b" stroke-width="1.8" fill="none"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M0-9 9 7H-9z"/>
+    <path d="M0-3v4M0 4v.5"/>
+  </g>
+  <text x="88" y="106" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600"
+        fill="#ffffff">Lane count disagrees with turn:lanes</text>
+  <text x="88" y="124" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#9b9b9b">
+    4 lanes tagged, 3 turn entries listed
+  </text>
+
+  <!-- Tag diff -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5">
+    <rect x="42.5" y="152.5" width="315" height="26" rx="7" fill="#101010" stroke="#2a2a2a"/>
+    <text x="58" y="169" fill="#9b9b9b">lanes<tspan fill="#5e5e5e">=</tspan><tspan fill="#ff6b6b">4</tspan></text>
+    <text x="150" y="169" fill="#5e5e5e">expected</text>
+    <text x="214" y="169" fill="#86cb0e">3</text>
+
+    <rect x="42.5" y="186.5" width="315" height="26" rx="7" fill="#101010" stroke="#2a2a2a"/>
+    <text x="58" y="203" fill="#9b9b9b">turn:lanes<tspan fill="#5e5e5e">=</tspan></text>
+    <text x="150" y="203" fill="#ff922b">left|through|right</text>
+  </g>
+</svg>

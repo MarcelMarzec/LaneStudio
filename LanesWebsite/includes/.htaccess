@@ -1,0 +1,9 @@
+# These are partials, not pages. The defined('SITE') guard in each file already
+# stops them rendering on their own; this stops Apache serving them at all.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

@@ -308,6 +308,24 @@ it is uploaded.
 3. Open the site, log in, make one small test edit and check the changeset on openstreetmap.org:
    it should say `created_by=LaneStudio <version>` (the version in the footer).
 
+### The Lane Studio website
+
+The pages that describe Lane Studio are a separate PHP site in `LanesWebsite/`, at the root of
+lanestudio.marcelmarzec.com; the editor is in `/editor/` (register the OAuth redirect URI as
+`https://lanestudio.marcelmarzec.com/editor/land.html`).
+
+- `index.php` (overview), `changelog.php` (renders [CHANGELOG.md](CHANGELOG.md)), `privacy_policy.php`
+  and `error.php`; `.htaccess` gives them clean URLs (`/changelog`, `/privacy_policy`) on Apache.
+- `includes/`: the settings and links (`config.php`), header, navigation, footer, icons and the
+  Markdown renderer. They are refused when requested directly.
+- `assets/`: the stylesheet and images.
+
+Deploy it with the **Deploy Lane Studio website to server** workflow (same `FTP_*` secrets). It checks
+the PHP, copies `CHANGELOG.md` into `includes/changelog.md` for the changelog page and uploads the
+folder to the web root. It keeps its own upload record (`.ftp-deploy-website-state.json`), so it
+never deletes the editor's files. Run locally with `php -S localhost:8000 router.php` in
+`LanesWebsite/`; the changelog page then reads `CHANGELOG.md` from the repository.
+
 The site's privacy note is [PRIVACY.md](PRIVACY.md). Still worth doing: a wiki page for Lane Studio
 that names its `created_by` value, listed on the wiki's Editors page.
 

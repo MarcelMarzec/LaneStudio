@@ -1,0 +1,50 @@
+# Apache configuration for the Lane Studio website at the root of
+# lanestudio.marcelmarzec.com. There is no build step, so this ships with the
+# site. The editor lives in /editor/ with its own .htaccess.
+
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS. The second and third conditions cover hosts that terminate
+  # TLS at a proxy; without them this would loop forever.
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteCond %{SERVER_PORT} !=443
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+  # Partials and Markdown are never served.
+  RewriteRule ^includes/ - [F,L]
+  RewriteRule \.md$ - [F,L]
+
+  # The rules below match THE_REQUEST, which keeps the *original* request line
+  # during an ErrorDocument subrequest. Without this guard a refused
+  # /includes/foo.php would come back as a redirect instead of a 403.
+  RewriteCond %{ENV:REDIRECT_STATUS} ^$
+  RewriteRule ^ - [E=CLEAN_URLS:1]
+
+  # Drop the .php extension: one canonical URL per page.
+  RewriteCond %{ENV:CLEAN_URLS} =1
+  RewriteCond %{THE_REQUEST} \s/+(.*?)index\.php[\s?] [NC]
+  RewriteRule ^ /%1 [R=301,L]
+
+  RewriteCond %{ENV:CLEAN_URLS} =1
+  RewriteCond %{THE_REQUEST} \s/+(.+?)\.php[\s?] [NC]
+  RewriteRule ^ /%1 [R=301,L]
+
+  # Serve the clean URL. Real directories are skipped so /editor/ still
+  # resolves through its own index.
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}\.php -f
+  RewriteRule ^(.+?)/?$ $1.php [L]
+</IfModule>
+
+# error.php reads the original status from REDIRECT_STATUS.
+ErrorDocument 400 /error.php
+ErrorDocument 401 /error.php
+ErrorDocument 403 /error.php
+ErrorDocument 404 /error.php
+ErrorDocument 500 /error.php
+ErrorDocument 502 /error.php
+ErrorDocument 503 /error.php

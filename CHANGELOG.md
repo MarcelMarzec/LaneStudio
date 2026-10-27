@@ -8,6 +8,16 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.27r3
+##### 2026-Oct-27
+
+#### Website
+* The Lane Studio website (overview, changelog and privacy policy) now lives in this repository, in
+  `LanesWebsite/`, and is served at lanestudio.marcelmarzec.com instead of marcelmarzec.com/lanestudio,
+  with the editor at lanestudio.marcelmarzec.com/editor
+* Each website deploy carries the current changelog to the changelog page, and the privacy policy now
+  covers the website's own pages
+
 # 26.10.27r2
 ##### 2026-Oct-27
 

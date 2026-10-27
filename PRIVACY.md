@@ -12,7 +12,9 @@ The project's code and issues are at [https://github.com/MarcelMarzec/iD](https:
 Lane Studio is a static website: it has no server-side code, accounts or database of its own, and
 runs entirely in your browser. The web server that hosts it keeps ordinary access logs (such as your
 IP address, the pages and files requested, and your browser's user agent), which are used only to keep
-the site running. If you interact with the project on GitHub, you do so under
+the site running. The pages describing Lane Studio at lanestudio.marcelmarzec.com load their
+typefaces from Google Fonts, so Google receives your IP address when one of them opens, under
+[Google's privacy policy](https://policies.google.com/privacy); they set no cookies. If you interact with the project on GitHub, you do so under
 [GitHub's Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
 ### Storage in your browser
@@ -73,5 +75,6 @@ law, or want to ask about it, open an issue at
 
 ### Changelog
 
+* _2026-Oct-27_ - The website's pages, now part of this project, load fonts from Google Fonts.
 * _2026-Oct-27_ - The version last used and the what's new setting are stored; the changelog is fetched from the site itself.
 * _2026-Oct-21_ - Lane Studio's own policy, adapted from [iD's](https://github.com/openstreetmap/iD/blob/develop/PRIVACY.md).

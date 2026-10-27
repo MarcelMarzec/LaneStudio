@@ -50,6 +50,8 @@ The full rules are in [CLAUDE.md](CLAUDE.md), and `test/spec/lanes/version.ts` c
    with a stamp of their contents, so visitors get the new version straight away.
 2. Check the live site: the footer shows the version, you can log in, and a small test edit's
    changeset on openstreetmap.org says `created_by=LaneStudio YY.MM.DD`.
+3. To update the website (`LanesWebsite/`: the overview, changelog and privacy pages), run Actions →
+   **Deploy Lane Studio website to server**. It uploads the pages and the current `CHANGELOG.md`.
 
 ### Taking in a new iD release
 

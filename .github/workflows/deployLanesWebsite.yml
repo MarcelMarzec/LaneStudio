@@ -1,0 +1,39 @@
+name: Deploy Lane Studio website to server
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Lint and Deploy LanesWebsite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get latest code
+        uses: actions/checkout@v6
+        with:
+          ref: mm/lane-studio-main
+
+      - name: Check PHP syntax
+        run: find LanesWebsite -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      # the changelog page reads includes/changelog.md on the server
+      - name: Copy the changelog
+        run: cp CHANGELOG.md LanesWebsite/includes/changelog.md
+
+      # the website is the root of lanestudio.marcelmarzec.com; the editor is in /editor/, deployed by
+      # the Deploy LaneStudio to server workflow. Its own state file keeps this deploy from deleting the editor's files.
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: LanesWebsite/
+          state-name: .ftp-deploy-website-state.json
+          exclude: |
+            **/.DS_Store
+            router.php
