@@ -16,7 +16,9 @@ section, so a deploy simply ships the version the branch is at.
 2. **GitHub repository settings** (Settings → Secrets and variables → Actions):
    - Variables: `OSM_CLIENT_ID`, the application's client ID. It is built into the site, so it is
      public by design and belongs in a variable, not a secret.
-   - Secrets: `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` for the web host.
+   - Secrets: `FTP_SERVER`; `FTP_LANES_USERNAME` and `FTP_LANES_PASSWORD` for an FTP account that opens
+     in the editor's folder (`/editor/`); `FTP_ROOT_USERNAME` and `FTP_ROOT_PASSWORD` for one that opens
+     at the web root, for the website.
 
 ### Every commit
 
@@ -45,13 +47,14 @@ The full rules are in [CLAUDE.md](CLAUDE.md), and `test/spec/lanes/version.ts` c
 
 ### Deploying
 
-1. Actions → **Deploy LaneStudio to server** → Run workflow. It builds with `npm run all` (which ends
-   by packaging `dist-lanes/`) and uploads `dist-lanes/` over FTP. The page loads its code and styles
-   with a stamp of their contents, so visitors get the new version straight away.
-2. Check the live site: the footer shows the version, you can log in, and a small test edit's
-   changeset on openstreetmap.org says `created_by=LaneStudio YY.MM.DD`.
-3. To update the website (`LanesWebsite/`: the overview, changelog and privacy pages), run Actions →
-   **Deploy Lane Studio website to server**. It uploads the pages and the current `CHANGELOG.md`.
+1. Actions → **Deploy LaneStudio to server** → Run workflow, choosing what to deploy: **editor and
+   website** (the default), **editor** or **website**. The editor is built with `npm run all` (which
+   ends by packaging `dist-lanes/`) and uploaded to `/editor/`; the website (`LanesWebsite/`: the
+   overview, changelog and privacy pages) is uploaded to the web root with the current `CHANGELOG.md`.
+   The editor loads its code and styles with a stamp of their contents, so visitors get the new
+   version straight away.
+2. Check the live site: the editor's footer shows the version, you can log in, and a small test
+   edit's changeset on openstreetmap.org says `created_by=LaneStudio YY.MM.DD`.
 
 ### Taking in a new iD release
 

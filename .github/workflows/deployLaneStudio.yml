@@ -2,6 +2,15 @@ name: Deploy LaneStudio to server
 
 on:
   workflow_dispatch:
+    inputs:
+      deploy:
+        description: What to deploy
+        type: choice
+        options:
+          - editor and website
+          - editor
+          - website
+        default: editor and website
 
 permissions:
   contents: read
@@ -11,36 +20,71 @@ jobs:
     name: Build and Deploy to Server
     runs-on: ubuntu-latest
 
+    env:
+      EDITOR: ${{ inputs.deploy != 'website' }}
+      WEBSITE: ${{ inputs.deploy != 'editor' }}
+
     steps:
       - name: Get latest code
         uses: actions/checkout@v6
         with:
           ref: mm/lane-studio-main
 
+      # the website: LanesWebsite/, at the root of lanestudio.marcelmarzec.com
+      - name: Check the website's PHP
+        if: env.WEBSITE == 'true'
+        run: find LanesWebsite -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      # the changelog page reads includes/changelog.md on the server
+      - name: Copy the changelog into the website
+        if: env.WEBSITE == 'true'
+        run: cp CHANGELOG.md LanesWebsite/includes/changelog.md
+
+      # the editor: dist-lanes/, in /editor/
       - name: Set up Node.js
+        if: env.EDITOR == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
 
       - name: Install dependencies
+        if: env.EDITOR == 'true'
         run: npm ci
 
-      # builds iD's assets, then packages Lane Studio as the whole site in dist-lanes/
-      - name: Build Lane Studio
+      # builds iD's assets, then packages Lane Studio as the whole editor in dist-lanes/
+      - name: Build the editor
+        if: env.EDITOR == 'true'
         run: npm run all
         env:
           # logging in to OpenStreetMap from your own domain needs your own OAuth 2 application,
           # registered at https://www.openstreetmap.org/oauth2/applications with the redirect URI
-          # https://<your domain>/land.html; put its client ID in the repository variable OSM_CLIENT_ID
+          # https://lanestudio.marcelmarzec.com/editor/land.html; put its client ID in the repository variable OSM_CLIENT_ID
           ID_API_CONNECTION_URL: ${{ vars.OSM_CLIENT_ID && 'https://www.openstreetmap.org' || '' }}
           ID_API_CONNECTION_API_URL: ${{ vars.OSM_CLIENT_ID && 'https://api.openstreetmap.org' || '' }}
           ID_API_CONNECTION_CLIENT_ID: ${{ vars.OSM_CLIENT_ID }}
 
-      - name: Deploy via FTP
+      # the FTP_LANES account opens in /editor/
+      - name: Deploy the editor via FTP
+        if: env.EDITOR == 'true'
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          username: ${{ secrets.FTP_LANES_USERNAME }}
+          password: ${{ secrets.FTP_LANES_PASSWORD }}
           local-dir: dist-lanes/
+
+      # the FTP_ROOT account opens at the web root, above /editor/. The website keeps its own state file,
+      # which lists only its files, so this upload never deletes the editor's.
+      - name: Deploy the website via FTP
+        if: env.WEBSITE == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_ROOT_USERNAME }}
+          password: ${{ secrets.FTP_ROOT_PASSWORD }}
+          local-dir: LanesWebsite/
+          state-name: .ftp-deploy-website-state.json
+          exclude: |
+            **/.DS_Store
+            router.php

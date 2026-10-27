@@ -63,14 +63,14 @@ Before pushing: `npm run lint`, `npx tsc` and `npm run test:once`.
 
 ## Putting it online
 
-`npm run all` packages the site into `dist-lanes/`: upload its contents (including `.htaccess`) to
-your web root. The **Deploy LaneStudio to server** workflow in `.github/workflows/` builds
-`mm/lane-studio-main` and uploads it over FTP. Logging in from your own domain needs your own
+`npm run all` packages the editor into `dist-lanes/`: upload its contents (including `.htaccess`) to
+the folder it is served from. The **Deploy LaneStudio to server** workflow in `.github/workflows/`
+builds `mm/lane-studio-main` and uploads the editor and the website over FTP (or either one alone). Logging in from your own domain needs your own
 OpenStreetMap OAuth 2 application. [RELEASING.md](RELEASING.md) has the steps.
 
 The pages about Lane Studio (overview, changelog and privacy policy) are a small PHP site in
-`LanesWebsite/`, served at the root of lanestudio.marcelmarzec.com with the editor in `/editor/`. The
-**Deploy Lane Studio website to server** workflow uploads it over FTP. To try it locally, run
+`LanesWebsite/`, served at the root of lanestudio.marcelmarzec.com with the editor in `/editor/`. To
+try it locally, run
 `php -S localhost:8000 router.php` in `LanesWebsite/`.
 
 ## More

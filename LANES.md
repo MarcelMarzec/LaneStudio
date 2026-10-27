@@ -290,14 +290,17 @@ it is uploaded.
      modify notes (the scopes iD asks for)
 
    Register one on https://api06.dev.openstreetmap.org too if you want to test against the dev server.
-2. **Deploy** with the **Deploy LaneStudio to server** workflow (Actions tab → Run workflow). It builds
-   `mm/lane-studio-main` and uploads `dist-lanes/` over FTP. It needs:
+2. **Deploy** with the **Deploy LaneStudio to server** workflow (Actions tab → Run workflow, then pick
+   **editor and website**, **editor** or **website**). It builds `mm/lane-studio-main` and uploads
+   `dist-lanes/` to `/editor/` and the website below to the web root, over FTP. It needs:
    - repository **variable** `OSM_CLIENT_ID`: the application's client ID (Settings → Secrets and
      variables → Actions → Variables)
-   - repository **secrets** `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`
+   - repository **secrets** `FTP_SERVER`; `FTP_LANES_USERNAME` and `FTP_LANES_PASSWORD` for an FTP
+     account that opens in the editor's folder (`/editor/`); `FTP_ROOT_USERNAME` and
+     `FTP_ROOT_PASSWORD` for one that opens at the web root, for the website
 
    To build by hand instead, set the client ID in a `.env` file (git-ignored) or on the command line,
-   and upload the contents of `dist-lanes/` (including the hidden `.htaccess`) to the web root:
+   and upload the contents of `dist-lanes/` (including the hidden `.htaccess`) to `/editor/`:
 
    ```sh
    ID_API_CONNECTION_URL=https://www.openstreetmap.org \
@@ -320,9 +323,9 @@ lanestudio.marcelmarzec.com; the editor is in `/editor/` (register the OAuth red
   Markdown renderer. They are refused when requested directly.
 - `assets/`: the stylesheet and images.
 
-Deploy it with the **Deploy Lane Studio website to server** workflow (same `FTP_*` secrets). It checks
-the PHP, copies `CHANGELOG.md` into `includes/changelog.md` for the changelog page and uploads the
-folder to the web root. It keeps its own upload record (`.ftp-deploy-website-state.json`), so it
+The **Deploy LaneStudio to server** workflow deploys it (choose **website** to deploy it alone). It
+checks the PHP, copies `CHANGELOG.md` into `includes/changelog.md` for the changelog page and uploads
+the folder to the web root with the `FTP_ROOT_*` account. It keeps its own upload record (`.ftp-deploy-website-state.json`), so it
 never deletes the editor's files. Run locally with `php -S localhost:8000 router.php` in
 `LanesWebsite/`; the changelog page then reads `CHANGELOG.md` from the repository.
 
