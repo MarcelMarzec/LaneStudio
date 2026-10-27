@@ -15,11 +15,11 @@ const graphOf = (entities: Entity[]) => new iD.coreGraph(entities) as iD.Graph;
 
 describe('railway features', () => {
     // Sleaford Road crossing two tracks (as at Boston station), each with its own level crossing node
-    function crossing(barrier: string) {
+    function crossing(barrier: string, extra: Tags = {}) {
         const entities: Entity[] = [
             new iD.osmNode({ id: 'n101', loc: at(-40, 0) }), new iD.osmNode({ id: 'n102', loc: at(40, 0) }),
-            new iD.osmNode({ id: 'n1', loc: at(-2, 0), tags: { railway: 'level_crossing', 'crossing:barrier': barrier } }),
-            new iD.osmNode({ id: 'n2', loc: at(2, 0), tags: { railway: 'level_crossing', 'crossing:barrier': barrier } }),
+            new iD.osmNode({ id: 'n1', loc: at(-2, 0), tags: { railway: 'level_crossing', 'crossing:barrier': barrier, ...extra } }),
+            new iD.osmNode({ id: 'n2', loc: at(2, 0), tags: { railway: 'level_crossing', 'crossing:barrier': barrier, ...extra } }),
             new iD.osmNode({ id: 'n11', loc: at(-2, -50) }), new iD.osmNode({ id: 'n12', loc: at(-2, 50) }),
             new iD.osmNode({ id: 'n13', loc: at(2, -50) }), new iD.osmNode({ id: 'n14', loc: at(2, 50) }),
             new iD.osmWay({ id: 'w1', nodes: ['n101', 'n1', 'n2', 'n102'], tags: { highway: 'primary', name: 'Sleaford Road' } }),
@@ -31,41 +31,75 @@ describe('railway features', () => {
     }
 
     it('draws a level crossing\'s panels and rails over each track, and its barriers outside them both', () => {
-        const { overRoad } = crossing('double_half');
+        const { overRoad, symbols } = crossing('double_half');
         expect(overRoad.filter(s => s.part === 'crossing-deck')).toHaveLength(2);
         expect(overRoad.filter(s => s.part === 'crossing-rail')).toHaveLength(4);
-        // two halves each side, the west side's at n1, the east side's at n2
-        const arms = overRoad.filter(s => s.part === 'crossing-arm');
-        expect(arms).toHaveLength(4);
-        const xs = arms.map(arm => Math.round(arm.points.map(p => frame.toMetres(p)[0]).reduce((a, b) => a + b) / arm.points.length));
+        // two booms each side, the west side's at n1, the east side's at n2, each pivoting on a barrier machine
+        const pedestals = overRoad.filter(s => s.part === 'crossing-pedestal');
+        expect(pedestals).toHaveLength(4);
+        const xs = pedestals.map(p => Math.round(p.points.map(q => frame.toMetres(q)[0]).reduce((a, b) => a + b) / p.points.length));
         expect(xs.every(x => x < -4 || x > 4)).toBe(true);
-        expect(overRoad.filter(s => s.part === 'crossing-light').length).toBeGreaterThan(0);
+        // booms in red and white bands, with red lamps along them
+        expect(overRoad.filter(s => s.part === 'crossing-boom-red').length).toBeGreaterThan(4);
+        expect(overRoad.filter(s => s.part === 'crossing-boom-white').length).toBeGreaterThan(4);
+        expect(overRoad.filter(s => s.part === 'crossing-boom-lamp')).toHaveLength(12);
+        // the road traffic light signals on each side, facing the traffic coming in, with no St Andrew's cross
+        expect(symbols.map(s => s.kind)).toEqual(['crossing-lights', 'crossing-lights']);
+        expect(symbols.map(s => Math.round(s.facing)).sort((a, b) => a - b)).toEqual([90, 270]);
+        expect(symbols.some(s => s.cross)).toBe(false);
+        // the stop line on each side, and double white lines on the approach to it on this two-way road
         expect(overRoad.filter(s => s.part === 'crossing-stop-line')).toHaveLength(2);
+        expect(overRoad.filter(s => s.part === 'crossing-centre-line')).toHaveLength(4);
     });
 
-    it('draws a crossing with no barriers tagged as panels and rails only', () => {
-        const { overRoad } = crossing('no');
-        expect(overRoad.filter(s => s.part === 'crossing-arm' || s.part === 'crossing-stop-line')).toHaveLength(0);
-        expect(overRoad.filter(s => s.part === 'crossing-deck')).toHaveLength(2);
+    it('draws a half barrier across only the lanes coming in, on the left of the traffic', () => {
+        const { overRoad } = crossing('half');
+        // the east side (n2): traffic coming in drives west, keeping left, on the south half of the road
+        const east = overRoad.filter(s => s.part.startsWith('crossing-boom-') && s.key.startsWith('n2-'))
+            .flatMap(s => s.points.map(p => frame.toMetres(p)[1]));
+        expect(east.length).toBeGreaterThan(0);
+        expect(Math.max(...east)).toBeLessThan(0.5);
+    });
+
+    it('puts a St Andrew\'s cross over the lights of an open crossing, and draws one with nothing tagged as panels and rails', () => {
+        const lights = crossing('no', { 'crossing:light': 'yes' });
+        expect(lights.overRoad.filter(s => s.part.startsWith('crossing-boom'))).toHaveLength(0);
+        expect(lights.symbols.map(s => s.cross)).toEqual([true, true]);
+        expect(lights.overRoad.filter(s => s.part === 'crossing-stop-line')).toHaveLength(2);
+        const none = crossing('no');
+        expect(none.overRoad.filter(s => s.part.startsWith('crossing-boom') || s.part === 'crossing-stop-line')).toHaveLength(0);
+        expect(none.overRoad.filter(s => s.part === 'crossing-deck')).toHaveLength(2);
+        expect(none.symbols).toHaveLength(0);
     });
 
     it('draws platforms with a safety line on the track side, and the track\'s equipment', () => {
         const entities: Entity[] = [
             new iD.osmNode({ id: 'n11', loc: at(0, -50) }), new iD.osmNode({ id: 'n12', loc: at(0, 50), tags: { railway: 'buffer_stop' } }),
-            new iD.osmNode({ id: 'n21', loc: at(0, 0), tags: { railway: 'signal', 'railway:signal:direction': 'forward' } }),
+            new iD.osmNode({ id: 'n21', loc: at(0, 0), tags: { railway: 'signal', 'railway:signal:direction': 'forward', 'railway:signal:main': 'GB-NR:colour_light',
+                'railway:signal:main:states': 'GB-NR:stop;GB-NR:caution;GB-NR:preliminary_caution;GB-NR:clear', ref: 'BN123' } }),
+            new iD.osmNode({ id: 'n22', loc: at(0, 20), tags: { railway: 'signal', 'railway:signal:shunting': 'GB-NR:position_light', 'railway:signal:direction': 'backward' } }),
             new iD.osmNode({ id: 'n31', loc: at(2.5, -30) }), new iD.osmNode({ id: 'n32', loc: at(8, -30) }),
             new iD.osmNode({ id: 'n33', loc: at(8, 30) }), new iD.osmNode({ id: 'n34', loc: at(2.5, 30) }),
-            new iD.osmWay({ id: 'w1', nodes: ['n11', 'n21', 'n12'], tags: { railway: 'rail' } }),
+            new iD.osmWay({ id: 'w1', nodes: ['n11', 'n21', 'n22', 'n12'], tags: { railway: 'rail' } }),
             new iD.osmWay({ id: 'w2', nodes: ['n31', 'n32', 'n33', 'n34', 'n31'], tags: { railway: 'platform' } })
         ];
         const graph = graphOf(entities);
-        const { ground, trackside } = railFeatures(entities.map(e => graph.entity(e.id)), graph);
+        const { ground, trackside, symbols } = railFeatures(entities.map(e => graph.entity(e.id)), graph);
         expect(ground.filter(s => s.part === 'platform')).toHaveLength(1);
         // only the west edge faces the track; its safety line is 0.8 m back from it, on the platform
         const safety = ground.filter(s => s.part === 'platform-safety');
         expect(safety).toHaveLength(1);
         expect(frame.toMetres(safety[0].points[0])[0]).toBeCloseTo(3.3, 1);
-        expect(trackside.map(s => s.part)).toEqual(expect.arrayContaining(['buffer-stop', 'signal-head', 'signal-post']));
+        expect(trackside.map(s => s.part)).toEqual(expect.arrayContaining(['buffer-stop', 'signal-post']));
+        // a four-aspect colour-light signal showing red, with its plate, on the left of the line facing the trains
+        // coming north (so facing south); a position-light shunt signal facing the other way
+        const main = symbols.find(s => s.id === 'n21')!;
+        expect(main).toMatchObject({ kind: 'signal', aspects: ['yellow', 'green', 'yellow', 'red'], lit: 'red', plate: 'BN123' });
+        expect(Math.round(main.facing)).toBe(180);
+        expect(frame.toMetres(main.loc)[0]).toBeLessThan(-1);
+        const shunt = symbols.find(s => s.id === 'n22')!;
+        expect(shunt.kind).toBe('shunt-signal');
+        expect(Math.round(shunt.facing)).toBe(0);
     });
 
     it('knows the old course of a line, a planned one and a monorail', () => {

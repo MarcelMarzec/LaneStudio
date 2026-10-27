@@ -30,6 +30,45 @@ export interface RailFeatures {
     ground: RailShape[];
     trackside: RailShape[];
     overRoad: RailShape[];
+    /** signals and level crossing light units, drawn upright like traffic signs */
+    symbols: RailSymbol[];
+}
+
+/**
+ * Equipment drawn as an upright symbol where it stands, the way Lane Studio draws traffic signs: a railway signal
+ * (a Network Rail colour-light head, or a ground position-light shunt signal) or a level crossing's road traffic
+ * light signals (two red lamps over an amber one on a black backboard with a white border)
+ */
+export interface RailSymbol {
+    key: string;
+    /** the OSM node it draws, for hover and selection */
+    id: string;
+    kind: 'signal' | 'shunt-signal' | 'crossing-lights';
+    loc: Vec2;
+    /** the compass bearing its face looks towards (at the traffic or trains it is for) */
+    facing: number;
+    /** a signal's aspects, top to bottom, and the one shown lit */
+    aspects?: ('red' | 'yellow' | 'green')[];
+    lit?: 'red' | 'yellow' | 'green';
+    /** the signal's identification plate (`ref`) */
+    plate?: string;
+    /** crossing lights at an open crossing (no barriers) carry a St Andrew's cross above them */
+    cross?: boolean;
+}
+
+/** The compass bearing of a direction in a metric frame (x east, y north) */
+const bearing = (d: Vec2) => (Math.atan2(d[0], d[1]) * 180 / Math.PI + 360) % 360;
+
+/**
+ * A main signal's aspects, top to bottom, as on a Network Rail colour-light head: 4 aspects (yellow, green, yellow,
+ * red), 3 (green, yellow, red) or 2 (green, red; a distant signal green, yellow). How many from the number of states
+ * tagged (`railway:signal:main:states`), else 3.
+ */
+function aspectsOf(tags: Tags, distant: boolean): RailSymbol['aspects'] {
+    const states = (tags[distant ? 'railway:signal:distant:states' : 'railway:signal:main:states'] ?? '').split(';').filter(Boolean).length;
+    const count = Math.max(2, Math.min(4, states || (distant ? 2 : 3)));
+    if (distant) return ['green', 'yellow'];
+    return count === 4 ? ['yellow', 'green', 'yellow', 'red'] : count === 3 ? ['green', 'yellow', 'red'] : ['green', 'red'];
 }
 
 const locs = (way: osmWay, graph: coreGraph): Vec2[] => way.nodes.map(id => (graph.entity(id) as osmNode).loc as Vec2);
@@ -153,23 +192,56 @@ function crossingShapes(node: osmNode, graph: coreGraph, out: RailFeatures, side
             : barrier === 'half' ? [[kerbIn, post]]
             : barrier === 'double_half' ? [[kerbIn, post], [kerbOut, post]]
             : [];
-        arms.forEach(([from, to], k) => push('crossing-arm', `arm${side}-${k}`, box(scale(add(from, to), 0.5), unit(sub(to, from)), len(sub(to, from)), 0.3), true));
+        arms.forEach(([from, to], k) => boom(push, `arm${side}-${k}`, from, to));
         if (barrier === 'gates') {
-            push('crossing-gate', `gate${side}a`, box(add(post, scale(inSide, width / 4)), inSide, width / 2 - 0.2, 0.2), true);
-            push('crossing-gate', `gate${side}b`, box(sub(post, scale(inSide, width / 4)), inSide, width / 2 - 0.2, 0.2), true);
+            // white gates across the road, each with a red target in its middle
+            for (const [leaf, sign] of [['a', 1], ['b', -1]] as const) {
+                const middle = add(post, scale(inSide, sign * width / 4));
+                push('crossing-gate', `gate${side}${leaf}`, box(middle, inSide, width / 2 - 0.2, 0.25), true);
+                push('crossing-gate-target', `gate${side}${leaf}-target`, circle(middle, 0.3), true);
+            }
         }
         if (lights) {
-            // twin red lights on a post at the kerb, facing the traffic coming in
-            const at = add(kerbIn, scale(inSide, 0.4));
-            push('crossing-light', `light${side}a`, circle(add(at, scale(dr, 0.35)), 0.22), true);
-            push('crossing-light', `light${side}b`, circle(sub(at, scale(dr, 0.35)), 0.22), true);
+            // the road traffic light signals on the nearside verge, facing the traffic coming in (which drives
+            // towards the track, the other way to `side`); at an open crossing under a St Andrew's cross
+            out.symbols.push({
+                key: `${node.id}-lights${side}`, id: node.id, kind: 'crossing-lights',
+                loc: frame.toLoc(add(kerbIn, add(scale(inSide, 0.8), scale(dr, side * 0.6)))),
+                facing: bearing(scale(dr, side)), cross: barrier === 'no'
+            });
         }
         if (barrier !== 'no' || lights) {
-            // the white stop line across the lanes coming in, a metre before the barrier
-            const back = scale(dr, side * 1.2);
+            // the white stop line across the lanes coming in, before the lights and barrier (Highway Code rule 293:
+            // stop behind the white line)
+            const back = scale(dr, side * 1.8 / sin);
             push('crossing-stop-line', `stop${side}`, box(scale(add(add(kerbIn, back), add(post, back)), 0.5), inSide, width / 2, 0.3), true);
+            // on a two-way road, double solid white centre lines on the approach: no overtaking or crossing them
+            if (!layout!.model.oneway) {
+                for (const offset of [-0.15, 0.15]) {
+                    const start = add(add(post, back), scale(nr, offset));
+                    const end = add(start, scale(dr, side * 18));
+                    push('crossing-centre-line', `centre${side}${offset}`, box(scale(add(start, end), 0.5), dr, 18, 0.1), true);
+                }
+            }
         }
     }
+}
+
+/**
+ * A barrier boom from its pivot to its tip, as on British level crossings: red and white bands half a metre long,
+ * red lamps along the top, and the barrier machine at the pivot
+ */
+function boom(push: (part: string, key: string, points: Vec2[], closed: boolean) => void, key: string, pivot: Vec2, tip: Vec2) {
+    const d = unit(sub(tip, pivot));
+    const length = len(sub(tip, pivot));
+    const bands = Math.max(1, Math.round(length / 0.5));
+    for (let k = 0; k < bands; k++) {
+        const a = add(pivot, scale(d, k * length / bands));
+        const b = add(pivot, scale(d, (k + 1) * length / bands));
+        push(k % 2 ? 'crossing-boom-white' : 'crossing-boom-red', `${key}-band${k}`, box(scale(add(a, b), 0.5), d, length / bands, 0.3), true);
+    }
+    for (const at of [0.35, 0.65, 0.95]) push('crossing-boom-lamp', `${key}-lamp${at}`, circle(add(pivot, scale(d, at * length)), 0.12, 8), true);
+    push('crossing-pedestal', `${key}-pedestal`, box(pivot, d, 0.7, 0.7), true);
 }
 
 /** Buffer stops, switches, derailers, signals and stop markers on a track, and their place beside it */
@@ -206,9 +278,17 @@ function equipmentShapes(node: osmNode, graph: coreGraph, out: RailFeatures) {
         const overhead = position === 'overhead' || position === 'bridge';
         const at = overhead ? c : add(c, scale(sideways, gauge / 2 + 1.6));
         if (kind === 'signal') {
+            const tags = node.tags;
+            const main = !!tags['railway:signal:main'];
+            const distant = !main && !!tags['railway:signal:distant'];
+            const shunt = !main && !distant && !!(tags['railway:signal:shunting'] ?? tags['railway:signal:minor']);
             if (!overhead) push('signal-post', 'post', [add(c, scale(sideways, gauge / 2 + 0.9)), at], false);
-            push('signal-head', 'head', circle(at, 0.6), true);
-            push('signal-aspect', 'aspect', circle(add(at, scale(travel, -0.15)), 0.28), true);
+            // its face looks back along the line at the trains coming towards it
+            out.symbols.push({
+                key: `${node.id}-signal`, id: node.id, kind: shunt ? 'shunt-signal' : 'signal', loc: frame.toLoc(at),
+                facing: bearing(scale(travel, -1)), plate: tags.ref ?? tags['railway:signal:main:ref'],
+                ...(shunt ? {} : { aspects: aspectsOf(tags, distant), lit: distant ? 'yellow' : 'red' })
+            });
         } else {
             push('stop-board', 'board', box(at, travel, 0.4, 1.2), true);
         }
@@ -238,7 +318,7 @@ function pitShapes(way: osmWay, graph: coreGraph, out: RailFeatures) {
 
 /** The railway features among `entities` (see RailFeatures) */
 export function railFeatures(entities: OsmEntity[], graph: coreGraph): RailFeatures {
-    const out: RailFeatures = { ground: [], trackside: [], overRoad: [] };
+    const out: RailFeatures = { ground: [], trackside: [], overRoad: [], symbols: [] };
     const tracks = entities.filter(isTrack) as osmWay[];
     // a road crossing several tracks has a level crossing node on each: their barriers stand outside them all
     const crossingSides = new Map<string, number[]>();

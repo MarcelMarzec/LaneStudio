@@ -471,14 +471,36 @@
 .ideditor.lane-studio .lanes-layer .rail-turntable-bridge { fill: rgb(96, 92, 88); }
 .ideditor.lane-studio .lanes-layer .rail-turntable-rail { fill: none; stroke: rgb(214, 219, 226); stroke-width: 1.5; }
 
-/* level crossings: panels across the road with the rails through them, red and white barriers, red lights and
-   stop lines; crossings for people over the line get the panels */
-.ideditor.lane-studio .lanes-layer .rail-crossing-deck { fill: rgb(150, 148, 142); fill-opacity: 0.85; stroke: rgba(40, 40, 40, 0.6); stroke-width: 1; }
+/* level crossings, as on British roads (Highway Code rules 291-299): panels across the road with the rails through
+   them; red and white barrier booms with red lamps along them and the barrier machine at the pivot; white gates with
+   a red target; the white stop line and double white centre lines on the approach */
+.ideditor.lane-studio .lanes-layer .rail-crossing-deck { fill: rgb(70, 72, 76); fill-opacity: 0.9; stroke: rgba(20, 20, 20, 0.7); stroke-width: 1; }
 .ideditor.lane-studio .lanes-layer .rail-crossing-rail { fill: none; stroke: rgb(210, 214, 220); stroke-width: 2; }
-.ideditor.lane-studio .lanes-layer .rail-crossing-arm { fill: #e8e8e8; stroke: #d01c1c; stroke-width: 2; stroke-dasharray: 5 5; }
-.ideditor.lane-studio .lanes-layer .rail-crossing-gate { fill: #f2f2ee; stroke: #333; stroke-width: 1; }
-.ideditor.lane-studio .lanes-layer .rail-crossing-light { fill: #ff2a2a; stroke: #111; stroke-width: 1; }
-.ideditor.lane-studio .lanes-layer .rail-crossing-stop-line { fill: #fff; fill-opacity: 0.9; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-boom-red { fill: #d8141b; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-boom-white { fill: #f6f6f2; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-boom-lamp { fill: #ff3b2f; stroke: #400; stroke-width: 0.5; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-pedestal { fill: #e2b600; stroke: #222; stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-gate { fill: #f6f6f2; stroke: #333; stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-gate-target { fill: #d8141b; stroke: #fff; stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .rail-crossing-stop-line,
+.ideditor.lane-studio .lanes-layer .rail-crossing-centre-line { fill: #fff; fill-opacity: 0.92; }
+
+/* signals and crossing light units, drawn upright like traffic signs */
+.ideditor.lane-studio .lanes-layer .rail-symbol-post { stroke: #e8e8e8; stroke-width: 2; }
+.ideditor.lane-studio .lanes-layer .rail-symbol-facing { fill: #fff; stroke: #222; stroke-width: 0.8; }
+.ideditor.lane-studio .lanes-layer .rail-signal-head,
+.ideditor.lane-studio .lanes-layer .rail-crossing-backboard { fill: #111; stroke: #fff; stroke-width: 1.6; }
+.ideditor.lane-studio .lanes-layer .rail-lamp { stroke: #000; stroke-width: 0.5; }
+.ideditor.lane-studio .lanes-layer .rail-lamp.lit { filter: drop-shadow(0 0 2px currentColor); }
+.ideditor.lane-studio .lanes-layer .rail-lamp.amber { opacity: 0.55; }
+.ideditor.lane-studio .lanes-layer .rail-signal-plate,
+.ideditor.lane-studio .lanes-layer .rail-crossing-plate { fill: #fff; stroke: #111; stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .rail-signal-plate-text,
+.ideditor.lane-studio .lanes-layer .rail-crossing-plate-text { fill: #111; font-weight: bold; font-family: Arial, Helvetica, sans-serif; }
+.ideditor.lane-studio .lanes-layer .rail-cross-edge { stroke: #d8141b; stroke-linecap: square; fill: none; }
+.ideditor.lane-studio .lanes-layer .rail-cross { stroke: #fff; stroke-linecap: square; fill: none; }
+.ideditor.lane-studio .lanes-layer .rail-symbol.hover .rail-signal-head,
+.ideditor.lane-studio .lanes-layer .rail-symbol.hover .rail-crossing-backboard { stroke: #ffee00; }
 
 /* track equipment */
 .ideditor.lane-studio .lanes-layer .rail-buffer-stop { fill: #d01c1c; stroke: #fff; stroke-width: 1.5; }
@@ -486,8 +508,6 @@
 .ideditor.lane-studio .lanes-layer .rail-switch-motor { fill: rgb(70, 74, 80); stroke: #ddd; stroke-width: 1; }
 .ideditor.lane-studio .lanes-layer .rail-switch-bar { fill: none; stroke: rgb(200, 204, 210); stroke-width: 1.5; }
 .ideditor.lane-studio .lanes-layer .rail-signal-post { fill: none; stroke: #ddd; stroke-width: 1.5; }
-.ideditor.lane-studio .lanes-layer .rail-signal-head { fill: #111; stroke: #fff; stroke-width: 1.5; }
-.ideditor.lane-studio .lanes-layer .rail-signal-aspect { fill: #ff2a2a; }
 .ideditor.lane-studio .lanes-layer .rail-stop-board { fill: #fff; stroke: #111; stroke-width: 1.5; }
 .ideditor.lane-studio .lanes-layer [class*='rail-'].hover { filter: drop-shadow(0 0 2px #fff); }
 

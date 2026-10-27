@@ -8,6 +8,24 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.27
+##### 2026-Oct-27
+
+#### Railways
+* Level crossings are drawn as on British roads today, following the Highway Code (rules 291-299) and
+  the Traffic Signs Regulations: barrier booms in red and white bands with red lamps along them and the
+  barrier machine at the pivot (half barriers across the lanes coming in, on the traffic's left), the
+  road traffic light signals on the nearside verge facing the traffic (two red lamps and an amber one
+  on a black backboard edged white, over a "STOP when lights show" plate), a St Andrew's cross over
+  the lights at an open crossing with no barriers, the white stop line, and double white centre lines
+  on the approach of a two-way road; gates are white with a red target
+* Signals are drawn as Network Rail colour-light signals, upright beside the line like traffic signs:
+  a black head edged white with 2, 3 or 4 aspects (`railway:signal:main:states`) showing red, a distant
+  signal showing yellow, and a ground position-light shunt signal (`railway:signal:shunting`), each
+  over its white identification plate (`ref`), with a wedge showing which way it faces the trains
+* A crossing for people over the line (`railway=crossing`) shows its panels and rails over the footway
+  again
+
 # 26.10.26r5
 ##### 2026-Oct-26
 
