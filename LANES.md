@@ -24,12 +24,17 @@ Before pushing: `npm run lint`, `npx tsc` and `npm run test:once`.
 
 ## Using it
 
-Zoom levels: lanes, pavements, footways and mapped areas from zoom 17; lane lines, turn arrows,
-crossings, stop and give way lines from zoom 18 (also where editing starts); labels, painted STOP
-text and give-way triangles from zoom 19.
+Zoom levels: lanes, pavements, footways, railways and mapped areas from zoom 17; lane lines, turn
+arrows, crossings, stop and give way lines, railway sleepers and parking bay lines from zoom 18 (also
+where editing starts); labels, painted STOP text and give-way triangles from zoom 19.
 
-**Top bar**: Selection (the default: select and edit roads, lanes and other features) and Routing,
-then iD's Point, Line and Area for adding features.
+Lane Studio's name and logo are at the top left, above the sidebar. After an update, a **what's new**
+menu lists every version since the one you last used, with what changed in each (from
+[CHANGELOG.md](CHANGELOG.md)); tick "Don't show what's new after updates" to stop it, or turn it back on
+in the settings.
+
+**Top bar**: Selection (the default: select and edit roads, lanes and other features), Routing and
+Speed Limit, then iD's Point, Line and Area for adding features.
 
 **Routing** (top bar, or leave with Esc): editing is off and the sidebar shows the routes. Hover a lane
 to see every route a vehicle in it can take, up to 450 m and four junctions on, in numbered colours,
@@ -41,6 +46,15 @@ gap of a dual carriageway), keep to their lane at the first junction and along l
 change lanes on, and leave a roundabout only by the exits the entry lane's arrows point to. Hover a
 footway or pavement to see the streets reachable on foot and the crossings used.
 
+**Speed Limit** (top bar, or leave with Esc): every lane is coloured by its limit (its own
+`maxspeed:lanes`, else its road's `maxspeed`), in mph: 10 to 70 mph in their own colours, other limits
+grey, and roads with no limit red with a dashed edge (footways and pedestrian ways are not coloured).
+The sidebar shows the colours with how many roads in view have each, and lists the roads in view with
+no limit by name (click one to go to it). Pick a limit (or press 1 to 7 for 10 to 70 mph), then click
+a road to set it on that road, or shift-click a lane to set it on that lane only (`maxspeed:lanes`).
+The national speed limit sets 60 mph with `maxspeed:type=GB:nsl_single`, or 70 mph with `GB:nsl_dual` on
+a dual carriageway. Esc lets go of the limit, then leaves the tool.
+
 **Lanes** (sidebar section for a selected road)
 
 - Click a lane on the map or in the lane strip to select it; shift-click to add lanes.
@@ -49,6 +63,9 @@ footway or pavement to see the streets reachable on foot and the crossings used.
 - Inspector: direction of travel, position (move left or right), turn arrows, lane change,
   lane type, speed limits, destination, access, width, width and height limits, surface,
   and every other `*:lanes` tag on the road.
+- Speed limits are picked from a row of UK roundels (10 to 70 mph, and none), the current one ringed;
+  with no lane selected, the road's own limit is picked the same way, with the national speed limit
+  too.
 - Click the line between two lanes of the selected road to cycle its marking: dashed, solid,
   crossable one way, crossable the other way (`change:lanes`).
 
@@ -60,6 +77,9 @@ footway or pavement to see the streets reachable on foot and the crossings used.
   cones for everything Lane Studio draws. They can still be clicked, and hovering or selecting a road
   highlights Lane Studio's drawing of it. The selected road keeps a thin line and its nodes, so its
   nodes and midpoints can still be dragged to reshape it.
+- About Lane Studio: "Show what's new after an update" (on unless turned off), "See what's new" (the
+  latest versions' changes at any time), and links to the website, privacy policy and contact page
+  (set in `modules/lanes/core/links.ts`).
 
 **Tools** (buttons in the Lanes section)
 
@@ -134,8 +154,46 @@ islands; mapped kerbs styled by kerb height; crossings, stop and give way lines,
 calming and mini-roundabouts on road nodes (a stop, give way or signals' line on a pedestrian
 crossing, or up to 10 m past one, stands just before the crossing, and signals tagged as their
 crossing draw the crossing with a line each way); `road_marking=*` lines, areas and text; street parking
-with its bays and a layby joining it to the road; and lane connections. Everything else is drawn by
-iD as usual.
+with its bays and a layby joining it to the road; and lane connections. Footways, paths, cycleways and
+pedestrian ways are drawn over the roads (where one meets or crosses a road it shows); those in a
+tunnel or below ground (`layer` < 0) stay under them. Everything else is drawn by iD as usual.
+
+**Parking spaces and car parks**: a parking space mapped as an area of its own
+(`amenity=parking_space`) is drawn with white bay lines on every side but the one facing the aisle or
+road it is driven into from, coloured by `parking_space=*`: blue with yellow lines and a wheelchair for
+disabled bays, green with a bolt for charging, purple for parent and child, orange for motorcycles. A
+car park (`amenity=parking` with no `parking=*` or `parking=surface`) is drawn as asphalt.
+
+**Railways** (wiki: Key:railway): track is drawn at its gauge, from `gauge` (mm) or the usual one:
+1435 mm for main lines, the Underground, light rail and trams, 600 mm for narrow gauge, 184 mm for
+miniature lines. Grey ballast, concrete sleepers (timber on heritage and narrow gauge lines and
+`railway:preserved=yes`) and steel rails; `tracks=n` lays tracks side by side; conductor rails show for
+`electrified=rail` (third rail) and `electrified=4th_rail` (the Underground's centre and outer rails).
+Trams run in the road with their rails over its lanes, unless `embedded=no`. Tunnels are faded, disused
+track has rusty rails, track being built is striped, and abandoned, razed and proposed lines are a
+dashed trackbed; a monorail is its beam. Railways pass under the roads, except:
+
+- **Level crossings** (`railway=level_crossing`), drawn as on British roads (Highway Code rules
+  291-299): panels and rails across the road; barrier booms in red and white bands with red lamps and
+  the barrier machine at the pivot, by `crossing:barrier` (`half`: across the lanes coming in, on the
+  traffic's left; `double_half`: both halves; `full`: the whole road; `gates`: white gates with red
+  targets); the road traffic light signals (two red lamps and an amber one on a black backboard edged
+  white, over a "STOP when lights show" plate) on the nearside verge facing the traffic, under a St
+  Andrew's cross at an open crossing with `crossing:light=yes` and no barriers; the white stop line;
+  and double white centre lines on the approach of a two-way road. Where a road crosses several
+  tracks, the barriers and lights stand outside them all.
+- **Crossings for people** (`railway=crossing`) get their panels and rails over the path, and tram
+  crossings (`railway=tram_level_crossing`) their panels and rails across the road.
+
+Platforms (`railway=platform`, an area or a line 3 m wide or `width`) have a white edge and a yellow
+safety line on the side that faces a track. Signals (`railway=signal`) stand upright beside the line
+on the side tagged (`railway:signal:position`, the left by default), facing the trains
+(`railway:signal:direction`): Network Rail colour-light heads with 2, 3 or 4 aspects
+(`railway:signal:main:states`, else 3) showing red, distant signals showing yellow, and ground
+position-light shunt signals (`railway:signal:shunting`), each over its identification plate (`ref`).
+Buffer stops, switches (with their point motor), derailers and stop boards are drawn at the track, and
+turntables and traversers as pits (a turntable with its bridge). Stations, stops, subway entrances and
+railway buildings are left to iD's icons and buildings.
 
 **Surfaces**: `surface=*` (and `surface:lanes`) changes how carriageways, lanes, paths and mapped areas
 look: asphalt, concrete, paving slabs, setts and gravel (as textures), unpaved, grass, wood and metal.
@@ -182,9 +240,15 @@ hidden).
   fitting it to an area by at most half its width; bigger gaps mean the lanes or the area do not
   match, and moving that far would push the road into its neighbours.
 - Junctions joined by a road shorter than 25 m are one junction: one box, and the short link is drawn
-  only as lane guide lines. At a fork (a dual carriageway splitting) nothing runs through, so the
-  carriageways stop where they meet.
-- Junction boxes are a little lighter and bluer than the road. Their corners use each road's edges
+  only as lane guide lines, except where the junction holds traffic islands
+  (`area:highway=traffic_island`): there the links are drawn as whole lanes running between the
+  islands, and the islands are cut out of the box. At a fork (a dual carriageway splitting) nothing
+  runs through, so the carriageways stop where they meet.
+- A two-way road dividing round an island into roads carrying on from it, at least one of them one-way
+  (as Oak Spinney Park at Ratby Lane, Leicester), is no junction: the two-way road runs up to the node,
+  each branch starts where it clears the other, and the space between is filled as road with the kerbs
+  carried on.
+- Junction boxes are a shade lighter than the road, so a junction reads as one road surface. Their corners use each road's edges
   where it actually ends (a shifted or tapering road included), and curve round from one road's kerb
   to the next, with a kerb line. On the side a road joins, the box runs back along the main road to
   that road's corner (and the main road's kerb stops there), so a road joining at a shallow angle
@@ -196,7 +260,10 @@ hidden).
   bend so their lanes, kerbs and pavements meet exactly.
 - Dashed guide lines carry each lane through the junction box to the lanes it leads to, along the
   lane's edges, from its turn arrows and the exit angles; connectivity relations are drawn as solid
-  blue curves instead. A road running straight through with no gap gets no guides, and fragments
+  blue curves instead. A side road (or a road at a junction with no main road) with no turn arrows
+  still gets guide lines, a little fainter: one lane to every road it can turn into, or several lanes
+  shared out from left to right, leaving out turns a restriction bans (`no_*`, `only_*`, for the side
+  of a road passing through that the restriction's turn names). Mini-roundabouts get none. A road running straight through with no gap gets no guides, and fragments
   shorter than 2 m are left out.
 - Roads shorter than 8 m get an outline and a marker you can click.
 
@@ -208,7 +275,8 @@ roads) and offers a fix where the answer is certain.
 
 Lane Studio is a static site: no server code, just files. `npm run all` ends by packaging it into
 `dist-lanes/`: `index.html` (the Lane Studio page), `land.html` (where logins return), `dist/` (code,
-styles, icons, data and translations) and an `.htaccess` for Apache hosts. The page loads its code and
+styles, icons, data, translations and the changelog for the what's new menu) and an `.htaccess` for
+Apache hosts. The page loads its code and
 styles with a stamp of their contents (`lanes.min.js?v=…`), so visitors get a new version as soon as
 it is uploaded.
 
@@ -250,16 +318,20 @@ that names its `created_by` value, listed on the wiki's Editors page.
 | Entry point and boot | `modules/lanes/index.ts`, `modules/lanes/core/boot.ts`, `lanes.html` |
 | Lane model (parse, edit, write `*:lanes` tags), lane types, markings, connectivity, street feature tags | `modules/lanes/model/` |
 | Actions (lanes, markings, copy, connect), each one undo step | `modules/lanes/actions/` |
-| Selected lanes, tools, keyboard, settings, roadside detection | `modules/lanes/core/` |
-| Geometry in metres: lanes, junctions and lane connections, street features, road markings, parking | `modules/lanes/geometry/` |
+| Selected lanes, tools, keyboard, settings, roadside detection, the what's new state, links | `modules/lanes/core/` |
+| Geometry in metres: lanes, junctions and lane connections, street features, road markings, parking, parking spaces, railways and their features | `modules/lanes/geometry/` |
 | Look-ahead corridor, roundabouts | `modules/lanes/osm/` |
 | Map drawing and click targets | `modules/lanes/svg/` |
-| Sidebar sections, settings pane and welcome screen | `modules/lanes/ui/` |
+| Sidebar sections, settings pane, welcome screen, what's new menu, logo, speed roundels | `modules/lanes/ui/` |
 | Lane tags validation rule | `modules/lanes/validations/` |
 | Styles (built into `dist/lanes.css`) | `css-lanes/` |
 | Strings (read as `t('_lanes.…')`) | `data/lanes.yaml` |
 | Version shown in the footer and written to changesets | `modules/lanes/version.ts` |
 | Routing | `modules/lanes/geometry/routing.ts`, `modules/lanes/core/lane_routing.ts`, `modules/lanes/core/mode_routing.ts`, `modules/lanes/ui/routing_panel.ts`, `modules/lanes/svg/routing.ts` |
+| Speed Limit tool | `modules/lanes/core/lane_speed.ts`, `modules/lanes/core/mode_speed.ts`, `modules/lanes/ui/speed_panel.ts`, `modules/lanes/ui/speed_roundels.ts` |
+| Railways | `modules/lanes/geometry/railway.ts` (track), `modules/lanes/geometry/rail_features.ts` (platforms, crossings, signals, equipment), `modules/lanes/svg/railway.ts` |
+| Parking spaces and car parks | `modules/lanes/geometry/parking_spaces.ts`, `modules/lanes/svg/parking_spaces.ts` |
+| What's new menu | `modules/lanes/core/whats_new.ts`, `modules/lanes/ui/whats_new.ts`; the build copies `CHANGELOG.md` to `dist/lanes-changelog.md` |
 | Site packaging (`npm run site`, the last step of `npm run all`) | `scripts/build_lanes_site.js` |
 | Tests | `test/spec/lanes/` |
 
@@ -275,6 +347,7 @@ configured:
 | `localizer.addLocaleDir()` and `localizer.mergeStrings()` | `modules/core/localizer.ts` | none |
 | `uiEntityEditorAddSection()` for extra sidebar sections | `modules/ui/entity_editor.js` | none |
 | `uiInitAddPane()` for extra map panes | `modules/ui/init.js` | none |
+| `uiInitSetSidebarHeader()` for a header above the sidebar (Lane Studio's logo) | `modules/ui/init.js` | none |
 | `uiTopToolbarAddTool()` for extra top bar tools | `modules/ui/top_toolbar.js` | none |
 | `uiVersionSetProduct()` for the version in the footer | `modules/ui/version.js` | iD's version |
 | `coreValidatorAddRule()` for extra validation rules | `modules/core/validator.js` | none |

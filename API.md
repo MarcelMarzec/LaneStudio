@@ -22,7 +22,8 @@ Lane Studio runs on). `lanes.html` is the reference page; the site build copies 
 * __`LaneStudio.init(container, options)`__ boots iD's core with Lane Studio's map layer, sidebar
   sections, tools, settings pane and validation rule, and returns the iD context.
   * `options.assetPath`: where the `dist/` folder (icons, data, translations) is served from,
-    relative to the page. Default `'dist/'`.
+    relative to the page. Default `'dist/'`. The what's new menu reads `lanes-changelog.md` from this
+    folder (a copy of `CHANGELOG.md` made by the build); without it, the menu is not shown.
 * __`LaneStudio.version`__: Lane Studio's version, as shown in the footer and written to changesets
   (`created_by=LaneStudio <version>`).
 

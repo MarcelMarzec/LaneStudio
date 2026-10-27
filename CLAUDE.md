@@ -63,6 +63,33 @@ website, its build or its deploy alike):
 Deploying (the **Deploy LaneStudio to server** workflow) ships whatever version the branch is at; it
 never changes the version. Tell the user to run it when they want the site updated.
 
+## Keep the documents accurate
+
+**Every commit checks the documents against what it changes, and updates any that are no longer
+accurate, in the same commit.** A feature isn't finished while a document still describes the old
+behaviour, leaves the new one out, or names files, settings or steps that no longer exist.
+
+Before committing, look at what the change touches and check the documents that cover it:
+
+| Document | Covers | Update it when |
+| --- | --- | --- |
+| [README.md](README.md) | What Lane Studio is and does, getting started, putting it online | A feature users would notice is added or removed, or setup changes |
+| [LANES.md](LANES.md) | The user and developer guide: tools, settings, what is drawn and how, where each part lives, iD's hooks | Anything users see or do changes; a file, folder or iD hook is added, moved or removed |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | How the code fits together: modules, how a frame is drawn, editing, tools, caching | The structure, the drawing steps or a module's job changes |
+| [API.md](API.md) | Starting Lane Studio on a page, files it serves, URL parameters, build settings | `LaneStudio.init`, served files, URL parameters or environment variables change |
+| [FAQ.md](FAQ.md) | Common questions | A change answers, changes or raises a common question |
+| [PRIVACY.md](PRIVACY.md) | What is stored, sent and to whom | Anything new is stored in the browser or sent anywhere (add a line to its changelog) |
+| [ACCESSIBILITY.md](ACCESSIBILITY.md) | Keyboard, colour, touch and translation support of Lane Studio's features | A feature is added or changes how it is used |
+| [CONTRIBUTING.md](CONTRIBUTING.md), [RELEASING.md](RELEASING.md) | How to contribute, commit, version and deploy | The workflow, checks, versioning or deploy changes |
+| This file | The rules for working here | A rule changes |
+| `.github/` (issue templates, `FUNDING.yml`, workflows) | Reporting, sponsoring, building and deploying | What they ask for or do goes out of date |
+
+- Write documents for the person reading them, in the same plain style as the rest; name the tags,
+  files and settings exactly as they are.
+- When unsure whether a document is affected, read its section on the area you changed.
+- A commit that only updates documents still gets a version and changelog section
+  (`#### Behind the scenes`, or `#### Website` when it changes what users read).
+
 ## Checks before pushing
 
 `npm run lint`, `npx tsc` and `npm run test:once` must pass. Never run `npm run build:data` or

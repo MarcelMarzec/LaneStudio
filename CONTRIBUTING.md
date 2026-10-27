@@ -75,10 +75,13 @@ For drawing changes, also look at the result in the browser on real data before 
 
 1. Branch from `mm/lane-studio-main` with a descriptive name.
 2. Make the change, with tests, and check it in the browser.
-3. Give the commit its version and changelog section, and put the version first in its title (see
+3. Check the documents that cover what you changed (README, LANES, ARCHITECTURE, API, FAQ, PRIVACY,
+   ACCESSIBILITY and the rest; [CLAUDE.md](CLAUDE.md) lists what each covers) and update any that are
+   no longer accurate, in the same commit.
+4. Give the commit its version and changelog section, and put the version first in its title (see
    [RELEASING.md](RELEASING.md)).
-4. Commit with a message that says what changed and why.
-5. Open a pull request against `mm/lane-studio-main`.
+5. Commit with a message that says what changed and why.
+6. Open a pull request against `mm/lane-studio-main`.
 
 
 ## Translations

@@ -44,7 +44,7 @@ body:
     attributes:
       label: Version
       description: Bottom right of the map.
-      placeholder: "v26.10.21"
+      placeholder: "v26.10.27"
     validations:
       required: false
   - type: dropdown

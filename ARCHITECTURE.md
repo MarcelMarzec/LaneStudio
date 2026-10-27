@@ -2,7 +2,8 @@
 
 Lane Studio is a layer on top of iD. iD provides the editor (the graph of OSM data, undo history,
 modes, the OSM API, imagery, the validator, the sidebar and saving); Lane Studio adds a map layer
-that draws roads lane by lane, sidebar sections and tools that edit lane tags, and the Routing tool.
+that draws roads lane by lane (with their pavements, markings, signs, parking and railways), sidebar
+sections and tools that edit lane tags, the Speed Limit tool and the Routing tool.
 iD's own code changes only through small hooks that keep iD's behaviour by default (listed in
 [LANES.md](LANES.md#how-it-fits-into-id)).
 
@@ -20,11 +21,11 @@ Two rules run through it:
 | --- | --- |
 | `model/` | The lane model: `parseLanes` reads `lanes`, `*:lanes`, `*:lanes:forward|backward|both_ways` and the direction tags into lanes per direction; `serialiseLanes` writes a model back as tags, touching only the keys that changed. Lane types, markings, signs, connectivity and street feature tags. Pure functions, no iD state. |
 | `actions/` | iD actions (graph in, graph out) for lane edits, markings, signs, copying lanes and lane connections. |
-| `geometry/` | Everything drawn, in metres: `laneLayout` (lane widths and order across the road), `roadGeometry` (roads, junctions, guide lines), `streetGeometry` (pavements, footways, crossings, stop lines, islands, parking, structures), `signGeometry` (signs, gantries, cameras), and `routing.ts` (the Routing tool's route finding). |
+| `geometry/` | Everything drawn, in metres: `laneLayout` (lane widths and order across the road), `roadGeometry` (roads, junctions, guide lines, links channelled between traffic islands), `streetGeometry` (pavements, footways, crossings, stop lines, islands, structures), `parkingGeometry` and `parkingSpaceGeometry` (street parking, parking spaces and car parks), `railGeometry` and `railFeatures` (track, level crossings, platforms, signals and equipment), `signGeometry` (signs, gantries, cameras), and `routing.ts` (the Routing tool's route finding). |
 | `svg/` | The `lanes` map layer (`svgLanes`): runs the geometry for the roads in view and draws it, plus click targets, signs and routes. |
-| `core/` | Lane Studio state with d3 dispatch events: the selected lanes (`laneState`), tools (`laneTools`), settings, the Routing tool's state (`laneRouting`) and mode, keyboard, and boot (`laneStudioInit`). |
+| `core/` | Lane Studio state with d3 dispatch events: the selected lanes (`laneState`), tools (`laneTools`), settings, the Routing tool's state (`laneRouting`) and mode, the Speed Limit tool's state (`laneSpeed`) and mode (`modeLaneSpeed`), keyboard, the what's new menu's changelog reading (`whats_new.ts`), the links in About (`links.ts`), and boot (`laneStudioInit`). |
 | `osm/` | Looking along roads: the corridor ahead, roundabouts and their exits. |
-| `ui/` | Sidebar sections (lanes, markings, signs, street features), the settings pane, the Routing panel, the top bar tools and the welcome screen. |
+| `ui/` | Sidebar sections (lanes, markings, signs, street features), the settings pane, the Routing panel, the Speed Limit panel and speed roundels, the top bar tools, the logo, the welcome screen and the what's new menu. |
 | `validations/` | The lane tags rule in iD's Issues pane. |
 
 Styles are in `css-lanes/` (bundled into `dist/lanes.css`) and strings in `data/lanes.yaml` (built into
@@ -34,8 +35,8 @@ Styles are in `css-lanes/` (bundled into `dist/lanes.css`) and strings in `data/
 
 `svgLanes` redraws when the map moves or the graph changes:
 
-1. It collects the lane roads, carriageway areas and street features in view.
-2. `roadGeometry(ways, graph, areas)` works out the roads, in order:
+1. It collects the lane roads, carriageway areas, traffic islands and street features in view.
+2. `roadGeometry(ways, graph, areas, islands)` works out the roads, in order:
    1. roads fitted into the mapped carriageway areas they lie in;
    2. drawing-only shifts and tapers at each node where roads join (`alignAt`, `alignBranches`,
       `alignMerges`), so the lanes that carry on line up. Which lanes carry on comes from
@@ -43,17 +44,30 @@ Styles are in `css-lanes/` (bundled into `dist/lanes.css`) and strings in `data/
       `turn:lanes` arrows, with arrows that point to no road carrying on ahead, and a short unmarked
       link taking the arrows of the road leading into it);
    3. junctions (`junctionAt`): the arms meeting at a node, the road running through, how far each
-      side road stops back, the junction box, and roundabout flares;
+      side road stops back, the junction box, roundabout flares, and a road dividing in two
+      (`splitAt`) where its lanes are shared between the branches;
    4. road pieces (`buildPieces`): lane boundaries, lane polygons, centre lines, painted lines,
       arrows and labels, offset from each way's line by `edgesAt` (lane edges with the shifts and
       tapers);
-   5. guide lines through junctions (`junctionConnections`) from each lane to the lanes it leads to.
+   5. guide lines through junctions (`junctionConnections`) from each lane to the lanes it leads to;
+      where no lane leads anywhere by its tags, the guide lines are inferred and marked so;
+   6. `channelled`: short links in a junction holding traffic islands, drawn whole between the
+      islands instead of as guide lines.
 3. `streetGeometry` and `signGeometry` work out the rest, using the same shifts so markings stay on
-   their roads.
-4. The layer draws it all, with invisible click targets for lanes, lane lines, nodes and signs.
+   their roads; `railGeometry` and `railFeatures` the railways, and `parkingGeometry` and
+   `parkingSpaceGeometry` the parking.
+4. The layer draws it all, with invisible click targets for lanes, lane lines, nodes and signs, then
+   marks iD's own lines and points for what it drew (`markIdFeatures`), so they can be thinned or hidden.
 
-Layouts are cached per way version (`cachedLayout`); everything else is recomputed, so drawing always
-matches the data.
+What is drawn always matches the data, but work is skipped when nothing changed:
+
+* `drawWhenChanged` redraws at most once a frame, and only when the graph, the view, the selection,
+  the mode or the hidden features changed; otherwise it only re-marks iD's features.
+* The road and street geometry is kept while the graph and the features in view are the same, so a
+  new selection, tool or mode redraws without working it out again.
+* Layouts are cached per way version (`cachedLayout`), tracks per way and node versions, and each
+  shape's SVG path per view (`pathFor`).
+* Attributes and classes are written only when they change (`attrChanged`, `classChanged`).
 
 ### Editing
 
@@ -61,6 +75,13 @@ Clicking a lane selects it in `laneState`; the Lanes section reads the selected 
 it through `setLaneValue`, `insertLane`, `removeLane` and the like, then `actionChangeLanes` writes the
 new tags in one iD action. Tools (`laneTools`) change what a click on the map does (paint a value, drag
 widths, place markings or signs, connect lanes); Esc returns to Select.
+
+### Speed Limit tool
+
+The Speed Limit tool enters its own iD mode (`lanes-speed`): `laneSpeed` holds whether it is on and
+the limit picked in its panel, and the lanes layer colours each lane by `speedClassOf` (its
+`maxspeed:lanes` value, else the road's `maxspeed`, in mph). With a limit picked, a click sets
+`maxspeed` on the road, a shift-click that lane's `maxspeed:lanes` value, each one iD action.
 
 ### Routing
 

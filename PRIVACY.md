@@ -18,8 +18,10 @@ the site running. If you interact with the project on GitHub, you do so under
 ### Storage in your browser
 
 Lane Studio does not set tracking cookies and does not collect analytics. It stores some information
-in your browser's local storage so you don't have to re-enter it: your settings (such as lane opacity
-and the map layers shown) and edits you have not saved yet, under keys starting with `lanes_`, and
+in your browser's local storage so you don't have to re-enter it: your settings (such as lane opacity,
+the map layers shown and whether the what's new menu is shown), the Lane Studio version you last used
+(so the what's new menu shows only what changed since) and edits you have not saved yet, under keys
+starting with `lanes_`, and
 your OpenStreetMap login token, under a key named after the OpenStreetMap server. This stays on your
 device; you can delete it by clearing the site's data in your
 browser, which also logs you out and discards unsaved edits.
@@ -50,6 +52,8 @@ Searching uses OpenStreetMap's [Nominatim](https://nominatim.openstreetmap.org/)
 use [taginfo](https://taginfo.openstreetmap.org/). If you do not wish to interact with these third
 parties, do not use these features.
 
+Lane Studio's changelog, for the what's new menu, is fetched from the site Lane Studio is served from.
+
 Lane Studio fetches some resources (tagging presets and indexes) from the [jsDelivr](https://www.jsdelivr.com/)
 content delivery network, governed by its
 [privacy policy](https://www.jsdelivr.com/terms/privacy-policy-jsdelivr-net).
@@ -69,4 +73,5 @@ law, or want to ask about it, open an issue at
 
 ### Changelog
 
+* _2026-Oct-27_ - The version last used and the what's new setting are stored; the changelog is fetched from the site itself.
 * _2026-Oct-21_ - Lane Studio's own policy, adapted from [iD's](https://github.com/openstreetmap/iD/blob/develop/PRIVACY.md).

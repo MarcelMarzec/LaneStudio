@@ -40,8 +40,30 @@ and each edit is one undo step.
 ## Which countries does it work for?
 
 Anywhere: lane tags are the same everywhere, and left- and right-hand traffic are both handled. Lane
-widths, sign drawings, road number shields and speed roundels follow UK conventions; elsewhere signs
-are drawn as a plate with their code.
+widths, sign drawings, road number shields, speed roundels, level crossings and railway signals follow
+UK conventions; elsewhere signs are drawn as a plate with their code. The Speed Limit tool works in
+mph, and reads limits tagged in km/h too.
+
+
+## How do I check and set speed limits?
+
+Turn on the Speed Limit tool in the top bar. Every lane is coloured by its limit, and roads with no
+`maxspeed` stand out. Pick a limit in the sidebar (or press `1` to `7` for 10 to 70 mph), then click a
+road to set it; shift-click sets it on one lane only (`maxspeed:lanes`). Esc lets go of the limit, then
+leaves the tool.
+
+
+## Are railways drawn?
+
+Yes. Railways, the Underground and tram lines are drawn with their ballast, sleepers and rails at their
+gauge, along with level crossings (barriers, light units and road markings, UK style), footpath
+crossings, platforms, signals and track equipment. They are edited like any other feature in iD.
+
+
+## What is the window that opens after an update?
+
+The what's new menu lists the changes since the version you last used, from the changelog. Turn it off
+under About in the Lane Studio pane (shortcut `K`); the changelog is linked there too.
 
 
 ## How can I report an issue with background imagery?

@@ -25,17 +25,26 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   changes, lane types, speeds, destinations, access, widths and limits; drag lane widths; paint
   values onto lanes; connect lanes across junctions.
 * **Junctions and roundabouts**: the main road runs through, lanes that carry on line up, added and
-  dropped lanes taper, guide lines carry each lane to where it leads, and roundabout entries and
-  exits flare into the ring.
-* **Street features**: pavements, footways and crossings at their width, stop and give way lines,
-  traffic signals, islands, road markings, street parking, traffic signs, message signs, cameras,
-  bridges, tunnels and roads under construction.
+  dropped lanes taper, dashed guide lines carry each lane to where it leads (worked out from the
+  exits where no turn arrows are tagged), lanes run between traffic islands, a road dividing round an
+  island widens into its two halves, and roundabout entries and exits flare into the ring.
+* **Street features**: pavements, footways and crossings at their width (paths drawn over the roads
+  they cross), stop and give way lines, traffic signals, islands, road markings, street parking,
+  parking spaces and car parks, traffic signs, message signs, cameras, bridges, tunnels and roads
+  under construction.
+* **Railways**: track at its gauge (ballast, sleepers, rails and conductor rails) for main lines, the
+  Underground, light rail, trams, narrow gauge and more; platforms; level crossings with UK-style
+  barriers, light signals and road markings; Network Rail colour-light and shunt signals; buffer
+  stops, switches, turntables and old trackbeds.
 * **Routing**: hover a lane to see every route a car, bus, bicycle or lorry can take from it,
   following turn arrows, lane connections and turn restrictions; hover a footway to see where people
   can walk.
+* **Speed limits**: the Speed Limit tool colours every lane by its limit, with roads missing one in
+  red; pick a limit (UK roundels, in mph) and click roads or lanes to set it.
 * **Look ahead**: the roads a selected road leads on to, its exits and their destinations, and
   copying lanes to the next road.
 * **Checks**: a lane tags rule in iD's Issues pane, with fixes where the answer is certain.
+* **What's new**: after an update, a menu lists what changed since the version you last used.
 
 The full guide (zoom levels, tools, what is drawn and how junctions work) is in [LANES.md](LANES.md).
 
@@ -68,6 +77,12 @@ OpenStreetMap OAuth 2 application. [RELEASING.md](RELEASING.md) has the steps.
 * [API.md](API.md): URL parameters, build settings and embedding
 * [FAQ.md](FAQ.md), [PRIVACY.md](PRIVACY.md), [ACCESSIBILITY.md](ACCESSIBILITY.md),
   [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+
+## Supporting Lane Studio
+
+If Lane Studio helps you, you can support its development through
+[GitHub Sponsors](https://github.com/sponsors/marcelmarzec) (the **Sponsor** button at the top of the
+repository).
 
 ## License
 

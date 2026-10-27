@@ -8,6 +8,18 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.27r2
+##### 2026-Oct-27
+
+#### Website
+* The guides, FAQ, privacy policy and accessibility notes now cover the Speed Limit tool, railways and level
+  crossings, parking spaces, traffic islands and the what's new menu
+* You can support Lane Studio through GitHub Sponsors: the repository has a Sponsor button, and the README
+  says how
+
+#### Behind the scenes
+* Every change now checks the documents it affects and keeps them up to date
+
 # 26.10.27
 ##### 2026-Oct-27
 
