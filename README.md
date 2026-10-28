@@ -44,7 +44,8 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   following turn arrows, lane connections and turn restrictions; hover a footway to see where people
   can walk.
 * **Speed limits**: the Speed Limit tool colours every lane by its limit, with roads missing one in
-  red; pick a limit (UK roundels, in mph) and click roads or lanes to set it.
+  red; pick a limit (UK roundels, in mph) and click roads or lanes to set it. Minimum speeds work the
+  same way, and the UK's national, motorway and restricted road limit types are set with their limit.
 * **Look ahead**: the roads a selected road leads on to, its exits and their destinations, and
   copying lanes to the next road.
 * **Checks**: a lane tags rule in iD's Issues pane, with fixes where the answer is certain.

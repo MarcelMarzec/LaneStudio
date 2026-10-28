@@ -6,6 +6,7 @@ import { prefs } from '../../core/preferences';
 import { modeSelect } from '../../modes/select';
 import { actionCopyLanes, canCopyLanes } from '../actions/copy_lanes';
 import { laneCorridor } from '../osm/corridor';
+import { uiDisclosure } from '../../ui/disclosure';
 import { uiSection } from '../../ui/section';
 import { utilHighlightEntities } from '../../util';
 import {
@@ -20,11 +21,14 @@ import { actionChangeLanes } from '../actions/change_lanes';
 import { laneDriveSide } from '../core/drive_side';
 import { laneState } from '../core/lane_state';
 import { laneTools } from '../core/lane_tools';
-import { laneField, laneSuggestions, laneArrowIcon, laneChangeIcon } from './lane_fields';
+import { laneField, laneSuggestions, laneArrowIcon, laneChangeIcon, sidedField } from './lane_fields';
 import { uiTooltip } from '../../ui/tooltip';
 import { isLaneRoad } from '../core/roads';
 import { isTrafficIsland } from '../model/street_features';
-import { mphLimits, mphOf, roadSpeedPick, speedRoundels, withRoadSpeed, type SpeedPick } from './speed_roundels';
+import {
+    mphLimits, mphOf, roadSpeedPick, speedRoundels, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed, withSpeedType,
+    type SpeedPick, type UkSpeedType
+} from './speed_roundels';
 import {
     parseLanes, laneRefsInWayOrder, laneCount, insertLane, removeLane, moveLane, setLaneValue, laneValue,
     turnValues, parseTurn, toggleTurn, parseChange, formatChange, laneDirections,
@@ -192,15 +196,31 @@ export function uiSectionLanes(context: iD.Context) {
         if (shoulder?.wayID === wayID) renderShoulder(wrap, road, shoulder.side);
         const ring = roundaboutOf(road, graph);
         if (ring) renderRoundabout(wrap, road, ring);
-        else renderLookAhead(wrap, road, model, selected);
-        renderRoadside(wrap, road);
+        else {
+            // the corridor is outlined on the map whether or not Look ahead is open
+            const ahead = lookAhead(road, model, selected);
+            subsection(wrap, 'lanes-lookahead', t('_lanes.lookahead.title'), content => renderLookAhead(content, road, model, selected, ahead));
+        }
+        subsection(wrap, 'lanes-roadside', t('_lanes.roadside.title'), content => renderRoadside(content, road));
+    }
+
+
+    /** A part of the section that folds away as iD's own sections do, remembered across selections */
+    function subsection(wrap: Div, key: string, label: string, content: (content: Div) => void) {
+        wrap.append('div').attr('class', `lanes-subsection ${key}`)
+            .call((uiDisclosure(context, key, true) as any)
+                .label(() => label)
+                .content((selection: Div) => {
+                    selection.selectAll('*').remove();
+                    content(selection);
+                }));
     }
 
 
     /** A roundabout: the whole ring, turbo tagging and its checks */
     function renderRoundabout(wrap: Div, road: osmWay, ring: Roundabout) {
         state.setCorridor(ring.ring.map(w => w.id));
-        const box = wrap.append('div').attr('class', 'lanes-lookahead lanes-roundabout');
+        const box = wrap.append('div').attr('class', 'lanes-roundabout');
         box.append('h4').text(t('_lanes.roundabout.title'));
         box.append('p').attr('class', 'lanes-note').text(t('_lanes.roundabout.summary', {
             segments: ring.ring.length, approaches: ring.approaches.length
@@ -232,33 +252,49 @@ export function uiSectionLanes(context: iD.Context) {
     }
 
 
+    /** The roads ahead of the selected road, in the direction of the selected lanes, outlined on the map */
+    function lookAhead(road: osmWay, model: LaneModel, refs: LaneRef[]) {
+        const travel: 'forward' | 'backward' = model.oneway || (refs[0]?.direction === 'backward' ? 'backward' : 'forward');
+        const limit = Math.max(1, Math.min(10, parseInt(prefs('lanes-lookahead') ?? '', 10) || 5));
+        const steps = laneCorridor(road, context.graph(), { direction: travel, maxWays: limit, maxMetres: 1500 });
+        state.setCorridor(steps.map(step => step.way.id));
+        return { travel, limit, steps };
+    }
+
     /**
      * Look ahead: the roads the selected road leads on to, the exits at its end with suggested
      * turn and destination values for the selected lanes, and copying lanes to the next road.
      * Suggestions are only written when clicked, one road per click.
      */
-    function renderLookAhead(wrap: Div, road: osmWay, model: LaneModel, refs: LaneRef[]) {
+    function renderLookAhead(box: Div, road: osmWay, model: LaneModel, refs: LaneRef[], ahead: ReturnType<typeof lookAhead>) {
         const graph = context.graph();
-        const travel: 'forward' | 'backward' = model.oneway || (refs[0]?.direction === 'backward' ? 'backward' : 'forward');
-        const limit = Math.max(1, Math.min(10, parseInt(prefs('lanes-lookahead') ?? '', 10) || 5));
-        const steps = laneCorridor(road, graph, { direction: travel, maxWays: limit, maxMetres: 1500 });
-        state.setCorridor(steps.map(step => step.way.id));
+        const { travel, limit, steps } = ahead;
+        const setLimit = (n: number) => {
+            prefs('lanes-lookahead', String(Math.max(1, Math.min(10, n || 5))));
+            section.reRender();
+        };
 
-        const box = wrap.append('div').attr('class', 'lanes-lookahead');
-        const head = box.append('div').attr('class', 'lanes-lookahead-head');
-        head.append('h4').text(t('_lanes.lookahead.title'));
-        head.append('label').text(t('_lanes.lookahead.limit'))
-            .append('input').attr('type', 'number').attr('min', 1).attr('max', 10)
+        /* how many roads to follow, as iD's number fields */
+        const field = box.append('div').attr('class', 'form-field lane-form-field form-field-lane-lookahead-limit');
+        field.append('label').attr('class', 'field-label').attr('for', 'lane-field-lookahead-limit')
+            .append('span').attr('class', 'label-text')
+            .append('span').attr('class', 'label-textvalue').text(t('_lanes.lookahead.limit'));
+        const input = field.append('div').attr('class', 'form-field-input-wrap form-field-input-number');
+        input.append('input').attr('type', 'text').attr('id', 'lane-field-lookahead-limit').attr('inputmode', 'numeric')
             .property('value', limit)
-            .on('change', function(this: HTMLInputElement) {
-                prefs('lanes-lookahead', String(Math.max(1, Math.min(10, parseInt(this.value, 10) || 5))));
-                section.reRender();
-            });
+            .on('change', function(this: HTMLInputElement) { setLimit(parseInt(this.value, 10)); });
+        for (const step of [-1, 1]) {
+            const which = step > 0 ? 'increment' : 'decrement';
+            input.append('button').attr('class', `form-field-button ${which}`)
+                .attr('title', t(`inspector.${which}`))
+                .attr('disabled', limit + step < 1 || limit + step > 10 ? true : null)
+                .on('click', () => setLimit(limit + step));
+        }
         if (!model.oneway) {
             box.append('p').attr('class', 'lanes-note').text(t(`_lanes.lookahead.travelling_${travel}`));
         }
 
-        /* the corridor, one row per road */
+        /* the corridor, one line per road: its name, its lanes our way and how far along it is */
         const list = box.append('ol').attr('class', 'lanes-corridor');
         steps.forEach((step, i) => {
             const tags = step.way.tags;
@@ -268,48 +304,48 @@ export function uiSectionLanes(context: iD.Context) {
             const item = list.append('li').attr('class', i === 0 ? 'current' : null)
                 .on('mouseenter', () => utilHighlightEntities([step.way.id], true, context))
                 .on('mouseleave', () => utilHighlightEntities([step.way.id], false, context));
-            item.append('a').attr('href', '#')
+            item.append('a').attr('href', '#').attr('class', 'lanes-corridor-name')
                 .text([tags.ref, tags.name].filter(Boolean).join(' ') || t('_lanes.lookahead.unnamed'))
                 .on('click', (event: MouseEvent) => {
                     event.preventDefault();
                     utilHighlightEntities([step.way.id], false, context);
                     context.enter(modeSelect(context, [step.way.id]));
                 });
-            item.append('span').attr('class', 'lanes-corridor-distance').text(` ${Math.round(step.distance)} m`);
-            const cells = item.append('div').attr('class', 'lanes-corridor-cells');
+            const cells = item.append('span').attr('class', 'lanes-corridor-cells');
             stepModel.lanes[direction].forEach((_, index) => {
                 const ref = { direction, index };
                 cells.append('span')
                     .attr('class', `lanes-cell lane-${laneKindOf(stepModel, ref)}`)
-                    .call(cell => laneArrowIcon(cell as any, laneValue(stepModel, ref, 'turn:lanes'), 'travel', 18, stepModel.driveSide));
+                    .call(cell => laneArrowIcon(cell as any, laneValue(stepModel, ref, 'turn:lanes'), 'travel', 16, stepModel.driveSide));
             });
             if (stepModel.countSource === 'assumed') cells.classed('assumed', true);
+            item.append('span').attr('class', 'lanes-corridor-distance').text(t('_lanes.lookahead.metres', { n: Math.round(step.distance) }));
         });
 
         /* exits at the end of the selected road */
         const first = steps[0];
         if (first?.exits.length) {
-            box.append('h5').text(t('_lanes.lookahead.exits'));
+            box.append('h5').attr('class', 'lanes-lookahead-heading').text(t('_lanes.lookahead.exits'));
             const exits = box.append('ul').attr('class', 'lanes-exits');
             for (const exit of first.exits) {
                 const li = exits.append('li')
                     .on('mouseenter', () => utilHighlightEntities([exit.way.id], true, context))
                     .on('mouseleave', () => utilHighlightEntities([exit.way.id], false, context));
-                const turnCell = li.append('span').attr('class', 'lanes-exit-turn');
+                const turnCell = li.append('span').attr('class', 'lanes-exit-turn')
+                    .attr('title', t(`_lanes.turn.${exit.turn}`));
                 laneArrowIcon(turnCell as any, exit.turn, 'travel', 18, model.driveSide);
-                turnCell.append('span').text(t(`_lanes.turn.${exit.turn}`));
                 li.append('span').attr('class', 'lanes-exit-name')
                     .text((exit.exitNumber ? t('_lanes.lookahead.exit_number', { n: exit.exitNumber }) + ' ' : '') +
                         ([exit.destinationRef, exit.destination].filter(Boolean).join(' ') || t('_lanes.lookahead.unnamed')));
                 if (!refs.length) continue;
                 const actions = li.append('span').attr('class', 'lanes-exit-actions');
                 actions.append('button').text(t('_lanes.lookahead.use_turn'))
-                    .attr('title', t('_lanes.lookahead.use_turn_tip'))
+                    .call(tooltip(t('_lanes.lookahead.use_turn_tip')))
                     .on('click', () => perform(road.id, m => refs.reduce(
                         (acc, ref) => setLaneValue(acc, ref, 'turn:lanes', toggleTurn(laneValue(acc, ref, 'turn:lanes'), exit.turn)), m), 'turn'));
                 if (exit.destination || exit.destinationRef) {
                     actions.append('button').text(t('_lanes.lookahead.use_destination'))
-                        .attr('title', t('_lanes.lookahead.use_destination_tip'))
+                        .call(tooltip(t('_lanes.lookahead.use_destination_tip')))
                         .on('click', () => perform(road.id, m => {
                             let next = m;
                             if (exit.destination && !next.keys['destination:lanes']?.readonly) next = setLaneValue(next, refs, 'destination:lanes', exit.destination);
@@ -327,7 +363,7 @@ export function uiSectionLanes(context: iD.Context) {
             const sameOrientation = first.alongWay === second.alongWay;
             box.append('button').attr('class', 'lanes-copy-next')
                 .text(t('_lanes.lookahead.copy', { road: second.way.tags.ref ?? second.way.tags.name ?? second.way.id }))
-                .attr('title', t('_lanes.lookahead.copy_tip'))
+                .call(tooltip(t('_lanes.lookahead.copy_tip')))
                 .on('click', () => {
                     context.perform(actionCopyLanes(road.id, second.way.id, sameOrientation), t('_lanes.annotation.copy'));
                     context.enter(modeSelect(context, [second.way.id]));
@@ -347,15 +383,24 @@ export function uiSectionLanes(context: iD.Context) {
         if (tagged) field.append('p').attr('class', 'speed-tagged').text(t('_lanes.speed.tagged', { value: tagged }));
     }
 
-    /** The speed limit of the selected lanes, picked from roundels; no roundel clears the lanes' own limit */
-    function renderLaneSpeed(parent: Div, wayID: WayId, refs: LaneRef[], value: string | undefined) {
+    /** A value tagged in mph that no roundel shows (25 mph, 50 km/h), named under the roundels so it is not lost */
+    const unusualSpeed = (value: string | undefined) => {
+        const mph = mphOf(value);
+        return value && (mph === null || !mphLimits.includes(mph) || !/mph/i.test(value)) ? value : undefined;
+    };
+
+    /**
+     * The speed limit or minimum speed of the selected lanes, picked from roundels (blue for a minimum speed);
+     * no roundel clears the lanes' own, so they follow the road
+     */
+    function renderLaneSpeed(parent: Div, wayID: WayId, refs: LaneRef[], measure: 'maxspeed' | 'minspeed', value: string | undefined) {
         const mph = mphOf(value);
         const current: SpeedPick | undefined = value === undefined ? undefined : !value ? { kind: 'none' } : mph === null ? undefined : { kind: 'mph', mph };
-        const unusual = value === undefined ? t('_lanes.inspector.mixed') :
-            value && (mph === null || !mphLimits.includes(mph) || !/mph/i.test(value)) ? value : undefined;
-        speedField(parent, t('_lanes.speed.lanes_label'), unusual, row => speedRoundels(row, {
-            current, none: true, noneLabel: t('_lanes.speed.lanes_none'),
-            onPick: pick => perform(wayID, m => setLaneValue(m, refs, 'maxspeed:lanes', pick.kind === 'mph' ? `${pick.mph} mph` : ''), 'value')
+        const unusual = value === undefined ? t('inspector.multiple_values') : unusualSpeed(value);
+        const minimum = measure === 'minspeed';
+        speedField(parent, t(minimum ? '_lanes.speed.min_lanes_label' : '_lanes.speed.lanes_label'), unusual, row => speedRoundels(row, {
+            current, minimum, none: true, noneLabel: t('_lanes.speed.lanes_none'),
+            onPick: pick => perform(wayID, m => setLaneValue(m, refs, `${measure}:lanes`, pick.kind === 'mph' ? `${pick.mph} mph` : ''), 'value')
         }));
     }
 
@@ -363,13 +408,42 @@ export function uiSectionLanes(context: iD.Context) {
     function renderRoadLimits(wrap: Div, road: osmWay) {
         const box = wrap.append('div').attr('class', 'lane-inspector road-limits');
         box.append('h4').text(t('_lanes.inspector.whole_road'));
+        const retag = (next: Tags, annotation = 'speed') => context.perform(actionChangeTags(road.id, next), t(`_lanes.annotation.${annotation}`));
+
+        /* the speed limit: a roundel, and the kind of limit (UK national and restricted roads) */
         const pick = roadSpeedPick(road.tags);
-        const tagged = road.tags.maxspeed;
-        const unusual = tagged && pick.kind === 'mph' && (!mphLimits.includes(pick.mph) || !/mph/i.test(tagged)) ? tagged : undefined;
-        speedField(box, t('_lanes.speed.road_label'), unusual, row => speedRoundels(row, {
+        speedField(box, t('_lanes.speed.road_label'), pick.kind === 'mph' ? unusualSpeed(road.tags.maxspeed) : undefined, row => speedRoundels(row, {
             current: pick, national: true, none: true,
-            onPick: next => context.perform(actionChangeTags(road.id, withRoadSpeed(road.tags, next)), t('_lanes.annotation.speed'))
+            onPick: next => retag(withRoadSpeed(road.tags, next))
         }));
+        const type = speedTypeOf(road.tags);
+        laneField(context, box, {
+            id: 'road-maxspeed-type',
+            label: t('_lanes.speed.type_label'),
+            value: type ?? '',
+            strict: true,
+            emptyTitle: t('_lanes.speed.types.none'),
+            placeholder: t('_lanes.speed.type_placeholder'),
+            suggestions: (Object.keys(ukSpeedTypes) as UkSpeedType[]).map(value => ({
+                value, title: t(`_lanes.speed.types.${value.replace('GB:', '')}`, { mph: ukSpeedTypes[value].mph })
+            })),
+            onChange: value => retag(withSpeedType(road.tags, (value || undefined) as UkSpeedType | undefined))
+        });
+        // the lower national limit for some vehicles, as the Highway Code sets it
+        const lower = type ? ukSpeedTypes[type].lower : undefined;
+        if (lower) {
+            box.append('p').attr('class', 'lanes-note speed-lower')
+                .text(t(`_lanes.speed.lower.${lower.vehicles}`, { mph: lower.mph }));
+        }
+
+        /* the minimum speed, as blue roundels */
+        const minimum = mphOf(road.tags.minspeed);
+        speedField(box, t('_lanes.speed.min_road_label'), unusualSpeed(road.tags.minspeed), row => speedRoundels(row, {
+            current: !road.tags.minspeed ? { kind: 'none' } : minimum === null ? undefined : { kind: 'mph', mph: minimum },
+            minimum: true, none: true, noneLabel: t('_lanes.speed.min_none'),
+            onPick: next => retag(withRoadMinspeed(road.tags, next), 'minspeed')
+        }));
+
         laneField(context, box, {
             id: 'road-maxweight',
             label: t('_lanes.field.maxweight'),
@@ -379,7 +453,7 @@ export function uiSectionLanes(context: iD.Context) {
                 const next = { ...road.tags };
                 if (value) next.maxweight = value;
                 else delete next.maxweight;
-                context.perform(actionChangeTags(road.id, next), t('_lanes.annotation.value'));
+                retag(next, 'value');
             }
         });
     }
@@ -434,57 +508,61 @@ export function uiSectionLanes(context: iD.Context) {
     }
 
 
-    /** Pavements and cycleways per side, with what separately mapped ways and kerbs suggest */
-    function renderRoadside(wrap: Div, road: osmWay) {
+    /**
+     * Hard shoulders, pavements, cycleways and parking, one field each with a dropdown per side as iD's own
+     * two-sided fields, with what separately mapped ways and kerbs suggest under them
+     */
+    function renderRoadside(box: Div, road: osmWay) {
         const graph = context.graph();
         const tags = road.tags;
-        const box = wrap.append('div').attr('class', 'lanes-roadside');
-        box.append('h4').text(t('_lanes.roadside.title'));
         box.append('p').attr('class', 'lanes-note').text(t('_lanes.roadside.hint'));
 
         const extent = road.extent(graph).padByMeters(25);
         const nearby = context.history().intersects(extent);
         const sidewalks = parallelWays(road, graph, nearby, isSidewalkWay);
         const kerbs = parallelWays(road, graph, nearby, isKerbWay, 1, 15);
-
         const retag = (next: Tags) => context.perform(actionChangeTags(road.id, next), t('_lanes.annotation.roadside'));
 
-        for (const side of ['left', 'right'] as const) {
-            const row = box.append('div').attr('class', 'lane-row lanes-roadside-side');
-            row.append('label').text(t(`_lanes.roadside.${side}`));
-            const grid = row.append('div').attr('class', 'lanes-roadside-grid');
+        // a plain shoulder=yes on a one-way road is on its driving side
+        const layout = laneLayout(road, graph);
+        const driveSide = laneDriveSide(road, graph);
+        const oneSide = layout.model.oneway === 'forward' ? driveSide
+            : layout.model.oneway === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
 
-            // one row of radio buttons per feature, "not tagged" first
-            const pick = (label: string, values: string[], current: string | undefined, write: (v: string | undefined) => Tags) => {
-                const group = grid.append('div').attr('class', 'lanes-roadside-feature')
-                    .attr('role', 'radiogroup').attr('aria-label', t(`_lanes.roadside.${label}`));
-                group.append('span').attr('class', 'lanes-roadside-feature-name').text(t(`_lanes.roadside.${label}`));
-                const options = group.append('div').attr('class', 'lanes-radios');
-                const choices = ['', ...values, ...(current && !values.includes(current) ? [current] : [])];
-                for (const value of choices) {
-                    const option = options.append('label').attr('class', 'lanes-radio');
-                    option.append('input').attr('type', 'radio')
-                        .attr('name', `lanes-roadside-${road.id}-${side}-${label}`)
-                        .attr('value', value)
-                        .property('checked', (current ?? '') === value)
-                        .on('change', () => retag(write(value || undefined)));
-                    option.append('span').text(value ? t(`_lanes.roadside.values.${value}`, { default: value }) : t('_lanes.roadside.unknown'));
-                }
-            };
-            // a plain shoulder=yes on a one-way road is on its driving side
-            const layout = laneLayout(road, graph);
-            const driveSide = laneDriveSide(road, graph);
-            const oneSide = layout.model.oneway === 'forward' ? driveSide
-                : layout.model.oneway === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
-            pick('shoulder', ['yes', 'no'], shoulderValue(tags, side, oneSide), v => withShoulder(tags, side, v as 'yes' | 'no' | undefined, oneSide));
-            pick('sidewalk', ['yes', 'no', 'separate'], sidewalkValue(tags, side), v => withSidewalk(tags, side, v));
-            pick('cycleway', ['no', 'lane', 'track', 'shared_lane', 'separate'], cyclewayValue(tags, side), v => withCycleway(tags, side, v));
-            pick('parking', ['no', 'lane', 'street_side', 'half_on_kerb', 'on_kerb', 'separate'], parkingValue(tags, side), v => withParking(tags, side, v));
+        type Feature = { id: string; values: string[]; read: (side: 'left' | 'right') => string | undefined;
+            write: (side: 'left' | 'right', value: string | undefined) => Tags };
+        const features: Feature[] = [
+            { id: 'shoulder', values: ['yes', 'no'], read: side => shoulderValue(tags, side, oneSide),
+                write: (side, v) => withShoulder(tags, side, v as 'yes' | 'no' | undefined, oneSide) },
+            { id: 'sidewalk', values: ['yes', 'no', 'separate'], read: side => sidewalkValue(tags, side),
+                write: (side, v) => withSidewalk(tags, side, v) },
+            { id: 'cycleway', values: ['lane', 'track', 'shared_lane', 'separate', 'no'], read: side => cyclewayValue(tags, side),
+                write: (side, v) => withCycleway(tags, side, v) },
+            { id: 'parking', values: ['lane', 'street_side', 'half_on_kerb', 'on_kerb', 'separate', 'no'], read: side => parkingValue(tags, side),
+                write: (side, v) => withParking(tags, side, v) }
+        ];
+        for (const feature of features) {
+            sidedField(context, box, `roadside-${feature.id}`, t(`_lanes.roadside.${feature.id}`), (['left', 'right'] as const).map(side => {
+                const current = feature.read(side);
+                // a value Lane Studio doesn't offer is kept in the list, so it shows as tagged
+                const values = [...feature.values, ...(current && !feature.values.includes(current) ? [current] : [])];
+                return {
+                    id: `roadside-${feature.id}-${side}`,
+                    label: t(`_lanes.roadside.${side}_short`),
+                    value: current ?? '',
+                    strict: true,
+                    emptyTitle: t('_lanes.roadside.unknown'),
+                    suggestions: values.map(value => ({ value, title: t(`_lanes.roadside.values.${value}`, { default: value }) })),
+                    onChange: (value: string) => retag(feature.write(side, value || undefined))
+                };
+            }));
 
-            // separately mapped pavement on this side?
-            const found = sidewalks[side][0];
-            const current = sidewalkValue(tags, side);
-            if (found && current !== 'separate') {
+            // under the pavements: a pavement mapped separately that the road's tags don't say
+            if (feature.id !== 'sidewalk') continue;
+            for (const side of ['left', 'right'] as const) {
+                const found = sidewalks[side][0];
+                const current = sidewalkValue(tags, side);
+                if (!found || current === 'separate') continue;
                 const sideName = t(`_lanes.roadside.${side}`).toLowerCase();
                 const note = box.append('p').attr('class', 'lanes-note lanes-suggestion');
                 note.text(current === 'yes'
@@ -606,17 +684,16 @@ export function uiSectionLanes(context: iD.Context) {
             }
         }
 
-        /* lane type, as a combo of type names */
+        /* lane type, from a dropdown of type names */
         const kinds = refs.map(ref => laneKindOf(model, ref));
-        const kindNames = Object.keys(laneKindKeys).map(kind => ({ kind, name: t(`_lanes.kind.${kind}`) }));
         laneField(context, inspector, {
             id: 'kind',
             label: t('_lanes.inspector.kind'),
-            value: kinds.every(k => k === kinds[0]) ? t(`_lanes.kind.${kinds[0]}`) : undefined,
-            suggestions: kindNames.map(k => ({ value: k.name })),
-            onChange: name => {
-                const kind = kindNames.find(k => k.name.toLowerCase() === name.toLowerCase())?.kind;
-                if (kind) perform(wayID, m => setLaneKind(m, refs, kind), 'kind');
+            value: kinds.every(k => k === kinds[0]) ? kinds[0] : undefined,
+            strict: true,
+            suggestions: Object.keys(laneKindKeys).map(kind => ({ value: kind, title: t(`_lanes.kind.${kind}`) })),
+            onChange: kind => {
+                if (Object.hasOwn(laneKindKeys, kind)) perform(wayID, m => setLaneKind(m, refs, kind), 'kind');
                 else section.reRender();
             }
         });
@@ -633,9 +710,10 @@ export function uiSectionLanes(context: iD.Context) {
             onChange: value => perform(wayID, m => setLaneValue(m, refs, key, value), 'value')
         });
         for (const field of textFields) {
-            // the speed limit is picked from roundels, unless the road's lane speeds can't be edited here
-            if (field.id === 'maxspeed' && !readonly(field.key)) renderLaneSpeed(inspector, wayID, refs, shared(field.key));
-            else fieldFor(field.id, field.key, t(`_lanes.field.${field.id}`));
+            // speed limits and minimum speeds are picked from roundels, unless the road's lane speeds can't be edited here
+            if ((field.id === 'maxspeed' || field.id === 'minspeed') && !readonly(field.key)) {
+                renderLaneSpeed(inspector, wayID, refs, field.id, shared(field.key));
+            } else fieldFor(field.id, field.key, t(`_lanes.field.${field.id}`));
         }
 
         /* other lane keys on the road, so nothing is hidden */
@@ -696,22 +774,26 @@ export function uiSectionLanes(context: iD.Context) {
                 .text(t(tools.connectFrom() ? '_lanes.connect.pick_to' : '_lanes.connect.pick_from'));
         }
         if (tool === 'marking') {
-            const select = wrap.append('select').attr('class', 'lanes-marking-type')
-                .on('change', function(this: HTMLSelectElement) { tools.setMarking(this.value as MarkingType); });
-            for (const type of markingTypes.filter(v => v !== 'none')) {
-                select.append('option').attr('value', type).text(t(`_lanes.markings.types.${type}`))
-                    .property('selected', type === tools.marking());
-            }
+            laneField(context, wrap, {
+                id: 'tool-marking',
+                label: t('_lanes.tools.marking_type'),
+                value: tools.marking(),
+                strict: true,
+                suggestions: markingTypes.filter(v => v !== 'none').map(type => ({ value: type, title: t(`_lanes.markings.types.${type}`) })),
+                onChange: value => tools.setMarking(value as MarkingType)
+            });
             wrap.append('p').attr('class', 'lanes-note')
                 .text(t('_lanes.markings.placing', { type: t(`_lanes.markings.types.${tools.marking()}`) }));
         }
         if (tool === 'sign') {
-            const select = wrap.append('select').attr('class', 'lanes-sign-type')
-                .on('change', function(this: HTMLSelectElement) { tools.setSign(this.value as SignChoice); });
-            for (const choice of signChoices) {
-                select.append('option').attr('value', choice).text(t(`_lanes.signs.names.${signNameKey(choice)}`))
-                    .property('selected', choice === tools.sign());
-            }
+            laneField(context, wrap, {
+                id: 'tool-sign',
+                label: t('_lanes.tools.sign_type'),
+                value: tools.sign(),
+                strict: true,
+                suggestions: signChoices.map(choice => ({ value: choice, title: t(`_lanes.signs.names.${signNameKey(choice)}`) })),
+                onChange: value => tools.setSign(value as SignChoice)
+            });
             wrap.append('p').attr('class', 'lanes-note')
                 .text(t('_lanes.signs.placing', { type: t(`_lanes.signs.names.${signNameKey(tools.sign())}`) }));
         }
@@ -719,32 +801,30 @@ export function uiSectionLanes(context: iD.Context) {
 
         const paint = tools.paint();
         const palette = wrap.append('div').attr('class', 'lanes-palette');
-        const keySelect = palette.append('select').attr('class', 'lanes-palette-key')
-            .on('change', function(this: HTMLSelectElement) {
-                const key = this.value;
+        laneField(context, palette, {
+            id: 'paint-key',
+            label: t('_lanes.tools.paint_key'),
+            value: paint.key,
+            strict: true,
+            suggestions: paintKeys.map(key => ({ value: key.key, title: t(`_lanes.${key.label}`) })),
+            onChange: key => {
                 const value = key === 'kind' ? 'bus' : key === 'turn:lanes' ? 'left' : key === 'change:lanes' ? 'no' : '';
                 tools.setPaint({ key, value });
-            });
-        for (const key of paintKeys) {
-            keySelect.append('option').attr('value', key.key).text(t(`_lanes.${key.label}`))
-                .property('selected', key.key === paint.key);
-        }
-
-        const choices = paintChoices[paint.key];
-        if (choices) {
-            const valueSelect = palette.append('select').attr('class', 'lanes-palette-value')
-                .on('change', function(this: HTMLSelectElement) { tools.setPaint({ key: paint.key, value: this.value }); });
-            for (const choice of choices) {
-                valueSelect.append('option').attr('value', choice.value).text(t(choice.label))
-                    .property('selected', choice.value === paint.value);
             }
-        } else {
-            palette.append('input').attr('type', 'text').attr('class', 'lanes-palette-value')
-                .property('value', paint.value)
-                .on('change', function(this: HTMLInputElement) {
-                    tools.setPaint({ key: paint.key, value: context.cleanTagValue(this.value.trim()) });
-                });
-        }
+        });
+
+        // a fixed choice of values, or any value with suggestions for the selected road
+        const choices = paintChoices[paint.key];
+        const road = way();
+        laneField(context, palette, {
+            id: 'paint-value',
+            label: t('_lanes.tools.paint_value'),
+            value: paint.value,
+            strict: !!choices,
+            suggestions: choices ? choices.map(choice => ({ value: choice.value, title: t(choice.label) }))
+                : road ? laneSuggestions(context, road, paint.key) : [],
+            onChange: value => tools.setPaint({ key: paint.key, value })
+        });
         wrap.append('p').attr('class', 'lanes-note').text(t('_lanes.tools.paint_hint'));
     }
 

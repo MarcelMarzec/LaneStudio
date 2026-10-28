@@ -5,6 +5,7 @@ import { select as d3_select } from 'd3-selection';
 import type { Mode } from '../../../../modules/core/context';
 
 import { laneState } from '../../../../modules/lanes/core/lane_state';
+import { fieldPlaceholder } from '../../../../modules/lanes/ui/lane_fields';
 import { uiSectionLanes } from '../../../../modules/lanes/ui/section_lanes';
 
 // stand-ins for iD's modes, which need a rendered map
@@ -71,6 +72,37 @@ describe('Lane Studio sidebar', () => {
         const kind = selection.select<HTMLInputElement>('#lane-field-kind');
         kind.property('value', 'Bus lane').dispatch('change');
         expect(context.entity('w1').tags['bus:lanes:forward']).toBe('|designated');
+    });
+
+    it('sets the whole road\'s limit type and minimum speed', () => {
+        render(['w1']);
+        const type = selection.select<HTMLInputElement>('#lane-field-road-maxspeed-type');
+        expect(type.attr('readonly')).toBe('readonly');
+        type.property('value', 'National, dual carriageway (70 mph)').dispatch('change');
+        expect(context.entity('w1').tags).toMatchObject({ maxspeed: '70 mph', 'maxspeed:type': 'GB:nsl_dual' });
+
+        render(['w1']);
+        expect(selection.select('.speed-lower').text()).toContain('60 mph');
+        selection.select('.road-limits .speed-roundels-min .speed-roundel-40').dispatch('click');
+        expect(context.entity('w1').tags.minspeed).toBe('40 mph');
+    });
+
+    it('picks roadside features per side from dropdowns, as one edit each', () => {
+        render(['w1']);
+        const left = selection.select<HTMLInputElement>('#lane-field-roadside-sidewalk-left');
+        expect(left.attr('placeholder')).toBe('Yes, No, Mapped separately…');
+        const edits = context.history().difference().summary().length;
+        left.property('value', 'Yes').dispatch('change').dispatch('blur');
+        expect(context.entity('w1').tags['sidewalk:left']).toBe('yes');
+        context.undo();
+        expect(context.entity('w1').tags['sidewalk:left']).toBeUndefined();
+        expect(context.history().difference().summary().length).toBe(edits);
+    });
+
+    it('gives dropdowns iD\'s placeholders', () => {
+        expect(fieldPlaceholder([{ value: '3.5', title: '3.5 t' }, { value: '7.5', title: '7.5 t' }, { value: '16' }, { value: '18' }])).toBe('3.5 t, 7.5 t, 16…');
+        expect(fieldPlaceholder([{ value: 'yes' }], true)).toBe(iD.localizer.t('inspector.multiple_values'));
+        expect(fieldPlaceholder([], false, 'Place names…')).toBe('Place names…');
     });
 
     it('clears selected lanes when the road is deselected', () => {

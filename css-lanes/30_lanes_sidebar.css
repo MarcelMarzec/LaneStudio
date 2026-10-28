@@ -142,36 +142,28 @@
     margin: 4px 0;
 }
 
-/* roadside: pavement and cycleway per side, with suggestions from mapped ways */
-.ideditor.lane-studio .lanes-roadside {
+/* Look ahead and Roadside fold away as iD's sections do; their fields are iD's own */
+.ideditor.lane-studio .lanes-subsection {
     border-top: 1px solid var(--border-color);
     margin-top: 10px;
-    padding-top: 8px;
 }
-.ideditor.lane-studio .lanes-roadside h4 { margin: 0 0 4px 0; }
-.ideditor.lane-studio .lanes-roadside-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 12px;
+.ideditor.lane-studio .lanes-subsection summary.hide-toggle {
+    padding: 8px 0 6px;
 }
-.ideditor.lane-studio .lanes-roadside-feature-name {
-    display: block;
-    color: var(--text-color-light, #555);
-    margin-bottom: 2px;
+.ideditor.lane-studio .lanes-subsection .disclosure-content {
+    padding-bottom: 4px;
 }
-.ideditor.lane-studio .lanes-radios {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px 10px;
+/* two-sided fields: the side's label beside its dropdown, as in iD's cycle lane field */
+.ideditor.lane-studio .lane-form-field ul.rows li.labeled-input > div.label {
+    padding: 5px 10px;
+    width: 60px;
+    color: var(--text-color);
+    background: var(--bg-color-2, transparent);
+    vertical-align: middle;
 }
-.ideditor.lane-studio .lanes-radio {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    cursor: pointer;
+.ideditor.lane-studio .lane-form-field ul.rows li.labeled-input input {
+    border-radius: 0;
 }
-.ideditor.lane-studio .lanes-radio input { margin: 0; }
 
 /* turn arrow and lane change buttons: icons, named in their tooltips */
 .ideditor.lane-studio .turn-grid button,
@@ -198,71 +190,86 @@
     height: auto;
     padding: 3px 8px;
 }
-.ideditor.lane-studio .lanes-marking-type { width: 100%; margin: 4px 0; }
 .ideditor.lane-studio.lanes-tool-marking .lanes-layer .lane-target { cursor: crosshair; }
 
 /* look ahead: the corridor, the exits and copying lanes on */
-.ideditor.lane-studio .lanes-lookahead {
+.ideditor.lane-studio .lanes-roundabout {
     border-top: 1px solid var(--border-color);
     margin-top: 10px;
     padding-top: 8px;
 }
-.ideditor.lane-studio .lanes-lookahead-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.ideditor.lane-studio .lanes-lookahead-heading {
+    margin: 10px 0 4px;
+    font-weight: bold;
 }
-.ideditor.lane-studio .lanes-lookahead-head h4 { margin: 0; }
-.ideditor.lane-studio .lanes-lookahead-head input {
-    width: 48px;
-    height: 24px;
-    margin-left: 4px;
-}
-.ideditor.lane-studio .lanes-corridor {
-    list-style: decimal;
-    padding-left: 22px;
+/* one line per road: its name, its lanes our way and how far along */
+.ideditor.lane-studio .lanes-corridor,
+.ideditor.lane-studio .lanes-exits {
     margin: 6px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
     font-size: 12px;
 }
-.ideditor.lane-studio .lanes-corridor li { margin: 4px 0; }
-.ideditor.lane-studio .lanes-corridor li.current > a { font-weight: bold; }
-.ideditor.lane-studio .lanes-corridor-distance { color: var(--passive-text-color); }
+.ideditor.lane-studio .lanes-corridor li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-top: 1px solid var(--border-color);
+}
+.ideditor.lane-studio .lanes-corridor li:first-child,
+.ideditor.lane-studio .lanes-exits li:first-child { border-top: 0; }
+.ideditor.lane-studio .lanes-corridor li.current { background: var(--bg-color-2, rgba(0, 0, 0, 0.04)); }
+.ideditor.lane-studio .lanes-corridor li.current .lanes-corridor-name { font-weight: bold; }
+.ideditor.lane-studio .lanes-corridor-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.ideditor.lane-studio .lanes-corridor-distance {
+    flex: 0 0 auto;
+    min-width: 42px;
+    text-align: right;
+    color: var(--passive-text-color);
+}
 .ideditor.lane-studio .lanes-corridor-cells {
+    flex: 0 0 auto;
     display: flex;
     gap: 2px;
-    margin-top: 2px;
 }
 .ideditor.lane-studio .lanes-corridor-cells.assumed .lanes-cell { opacity: 0.55; border-style: dashed; }
 .ideditor.lane-studio .lanes-cell {
-    min-width: 22px;
-    height: 20px;
-    padding: 0 3px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 1px;
     border: 1px solid transparent;
     border-radius: 3px;
     background: #5a606a;
     color: #fff;
     text-align: center;
-    line-height: 18px;
+    line-height: 16px;
 }
 .ideditor.lane-studio .lanes-cell.lane-bus     { background: #b33a3a; }
 .ideditor.lane-studio .lanes-cell.lane-psv,
 .ideditor.lane-studio .lanes-cell.lane-taxi    { background: #b77d10; }
 .ideditor.lane-studio .lanes-cell.lane-hov     { background: #3d5c99; }
 .ideditor.lane-studio .lanes-cell.lane-bicycle { background: #24764a; }
-.ideditor.lane-studio .lanes-exits {
-    margin: 4px 0;
-    font-size: 12px;
-}
+/* one line per exit: its arrow, where it goes, and the buttons that use it */
 .ideditor.lane-studio .lanes-exits li {
-    display: grid;
-    grid-template-columns: 34% 1fr;
-    gap: 2px 6px;
+    display: flex;
     align-items: center;
-    padding: 3px 0;
-    border-bottom: 1px solid var(--border-color-2);
+    gap: 6px;
+    padding: 4px 8px;
+    border-top: 1px solid var(--border-color);
+}
+.ideditor.lane-studio .lanes-exit-name {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 .ideditor.lane-studio .lanes-exit-actions {
-    grid-column: 1 / -1;
+    flex: 0 0 auto;
     display: flex;
     gap: 4px;
 }
@@ -351,6 +358,8 @@
 .ideditor.lane-studio .speed-roundel .roundel-band { fill: #111; }
 .ideditor.lane-studio .speed-roundel .roundel-edge { fill: none; stroke: #111; stroke-width: 0.8; }
 .ideditor.lane-studio .speed-roundel .roundel-none { fill: none; stroke: var(--passive-text-color); stroke-width: 1.5; stroke-dasharray: 3 2.5; }
+.ideditor.lane-studio .speed-roundel .roundel-min-disc { fill: #1d5bbf; stroke: #fff; stroke-width: 1; }
+.ideditor.lane-studio .speed-roundel .roundel-min-number { fill: #fff; }
 .ideditor.lane-studio .speed-roundel .roundel-none-text { fill: var(--passive-text-color); font-size: 12px; }
 .ideditor.lane-studio .speed-tagged {
     margin: 4px 0 0;

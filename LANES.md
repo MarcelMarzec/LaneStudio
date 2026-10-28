@@ -47,13 +47,18 @@ change lanes on, and leave a roundabout only by the exits the entry lane's arrow
 footway or pavement to see the streets reachable on foot and the crossings used.
 
 **Speed Limit** (top bar, or leave with Esc): every lane is coloured by its limit (its own
-`maxspeed:lanes`, else its road's `maxspeed`), in mph: 10 to 70 mph in their own colours, other limits
-grey, and roads with no limit red with a dashed edge (footways and pedestrian ways are not coloured).
-The sidebar shows the colours with how many roads in view have each, and lists the roads in view with
-no limit by name (click one to go to it). Pick a limit (or press 1 to 7 for 10 to 70 mph), then click
-a road to set it on that road, or shift-click a lane to set it on that lane only (`maxspeed:lanes`).
-The national speed limit sets 60 mph with `maxspeed:type=GB:nsl_single`, or 70 mph with `GB:nsl_dual` on
-a dual carriageway. Esc lets go of the limit, then leaves the tool.
+`maxspeed:lanes`, else its road's `maxspeed`, or the limit its `maxspeed:type` sets), in mph: 10 to
+70 mph in their own colours, other limits grey, and roads with no limit red with a dashed edge
+(footways and pedestrian ways are not coloured). The sidebar shows the colours with how many roads in
+view have each, and lists the roads in view with no limit by name (click one to go to it). Pick a
+limit (or press 1 to 7 for 10 to 70 mph), then click a road to set it on that road, or shift-click a
+lane to set it on that lane only (`maxspeed:lanes`). The national speed limit keeps the road's type,
+or sets 70 mph with `maxspeed:type=GB:motorway` on a motorway, 70 mph with `GB:nsl_dual` on a dual
+carriageway and 60 mph with `GB:nsl_single` elsewhere. Esc lets go of the limit, then leaves the tool.
+
+Switch the panel from **Speed limit** to **Minimum speed** to do the same with minimum speeds: blue
+roundels, lanes coloured by their `minspeed:lanes` or their road's `minspeed` (roads with none are
+drawn as usual), a click setting `minspeed` and a shift-click `minspeed:lanes`.
 
 **Lanes** (sidebar section for a selected road)
 
@@ -63,9 +68,16 @@ a dual carriageway. Esc lets go of the limit, then leaves the tool.
 - Inspector: direction of travel, position (move left or right), turn arrows, lane change,
   lane type, speed limits, destination, access, width, width and height limits, surface,
   and every other `*:lanes` tag on the road.
-- Speed limits are picked from a row of UK roundels (10 to 70 mph, and none), the current one ringed;
-  with no lane selected, the road's own limit is picked the same way, with the national speed limit
-  too.
+- Speed limits are picked from a row of UK roundels (10 to 70 mph, and none), the current one ringed,
+  and minimum speeds (`minspeed:lanes`) from a row of blue ones; with no lane selected, the road's own
+  limit and minimum speed (`minspeed`) are picked the same way, with the national speed limit too.
+- With no lane selected, **Speed limit type** sets the UK limit types (wiki: Key:maxspeed:type) with
+  their limit: national on a single carriageway (`GB:nsl_single`, 60 mph), a dual carriageway
+  (`GB:nsl_dual`, 70 mph) or a motorway (`GB:motorway`, 70 mph), or a restricted road with street
+  lights (`GB:nsl_restricted`, 30 mph). A type in `source:maxspeed` is read too, and written as
+  `maxspeed:type`. Under it, the lower limit the national limit sets for vehicles towing caravans or
+  trailers, buses and minibuses up to 12 m and HGVs (50 mph, 60 mph on a dual carriageway; 60 mph on a
+  motorway, where it doesn't apply to buses).
 - Click the line between two lanes of the selected road to cycle its marking: dashed, solid,
   crossable one way, crossable the other way (`change:lanes`).
 
@@ -96,9 +108,17 @@ black and white, shortcut `K`)
 Esc, clicking empty map or selecting nothing returns to Select.
 
 Lane fields in the inspector work like iD's own fields: type or pick from the suggestions (speeds in
-the country's units, access and surface values, widths, destinations used on nearby roads).
+the country's units, access and surface values, widths, destinations used on nearby roads). A field
+with a fixed set of choices (lane type, the tools' marking, sign and paint pickers, roadside features)
+is a dropdown that can't be typed in. As in iD, an empty field's placeholder shows its first few
+choices ("Yes, No, Mapped separately…"), and a field whose selected lanes differ shows "Multiple
+Values".
 
-**Look ahead**: the roads the selected road leads on to (highlighted on the map), the exits at its
+Look ahead and Roadside fold away like iD's own sections (click their heading), and stay as you
+left them.
+
+**Look ahead**: how many roads to follow (1 to 10, with `−` and `+`), then the roads the selected
+road leads on to (highlighted on the map), one line each with its lanes and how far along it is, the exits at its
 end (for a road entering a roundabout, the roundabout's exits, numbered) with a suggested turn and the exit's sign text (written to the selected lanes only when you
 click Turn or Destination), and "Copy lanes to the next road" (lane counts and lane tags, not turn
 or destination lanes; one road per click).
@@ -115,7 +135,8 @@ average-speed camera system (`type=enforcement`) shows the stretch of road it co
 
 **Roadside**: hard shoulders (with width; drawn 2.5 m wide until one is tagged), and pavement,
 cycleway and parking per side (`sidewalk:<side>`, `cycleway:<side>`,
-`parking:<side>`). Lane Studio also looks at what is mapped next to the road:
+`parking:<side>`): one field each, with a Left and a Right dropdown as in iD's cycle lane field.
+Lane Studio also looks at what is mapped next to the road:
 
 - a separately mapped pavement on a side → "Set to mapped separately" (or a double-mapping warning);
 - mapped `barrier=kerb` lines on both sides → the kerb-to-kerb width, with "Set width";

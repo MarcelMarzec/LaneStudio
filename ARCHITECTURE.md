@@ -78,10 +78,13 @@ widths, place markings or signs, connect lanes); Esc returns to Select.
 
 ### Speed Limit tool
 
-The Speed Limit tool enters its own iD mode (`lanes-speed`): `laneSpeed` holds whether it is on and
-the limit picked in its panel, and the lanes layer colours each lane by `speedClassOf` (its
-`maxspeed:lanes` value, else the road's `maxspeed`, in mph). With a limit picked, a click sets
-`maxspeed` on the road, a shift-click that lane's `maxspeed:lanes` value, each one iD action.
+The Speed Limit tool enters its own iD mode (`lanes-speed`): `laneSpeed` holds whether it is on,
+whether it shows speed limits or minimum speeds (`measure`), and the limit picked in its panel, and the
+lanes layer colours each lane by `speedClassOf` (its `maxspeed:lanes` value, else the road's
+`maxspeed` or the limit its UK `maxspeed:type` sets, in mph; or `minspeed:lanes` and `minspeed`). With
+a limit picked, a click sets `maxspeed` (or `minspeed`) on the road, a shift-click that lane's
+`maxspeed:lanes` (or `minspeed:lanes`) value, each one iD action. The UK limit types and the tags they
+write are in `speed_roundels.ts` (`ukSpeedTypes`, `withRoadSpeed`, `withSpeedType`).
 
 ### Routing
 

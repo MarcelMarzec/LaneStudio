@@ -24,10 +24,11 @@ Symbols used in this document:
 |   | Feature | Notes |
 |---|---|---|
 | ✅ | Light and dark themes | Lane Studio's panes, sidebar sections and Routing panel follow iD's themes and your system's setting |
-| ✅ | Lane fields | Standard form fields: usable with a keyboard and screen readers like iD's own fields |
+| ✅ | Lane fields | Standard form fields: usable with a keyboard and screen readers like iD's own fields, including the dropdowns (lane type, roadside features, the speed limit type and the tools' pickers), with iD's placeholders |
+| ✅ | Look ahead and Roadside | Fold away with their headings, as iD's sections do, from the keyboard too; Roadside's sides are labelled Left and Right beside each dropdown |
 | 🟠 | Picking lanes | Lanes are picked on the map or in the sidebar's lane strip with a pointer; once one is selected, `[` and `]` step to the next lane and Delete removes the selected lanes |
 | 🟠 | Lane colours | Lane types are told apart by colour, with labels on each lane from zoom 19; the lane opacity setting (pane shortcut `K`) makes them stronger or fainter |
-| 🟠 | Speed Limit tool | Lanes are coloured by their speed limit; the sidebar lists what each colour means, and the limit itself is shown in the inspector's speed roundels. Keys `1` to `7` pick 10 to 70 mph and Esc lets go; setting the limit still needs a click on the road |
+| 🟠 | Speed Limit tool | Lanes are coloured by their speed limit or minimum speed; the sidebar lists what each colour means, and the limit itself is shown in the inspector's speed roundels (each named for screen readers). The Speed limit / Minimum speed switch is a pair of buttons. Keys `1` to `7` pick 10 to 70 mph and Esc lets go; setting the limit still needs a click on the road |
 | 🟠 | Railways, signals and level crossings | Drawn as symbols on the map; what each one is shows in the inspector when it is selected, as for any feature in iD |
 | 🟩 | What's new menu | A dialog listing the changes since the version you last used; closed with Esc or its button, and turned off under About in the Lane Studio pane |
 | ❌ | Routing tool | Routes are shown for the lane under the pointer; there is no keyboard way to pick a lane in it yet |

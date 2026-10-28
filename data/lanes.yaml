@@ -68,6 +68,10 @@ en:
     marking_tip: Place crossings, stop and give way signs, signals and traffic calming by clicking a road
     sign: Signs
     sign_tip: Place traffic signs, message signs and cameras beside a road by clicking a lane
+    marking_type: Marking to place
+    sign_type: Sign to place
+    paint_key: Paint
+    paint_value: Value
   change:
     "yes": Change allowed both ways
     "no": No lane change
@@ -97,12 +101,27 @@ en:
     none: No arrow
   speed:
     mph: "{n} mph"
-    national: National speed limit (60 mph, 70 mph on a dual carriageway)
+    national: National speed limit (60 mph; 70 mph on a dual carriageway or motorway)
     none: No speed limit tagged
     lanes_label: Speed limit of these lanes
     lanes_none: Same as the road
     road_label: Speed limit
     tagged: "Tagged: {value}"
+    min_mph: "Minimum {n} mph"
+    min_lanes_label: Minimum speed of these lanes
+    min_road_label: Minimum speed
+    min_none: No minimum speed
+    type_label: Speed limit type
+    type_placeholder: National, motorway, restricted road…
+    types:
+      none: Signed limit
+      nsl_single: "National, single carriageway ({mph} mph)"
+      nsl_dual: "National, dual carriageway ({mph} mph)"
+      motorway: "Motorway ({mph} mph)"
+      nsl_restricted: "Restricted road, street lights ({mph} mph)"
+    lower:
+      towing_bus_hgv: "{mph} mph for vehicles towing caravans or trailers, buses and minibuses up to 12 m long, and HGVs."
+      towing_hgv: "{mph} mph for vehicles towing caravans or trailers, and HGVs."
   field:
     maxspeed: Speed limit
     minspeed: Minimum speed
@@ -217,7 +236,8 @@ en:
   lookahead:
     exit_number: "Exit {n}:"
     title: Look ahead
-    limit: "Roads: "
+    limit: Roads to look ahead
+    metres: "{n} m"
     travelling_forward: Following the road in its drawing direction. Select a backward lane to look the other way.
     travelling_backward: Following the road against its drawing direction.
     unnamed: Unnamed road
@@ -234,6 +254,8 @@ en:
     hint: Left and right are as seen looking along the way's drawing direction.
     left: Left side
     right: Right side
+    left_short: Left
+    right_short: Right
     shoulder: Hard shoulder
     shoulder_yes: There is a hard shoulder
     shoulder_no: No hard shoulder
@@ -339,6 +361,7 @@ en:
   annotation:
     marking: Changed a road marking.
     speed: Changed the speed limit.
+    minspeed: Changed the minimum speed.
     sign: Changed a traffic sign.
     street_feature: Changed a street feature.
     roadside: Changed the roadside.
@@ -368,8 +391,16 @@ en:
     tooltip: Lane Studio, a lane editor for OpenStreetMap
   speed_tool:
     title: Speed Limit
+    measure: What to show and set
+    measures:
+      maxspeed: Speed limit
+      minspeed: Minimum speed
     apply: Limit to apply
+    apply_min: Minimum speed to apply
     remove: Remove the speed limit
+    remove_min: Remove the minimum speed
+    min_hint: Pick a minimum speed, then click roads to set it. Lanes with a minimum speed are coloured by it.
+    min_hint_picked: Click a road to set this minimum speed on the whole road; shift-click a lane to set it on that lane only. Esc lets go.
     hint: Pick a limit, then click roads to set it. Lanes are coloured by their limit; roads with none are red.
     hint_picked: Click a road to set this limit on the whole road; shift-click a lane to set it on that lane only. Esc lets go.
     key: On the map

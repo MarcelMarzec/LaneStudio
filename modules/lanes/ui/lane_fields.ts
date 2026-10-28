@@ -18,14 +18,32 @@ export interface LaneFieldOptions {
     /** shared value of the selected lanes; undefined when they differ */
     value: string | undefined;
     suggestions: { value: string; title?: string }[];
+    /**
+     * only the suggestions can be picked, from a list that can't be typed in (as iD's fields with a fixed set of
+     * values); the input shows each one's title, and an empty value is offered as `emptyTitle`
+     */
+    strict?: boolean;
+    emptyTitle?: string;
+    /** the hint shown while it is empty, when not the first suggestions (as iD's fields) */
+    placeholder?: string;
     disabled?: boolean;
     disabledReason?: string;
     onChange: (value: string) => void;
 }
 
 /**
+ * A field's placeholder as iD's combo fields have it: the first few suggestions, then an ellipsis
+ * ("Yes, No, Separate…"), or iD's "Multiple values" when the selected lanes differ
+ */
+export function fieldPlaceholder(suggestions: { value: string; title?: string }[], mixed = false, given?: string): string {
+    if (mixed) return t('inspector.multiple_values');
+    const text = given ?? suggestions.map(s => s.title ?? s.value).filter(v => v && v.length < 20).slice(0, 3).join(', ');
+    return !text || /(…|\.\.\.)$/.test(text) ? text : `${text}…`;
+}
+
+/**
  * A field laid out like iD's own preset fields: a label row and an input with iD's combobox,
- * which suggests values as you type.
+ * which suggests values as you type, or (strict) a dropdown of fixed choices.
  */
 export function laneField(context: iD.Context, parent: Selection, options: LaneFieldOptions) {
     const field = parent.append('div').attr('class', `form-field lane-form-field form-field-lane-${options.id}`);
@@ -34,33 +52,79 @@ export function laneField(context: iD.Context, parent: Selection, options: LaneF
         .append('span').attr('class', 'label-textvalue').text(options.label);
 
     const wrap = field.append('div').attr('class', 'form-field-input-wrap');
+    laneInput(context, wrap, options);
+    return field;
+}
+
+/** The input of a lane field, with its combobox, in a wrap of iD's (a field's, or a row of a two-sided field's) */
+export function laneInput(context: iD.Context, wrap: Selection, options: LaneFieldOptions) {
+    // in a strict field the input shows a choice's title, and the value written is the choice's
+    const choices = options.strict
+        ? [{ value: '', title: options.emptyTitle ?? '' }, ...options.suggestions].filter(c => c.value || c.title)
+        : options.suggestions;
+    const shown = (value: string | undefined) =>
+        options.strict && value ? choices.find(c => c.value === value)?.title ?? value : value ?? '';
+    const valueOf = (text: string) => {
+        if (!options.strict) return text;
+        const choice = choices.find(c => (c.title ?? c.value) === text || c.value === text);
+        return choice ? choice.value : text;
+    };
+
     const input = wrap.append('input')
         .attr('type', 'text')
         .attr('id', `lane-field-${options.id}`)
         .attr('class', 'lane-field-input')
-        .attr('placeholder', options.value === undefined ? t('_lanes.inspector.mixed') : null)
+        .attr('placeholder', fieldPlaceholder(options.suggestions, options.value === undefined, options.placeholder) || null)
         .attr('title', options.disabled ? options.disabledReason ?? null : null)
+        .attr('readonly', options.strict ? 'readonly' : null)
         .property('disabled', !!options.disabled)
         .call(utilNoAuto as any);
-    utilGetSetValue(input as any, options.value ?? '');
+    utilGetSetValue(input as any, shown(options.value));
 
-    if (!options.disabled && options.suggestions.length) {
+    if (!options.disabled && choices.length) {
         input.call((uiCombobox(context, `lane-${options.id}`) as any)
             // a title (a value with its unit) is what the list shows; the value is what is written
-            .data(options.suggestions.map(s => ({
-                value: s.value,
+            .data(choices.map(s => ({
+                value: options.strict ? s.title ?? s.value : s.value,
                 title: s.title ?? s.value,
                 display: s.title ? (label: Selection) => label.text(s.title!) : undefined
             })))
-            .minItems(1), field);
+            .minItems(1), wrap);
     }
 
+    // a pick fires change, then blur as the sidebar redraws: write each new value once
+    let written = options.value ?? '';
     const change = function(this: HTMLInputElement) {
-        const value = context.cleanTagValue((utilGetSetValue(input as any) as string).trim());
-        if (value === (options.value ?? '')) return;
+        const value = valueOf(context.cleanTagValue((utilGetSetValue(input as any) as string).trim()));
+        if (value === written) return;
+        written = value;
         options.onChange(value);
     };
     input.on('change', change).on('blur', change);
+    return input;
+}
+
+export interface SidedFieldRow extends Omit<LaneFieldOptions, 'label'> {
+    /** the row's label: the side */
+    label: string;
+}
+
+/**
+ * A field with one dropdown per side, laid out as iD's own two-sided fields (such as its cycle lane field): the
+ * field's label, then a row for each side with its label beside its dropdown
+ */
+export function sidedField(context: iD.Context, parent: Selection, id: string, label: string, rows: SidedFieldRow[]) {
+    const field = parent.append('div').attr('class', `form-field lane-form-field form-field-lane-${id}`);
+    field.append('label').attr('class', 'field-label').attr('for', `lane-field-${rows[0]?.id}`)
+        .append('span').attr('class', 'label-text')
+        .append('span').attr('class', 'label-textvalue').text(label);
+    const list = field.append('div').attr('class', 'form-field-input-wrap form-field-input-directionalcombo')
+        .append('ul').attr('class', 'rows rows-table');
+    for (const row of rows) {
+        const item = list.append('li').attr('class', 'labeled-input');
+        item.append('div').attr('class', 'label').text(row.label);
+        laneInput(context, item.append('div').attr('class', 'form-field-input-wrap'), row);
+    }
     return field;
 }
 

@@ -50,7 +50,11 @@ mph, and reads limits tagged in km/h too.
 Turn on the Speed Limit tool in the top bar. Every lane is coloured by its limit, and roads with no
 `maxspeed` stand out. Pick a limit in the sidebar (or press `1` to `7` for 10 to 70 mph), then click a
 road to set it; shift-click sets it on one lane only (`maxspeed:lanes`). Esc lets go of the limit, then
-leaves the tool.
+leaves the tool. Switch the panel to **Minimum speed** to set `minspeed` the same way.
+
+With a road selected and no lane picked, the Lanes section also sets the UK limit type (national on a
+single or dual carriageway or a motorway, or a restricted road: `maxspeed:type=GB:nsl_single`,
+`GB:nsl_dual`, `GB:motorway`, `GB:nsl_restricted`) and the road's minimum speed.
 
 
 ## Are railways drawn?

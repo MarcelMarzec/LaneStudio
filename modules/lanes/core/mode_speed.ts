@@ -7,16 +7,16 @@ import type { osmWay } from '../../osm/way';
 import { utilKeybinding } from '../../util';
 import { actionChangeLanes } from '../actions/change_lanes';
 import { parseLanes, setLaneValue } from '../model';
-import { mphLimits, withRoadSpeed } from '../ui/speed_roundels';
+import { mphLimits, withRoadMinspeed, withRoadSpeed } from '../ui/speed_roundels';
 import { speedPanel } from '../ui/speed_panel';
 import { laneRouting } from './lane_routing';
 import { laneSpeed } from './lane_speed';
 import { isDrag, roadOf } from './mode_routing';
 
 /**
- * The Speed Limit tool: lanes are coloured by their speed limit (roads with none stand out), and with a limit
- * picked in the panel, clicking a road sets it (shift-click: that lane only). Keys 1 to 7 pick 10 to 70 mph;
- * Esc lets go of the pick, then leaves.
+ * The Speed Limit tool: lanes are coloured by their speed limit (roads with none stand out), or by their minimum
+ * speed, and with a limit picked in the panel, clicking a road sets it (shift-click: that lane only). Keys 1 to 7
+ * pick 10 to 70 mph; Esc lets go of the pick, then leaves.
  */
 export function modeLaneSpeed(context: iD.Context) {
     const speed = laneSpeed(context);
@@ -35,11 +35,15 @@ export function modeLaneSpeed(context: iD.Context) {
         const lane = lanes.laneAt(point) ?? (road ? lanes.laneAt(point, road) : null);
         if (lane?.kind !== 'lane') return;
         const way = context.entity(lane.wayID) as osmWay;
+        const measure = speed.measure();
+        const laneKey = `${measure}:lanes`;
         if (!event.shiftKey) {
-            context.perform(actionChangeTags(way.id, withRoadSpeed(way.tags, pick)), t('_lanes.annotation.speed'));
-        } else if (pick.kind !== 'national' && !parseLanes(way.tags).keys['maxspeed:lanes']?.readonly) {
+            const tags = measure === 'maxspeed' ? withRoadSpeed(way.tags, pick) : withRoadMinspeed(way.tags, pick);
+            context.perform(actionChangeTags(way.id, tags), t(`_lanes.annotation.${measure === 'maxspeed' ? 'speed' : 'minspeed'}`));
+        } else if (pick.kind !== 'national' && !parseLanes(way.tags).keys[laneKey]?.readonly) {
             const value = pick.kind === 'mph' ? `${pick.mph} mph` : '';
-            context.perform(actionChangeLanes(way.id, m => setLaneValue(m, lane.ref, 'maxspeed:lanes', value)), t('_lanes.annotation.speed'));
+            context.perform(actionChangeLanes(way.id, m => setLaneValue(m, lane.ref, laneKey, value)),
+                t(`_lanes.annotation.${measure === 'maxspeed' ? 'speed' : 'minspeed'}`));
         }
     }
 

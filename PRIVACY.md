@@ -21,7 +21,8 @@ typefaces from Google Fonts, so Google receives your IP address when one of them
 
 Lane Studio does not set tracking cookies and does not collect analytics. It stores some information
 in your browser's local storage so you don't have to re-enter it: your settings (such as lane opacity,
-the map layers shown and whether the what's new menu is shown), the Lane Studio version you last used
+the map layers shown, whether the what's new menu is shown and whether the Lanes section's Look ahead
+and Roadside are folded away), the Lane Studio version you last used
 (so the what's new menu shows only what changed since) and edits you have not saved yet, under keys
 starting with `lanes_`, and
 your OpenStreetMap login token, under a key named after the OpenStreetMap server. This stays on your
@@ -75,6 +76,7 @@ law, or want to ask about it, open an issue at
 
 ### Changelog
 
+* _2026-Oct-28_ - Whether Look ahead and Roadside are folded away is stored with your settings.
 * _2026-Oct-27_ - The website's pages, now part of this project, load fonts from Google Fonts.
 * _2026-Oct-27_ - The version last used and the what's new setting are stored; the changelog is fetched from the site itself.
 * _2026-Oct-21_ - Lane Studio's own policy, adapted from [iD's](https://github.com/openstreetmap/iD/blob/develop/PRIVACY.md).

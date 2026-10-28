@@ -393,9 +393,13 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         /* lane ribbons */
         // (each lane of a road in one path, as for carriageways)
         // (the Speed Limit tool colours each lane by its limit)
+        // (showing minimum speeds, a road without one is drawn as usual: most have none)
         const speedClass = (piece: RoadPiece, lane: LaneInfo) => {
             const road = speed.active() ? graph.hasEntity(piece.wayID) as osmWay | undefined : undefined;
-            return road ? ` speed-${speedClassOf(lane.values['maxspeed:lanes'], road)}` : '';
+            if (!road) return '';
+            const measure = speed.measure();
+            const cls = speedClassOf(lane.values[`${measure}:lanes`], road, measure);
+            return measure === 'minspeed' && cls === 'missing' ? '' : ` speed-${cls}`;
         };
         const laneClass = (piece: RoadPiece, lane: LaneInfo) => {
             const surface = surfaceGroup(lane.values['surface:lanes']) ?? surfaceOf(piece);

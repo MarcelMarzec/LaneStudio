@@ -8,6 +8,28 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r5
+##### 2026-Oct-28
+
+#### Roads and signs
+* Minimum speeds: blue roundels set `minspeed` on a selected road and `minspeed:lanes` on selected
+  lanes, and the Speed Limit tool has a Minimum speed switch that colours lanes by their minimum speed
+  and sets it with a click (shift-click: one lane)
+* A selected road's **Speed limit type** sets the UK limits from the wiki with their speed:
+  `GB:nsl_single` (60 mph), `GB:nsl_dual` (70 mph), `GB:motorway` (70 mph) and `GB:nsl_restricted`
+  (30 mph), with the lower limit for vehicles towing caravans or trailers, buses and HGVs shown under it
+* A road tagged only with `maxspeed:type` (or `source:maxspeed`) is coloured by the limit its type sets,
+  and the national speed limit on a motorway is tagged `GB:motorway`
+
+#### Editing
+* Roadside is laid out as iD's own fields: one field each for hard shoulder, pavement, cycleway and
+  parking, with a Left and a Right dropdown, in place of rows of radio buttons
+* Look ahead is tidier: one line per road with its lanes and distance, one line per exit, and a
+  number field with `−` and `+` for how many roads to follow
+* Look ahead and Roadside fold away like iD's sections, and stay as you left them
+* Every dropdown in the Lanes section is an iD dropdown with iD's placeholder (its first few choices,
+  or "Multiple Values"), including the lane type and the Markings, Signs and Paint pickers
+
 # 26.10.28r4
 ##### 2026-Oct-28
 
