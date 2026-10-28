@@ -6,6 +6,7 @@ import type { Mode } from '../../../../modules/core/context';
 
 import { laneState } from '../../../../modules/lanes/core/lane_state';
 import { fieldPlaceholder } from '../../../../modules/lanes/ui/lane_fields';
+import { laneStudioCrossingSignals } from '../../../../modules/lanes/core/preset_fields';
 import { uiSectionLanes } from '../../../../modules/lanes/ui/section_lanes';
 
 // stand-ins for iD's modes, which need a rendered map
@@ -127,6 +128,19 @@ describe('Lane Studio sidebar', () => {
         expect(selection.select('.lane-limits .speed-lower').empty()).toBe(false);
         selection.select('.lane-limits-road').dispatch('click');
         expect(state.selected()).toBeNull();
+    });
+
+    it('makes a crossing with traffic signals when its signals are ticked, in one undo step', () => {
+        laneStudioCrossingSignals(context);
+        context.history().merge([new iD.osmNode({ id: 'n9', loc: [13.4005, 52.52], tags: { highway: 'crossing', crossing: 'uncontrolled', 'crossing:markings': 'zebra' } })]);
+        const tick = (value: string) => context.perform(iD.actionChangeTags('n9', { ...context.entity('n9').tags, 'crossing:signals': value }), 'Changed tags.');
+        tick('yes');
+        expect(context.entity('n9').tags).toMatchObject({ crossing: 'traffic_signals', 'crossing:signals': 'yes' });
+        tick('no');
+        expect(context.entity('n9').tags.crossing).toBe('uncontrolled');
+        context.undo();
+        context.undo();
+        expect(context.entity('n9').tags).toEqual({ highway: 'crossing', crossing: 'uncontrolled', 'crossing:markings': 'zebra' });
     });
 
     it('clears selected lanes when the road is deselected', () => {

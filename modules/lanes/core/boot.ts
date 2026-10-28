@@ -12,7 +12,7 @@ import { laneKeys } from './lane_keys';
 import { svgLanes } from '../svg/lanes';
 import { validationLaneTags } from '../validations/lane_tags';
 import { uiSectionLanes } from '../ui/section_lanes';
-import { uiSectionMarkings } from '../ui/section_markings';
+import { laneStudioCrossingSignals, laneStudioPresetFields } from './preset_fields';
 import { uiSectionSign } from '../ui/section_sign';
 import { uiSectionStreetFeature } from '../ui/section_street_feature';
 import { laneStudioSplash } from '../ui/splash';
@@ -47,7 +47,6 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
 
     // the Lanes section sits in iD's sidebar, after the issues and before the preset fields
     uiEntityEditorAddSection(uiSectionLanes);
-    uiEntityEditorAddSection(uiSectionMarkings);
     uiEntityEditorAddSection(uiSectionSign);
     uiEntityEditorAddSection(uiSectionStreetFeature);
 
@@ -73,6 +72,9 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
     laneStudioSplash(context);
     // after an update, what changed since the version last used
     laneStudioWhatsNew(context);
+    // the fields of crossings, traffic calming and passing places that Lane Studio's drawing reads
+    laneStudioPresetFields();
+    laneStudioCrossingSignals(context);
 
     // iD's Issues pane looks up rule names under `issues.<rule>` in its general strings
     // (merged as soon as strings load, before iD's UI first renders)

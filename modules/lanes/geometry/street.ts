@@ -27,7 +27,91 @@ export const pathWidths: Record<string, number> = {
 };
 
 export type PathKind = 'sidewalk' | 'crossing' | 'footway' | 'path' | 'cycleway' | 'steps' | 'pedestrian' | 'bridleway';
-export type CrossingMarkings = 'zebra' | 'lines' | 'dots' | 'none';
+/** How a crossing is painted (wiki: Key:crossing:markings) */
+export type CrossingMarkings = 'zebra' | 'zebra_double' | 'zebra_paired' | 'zebra_bicolour' | 'lines' | 'lines_paired' | 'ladder'
+    | 'ladder_skewed' | 'ladder_paired' | 'dashes' | 'dots' | 'surface' | 'pictograms' | 'none';
+
+/** One painted mark of a crossing: a bar or patch (closed), or a line, and how it is drawn */
+export interface CrossingMark {
+    points: Vec2[];
+    closed: boolean;
+    /** the CSS class: `marking-zebra_bar`, `marking-crossing_line`… with its variant */
+    cls: string;
+}
+
+/**
+ * The marks of a crossing, laid out in its own terms: `t` along the way people walk (0 to `length`), `u` across it
+ * (±`width`/2). Bars of a zebra run with the traffic, half a metre wide every metre; lines run along the edges.
+ */
+export function crossingMarks(markings: CrossingMarkings, length: number, width: number): { points: [number, number][]; closed: boolean; cls: string }[] {
+    const out: { points: [number, number][]; closed: boolean; cls: string }[] = [];
+    const h = width / 2;
+    const bar = (t: number, w: number, u0 = -h, u1 = h, cls = 'marking marking-zebra_bar') =>
+        out.push({ points: [[t, u0], [t + w, u0], [t + w, u1], [t, u1]], closed: true, cls });
+    const line = (u: number, cls = 'marking marking-crossing_line') => out.push({ points: [[0, u], [length, u]], closed: false, cls });
+    const bars = (u0 = -h, u1 = h, step = 1, w = 0.5) => {
+        let k = 0;
+        for (let t = 0.25; t + w <= length; t += step, k++) bar(t, w, u0, u1, 'marking marking-zebra_bar' + (markings === 'zebra_bicolour' && k % 2 ? ' alt' : ''));
+    };
+    switch (markings) {
+        case 'zebra':
+        case 'zebra_bicolour':
+            bars();
+            break;
+        case 'zebra_double':
+            // two zebras side by side, a gap down the middle
+            bars(-h, -0.15);
+            bars(0.15, h);
+            break;
+        case 'zebra_paired':
+            for (let t = 0.25; t + 0.6 <= length; t += 1.4) {
+                bar(t, 0.25);
+                bar(t + 0.4, 0.25);
+            }
+            break;
+        case 'lines':
+            line(-h);
+            line(h);
+            break;
+        case 'lines_paired':
+            for (const u of [-h, -h + 0.3, h - 0.3, h]) line(u);
+            break;
+        case 'ladder':
+            line(-h);
+            line(h);
+            bars(-h, h, 1, 0.4);
+            break;
+        case 'ladder_paired':
+            for (const u of [-h, -h + 0.3, h - 0.3, h]) line(u);
+            bars(-h + 0.3, h - 0.3, 1, 0.4);
+            break;
+        case 'ladder_skewed':
+            line(-h);
+            line(h);
+            for (let t = 0.25; t + 0.9 <= length; t += 1) {
+                out.push({ points: [[t, -h], [t + 0.4, -h], [t + 0.9, h], [t + 0.5, h]], closed: true, cls: 'marking marking-zebra_bar' });
+            }
+            break;
+        case 'dashes':
+            line(-h, 'marking marking-crossing_line dashes');
+            line(h, 'marking marking-crossing_line dashes');
+            break;
+        case 'dots':
+            line(-h, 'marking marking-crossing_line dots');
+            line(h, 'marking marking-crossing_line dots');
+            break;
+        case 'surface':
+            out.push({ points: [[0, -h], [length, -h], [length, h], [0, h]], closed: true, cls: 'marking marking-crossing_surface' });
+            break;
+        case 'pictograms':
+            // a symbol painted every few metres down the middle
+            for (let t = 1; t + 0.8 <= length; t += 3) {
+                out.push({ points: [[t, 0], [t + 0.4, -0.4], [t + 0.8, 0], [t + 0.4, 0.4]], closed: true, cls: 'marking marking-crossing_pictogram' });
+            }
+            break;
+    }
+    return out;
+}
 
 export interface PathShape {
     id: string;
@@ -44,8 +128,8 @@ export interface PathShape {
     footHalf?: Vec2[];
     /** crossing paths only */
     markings?: CrossingMarkings;
-    /** zebra bars or edge lines for crossings */
-    marks: Vec2[][];
+    /** a crossing's painted marks (see crossingMarks) */
+    marks: CrossingMark[];
     /** being built (`highway=construction`) */
     construction?: boolean;
     /** in a tunnel or below ground (`layer` < 0) */
@@ -84,7 +168,7 @@ export interface KerbLine {
 }
 
 export type MarkingKind =
-    | 'crossing' | 'zebra_bar' | 'crossing_line' | 'island'
+    | 'crossing' | 'zebra_bar' | 'crossing_line' | 'crossing_surface' | 'crossing_pictogram' | 'island'
     | 'stop_line' | 'give_way_line' | 'signal_line'
     | 'calming' | 'mini_roundabout' | 'kerb_node' | 'ford'
     | 'mini_roundabout_surface' | 'passing_place_surface' | 'turning_loop_island'
@@ -159,10 +243,12 @@ const circle = (centre: Vec2, r: number, steps = 32): Vec2[] => Array.from({ len
 export function crossingMarkings(tags: Tags): CrossingMarkings {
     const markings = tags['crossing:markings'];
     if (markings) {
-        if (markings === 'no') return 'none';
-        if (markings === 'lines' || markings === 'lines:paired' || markings === 'ladder:paired') return 'lines';
-        if (markings === 'dots' || markings === 'dashes') return 'dots';
-        return 'zebra';   // yes, zebra, ladder, ladder:skewed, zebra:double…
+        const known: Record<string, CrossingMarkings> = {
+            no: 'none', zebra: 'zebra', 'zebra:double': 'zebra_double', 'zebra:paired': 'zebra_paired', 'zebra:bicolour': 'zebra_bicolour',
+            lines: 'lines', 'lines:paired': 'lines_paired', ladder: 'ladder', 'ladder:skewed': 'ladder_skewed',
+            'ladder:paired': 'ladder_paired', dashes: 'dashes', dots: 'dots', surface: 'surface', pictograms: 'pictograms'
+        };
+        return known[markings] ?? 'zebra';   // yes, and anything else painted
     }
     const crossing = tags.crossing;
     if (crossing === 'zebra' || crossing === 'marked' || tags.crossing_ref === 'zebra') return 'zebra';
@@ -251,22 +337,22 @@ function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisua
     const right = offsetPolyline(points, points.map(() => width / 2));
     const kind = pathKind(tags);
 
-    const marks: Vec2[][] = [];
+    const marks: CrossingMark[] = [];
     let markings: CrossingMarkings | undefined;
     if (kind === 'crossing') {
         markings = crossingMarkings(tags);
         const length = polylineLength(points);
-        if (markings === 'zebra') {
-            // bars across the path every metre: the stripes run with the traffic
-            for (let s = 0.3; s + 0.5 < length; s += 1) {
-                const a = pointAlong(points, s);
-                const b = pointAlong(points, s + 0.5);
-                const n = rightNormal(a.direction);
-                marks.push([add(a.point, scale(n, -width / 2)), add(b.point, scale(n, -width / 2)),
-                    add(b.point, scale(n, width / 2)), add(a.point, scale(n, width / 2))].map(frame.toLoc));
-            }
-        } else if (markings === 'lines' || markings === 'dots') {
-            marks.push(left.map(frame.toLoc), right.map(frame.toLoc));
+        // laid out along the path (t) and across it (u)
+        const place = ([t, u]: [number, number]) => {
+            const at = pointAlong(points, Math.max(0, Math.min(length, t)));
+            return frame.toLoc(add(at.point, scale(rightNormal(at.direction), u)));
+        };
+        for (const mark of crossingMarks(markings, length, width)) {
+            // a line along the path follows its bends
+            const points2 = !mark.closed && mark.points.length === 2
+                ? Array.from({ length: Math.max(2, Math.ceil(length)) + 1 }, (_, k) => place([length * k / Math.max(2, Math.ceil(length)), mark.points[0][1]]))
+                : mark.points.map(place);
+            marks.push({ points: points2, closed: mark.closed, cls: mark.cls });
         }
     }
 
@@ -590,18 +676,15 @@ function crossingNodeMarkings(node: osmNode, cs: CrossSection, out: StreetGeomet
     const markings = crossingMarkings(tags);
     const half = 1.5;
     out.markings.push({ key: `${node.id}-crossing`, kind: 'crossing', nodeID: node.id, closed: true, variant: markings, points: band(cs, -half, half, left, right) });
-    if (markings === 'zebra') {
-        for (let x = left + 0.25; x + 0.5 <= right; x += 1) {
-            out.markings.push({ key: `${node.id}-bar-${x.toFixed(2)}`, kind: 'zebra_bar', nodeID: node.id, closed: true, points: band(cs, -half, half, x, x + 0.5) });
-        }
-    } else if (markings === 'lines' || markings === 'dots') {
-        for (const along of [-half, half]) {
-            out.markings.push({
-                key: `${node.id}-line-${along}`, kind: 'crossing_line', nodeID: node.id, closed: false, variant: markings,
-                points: [add(scale(cs.direction, along), scale(cs.normal, left)), add(scale(cs.direction, along), scale(cs.normal, right))].map(cs.frame.toLoc)
-            });
-        }
-    }
+    // walking across the road (t, from one kerb) within the crossing's width along the road (u)
+    crossingMarks(markings, right - left, half * 2).forEach((mark, k) => {
+        const kind = (/marking-(\w+)/.exec(mark.cls)?.[1] ?? 'zebra_bar') as MarkingKind;
+        const variant = mark.cls.split(' ').slice(2).join(' ') || undefined;
+        out.markings.push({
+            key: `${node.id}-mark-${k}`, kind, nodeID: node.id, closed: mark.closed, variant,
+            points: mark.points.map(([t, u]) => cs.frame.toLoc(add(scale(cs.normal, left + t), scale(cs.direction, u))))
+        });
+    });
     if (tags['crossing:island'] === 'yes') {
         // the island sits between the two directions, or in the middle
         const forward = approachRange(cs, 'forward');
@@ -612,9 +695,17 @@ function crossingNodeMarkings(node: osmNode, cs: CrossSection, out: StreetGeomet
         out.markings.push({ key: `${node.id}-island`, kind: 'island', nodeID: node.id, closed: true, points: band(cs, -2.5, 2.5, middle - 0.75, middle + 0.75) });
     }
     if ((tags.crossing === 'traffic_signals' || tags['crossing:signals'] === 'yes') && !signalCrossing) {
-        for (const [x, side] of [[left - 0.6, 'l'], [right + 0.6, 'r']] as const) {
-            const loc = cs.frame.toLoc(add(scale(cs.direction, -half - 0.5), scale(cs.normal, x)));
-            out.symbols.push({ key: `${node.id}-signal-${side}`, kind: 'signals', loc, ahead: cs.frame.toLoc(add(scale(cs.direction, 0.5 - half), scale(cs.normal, x))), size: 1.5 });
+        // a signal head for each direction the crossing stops (direction=forward|backward, or both), on that traffic's
+        // nearside kerb before the crossing, facing it
+        const tagged = tags.direction ?? tags['traffic_signals:direction'];
+        const directions: ('forward' | 'backward')[] = tagged === 'forward' || tagged === 'backward' ? [tagged] : ['forward', 'backward'];
+        const nearside = (direction: 'forward' | 'backward') => (cs.layout.model.driveSide === 'left') === (direction === 'forward') ? left - 0.6 : right + 0.6;
+        for (const direction of directions) {
+            const sign = direction === 'forward' ? 1 : -1;
+            const x = nearside(direction);
+            const loc = cs.frame.toLoc(add(scale(cs.direction, sign * (-half - 0.5)), scale(cs.normal, x)));
+            const ahead = cs.frame.toLoc(add(scale(cs.direction, sign * (0.5 - half)), scale(cs.normal, x)));
+            out.symbols.push({ key: `${node.id}-signal-${direction}`, kind: 'signals', loc, ahead, size: 1.5 });
         }
     }
 }
@@ -622,12 +713,15 @@ function crossingNodeMarkings(node: osmNode, cs: CrossSection, out: StreetGeomet
 
 /**
  * A passing place (wiki: Tag:highway=passing_place): the road widening into a bay where oncoming traffic can pass, on
- * the side `passing_place=*` gives (left, right or both, looking along the way; both when not tagged, as a turning
- * circle is drawn all round): 20 m long, tapering out from the carriageway's edge to 3 m beyond it and back
+ * the side `direction=forward|backward|both` gives (forward: beside traffic going along the way, which is its left
+ * where traffic drives on the left), else `passing_place=left|right|both`, else both, as a turning circle is drawn all
+ * round: 20 m long, tapering out from the carriageway's edge to 3 m beyond it and back
  */
 function passingPlace(node: osmNode, cs: CrossSection, out: StreetGeometry, left: number, right: number) {
-    const side = node.tags.passing_place;
-    const sides = side === 'left' ? [-1] : side === 'right' ? [1] : [-1, 1];
+    const tags = node.tags;
+    const forwardSide = cs.layout.model.driveSide === 'left' ? -1 : 1;
+    const sides = tags.direction === 'forward' ? [forwardSide] : tags.direction === 'backward' ? [-forwardSide]
+        : tags.passing_place === 'left' ? [-1] : tags.passing_place === 'right' ? [1] : [-1, 1];
     for (const s of sides) {
         const edge = s > 0 ? right : left;
         // (overlapping the carriageway a little, so no seam shows along its edge)

@@ -25,7 +25,7 @@ Two rules run through it:
 | `svg/` | The `lanes` map layer (`svgLanes`): runs the geometry for the roads in view and draws it, plus click targets (car parks and highway areas across their surface), signs, brand logos and routes. |
 | `core/` | Lane Studio state with d3 dispatch events: the selected lanes (`laneState`), tools (`laneTools`), settings, the Routing tool's state (`laneRouting`) and mode, the Speed Limit tool's state (`laneSpeed`) and mode (`modeLaneSpeed`), brand logos looked up on Wikidata (`brand_logos.ts`), keyboard, the what's new menu's changelog reading (`whats_new.ts`), the links in About (`links.ts`), and boot (`laneStudioInit`). |
 | `osm/` | Looking along roads: the corridor ahead, roundabouts and their exits. |
-| `ui/` | Sidebar sections (lanes, markings, signs, street features), the settings pane, the Routing panel, the Speed Limit panel and speed roundels, the top bar tools, the logo, the welcome screen and the what's new menu. |
+| `ui/` | Sidebar sections (lanes, signs, street features; the fields Lane Studio adds to iD's presets are in `core/preset_fields.ts`), the settings pane, the Routing panel, the Speed Limit panel and speed roundels, the top bar tools, the logo, the welcome screen and the what's new menu. |
 | `validations/` | The lane tags rule in iD's Issues pane. |
 
 Styles are in `css-lanes/` (bundled into `dist/lanes.css`) and strings in `data/lanes.yaml` (built into

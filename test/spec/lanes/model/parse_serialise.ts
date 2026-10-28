@@ -150,9 +150,16 @@ describe('parseLanes', () => {
         expect(residential.lanes.forward).toHaveLength(1);
         expect(residential.lanes.backward).toHaveLength(1);
 
+        // a service road has a lane each way; a driveway, alley, drive-through or narrow one is a single shared lane
         const service = parseLanes({ highway: 'service' });
-        expect(service.lanes.both_ways).toHaveLength(1);
-        expect(service.lanes.forward).toHaveLength(0);
+        expect(service.lanes.forward).toHaveLength(1);
+        expect(service.lanes.backward).toHaveLength(1);
+        for (const tags of [{ service: 'driveway' }, { service: 'alley' }, { service: 'drive-through' }, { narrow: 'yes' }, { width: '3.5' }] as Tags[]) {
+            const one = parseLanes({ highway: 'service', ...tags });
+            expect(one.lanes.both_ways).toHaveLength(1);
+            expect(one.lanes.forward).toHaveLength(0);
+        }
+        expect(parseLanes({ highway: 'track' }).lanes.both_ways).toHaveLength(1);
 
         const oneway = parseLanes({ highway: 'primary', oneway: 'yes' });
         expect(oneway.lanes.forward).toHaveLength(1);

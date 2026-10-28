@@ -2365,10 +2365,32 @@ export interface RoadGeometry {
      * in the middle of a staggered junction): a diagonal white line across the lane, from its edge before the node
      * to its other edge after it
      */
-    swaps: { key: string; line: Vec2[] }[];
+    swaps: LaneSwap[];
 }
 
-/** The diagonal lines where a lane's traffic changes direction between two roads meeting end to end (see swaps) */
+/** A lane line cut short or carried on to meet a swap's diagonal: `by` metres at the end at the node (+ shorter, − longer) */
+export interface LineTrim {
+    wayID: string;
+    pieceIndex: number;
+    /** the boundary (an index into the piece's lines) */
+    k: number;
+    /** the line's end at the node is its start */
+    atStart: boolean;
+    by: number;
+}
+
+export interface LaneSwap {
+    key: string;
+    line: Vec2[];
+    /** the lane lines either side, ending where the diagonal meets them */
+    trims: LineTrim[];
+}
+
+/**
+ * The diagonal lines where a lane's traffic changes direction between two roads meeting end to end (see swaps): from
+ * the centre line on one side, 3 m before the node, to the centre line on the other, 3 m after it, with the lines along
+ * those edges trimmed or carried on so each meets the diagonal's end
+ */
 function laneSwaps(pieces: RoadPiece[], graph: coreGraph): RoadGeometry['swaps'] {
     const out: RoadGeometry['swaps'] = [];
     const ends = new Map<string, { piece: RoadPiece; atStart: boolean }[]>();
@@ -2392,6 +2414,19 @@ function laneSwaps(pieces: RoadPiece[], graph: coreGraph): RoadGeometry['swaps']
         const [a, b] = list;
         const lanesA = at(a);
         const lanesB = at(b);
+        // which of B's boundaries lies at a point at the node
+        const boundaryNear = (point: Vec2) => {
+            let best = -1;
+            let dist = Infinity;
+            b.piece.boundaries.forEach((line, k) => {
+                const d = len(sub(frame.toMetres(b.atStart ? line[0] : line[line.length - 1]), point));
+                if (d < dist) {
+                    dist = d;
+                    best = k;
+                }
+            });
+            return dist < 0.5 ? best : -1;
+        };
         const along = (() => {
             const c = a.piece.centres[0].map(frame.toMetres);
             const d = a.atStart ? sub(c[0], c[1]) : sub(c[c.length - 1], c[c.length - 2]);
@@ -2402,8 +2437,26 @@ function laneSwaps(pieces: RoadPiece[], graph: coreGraph): RoadGeometry['swaps']
             const lb = lanesB.find(l => len(sub(l.point, la.point)) < Math.min(l.width, la.width) / 2);
             // both heading away from the node (back to back) or both into it: the lane changes direction here
             if (!lb || la.into === null || lb.into === null || la.into !== lb.into) return;
-            const [e1, e2] = la.edges;
-            out.push({ key: `${nodeID}-swap-${i}`, line: [add(e1, scale(along, -3)), add(e2, scale(along, 3))].map(frame.toLoc) });
+            // the lane's edge against the other direction's traffic (its solid centre line) on A's side, and the other edge,
+            // which is the centre line on B's side once the lane has changed direction
+            const lanes = a.piece.layout.lanes;
+            const opposite = (k: number) => k >= 0 && k < lanes.length && lanes[k].ref.direction !== lanes[i].ref.direction &&
+                lanes[k].ref.direction !== 'both_ways';
+            const centreA = opposite(i - 1) ? i : opposite(i + 1) ? i + 1 : i;
+            const otherA = centreA === i ? i + 1 : i;
+            const [onCentre, onOther] = centreA === i ? la.edges : [la.edges[1], la.edges[0]];
+            const d = 3;
+            const trims: LineTrim[] = [];
+            const trim = (end: { piece: RoadPiece; atStart: boolean }, k: number, by: number) => {
+                if (k >= 0) trims.push({ wayID: end.piece.wayID, pieceIndex: end.piece.index, k, atStart: end.atStart, by });
+            };
+            // from A's centre line 3 m before the node to B's 3 m after it: each centre line stops where the diagonal
+            // meets it, and the line beyond it along the same edge carries on to meet it
+            trim(a, centreA, d);
+            trim(b, boundaryNear(onCentre), -d);
+            trim(a, otherA, -d);
+            trim(b, boundaryNear(onOther), d);
+            out.push({ key: `${nodeID}-swap-${i}`, line: [add(onCentre, scale(along, -d)), add(onOther, scale(along, d))].map(frame.toLoc), trims });
         });
     }
     return out;

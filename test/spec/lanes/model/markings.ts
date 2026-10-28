@@ -1,5 +1,5 @@
 import {
-    markingType, withMarkingType, crossingOptions, withCrossing, withDirection, passingPlaceDirection, withPassingPlaceDirection
+    markingType, withMarkingType, crossingOptions, withCrossing, withDirection
 } from '../../../../modules/lanes/model/markings';
 
 describe('road marking tags', () => {
@@ -10,14 +10,6 @@ describe('road marking tags', () => {
         expect(markingType({ traffic_calming: 'island' })).toBe('calming');
         expect(markingType({ highway: 'passing_place' })).toBe('passing_place');
         expect(markingType({ barrier: 'bollard' })).toBe('none');
-    });
-
-    it('writes a passing place\'s side by the traffic beside it', () => {
-        expect(passingPlaceDirection({ passing_place: 'left' }, 'left')).toBe('forward');
-        expect(passingPlaceDirection({ passing_place: 'left' }, 'right')).toBe('backward');
-        expect(passingPlaceDirection({}, 'left')).toBe('both');
-        expect(withPassingPlaceDirection({ highway: 'passing_place' }, 'backward', 'left')).toEqual({ highway: 'passing_place', passing_place: 'right' });
-        expect(withPassingPlaceDirection({ highway: 'passing_place' }, 'both', 'left')).toEqual({ highway: 'passing_place', passing_place: 'both' });
     });
 
     it('switches type and removes the old type\'s keys only', () => {

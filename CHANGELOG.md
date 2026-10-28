@@ -8,6 +8,29 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r13
+##### 2026-Oct-28
+
+#### Lanes and junctions
+* The diagonal line where a centre lane changes direction runs the other way, from one solid centre line
+  to the other, and the lane lines along its edges run up to its ends
+* Service roads with no lanes tagged have a lane each way; driveways, alleys, drive-throughs, emergency
+  access roads, `narrow=yes` and service roads under 4.5 m wide stay a single shared lane
+
+#### Roads and signs
+* Every `crossing:markings` value is drawn: zebra, double, paired and bicolour zebras, lines and paired
+  lines, ladders (plain, skewed, paired), dashes, dots, a coloured surface and pictograms
+* Passing places take their side from `direction=forward|backward|both`, set with Direction Affected
+* A crossing's traffic signals face each direction's traffic from its nearside kerb, and follow its
+  `direction`, as stop lines, give way lines, traffic calming and passing places do
+
+#### Editing
+* The Road markings section is gone: crossings, traffic calming and passing places are set in iD's
+  fields, with a Traffic signals check added to every crossing, a Type dropdown and Direction Affected to
+  every kind of traffic calming, and Direction Affected to passing places
+* Ticking Traffic signals on a crossing makes it a crossing with traffic signals (and unticking it an
+  uncontrolled crossing), in one undo step
+
 # 26.10.28r12
 ##### 2026-Oct-28
 

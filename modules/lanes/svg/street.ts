@@ -145,11 +145,7 @@ export function drawStreet(
     const crossings = street.paths.filter(p => p.kind === 'crossing');
     const crossingShapes = crossings.flatMap(c => [
         { key: c.id, cls: `street-path street-path-crossing ${c.id} markings-${c.markings}` + (c.assumed ? ' assumed' : ''), d: path(c.polygon, true) },
-        ...(!markings ? [] : c.marks.map((m, i) => ({
-            key: `${c.id}-m${i}`,
-            cls: c.markings === 'zebra' ? 'marking marking-zebra_bar' : `marking marking-crossing_line ${c.markings}`,
-            d: path(m, c.markings === 'zebra')
-        })))
+        ...(!markings ? [] : c.marks.map((m, i) => ({ key: `${c.id}-m${i}`, cls: m.cls, d: path(m.points, m.closed) })))
     ]);
     joinPaths(group('crossings'), crossingShapes, d => d.key, d => d.cls, d => d.d);
 
@@ -172,7 +168,7 @@ export function drawStreet(
         .attr('stroke-width', d => Math.max(1.2, d.width * metres).toFixed(1));
 
     // node markings, with the bands under the bars and lines
-    const order = ['ford', 'crossing', 'calming', 'cattle_grid', 'mini_roundabout', 'island', 'turning_loop_island', 'kerb_node', 'zebra_bar', 'crossing_line',
+    const order = ['ford', 'crossing', 'crossing_surface', 'calming', 'cattle_grid', 'mini_roundabout', 'island', 'turning_loop_island', 'kerb_node', 'zebra_bar', 'crossing_line', 'crossing_pictogram',
         'stop_line', 'give_way_line', 'signal_line', 'barrier_line', 'barrier_post', 'barrier_node'];
     const nodeShapes = !markings ? [] : [...street.markings].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
     joinPaths(group('markings'), nodeShapes, d => d.key,

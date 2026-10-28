@@ -78,6 +78,11 @@
     stroke-width: 2;
 }
 .ideditor.lane-studio .lanes-layer .marking-crossing_line.dots { stroke-dasharray: 2, 4; }
+.ideditor.lane-studio .lanes-layer .marking-crossing_line.dashes { stroke-dasharray: 6, 4; }
+/* every crossing:markings value: a zebra's alternate bars in a second colour (bicolour), a coloured surface, symbols */
+.ideditor.lane-studio .lanes-layer .marking-zebra_bar.alt { fill: #d6342c; }
+.ideditor.lane-studio .lanes-layer .marking-crossing_surface { fill: rgba(200, 70, 60, 0.6); stroke: none; }
+.ideditor.lane-studio .lanes-layer .marking-crossing_pictogram { fill: #fff; stroke: none; }
 .ideditor.lane-studio .lanes-layer .marking-island {
     fill: rgba(165, 190, 135, 0.95);
     stroke: #f2f2f2;

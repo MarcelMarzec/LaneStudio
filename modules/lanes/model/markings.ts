@@ -46,7 +46,10 @@ export function withMarkingType(tags: Tags, type: MarkingType): Tags {
         delete next.traffic_calming;
         delete next.direction;
     }
-    if (before === 'passing_place') delete next.passing_place;
+    if (before === 'passing_place') {
+        delete next.passing_place;
+        delete next.direction;
+    }
     if (before !== 'none' && before !== 'calming') delete next.highway;
 
     if (type === 'calming') {
@@ -59,22 +62,6 @@ export function withMarkingType(tags: Tags, type: MarkingType): Tags {
         next['crossing:markings'] = 'zebra';
     }
     return next;
-}
-
-/**
- * A passing place's side (wiki: Tag:highway=passing_place), as forward (beside traffic going along the road's drawing
- * direction), backward or both: `passing_place=left|right|both`, forward being the road's left where traffic drives
- * on the left
- */
-export function passingPlaceDirection(tags: Tags, driveSide: 'left' | 'right'): 'forward' | 'backward' | 'both' {
-    const side = tags.passing_place;
-    if (side !== 'left' && side !== 'right') return 'both';
-    return side === driveSide ? 'forward' : 'backward';
-}
-
-export function withPassingPlaceDirection(tags: Tags, direction: 'forward' | 'backward' | 'both', driveSide: 'left' | 'right'): Tags {
-    const other = driveSide === 'left' ? 'right' : 'left';
-    return { ...tags, passing_place: direction === 'both' ? 'both' : direction === 'forward' ? driveSide : other };
 }
 
 export interface CrossingOptions {

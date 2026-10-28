@@ -12,7 +12,7 @@ import { laneRouting } from '../core/lane_routing';
 import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind } from '../core/lane_speed';
 import { drawRoutes, laneUnder } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
-import { roadGeometry, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
+import { roadGeometry, type LaneSwap, type LineTrim, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
 import type { LaneInfo, ParkingLayout } from '../geometry/layout';
 import { t } from '../../core/localizer';
 import {
@@ -132,6 +132,55 @@ function insideAreas(piece: RoadPiece, areas: AreaShape[]): boolean {
     return areas.some(area => samples.filter(p => pointInPolygon(p, area.polygon)).length >= samples.length * 0.6);
 }
 
+
+/** Lane lines as they meet the swaps' diagonals: each piece's line `k`, trimmed or carried on (see LaneSwap) */
+function swapTrimmer(swaps: LaneSwap[], keyOf: (piece: RoadPiece) => string) {
+    const trims = new Map<string, LineTrim[]>();
+    for (const swap of swaps) {
+        for (const t of swap.trims) {
+            const key = `${t.wayID}-${t.pieceIndex}`;
+            trims.set(key, [...(trims.get(key) ?? []), t]);
+        }
+    }
+    return (piece: RoadPiece, k: number, line: Vec2[]) =>
+        (trims.get(keyOf(piece)) ?? []).filter(t => t.k === k).reduce((points, t) => trimLine(points, t.atStart, t.by), line);
+}
+
+/**
+ * A line with one end cut short (`by` > 0) or carried on straight (`by` < 0), by `by` metres, in map coordinates: the
+ * end is its start when `atStart`
+ */
+function trimLine(line: Vec2[], atStart: boolean, by: number): Vec2[] {
+    if (line.length < 2 || !by) return line;
+    const points = atStart ? line.slice().reverse() : line.slice();
+    const frame = metricFrame(points[points.length - 1]);
+    const metres = points.map(frame.toMetres);
+    const total = polylineLength(metres);
+    let result: Vec2[];
+    if (by > 0) {
+        if (by >= total - 0.1) return [];
+        // keep up to `total - by` along the line
+        const keep = total - by;
+        result = [metres[0]];
+        let walked = 0;
+        for (let i = 1; i < metres.length; i++) {
+            const step = Math.hypot(metres[i][0] - metres[i - 1][0], metres[i][1] - metres[i - 1][1]);
+            if (walked + step >= keep) {
+                const f = (keep - walked) / step;
+                result.push([metres[i - 1][0] + (metres[i][0] - metres[i - 1][0]) * f, metres[i - 1][1] + (metres[i][1] - metres[i - 1][1]) * f]);
+                break;
+            }
+            result.push(metres[i]);
+            walked += step;
+        }
+    } else {
+        const [p, q] = [metres[metres.length - 2], metres[metres.length - 1]];
+        const step = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+        result = [...metres, [q[0] + (q[0] - p[0]) / step * -by, q[1] + (q[1] - p[1]) / step * -by]];
+    }
+    const out = result.map(frame.toLoc);
+    return atStart ? out.reverse() : out;
+}
 
 export function svgLanes(projection: Projection, context: iD.Context) {
     let _layer: Selection = d3_select<SVGGElement, unknown>(null!) as Selection;
@@ -525,6 +574,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
 
         /* dividers between lanes, from change:lanes */
+        // (lines meeting a swap's diagonal end where it does)
+        const trimmed = swapTrimmer(swaps, pieceKey);
         const dividerData = !markings ? [] : marked.flatMap(piece => {
             const lanes = piece.layout.lanes;
             const result: { key: string; style: string; line: string; piece: RoadPiece; k: number }[] = [];
@@ -536,10 +587,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 if (style === 'centre' || style.startsWith('solid-')) {
                     const leftStyle = style === 'centre' || style === 'solid-left' ? 'solid' : 'dashed';
                     const rightStyle = style === 'centre' || style === 'solid-right' ? 'solid' : 'dashed';
-                    result.push({ key: key + 'l', style: `${leftStyle} double${style === 'centre' ? ' centre' : ''}`, line: path(piece.lineSides[k][0], false), piece, k });
-                    result.push({ key: key + 'r', style: `${rightStyle} double${style === 'centre' ? ' centre' : ''}`, line: path(piece.lineSides[k][1], false), piece, k });
+                    result.push({ key: key + 'l', style: `${leftStyle} double${style === 'centre' ? ' centre' : ''}`, line: path(trimmed(piece, k, piece.lineSides[k][0]), false), piece, k });
+                    result.push({ key: key + 'r', style: `${rightStyle} double${style === 'centre' ? ' centre' : ''}`, line: path(trimmed(piece, k, piece.lineSides[k][1]), false), piece, k });
                 } else {
-                    result.push({ key, style, line: path(piece.lines[k], false), piece, k });
+                    result.push({ key, style, line: path(trimmed(piece, k, piece.lines[k]), false), piece, k });
                 }
             }
             return result;

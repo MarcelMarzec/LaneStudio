@@ -19,8 +19,21 @@ interface KeyGroup {
     variants: Partial<Record<Variant, { tagKey: string; slots: string[] }>>;
 }
 
-// Two-way roads where the wiki's default is a single lane shared by both directions
-const sharedSingleLaneHighways = new Set(['service', 'track']);
+// service roads that are one lane shared by both directions: a driveway, an alley, a drive-through, emergency access
+const singleLaneServices = new Set(['driveway', 'alley', 'drive-through', 'emergency_access']);
+
+/**
+ * Whether a two-way road with no lanes tagged is a single lane both directions share: a track; a service road that is
+ * a driveway, alley, drive-through or emergency access road, or tagged `narrow=yes` or narrower than 4.5 m. Other
+ * service roads (a road round a car park, a business park's roads) have a lane each way.
+ */
+export function sharesOneLane(tags: Tags): boolean {
+    const highway = builtHighway(tags);
+    if (highway === 'track') return true;
+    if (highway !== 'service') return false;
+    const width = parseFloat(tags.width ?? '');
+    return singleLaneServices.has(tags.service ?? '') || tags.narrow === 'yes' || (Number.isFinite(width) && width < 4.5);
+}
 
 
 /** The direction(s) lanes run in, following iD's oneway rules (`oneway=*`, roundabouts, motorways) */
@@ -154,7 +167,7 @@ function laneCounts(tags: Tags, oneway: LaneOneway, groups: Map<string, KeyGroup
         } else {
             // nothing tagged at all: the wiki's defaults, for display only
             source = 'assumed';
-            if (forward === undefined && backward === undefined && sharedSingleLaneHighways.has(builtHighway(tags) ?? '')) {
+            if (forward === undefined && backward === undefined && sharesOneLane(tags)) {
                 forward = 0;
                 backward = 0;
                 both = 1;

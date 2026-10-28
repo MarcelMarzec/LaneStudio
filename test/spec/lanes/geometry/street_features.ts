@@ -172,11 +172,41 @@ describe('streetGeometry: traffic calming', () => {
 });
 
 
+describe('streetGeometry: forward, backward or both', () => {
+    function build(tags: Tags) {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(50, 0), tags }),
+            new iD.osmNode({ id: 'n3', loc: at(100, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: { highway: 'unclassified', lanes: '2' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        return streetGeometry(entities.map(e => graph.entity(e.id)), graph);
+    }
+
+    it('draws a crossing\'s signals, traffic calming and a passing place for the direction tagged, or both', () => {
+        const signals = (tags: Tags) => build({ highway: 'crossing', crossing: 'traffic_signals', ...tags }).symbols.filter(s => s.kind === 'signals').length;
+        expect(signals({})).toBe(2);
+        expect(signals({ direction: 'forward' })).toBe(1);
+        expect(signals({ direction: 'both' })).toBe(2);
+        const humps = (tags: Tags) => build({ traffic_calming: 'hump', ...tags }).markings.filter(m => m.variant === 'tooth').length;
+        expect(humps({})).toBe(2);
+        expect(humps({ direction: 'backward' })).toBe(1);
+        const bays = (tags: Tags) => build({ highway: 'passing_place', ...tags }).surfaces.filter(s => s.kind === 'passing_place_surface').length;
+        expect(bays({ direction: 'forward' })).toBe(1);
+        expect(bays({ direction: 'both' })).toBe(2);
+        const lines = (tags: Tags) => build({ highway: 'give_way', ...tags }).markings.filter(m => m.kind === 'give_way_line').length;
+        expect(lines({ direction: 'forward' })).toBeLessThan(lines({ direction: 'both' }));
+    });
+});
+
+
 describe('streetGeometry: passing places', () => {
     it('widens the road into a bay on the side tagged, or both', () => {
         const entities = [
             new iD.osmNode({ id: 'n1', loc: at(0, 0) }),
-            new iD.osmNode({ id: 'n2', loc: at(50, 0), tags: { highway: 'passing_place', passing_place: 'left' } }),
+            new iD.osmNode({ id: 'n2', loc: at(50, 0), tags: { highway: 'passing_place', direction: 'forward' } }),
             new iD.osmNode({ id: 'n3', loc: at(100, 0), tags: { highway: 'passing_place' } }),
             new iD.osmNode({ id: 'n4', loc: at(150, 0) }),
             new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3', 'n4'], tags: { highway: 'unclassified', lanes: '1' } })
@@ -187,7 +217,7 @@ describe('streetGeometry: passing places', () => {
         const bays = surfaces.filter(s => s.kind === 'passing_place_surface');
         expect(bays.filter(s => s.nodeID === 'n2')).toHaveLength(1);
         expect(bays.filter(s => s.nodeID === 'n3')).toHaveLength(2);
-        // the left bay of an eastbound way lies north of it
+        // forward, driving on the left (Nottingham): beside eastbound traffic, north of the way
         const north = bays.find(s => s.nodeID === 'n2')!.points.map(p => (p[1] - origin[1]) / m);
         expect(Math.max(...north)).toBeGreaterThan(2);
     });

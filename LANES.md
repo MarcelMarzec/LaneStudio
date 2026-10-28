@@ -34,6 +34,10 @@ menu lists every version since the one you last used, with what changed in each 
 in the settings. When the welcome screen or iD's prompt to restore unsaved changes is open, it waits until
 that is closed.
 
+**Lanes when none are tagged**: two lanes, one each way (one way: one lane), including service roads; a
+single lane shared by both directions on a track, a driveway, an alley, a drive-through or an emergency
+access road (`service=*`), or a service road tagged `narrow=yes` or narrower than 4.5 m.
+
 **Top bar**: Selection (the default: select and edit roads, lanes and other features), Routing and
 Speed Limit, then iD's Point, Line and Area for adding features.
 
@@ -162,11 +166,15 @@ Lane Studio also looks at what is mapped next to the road:
 - mapped `barrier=kerb` lines on both sides → the kerb-to-kerb width, with "Set width";
 - traffic islands on the road are counted.
 
-**Road markings** (sidebar section for a selected node on a road): what is there (crossing, stop,
-give way, traffic signals, traffic calming, mini-roundabout), crossing markings, signals and refuge
-island, the direction a sign applies to, all-way stop, the kind of traffic calming and the direction it
-slows (`direction=forward|backward`), and which side a passing place is on (Forward, Backward or Both,
-written as `passing_place=left|right|both` by the side traffic drives on).
+**Road features in iD's fields**: a crossing, stop, give way, traffic signals, traffic calming, mini-roundabout
+or passing place on a road is set with iD's own preset and fields, to which Lane Studio adds what its drawing
+reads: a **Traffic signals** check on every crossing (`crossing:signals`; ticking it makes the crossing a
+crossing with traffic signals, `crossing=traffic_signals`, and unticking it an uncontrolled one, in the same
+undo step), the **Type** dropdown
+(`traffic_calming=*`) and **Direction Affected** on every kind of traffic calming, and **Direction Affected**
+on a passing place. Whatever Lane Studio draws on a node follows its direction (`direction=forward|backward|both`,
+or `traffic_signals:direction`): stop, give way and signal lines, a crossing's signals, traffic calming and a
+passing place's bay.
 
 **Islands, road markings and street parking** (sidebar section when one is selected):
 
@@ -193,14 +201,17 @@ lane lines or direction arrows. `highway=construction` without a type is left to
 **What is drawn**: lanes by type (bus, PSV, taxi, HOV, bicycle, pedestrian, no access), kerbs,
 lane lines, turn arrows, labels; junctions; pavements and cycle and parking strips from road tags,
 with unknown sides hatched; footways, paths, cycleways, steps and pedestrian streets at their real
-width; crossing ways with zebra bars or lines (an unmarked or untagged crossing leaves the road showing,
-with a faint dashed outline); `area:highway=*` areas, pedestrian areas and traffic islands; mapped kerbs
+width; crossings, on a node or as a way, painted by `crossing:markings` (wiki: Key:crossing:markings): a
+zebra, a double zebra (two side by side), paired bars, a bicolour zebra (red and white), lines, paired lines,
+a ladder (lines and bars), a skewed or paired ladder, dashes, dots, a coloured surface or pictograms (an
+unmarked or untagged crossing leaves the road showing, with a faint dashed outline); `area:highway=*` areas, pedestrian areas and traffic islands; mapped kerbs
 styled by kerb height; crossings, stop and give way lines, signals, traffic calming and mini-roundabouts on
 road nodes (a stop, give way or signals' line on a pedestrian
 crossing, or up to 10 m past one, stands just before the crossing, and signals tagged as their
 crossing draw the crossing with a line each way); `road_marking=*` lines, areas and text; street parking
 with its bays and a layby joining it to the road; passing places (`highway=passing_place`) as a bay
-of road on the side `passing_place=left|right|both` gives (both when not tagged); and lane connections.
+of road on the side `direction=forward|backward|both` gives (forward: beside traffic going along the road),
+else `passing_place=left|right|both`, both when not tagged; and lane connections.
 Footways, paths, cycleways and pedestrian ways are drawn under the roads; crossings (`footway=crossing`
 and the like) over them, and paths on a bridge or above ground (`layer` > 0) over them too. Everything
 else is drawn by iD as usual. A node Lane Studio draws as what it is (a crossing, a barrier, a sign, a
@@ -340,7 +351,8 @@ hidden).
   staggered junction, or a right turn lane starting) is not shifted: over its last 40 m its two
   directions part about the centre, so both kerbs taper out smoothly, and the opening between them is
   a hatched ghost island. Where a centre lane's traffic changes direction between two roads meeting end to
-  end, a diagonal white line crosses it.
+  end, a diagonal white line crosses it, from the centre line on one side 3 m before the node to the centre
+  line on the other 3 m after it, and the lane lines along both its edges run up to the diagonal's ends.
 - Shifts are capped: lining up with a joining road moves a road by at most one lane (3.5 m), and
   fitting it to an area by at most half its width; bigger gaps mean the lanes or the area do not
   match, and moving that far would push the road into its neighbours.

@@ -140,9 +140,9 @@ en:
     mixed_key_styles: "{key} is tagged both with and without a direction."
     invalid_lane_count: "{key} is not a whole number."
     key_not_updated: "{key} was not updated for the new lane count."
+  fields:
+    crossing_signals: Traffic signals
   markings:
-    title: Road markings
-    type: What is here
     types:
       none: Nothing
       crossing: Crossing
@@ -152,44 +152,7 @@ en:
       calming: Traffic calming
       mini_roundabout: Mini-roundabout
       passing_place: Passing place
-    passing_side: Side
-    passing_hint: "Forward is the side beside traffic going along the road's drawing direction (written as passing_place=left, right or both)."
-    crossing_markings: Crossing markings
-    crossing:
-      zebra: Zebra
-      lines: Lines
-      dots: Dots
-      "no": Unmarked
-      signals: Traffic signals
-      island: Traffic island in the middle
-    direction: Applies to traffic travelling
-    directions:
-      forward: Along the road
-      backward: Against the road
-      both: Both ways
-    direction_hint: '"Along the road" is the way''s drawing direction, shown by iD''s direction arrows.'
-    all_way_stop: All-way stop
-    calming: Type
-    calming_types:
-      hump: Hump
-      bump: Bump
-      table: Table
-      painted_table: Painted table
-      cushion: Cushions
-      mini_bumps: Mini bumps
-      rumble_strip: Rumble strip
-      dip: Dip
-      double_dip: Double dip
-      dynamic_bump: Dynamic bump
-      chicane: Chicane
-      choker: Choker
-      island: Island
-      choked_table: Choker and table
-      choked_island: Choker and island
-    place: Place on the map
-    place_tip: Choose what to place, then click a road on the map
     placing: "Click a road to place a {type}."
-    stop_placing: Stop placing
   signs:
     title: Traffic sign
     camera_title: Enforcement camera
