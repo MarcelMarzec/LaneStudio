@@ -10,7 +10,7 @@ export const laneStudioMark =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">' +
     '<rect width="32" height="32" rx="7" fill="#2b313b"/>' +
     '<path d="M11 3v26M21 3v26" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 2.6" opacity="0.8"/>' +
-    '<g fill="none" stroke="#5cc8ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+    '<g fill="none" stroke="#ff922b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
     '<path d="M16 26V8M12.6 11.4 16 8l3.4 3.4"/>' +
     '<path d="M6.5 26v-9L3.2 12.5M3 16.1l.2-3.6 3.5.85"/>' +
     '<path d="M25.5 26v-9l3.3-4.5M29 16.1l-.2-3.6-3.5.85"/>' +

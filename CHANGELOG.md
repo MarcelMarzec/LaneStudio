@@ -8,6 +8,14 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r2
+##### 2026-Oct-28
+
+#### Website
+* Lane Studio's logo has orange turn arrows, the same orange as the website, in place of light blue:
+  beside the name above the sidebar, on the browser tab, on the website, in the README and on
+  marcelmarzec.com
+
 # 26.10.28
 ##### 2026-Oct-28
 
