@@ -14,16 +14,17 @@ import { loadChangelog, showWhatsNew } from './whats_new';
 
 type Div = d3.Selection<HTMLDivElement>;
 
-/** The icon on the pane button: Lane Studio's mark in black and white */
+/** The icon on the pane button: Lane Studio's mark without its tile, its lines and arrows in the button's colour */
 function ensurePaneIcon() {
     if (document.getElementById('lanes-icon-pane')) return;
     const svg = d3_select(document.body).append('svg')
         .attr('class', 'lanes-icon-defs')
         .attr('width', 0).attr('height', 0)
         .style('position', 'absolute');
-    // the mark's road in black, its lane lines and arrows in white
+    // (iD's other pane icons are plain shapes in the button's colour, with no background)
     const inner = laneStudioMark.replace(/^<svg[^>]*>|<\/svg>$/g, '')
-        .replace('#2b313b', '#000').replace('#ff922b', '#fff');
+        .replace(/<rect[^>]*\/>/, '')
+        .replace(/"#fff"/g, '"currentColor"').replace('#ff922b', 'currentColor');
     svg.append('symbol').attr('id', 'lanes-icon-pane').attr('viewBox', '0 0 32 32').html(inner);
 }
 

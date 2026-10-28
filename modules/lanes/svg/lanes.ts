@@ -9,7 +9,7 @@ import { actionAddMarking } from '../actions/add_marking';
 import { actionAddSign } from '../actions/add_sign';
 import { laneState } from '../core/lane_state';
 import { laneRouting } from '../core/lane_routing';
-import { laneSpeed, speedClassOf } from '../core/lane_speed';
+import { junctionSpeedClass, laneSpeed, speedClassOf } from '../core/lane_speed';
 import { drawRoutes, laneUnder } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
 import { roadGeometry, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
@@ -369,16 +369,28 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             return !node || !roadAreas.some(a => pointInPolygon(node.loc, a.polygon));
         }) : junctions;
         // all junctions of a kind in one path, so where they overlap the surface is one even colour rather than
-        // see-through boxes stacked on each other
-        const junctionKinds = (['junction', 'flare'] as const).map(kind => ({
-            kind, polygons: shownJunctions.filter(j => j.kind === kind).flatMap(j => j.polygons)
-        })).filter(k => k.polygons.length);
+        // see-through boxes stacked on each other (the Speed Limit tool colours them too: one path per colour)
+        const junctionSpeed = (j: typeof shownJunctions[number]) => {
+            if (!speed.active()) return '';
+            const node = graph.hasEntity(j.nodeID as NodeId) as osmNode | undefined;
+            const cls = node ? junctionSpeedClass(graph.parentWays(node).filter(isLaneRoad) as osmWay[], speed.measure()) : null;
+            return cls === null || (speed.measure() === 'minspeed' && cls === 'missing') ? '' : ` speed-${cls}`;
+        };
+        const junctionGroups = new Map<string, { key: string; kind: 'junction' | 'flare'; cls: string; polygons: Vec2[][] }>();
+        for (const j of shownJunctions) {
+            const cls = junctionSpeed(j);
+            const key = j.kind + cls;
+            const shape = junctionGroups.get(key) ?? { key, kind: j.kind, cls, polygons: [] };
+            shape.polygons.push(...j.polygons);
+            junctionGroups.set(key, shape);
+        }
+        const junctionKinds = [...junctionGroups.values()];
         const areas = group('junctions').selectAll<SVGPathElement, typeof junctionKinds[number]>('path')
-            .data(junctionKinds, d => d.kind);
+            .data(junctionKinds, d => d.key);
         areas.exit().remove();
         areas.enter().append('path')
             .merge(areas)
-            .each(attrChanged('class', d => 'junction-area' + (d.kind === 'flare' ? ' junction-flare' : '')))
+            .each(attrChanged('class', d => 'junction-area' + (d.kind === 'flare' ? ' junction-flare' : '') + d.cls))
             .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')));
 
 

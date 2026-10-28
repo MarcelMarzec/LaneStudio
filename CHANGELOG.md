@@ -8,6 +8,39 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r6
+##### 2026-Oct-28
+
+#### Roads and signs
+* The UK speed limit types are signs beside the speed roundels, in place of a separate Speed limit
+  type field: national limit on a single or dual carriageway, motorway, restricted road, and a new
+  **20 mph zone** (`maxspeed:type=GB:zone20`), which is kept apart from a plain 20 mph
+* The Speed Limit tool offers the same signs as a selected road, so it can set every limit type
+* Junctions are coloured in the Speed Limit tool, by their roads' limit, or the main road's where they
+  differ, and lanes running between traffic islands (round the roundabout by Asda on Lister Way) are
+  coloured instead of staying grey
+* Speed limit roundels are painted again where a road splits into a dual carriageway and its limit
+  changes (Lister Way), and a road tagged with only a `maxspeed:type` (a 20 zone, a restricted road)
+  gets its limit painted
+* The Speed Limit button in the top bar always shows its 30, not only while the tool is on
+* Speed roundel tooltips no longer overlap themselves or run off the side of the sidebar
+
+#### Railways
+* Level crossings follow the Office of Rail and Road's typical layouts: full barriers are two booms
+  meeting in the middle on each side, booms narrow to the tip, and the light units have the red and
+  white chequered border
+* User worked crossings (`crossing:activation=user`) get a braced gate on each side with its swing,
+  and miniature warning lights in place of road traffic light signals
+* Open crossings get a St Andrew's cross on its own post and give way lines (`crossing=uncontrolled`,
+  `crossing:saltire`); `crossing:barrier=yes`, `crossing:light=no`, `crossing:surface`,
+  `crossing:whistle` (whistle boards beside the line) and `crossing=informal` are drawn too
+* Level crossings no longer draw their own double white centre lines on the approach, which didn't line
+  up with the road's centre (Sleaford Road)
+
+#### Editing
+* The Lane Studio settings button on the right shows the logo's lines and arrows in the button's
+  colour, without the black tile and its uneven corners
+
 # 26.10.28r5
 ##### 2026-Oct-28
 

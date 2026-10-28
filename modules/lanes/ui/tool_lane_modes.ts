@@ -49,9 +49,9 @@ export function uiToolLaneModes(context: iD.Context) {
         },
         {
             id: 'speed',
-            // a speed limit roundel
+            // a speed limit roundel (styled inline: iD's own CSS paints svg text dark, which hid it on the button)
             icon: '<circle cx="10" cy="10" r="7.6" fill="none" stroke="currentColor" stroke-width="2.6"/>' +
-                '<text x="10" y="13.4" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor">30</text>',
+                '<text x="10" y="13.2" text-anchor="middle" style="color: inherit; fill: currentColor; font-size: 9px; font-weight: 700">30</text>',
             active: () => speed.active(),
             click: () => {
                 if (speed.active()) context.enter(modeBrowse(context) as any);

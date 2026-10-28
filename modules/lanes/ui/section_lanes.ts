@@ -26,8 +26,7 @@ import { uiTooltip } from '../../ui/tooltip';
 import { isLaneRoad } from '../core/roads';
 import { isTrafficIsland } from '../model/street_features';
 import {
-    mphLimits, mphOf, roadSpeedPick, speedRoundels, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed, withSpeedType,
-    type SpeedPick, type UkSpeedType
+    mphLimits, mphOf, roadSpeedPick, speedRoundels, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed, type SpeedPick
 } from './speed_roundels';
 import {
     parseLanes, laneRefsInWayOrder, laneCount, insertLane, removeLane, moveLane, setLaneValue, laneValue,
@@ -410,25 +409,13 @@ export function uiSectionLanes(context: iD.Context) {
         box.append('h4').text(t('_lanes.inspector.whole_road'));
         const retag = (next: Tags, annotation = 'speed') => context.perform(actionChangeTags(road.id, next), t(`_lanes.annotation.${annotation}`));
 
-        /* the speed limit: a roundel, and the kind of limit (UK national and restricted roads) */
+        /* the speed limit: a roundel, or a sign for the UK limit types (national, motorway, restricted road, 20 zone) */
         const pick = roadSpeedPick(road.tags);
         speedField(box, t('_lanes.speed.road_label'), pick.kind === 'mph' ? unusualSpeed(road.tags.maxspeed) : undefined, row => speedRoundels(row, {
-            current: pick, national: true, none: true,
+            current: pick, types: true, none: true,
             onPick: next => retag(withRoadSpeed(road.tags, next))
         }));
         const type = speedTypeOf(road.tags);
-        laneField(context, box, {
-            id: 'road-maxspeed-type',
-            label: t('_lanes.speed.type_label'),
-            value: type ?? '',
-            strict: true,
-            emptyTitle: t('_lanes.speed.types.none'),
-            placeholder: t('_lanes.speed.type_placeholder'),
-            suggestions: (Object.keys(ukSpeedTypes) as UkSpeedType[]).map(value => ({
-                value, title: t(`_lanes.speed.types.${value.replace('GB:', '')}`, { mph: ukSpeedTypes[value].mph })
-            })),
-            onChange: value => retag(withSpeedType(road.tags, (value || undefined) as UkSpeedType | undefined))
-        });
         // the lower national limit for some vehicles, as the Highway Code sets it
         const lower = type ? ukSpeedTypes[type].lower : undefined;
         if (lower) {

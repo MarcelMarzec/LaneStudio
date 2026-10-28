@@ -101,7 +101,6 @@ en:
     none: No arrow
   speed:
     mph: "{n} mph"
-    national: National speed limit (60 mph; 70 mph on a dual carriageway or motorway)
     none: No speed limit tagged
     lanes_label: Speed limit of these lanes
     lanes_none: Same as the road
@@ -111,14 +110,12 @@ en:
     min_lanes_label: Minimum speed of these lanes
     min_road_label: Minimum speed
     min_none: No minimum speed
-    type_label: Speed limit type
-    type_placeholder: National, motorway, restricted road…
     types:
-      none: Signed limit
       nsl_single: "National, single carriageway ({mph} mph)"
       nsl_dual: "National, dual carriageway ({mph} mph)"
       motorway: "Motorway ({mph} mph)"
       nsl_restricted: "Restricted road, street lights ({mph} mph)"
+      zone20: 20 mph zone
     lower:
       towing_bus_hgv: "{mph} mph for vehicles towing caravans or trailers, buses and minibuses up to 12 m long, and HGVs."
       towing_hgv: "{mph} mph for vehicles towing caravans or trailers, and HGVs."

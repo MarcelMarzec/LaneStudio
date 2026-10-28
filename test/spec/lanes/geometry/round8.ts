@@ -121,6 +121,27 @@ describe('speed roundels', () => {
         expect(symbols.filter(s => s.kind === 'min_speed').map(s => s.text)).toEqual(['30', '30', '30']);
     });
 
+    it('finds the road traffic comes from where a road splits into a dual carriageway', () => {
+        // w1 (two-way, 30) splits at n2 into w2 (one-way, coming in) and w3 (one-way, going out); w4 carries on at 40
+        const graph = graphOf([
+            node('n1', -200, 0), node('n2', 0, 0), node('n3', 200, 0), node('n4', -200, 20), node('n5', -200, -20),
+            way('w2', ['n4', 'n2'], { highway: 'tertiary', oneway: 'yes', lanes: '1', maxspeed: '30 mph', name: 'Lister Way' }),
+            way('w3', ['n2', 'n5'], { highway: 'tertiary', oneway: 'yes', lanes: '1', maxspeed: '30 mph', name: 'Lister Way' }),
+            way('w4', ['n2', 'n3'], { highway: 'tertiary', lanes: '2', maxspeed: '40 mph', name: 'Lister Way' })
+        ]);
+        expect(symbolsOf(graph).filter(s => s.kind === 'speed_limit').map(s => s.text)).toEqual(['40']);
+    });
+
+    it('paints a 20 zone tagged only by its type, but never the national limit', () => {
+        const graph = graphOf([
+            node('n1', -200, 0), node('n2', 0, 0), node('n3', 200, 0), node('n4', 400, 0),
+            way('w1', ['n1', 'n2'], { highway: 'primary', oneway: 'yes', lanes: '1', maxspeed: '30 mph' }),
+            way('w2', ['n2', 'n3'], { highway: 'primary', oneway: 'yes', lanes: '1', 'maxspeed:type': 'GB:zone20' }),
+            way('w3', ['n3', 'n4'], { highway: 'primary', oneway: 'yes', lanes: '1', 'maxspeed:type': 'GB:nsl_single' })
+        ]);
+        expect(symbolsOf(graph).filter(s => s.kind === 'speed_limit').map(s => s.text)).toEqual(['20']);
+    });
+
     it('paints each lane where the road limit changes', () => {
         const graph = graphOf([
             node('n1', -200, 0), node('n2', 0, 0), node('n3', 200, 0),

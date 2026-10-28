@@ -1,5 +1,5 @@
 import { metricFrame } from '../../../../modules/lanes/geometry/frame';
-import { railFeatures } from '../../../../modules/lanes/geometry/rail_features';
+import { levelCrossingOf, railFeatures } from '../../../../modules/lanes/geometry/rail_features';
 import { parkingSpaceGeometry, parkingSpaceKind } from '../../../../modules/lanes/geometry/parking_spaces';
 import { railKind, trackShape } from '../../../../modules/lanes/geometry/railway';
 
@@ -32,7 +32,7 @@ describe('railway features', () => {
 
     it('draws a level crossing\'s panels and rails over each track, and its barriers outside them both', () => {
         const { overRoad, symbols } = crossing('double_half');
-        expect(overRoad.filter(s => s.part === 'crossing-deck')).toHaveLength(2);
+        expect(overRoad.filter(s => s.part.startsWith('crossing-deck'))).toHaveLength(2);
         expect(overRoad.filter(s => s.part === 'crossing-rail')).toHaveLength(4);
         // two booms each side, the west side's at n1, the east side's at n2, each pivoting on a barrier machine
         const pedestals = overRoad.filter(s => s.part === 'crossing-pedestal');
@@ -47,9 +47,9 @@ describe('railway features', () => {
         expect(symbols.map(s => s.kind)).toEqual(['crossing-lights', 'crossing-lights']);
         expect(symbols.map(s => Math.round(s.facing)).sort((a, b) => a - b)).toEqual([90, 270]);
         expect(symbols.some(s => s.cross)).toBe(false);
-        // the stop line on each side, and double white lines on the approach to it on this two-way road
+        // the stop line on each side, and no centre lines of its own (the road's are drawn with the road)
         expect(overRoad.filter(s => s.part === 'crossing-stop-line')).toHaveLength(2);
-        expect(overRoad.filter(s => s.part === 'crossing-centre-line')).toHaveLength(4);
+        expect(overRoad.filter(s => s.part === 'crossing-centre-line')).toHaveLength(0);
     });
 
     it('draws a half barrier across only the lanes coming in, on the left of the traffic', () => {
@@ -68,8 +68,49 @@ describe('railway features', () => {
         expect(lights.overRoad.filter(s => s.part === 'crossing-stop-line')).toHaveLength(2);
         const none = crossing('no');
         expect(none.overRoad.filter(s => s.part.startsWith('crossing-boom') || s.part === 'crossing-stop-line')).toHaveLength(0);
-        expect(none.overRoad.filter(s => s.part === 'crossing-deck')).toHaveLength(2);
+        expect(none.overRoad.filter(s => s.part.startsWith('crossing-deck'))).toHaveLength(2);
         expect(none.symbols).toHaveLength(0);
+    });
+
+    it('reads a level crossing\'s equipment from its tags', () => {
+        expect(levelCrossingOf({ 'crossing:barrier': 'yes' })).toMatchObject({ barrier: 'full', lights: true, saltire: false });
+        expect(levelCrossingOf({ crossing_barrier: 'yes' }).barrier).toBe('full');
+        expect(levelCrossingOf({ crossing: 'uncontrolled' })).toMatchObject({ barrier: 'no', lights: false, saltire: true });
+        expect(levelCrossingOf({ 'crossing:barrier': 'half', 'crossing:light': 'no' }).lights).toBe(false);
+        expect(levelCrossingOf({ 'crossing:barrier': 'gates', 'crossing:activation': 'user' })).toMatchObject({ user: true, lights: false });
+        expect(levelCrossingOf({ crossing: 'informal', 'crossing:barrier': 'full' })).toMatchObject({ informal: true, barrier: 'no', lights: false });
+        expect(levelCrossingOf({ 'crossing:whistle': 'wayside', 'crossing:surface': 'rubber' })).toMatchObject({ whistle: true, surface: 'rubber' });
+    });
+
+    it('draws full barriers as two booms meeting in the middle on each side', () => {
+        const { overRoad } = crossing('full');
+        expect(overRoad.filter(s => s.part === 'crossing-pedestal')).toHaveLength(4);
+    });
+
+    it('draws a user worked crossing\'s gates, braced and with their swing, and its miniature warning lights', () => {
+        const { overRoad, symbols } = crossing('gates', { 'crossing:activation': 'user', 'crossing:light': 'yes' });
+        expect(overRoad.filter(s => s.part === 'crossing-gate')).toHaveLength(2);
+        expect(overRoad.filter(s => s.part === 'crossing-gate-brace')).toHaveLength(2);
+        expect(overRoad.filter(s => s.part === 'crossing-gate-swing')).toHaveLength(2);
+        expect(overRoad.filter(s => s.part === 'crossing-gate-target')).toHaveLength(0);
+        expect(symbols.map(s => s.kind)).toEqual(['crossing-mwl', 'crossing-mwl']);
+    });
+
+    it('gives an open crossing a St Andrew\'s cross and give way lines, and an informal one nothing but rails', () => {
+        const open = crossing('no', { crossing: 'uncontrolled' });
+        expect(open.symbols.map(s => s.kind)).toEqual(['crossing-saltire', 'crossing-saltire']);
+        expect(open.overRoad.filter(s => s.part === 'crossing-give-way-line')).toHaveLength(4);
+        expect(open.overRoad.filter(s => s.part === 'crossing-stop-line')).toHaveLength(0);
+        const informal = crossing('no', { crossing: 'informal' });
+        expect(informal.overRoad.filter(s => s.part.startsWith('crossing-deck'))).toHaveLength(0);
+        expect(informal.overRoad.filter(s => s.part === 'crossing-rail')).toHaveLength(4);
+        expect(informal.symbols).toHaveLength(0);
+    });
+
+    it('puts whistle boards beside the line, and colours the panels by their surface', () => {
+        const { overRoad, symbols } = crossing('half', { 'crossing:whistle': 'yes', 'crossing:surface': 'wood' });
+        expect(symbols.filter(s => s.kind === 'whistle-board')).toHaveLength(4);
+        expect(overRoad.filter(s => s.part === 'crossing-deck rail-crossing-deck-wood')).toHaveLength(2);
     });
 
     it('draws platforms with a safety line on the track side, and the track\'s equipment', () => {

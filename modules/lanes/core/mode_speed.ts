@@ -25,7 +25,7 @@ export function modeLaneSpeed(context: iD.Context) {
     const panel = speedPanel(context);
     const keybinding = utilKeybinding('lanes-speed');
 
-    /** A click sets the picked limit on the whole road; shift-click on that lane alone (the national limit is for whole roads) */
+    /** A click sets the picked limit on the whole road; shift-click on that lane alone (limit types are for whole roads) */
     function click(event: MouseEvent) {
         const pick = speed.picked();
         const point = context.map().mouse(event) as [number, number] | null;
@@ -40,7 +40,7 @@ export function modeLaneSpeed(context: iD.Context) {
         if (!event.shiftKey) {
             const tags = measure === 'maxspeed' ? withRoadSpeed(way.tags, pick) : withRoadMinspeed(way.tags, pick);
             context.perform(actionChangeTags(way.id, tags), t(`_lanes.annotation.${measure === 'maxspeed' ? 'speed' : 'minspeed'}`));
-        } else if (pick.kind !== 'national' && !parseLanes(way.tags).keys[laneKey]?.readonly) {
+        } else if (pick.kind !== 'type' && !parseLanes(way.tags).keys[laneKey]?.readonly) {
             const value = pick.kind === 'mph' ? `${pick.mph} mph` : '';
             context.perform(actionChangeLanes(way.id, m => setLaneValue(m, lane.ref, laneKey, value)),
                 t(`_lanes.annotation.${measure === 'maxspeed' ? 'speed' : 'minspeed'}`));

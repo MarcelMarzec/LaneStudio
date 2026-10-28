@@ -1,7 +1,8 @@
 import { dispatch as d3_dispatch } from 'd3-dispatch';
 
 import type { osmWay } from '../../osm/way';
-import { mphOf, roadMaxspeed, type SpeedPick } from '../ui/speed_roundels';
+import { highwayRank } from '../geometry/road_geometry';
+import { mphOf, roadMaxspeed, type SpeedPick } from '../model/speed_limits';
 
 /** How a lane's speed limit is coloured: a limit in mph, a limit no roundel shows, or none tagged */
 export type SpeedClass = number | 'other' | 'missing';
@@ -35,6 +36,19 @@ export function speedClassOf(laneValue: string | undefined, road: osmWay, measur
     if (!value) return 'missing';
     const mph = mphOf(value);
     return mph !== null && colouredLimits.includes(mph) ? mph : 'other';
+}
+
+/**
+ * How a junction is coloured: its roads' limit where they all agree, else the main road's (the most major road
+ * meeting there), so a side road without a limit doesn't paint a main road's junction red
+ */
+export function junctionSpeedClass(roads: osmWay[], measure: SpeedMeasure = 'maxspeed'): SpeedClass | null {
+    if (!roads.length) return null;
+    const classes = roads.map(road => speedClassOf(undefined, road, measure));
+    if (classes.every(cls => cls === classes[0])) return classes[0];
+    const rank = (road: osmWay) => highwayRank[road.tags.highway ?? ''] ?? 0;
+    const main = roads.reduce((best, road, i) => (rank(road) > rank(roads[best]) ? i : best), 0);
+    return classes[main];
 }
 
 const speedByContext = new WeakMap<iD.Context, LaneSpeed>();

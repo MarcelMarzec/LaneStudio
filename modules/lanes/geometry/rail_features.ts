@@ -8,6 +8,7 @@ import { add, dot, len, metricFrame, rightNormal, scale, sub, unit, type MetricF
 import { railGauge, railKind } from './railway';
 import { cachedLayout } from './road_geometry';
 import { pathWidths } from './street';
+import { surfaceGroup } from '../model/street_features';
 
 /** One shape of a railway feature: a polygon or a line, in map coordinates */
 export interface RailShape {
@@ -43,7 +44,7 @@ export interface RailSymbol {
     key: string;
     /** the OSM node it draws, for hover and selection */
     id: string;
-    kind: 'signal' | 'shunt-signal' | 'crossing-lights';
+    kind: 'signal' | 'shunt-signal' | 'crossing-lights' | 'crossing-saltire' | 'crossing-mwl' | 'whistle-board';
     loc: Vec2;
     /** the compass bearing its face looks towards (at the traffic or trains it is for) */
     facing: number;
@@ -54,6 +55,47 @@ export interface RailSymbol {
     plate?: string;
     /** crossing lights at an open crossing (no barriers) carry a St Andrew's cross above them */
     cross?: boolean;
+}
+
+/**
+ * How a level crossing is equipped, from its tags (wiki: Tag:railway=level_crossing):
+ * - `barrier`: `crossing:barrier` (`yes` is drawn as full barriers; the older `crossing_barrier=yes` too), `no` at an
+ *   open or informal crossing
+ * - `lights`: road traffic light signals, from `crossing:light`, or implied by barriers that lower on their own
+ * - `user`: worked by the people crossing (`crossing:activation=user`): gates they open, and miniature warning lights
+ *   (red and green) rather than road traffic light signals
+ * - `saltire`: a St Andrew's cross (`crossing:saltire`), at every open crossing unless tagged `no`
+ * - `informal`: a crossing with no formal works (`crossing=informal`): no panels, signs or markings
+ * - `surface`: the panels between the rails (`crossing:surface`)
+ * - `whistle`: trains sound their horn (`crossing:whistle`), shown by whistle boards beside the line
+ */
+export interface LevelCrossing {
+    barrier: 'full' | 'half' | 'double_half' | 'gates' | 'no';
+    lights: boolean;
+    user: boolean;
+    saltire: boolean;
+    informal: boolean;
+    surface?: string;
+    whistle: boolean;
+}
+
+/** A level crossing's equipment from its tags (see LevelCrossing) */
+export function levelCrossingOf(tags: Tags): LevelCrossing {
+    const informal = tags.crossing === 'informal';
+    const tagged = tags['crossing:barrier'] ?? (tags.crossing_barrier === 'yes' ? 'yes' : undefined);
+    const barrier: LevelCrossing['barrier'] = informal || tags.crossing === 'uncontrolled' ? 'no'
+        : tagged === 'yes' ? 'full'
+        : (['full', 'half', 'double_half', 'gates'] as const).find(b => b === tagged) ?? 'no';
+    const user = tags['crossing:activation'] === 'user';
+    const lights = !informal && tags['crossing:light'] !== 'no' && (tags['crossing:light'] === 'yes' ||
+        tags.crossing === 'traffic_signals' || (!user && ['half', 'double_half', 'full'].includes(barrier)));
+    const saltire = !informal && tags['crossing:saltire'] !== 'no' &&
+        (tags['crossing:saltire'] === 'yes' || (barrier === 'no' && !user && (lights || tags.crossing === 'uncontrolled')));
+    return {
+        barrier, lights, user, saltire, informal,
+        surface: tags['crossing:surface'],
+        whistle: ['yes', 'optional', 'wayside'].includes(tags['crossing:whistle'] ?? '')
+    };
 }
 
 /** The compass bearing of a direction in a metric frame (x east, y north) */
@@ -141,10 +183,17 @@ function platformShapes(way: osmWay, graph: coreGraph, tracks: osmWay[], out: Ra
 }
 
 /**
- * A level crossing (or a crossing for people over the line): panels between and round the rails across the road,
- * the rails, and by `crossing:barrier` the barriers on each side of the line (`full`, `half` across the lanes
- * coming in, `double_half` both halves, `gates`), their red lights (`crossing:light`), and the stop lines, on the
- * `sides` of it along the road (1 ahead, -1 behind) that are the outside of the crossing
+ * A level crossing (or a crossing for people over the line), laid out as in the Office of Rail and Road's typical
+ * layouts: panels between and round the rails across the road (by `crossing:surface`), the rails, and on the `sides`
+ * of it along the road (1 ahead, -1 behind) that are the outside of the crossing:
+ * - half barriers across the lanes coming in; full barriers as two booms from the kerbs meeting in the middle
+ * - gates: at a user worked crossing one gate across the road, braced, with the arc it swings through away from the
+ *   line; otherwise a pair of gates with red targets
+ * - the road traffic light signals on the nearside verge (miniature red and green lights at a user worked
+ *   crossing), and the St Andrew's cross at an open crossing, above the lights at an automatic one
+ * - a stop line across the lanes coming in where there are barriers, gates or lights, and a give way line at an
+ *   open crossing without
+ * - whistle boards beside the line, where trains sound their horn
  */
 function crossingShapes(node: osmNode, graph: coreGraph, out: RailFeatures, sides: number[] = [1, -1]) {
     const parents = graph.parentWays(node) as osmWay[];
@@ -160,25 +209,32 @@ function crossingShapes(node: osmNode, graph: coreGraph, out: RailFeatures, side
     const layout = isRoad ? cachedLayout(road, graph) : null;
     const width = layout?.total ?? (parseFloat(road.tags.width ?? '') || pathWidths[road.tags.highway!] || 2);
     const gauge = railGauge(track.tags, railKind(track.tags)!.kind);
+    const crossing = levelCrossingOf(node.tags);
     const c: Vec2 = [0, 0];
     const toLoc = (points: Vec2[]) => points.map(frame.toLoc);
     const push = (part: string, key: string, points: Vec2[], closed: boolean) =>
         out.overRoad.push({ key: `${node.id}-${key}`, id: node.id, part, points: toLoc(points), closed });
 
     // the panels: along the track as far as the road is wide, along the road as far as the track bed reaches
+    // (an informal crossing has none: the road just runs over the rails)
     const u = scale(dt, (width / 2 + 0.3) / sin);
     const v = scale(dr, (gauge / 2 + 0.6) / sin);
-    push('crossing-deck', 'deck', [add(add(c, u), v), add(sub(c, u), v), sub(sub(c, u), v), sub(add(c, u), v)], true);
+    if (!crossing.informal) {
+        // (rubber panels, the usual British kind, in their own dark grey)
+        const surface = crossing.surface === 'rubber' ? 'rubber' : surfaceGroup(crossing.surface);
+        push('crossing-deck' + (surface ? ` rail-crossing-deck-${surface}` : ''), 'deck',
+            [add(add(c, u), v), add(sub(c, u), v), sub(sub(c, u), v), sub(add(c, u), v)], true);
+    }
     const nt = rightNormal(dt);
     for (const side of [-1, 1]) {
         const o = scale(nt, side * gauge / 2);
         push('crossing-rail', `rail${side}`, [add(o, u), sub(o, u)], false);
     }
-    if (!isRoad || node.tags.railway === 'tram_level_crossing') return;
+    if (crossing.whistle) whistleBoards(node, track, graph, frame, dt, gauge, out);
+    if (!isRoad || node.tags.railway === 'tram_level_crossing' || crossing.informal) return;
 
     // barriers stand 3 m from the track's centre on each side, across the road
-    const barrier = node.tags['crossing:barrier'] ?? (node.tags.crossing_barrier === 'yes' ? 'full' : 'no');
-    const lights = node.tags['crossing:light'] === 'yes' || ['half', 'double_half', 'full'].includes(barrier);
+    const { barrier, lights } = crossing;
     const nr = rightNormal(dr);
     const driveLeft = layout!.model.driveSide === 'left';
     for (const side of sides) {
@@ -188,59 +244,86 @@ function crossingShapes(node: osmNode, graph: coreGraph, out: RailFeatures, side
         const inSide = scale(nr, side * (driveLeft ? 1 : -1));
         const kerbIn = add(post, scale(inSide, width / 2));
         const kerbOut = sub(post, scale(inSide, width / 2));
-        const arms: [Vec2, Vec2][] = barrier === 'full' ? [[kerbIn, kerbOut]]
-            : barrier === 'half' ? [[kerbIn, post]]
-            : barrier === 'double_half' ? [[kerbIn, post], [kerbOut, post]]
+        const arms: [Vec2, Vec2][] = barrier === 'half' ? [[kerbIn, post]]
+            : barrier === 'full' || barrier === 'double_half' ? [[kerbIn, post], [kerbOut, post]]
             : [];
         arms.forEach(([from, to], k) => boom(push, `arm${side}-${k}`, from, to));
-        if (barrier === 'gates') {
-            // white gates across the road, each with a red target in its middle
+        if (barrier === 'gates' && crossing.user) {
+            // one gate across the road, hung from a post at the nearside kerb and shut against a post at the other,
+            // braced corner to corner, and the quarter circle it swings through, away from the line
+            const along = sub(kerbOut, kerbIn);
+            const away = scale(dr, side);
+            const middle = scale(add(kerbIn, kerbOut), 0.5);
+            push('crossing-gate', `gate${side}`, box(middle, unit(along), width, 0.3), true);
+            push('crossing-gate-brace', `gate${side}-brace`, [add(kerbIn, scale(away, 0.15)), sub(kerbOut, scale(away, 0.15))], false);
+            push('crossing-gate-swing', `gate${side}-swing`, Array.from({ length: 13 }, (_, k) => {
+                const a = (k / 12) * Math.PI / 2;
+                return add(kerbIn, add(scale(along, Math.cos(a)), scale(away, Math.sin(a) * width)));
+            }), false);
+            for (const [at, k] of [[kerbIn, 'a'], [kerbOut, 'b']] as const) push('crossing-gate-post', `gate${side}-post${k}`, box(at, dr, 0.45, 0.45), true);
+        } else if (barrier === 'gates') {
+            // a pair of white gates meeting in the middle of the road, each with a red target
             for (const [leaf, sign] of [['a', 1], ['b', -1]] as const) {
                 const middle = add(post, scale(inSide, sign * width / 4));
                 push('crossing-gate', `gate${side}${leaf}`, box(middle, inSide, width / 2 - 0.2, 0.25), true);
                 push('crossing-gate-target', `gate${side}${leaf}-target`, circle(middle, 0.3), true);
             }
         }
-        if (lights) {
-            // the road traffic light signals on the nearside verge, facing the traffic coming in (which drives
-            // towards the track, the other way to `side`); at an open crossing under a St Andrew's cross
-            out.symbols.push({
-                key: `${node.id}-lights${side}`, id: node.id, kind: 'crossing-lights',
-                loc: frame.toLoc(add(kerbIn, add(scale(inSide, 0.8), scale(dr, side * 0.6)))),
-                facing: bearing(scale(dr, side)), cross: barrier === 'no'
-            });
+        // on the nearside verge, facing the traffic coming in (which drives towards the track, the other way to `side`)
+        const verge = frame.toLoc(add(kerbIn, add(scale(inSide, 0.8), scale(dr, side * 0.6))));
+        const facing = bearing(scale(dr, side));
+        if (lights && crossing.user) {
+            out.symbols.push({ key: `${node.id}-mwl${side}`, id: node.id, kind: 'crossing-mwl', loc: verge, facing });
+        } else if (lights) {
+            out.symbols.push({ key: `${node.id}-lights${side}`, id: node.id, kind: 'crossing-lights', loc: verge, facing, cross: crossing.saltire });
+        } else if (crossing.saltire) {
+            out.symbols.push({ key: `${node.id}-saltire${side}`, id: node.id, kind: 'crossing-saltire', loc: verge, facing });
         }
+        const back = scale(dr, side * 1.8 / sin);
+        const across = box(scale(add(add(kerbIn, back), add(post, back)), 0.5), inSide, width / 2, 0.3);
         if (barrier !== 'no' || lights) {
             // the white stop line across the lanes coming in, before the lights and barrier (Highway Code rule 293:
             // stop behind the white line)
-            const back = scale(dr, side * 1.8 / sin);
-            push('crossing-stop-line', `stop${side}`, box(scale(add(add(kerbIn, back), add(post, back)), 0.5), inSide, width / 2, 0.3), true);
-            // on a two-way road, double solid white centre lines on the approach: no overtaking or crossing them
-            if (!layout!.model.oneway) {
-                for (const offset of [-0.15, 0.15]) {
-                    const start = add(add(post, back), scale(nr, offset));
-                    const end = add(start, scale(dr, side * 18));
-                    push('crossing-centre-line', `centre${side}${offset}`, box(scale(add(start, end), 0.5), dr, 18, 0.1), true);
-                }
+            push('crossing-stop-line', `stop${side}`, across, true);
+        } else if (crossing.saltire) {
+            // an open crossing: give way, as at a junction (a double broken line)
+            for (const offset of [0, 0.5]) {
+                const at = add(add(kerbIn, back), scale(dr, side * offset));
+                push('crossing-give-way-line', `giveway${side}${offset}`, [at, add(at, scale(inSide, -width / 2))], false);
             }
         }
     }
 }
 
 /**
+ * Whistle boards on the approach to a crossing where trains sound their horn: on the left of the line, as in
+ * Britain, 40 m before the crossing in each direction, facing the trains
+ */
+function whistleBoards(node: osmNode, track: osmWay, graph: coreGraph, frame: MetricFrame, dt: Vec2, gauge: number, out: RailFeatures) {
+    for (const way of [1, -1]) {
+        const travel = scale(dt, way);
+        const at = add(scale(travel, -40), scale(rightNormal(travel), -(gauge / 2 + 1.6)));
+        out.symbols.push({ key: `${node.id}-whistle${way}`, id: node.id, kind: 'whistle-board', loc: frame.toLoc(at), facing: bearing(scale(travel, -1)) });
+    }
+}
+
+/**
  * A barrier boom from its pivot to its tip, as on British level crossings: red and white bands half a metre long,
- * red lamps along the top, and the barrier machine at the pivot
+ * narrowing towards the tip, red lamps along the top, and the barrier machine at the pivot
  */
 function boom(push: (part: string, key: string, points: Vec2[], closed: boolean) => void, key: string, pivot: Vec2, tip: Vec2) {
     const d = unit(sub(tip, pivot));
+    const n = rightNormal(d);
     const length = len(sub(tip, pivot));
     const bands = Math.max(1, Math.round(length / 0.5));
+    const half = (k: number) => 0.18 - 0.08 * (k / bands);
     for (let k = 0; k < bands; k++) {
         const a = add(pivot, scale(d, k * length / bands));
         const b = add(pivot, scale(d, (k + 1) * length / bands));
-        push(k % 2 ? 'crossing-boom-white' : 'crossing-boom-red', `${key}-band${k}`, box(scale(add(a, b), 0.5), d, length / bands, 0.3), true);
+        push(k % 2 ? 'crossing-boom-white' : 'crossing-boom-red', `${key}-band${k}`,
+            [add(a, scale(n, half(k))), add(b, scale(n, half(k + 1))), sub(b, scale(n, half(k + 1))), sub(a, scale(n, half(k)))], true);
     }
-    for (const at of [0.35, 0.65, 0.95]) push('crossing-boom-lamp', `${key}-lamp${at}`, circle(add(pivot, scale(d, at * length)), 0.12, 8), true);
+    for (const at of [0.35, 0.65, 0.95]) push('crossing-boom-lamp', `${key}-lamp${at}`, circle(add(pivot, scale(d, at * length)), 0.1, 8), true);
     push('crossing-pedestal', `${key}-pedestal`, box(pivot, d, 0.7, 0.7), true);
 }
 

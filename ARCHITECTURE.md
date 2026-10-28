@@ -84,7 +84,8 @@ lanes layer colours each lane by `speedClassOf` (its `maxspeed:lanes` value, els
 `maxspeed` or the limit its UK `maxspeed:type` sets, in mph; or `minspeed:lanes` and `minspeed`). With
 a limit picked, a click sets `maxspeed` (or `minspeed`) on the road, a shift-click that lane's
 `maxspeed:lanes` (or `minspeed:lanes`) value, each one iD action. The UK limit types and the tags they
-write are in `speed_roundels.ts` (`ukSpeedTypes`, `withRoadSpeed`, `withSpeedType`).
+write are in `model/speed_limits.ts` (`ukSpeedTypes`, `withRoadSpeed`, `withSpeedType`), shared by the sidebar, the
+tool and the painted roundels. Junction areas are coloured too, by `junctionSpeedClass`.
 
 ### Routing
 

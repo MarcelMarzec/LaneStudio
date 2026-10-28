@@ -189,25 +189,26 @@
     --speed-other: #b2bec3;
     --speed-missing: #ff1744;
 }
-.ideditor.lane-studio.lanes-speed .lanes-layer path.lane[class*=' speed-'] {
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path[class*=' speed-'] {
     fill-opacity: 0.85;
     stroke: rgba(0, 0, 0, 0.35);
     stroke-width: 0.5;
 }
-.ideditor.lane-studio.lanes-speed .lanes-layer path.lane.speed-missing {
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-missing {
     stroke: #fff;
     stroke-width: 1;
     stroke-dasharray: 4 3;
 }
-.ideditor.lane-studio .lanes-layer path.lane.speed-10, .ideditor.lane-studio .speed-swatch.speed-10 { fill: var(--speed-10); background: var(--speed-10); }
-.ideditor.lane-studio .lanes-layer path.lane.speed-20, .ideditor.lane-studio .speed-swatch.speed-20 { fill: var(--speed-20); background: var(--speed-20); }
-.ideditor.lane-studio .lanes-layer path.lane.speed-30, .ideditor.lane-studio .speed-swatch.speed-30 { fill: var(--speed-30); background: var(--speed-30); }
-.ideditor.lane-studio .lanes-layer path.lane.speed-40, .ideditor.lane-studio .speed-swatch.speed-40 { fill: var(--speed-40); background: var(--speed-40); }
-.ideditor.lane-studio .lanes-layer path.lane.speed-50, .ideditor.lane-studio .speed-swatch.speed-50 { fill: var(--speed-50); background: var(--speed-50); }
-.ideditor.lane-studio .lanes-layer path.lane.speed-60, .ideditor.lane-studio .speed-swatch.speed-60 { fill: var(--speed-60); background: var(--speed-60); }
-.ideditor.lane-studio .lanes-layer path.lane.speed-70, .ideditor.lane-studio .speed-swatch.speed-70 { fill: var(--speed-70); background: var(--speed-70); }
-.ideditor.lane-studio .lanes-layer path.lane.speed-other, .ideditor.lane-studio .speed-swatch.speed-other { fill: var(--speed-other); background: var(--speed-other); }
-.ideditor.lane-studio .lanes-layer path.lane.speed-missing, .ideditor.lane-studio .speed-swatch.speed-missing { fill: var(--speed-missing); background: var(--speed-missing); }
+/* lanes and junctions alike, over the colours of lanes between traffic islands and of junction boxes */
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-10, .ideditor.lane-studio .speed-swatch.speed-10 { fill: var(--speed-10); background: var(--speed-10); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-20, .ideditor.lane-studio .speed-swatch.speed-20 { fill: var(--speed-20); background: var(--speed-20); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-30, .ideditor.lane-studio .speed-swatch.speed-30 { fill: var(--speed-30); background: var(--speed-30); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-40, .ideditor.lane-studio .speed-swatch.speed-40 { fill: var(--speed-40); background: var(--speed-40); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-50, .ideditor.lane-studio .speed-swatch.speed-50 { fill: var(--speed-50); background: var(--speed-50); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-60, .ideditor.lane-studio .speed-swatch.speed-60 { fill: var(--speed-60); background: var(--speed-60); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-70, .ideditor.lane-studio .speed-swatch.speed-70 { fill: var(--speed-70); background: var(--speed-70); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-other, .ideditor.lane-studio .speed-swatch.speed-other { fill: var(--speed-other); background: var(--speed-other); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-missing, .ideditor.lane-studio .speed-swatch.speed-missing { fill: var(--speed-missing); background: var(--speed-missing); }
 /* with a limit picked, the lane under the pointer shows where a click lands */
 .ideditor.lane-studio.lanes-speed .lanes-layer .lane-target:hover {
     fill: rgba(255, 255, 255, 0.2);

@@ -56,7 +56,7 @@ export function speedPanel(context: iD.Context) {
         const pick = body.append('div').attr('class', 'routing-section');
         pick.append('h4').text(t(minimum ? '_lanes.speed_tool.apply_min' : '_lanes.speed_tool.apply'));
         speedRoundels(pick, {
-            current: speed.picked() ?? undefined, national: !minimum, minimum, none: true,
+            current: speed.picked() ?? undefined, types: !minimum, minimum, none: true,
             noneLabel: t(minimum ? '_lanes.speed_tool.remove_min' : '_lanes.speed_tool.remove'),
             // clicking the picked limit again lets go of it
             onPick: next => speed.setPicked(samePick(speed.picked() ?? undefined, next) ? null : next)

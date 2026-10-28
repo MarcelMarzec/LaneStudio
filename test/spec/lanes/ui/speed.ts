@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { load as loadYaml } from 'js-yaml';
 import { select as d3_select } from 'd3-selection';
 
-import { laneSpeed, speedClassOf } from '../../../../modules/lanes/core/lane_speed';
+import { junctionSpeedClass, laneSpeed, speedClassOf } from '../../../../modules/lanes/core/lane_speed';
 import {
     mphOf, roadMaxspeed, roadSpeedPick, samePick, speedTypeOf, withRoadMinspeed, withRoadSpeed, withSpeedType
 } from '../../../../modules/lanes/ui/speed_roundels';
@@ -28,15 +28,21 @@ describe('speed limits in mph', () => {
         expect(speedClassOf(undefined, road({}))).toBe('missing');
     });
 
-    it('sets a road\'s limit, the national speed limit, or none', () => {
+    it('sets a road\'s limit, a UK limit type with its limit, or none', () => {
         expect(withRoadSpeed({ highway: 'residential' }, { kind: 'mph', mph: 20 })).toEqual({ highway: 'residential', maxspeed: '20 mph' });
-        expect(withRoadSpeed({ highway: 'primary' }, { kind: 'national' }))
+        expect(withRoadSpeed({ highway: 'primary' }, { kind: 'type', type: 'GB:nsl_single' }))
             .toEqual({ highway: 'primary', maxspeed: '60 mph', 'maxspeed:type': 'GB:nsl_single' });
-        expect(withRoadSpeed({ highway: 'trunk', dual_carriageway: 'yes' }, { kind: 'national' }))
-            .toEqual({ highway: 'trunk', dual_carriageway: 'yes', maxspeed: '70 mph', 'maxspeed:type': 'GB:nsl_dual' });
-        // leaving the national limit drops its type
+        expect(withRoadSpeed({ highway: 'motorway' }, { kind: 'type', type: 'GB:motorway' }))
+            .toEqual({ highway: 'motorway', maxspeed: '70 mph', 'maxspeed:type': 'GB:motorway' });
+        // a 20 zone is not the same as a plain 20
+        expect(withRoadSpeed({}, { kind: 'type', type: 'GB:zone20' })).toEqual({ maxspeed: '20 mph', 'maxspeed:type': 'GB:zone20' });
+        expect(withRoadSpeed({ maxspeed: '20 mph', 'maxspeed:type': 'GB:zone20' }, { kind: 'mph', mph: 20 })).toEqual({ maxspeed: '20 mph' });
+        // leaving a type drops it, and the older source:maxspeed becomes maxspeed:type
         expect(withRoadSpeed({ maxspeed: '60 mph', 'maxspeed:type': 'GB:nsl_single' }, { kind: 'mph', mph: 40 })).toEqual({ maxspeed: '40 mph' });
         expect(withRoadSpeed({ maxspeed: '60 mph', 'maxspeed:type': 'GB:nsl_single' }, { kind: 'none' })).toEqual({});
+        expect(withRoadSpeed({ 'source:maxspeed': 'GB:nsl_single' }, { kind: 'type', type: 'GB:nsl_dual' }))
+            .toEqual({ maxspeed: '70 mph', 'maxspeed:type': 'GB:nsl_dual' });
+        expect(withSpeedType({ maxspeed: '70 mph', 'maxspeed:type': 'GB:motorway' }, undefined)).toEqual({ maxspeed: '70 mph' });
     });
 
     it('reads the UK limit types from maxspeed:type, or source:maxspeed', () => {
@@ -45,27 +51,22 @@ describe('speed limits in mph', () => {
         expect(speedTypeOf({ 'maxspeed:type': 'sign' })).toBeUndefined();
         // a type alone sets the limit
         expect(roadMaxspeed({ 'maxspeed:type': 'GB:nsl_restricted' })).toBe('30 mph');
+        expect(roadMaxspeed({ 'maxspeed:type': 'GB:zone20' })).toBe('20 mph');
         expect(roadMaxspeed({ maxspeed: 'national', 'maxspeed:type': 'GB:nsl_single' })).toBe('60 mph');
         expect(roadMaxspeed({ maxspeed: '40 mph', 'maxspeed:type': 'GB:nsl_single' })).toBe('40 mph');
         expect(speedClassOf(undefined, road({ 'maxspeed:type': 'GB:motorway' }))).toBe(70);
-        expect(roadSpeedPick({ 'source:maxspeed': 'GB:motorway' })).toEqual({ kind: 'national' });
-        expect(roadSpeedPick({ 'maxspeed:type': 'GB:nsl_restricted' })).toEqual({ kind: 'mph', mph: 30 });
+        expect(roadSpeedPick({ 'source:maxspeed': 'GB:motorway' })).toEqual({ kind: 'type', type: 'GB:motorway' });
+        expect(roadSpeedPick({ 'maxspeed:type': 'GB:nsl_restricted' })).toEqual({ kind: 'type', type: 'GB:nsl_restricted' });
+        // maxspeed=national alone, by the kind of road
+        expect(roadSpeedPick({ highway: 'trunk', dual_carriageway: 'yes', maxspeed: 'national' })).toEqual({ kind: 'type', type: 'GB:nsl_dual' });
     });
 
-    it('sets the national limit by the kind of road, and a type with its limit', () => {
-        expect(withRoadSpeed({ highway: 'motorway' }, { kind: 'national' }))
-            .toEqual({ highway: 'motorway', maxspeed: '70 mph', 'maxspeed:type': 'GB:motorway' });
-        expect(withRoadSpeed({ highway: 'primary' }, { kind: 'national', type: 'GB:nsl_dual' }))
-            .toEqual({ highway: 'primary', maxspeed: '70 mph', 'maxspeed:type': 'GB:nsl_dual' });
-        // the older source:maxspeed becomes maxspeed:type
-        expect(withRoadSpeed({ 'source:maxspeed': 'GB:nsl_single' }, { kind: 'national' }))
-            .toEqual({ maxspeed: '60 mph', 'maxspeed:type': 'GB:nsl_single' });
-        // 30 mph keeps a restricted road's type; another limit drops it
-        expect(withRoadSpeed({ 'maxspeed:type': 'GB:nsl_restricted' }, { kind: 'mph', mph: 30 }))
-            .toEqual({ maxspeed: '30 mph', 'maxspeed:type': 'GB:nsl_restricted' });
-        expect(withRoadSpeed({ maxspeed: '30 mph', 'maxspeed:type': 'GB:nsl_restricted' }, { kind: 'mph', mph: 20 })).toEqual({ maxspeed: '20 mph' });
-        expect(withSpeedType({ maxspeed: '40 mph' }, 'GB:nsl_restricted')).toEqual({ maxspeed: '30 mph', 'maxspeed:type': 'GB:nsl_restricted' });
-        expect(withSpeedType({ maxspeed: '70 mph', 'maxspeed:type': 'GB:motorway' }, undefined)).toEqual({ maxspeed: '70 mph' });
+    it('colours a junction by its roads\' limit, or the main road\'s where they differ', () => {
+        const main = new iD.osmWay({ id: 'w1', tags: { highway: 'primary', maxspeed: '40 mph' } });
+        const side = new iD.osmWay({ id: 'w2', tags: { highway: 'service' } });
+        expect(junctionSpeedClass([main, side])).toBe(40);
+        expect(junctionSpeedClass([side, side])).toBe('missing');
+        expect(junctionSpeedClass([])).toBeNull();
     });
 
     it('sets a minimum speed, and colours lanes by it', () => {
@@ -78,7 +79,7 @@ describe('speed limits in mph', () => {
 
     it('reads the roundel a road shows', () => {
         expect(roadSpeedPick({ maxspeed: '30 mph' })).toEqual({ kind: 'mph', mph: 30 });
-        expect(roadSpeedPick({ maxspeed: '60 mph', 'maxspeed:type': 'GB:nsl_single' })).toEqual({ kind: 'national' });
+        expect(roadSpeedPick({ maxspeed: '60 mph', 'maxspeed:type': 'GB:nsl_single' })).toEqual({ kind: 'type', type: 'GB:nsl_single' });
         expect(roadSpeedPick({})).toEqual({ kind: 'none' });
         expect(samePick({ kind: 'mph', mph: 30 }, { kind: 'mph', mph: 30 })).toBe(true);
         expect(samePick({ kind: 'mph', mph: 30 }, { kind: 'mph', mph: 40 })).toBe(false);
@@ -123,7 +124,7 @@ describe('the Speed Limit tool\'s panel', () => {
         const body = d3_select(document.createElement('div'));
         speedPanel(context).panel(body as any);
         expect(body.selectAll('.speed-roundels-min .speed-roundel').size()).toBe(8);
-        expect(body.select('.speed-roundel-national').empty()).toBe(true);
+        expect(body.select('.speed-roundel-type').empty()).toBe(true);
         expect(body.select('.speed-swatch.speed-missing').empty()).toBe(true);
         speed.setMeasure('maxspeed');
     });

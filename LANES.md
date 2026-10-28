@@ -49,12 +49,13 @@ footway or pavement to see the streets reachable on foot and the crossings used.
 **Speed Limit** (top bar, or leave with Esc): every lane is coloured by its limit (its own
 `maxspeed:lanes`, else its road's `maxspeed`, or the limit its `maxspeed:type` sets), in mph: 10 to
 70 mph in their own colours, other limits grey, and roads with no limit red with a dashed edge
-(footways and pedestrian ways are not coloured). The sidebar shows the colours with how many roads in
+(footways and pedestrian ways are not coloured). Junctions are coloured by their roads' limit where
+they agree, else by the main road's (the most major road meeting there). The sidebar shows the colours with how many roads in
 view have each, and lists the roads in view with no limit by name (click one to go to it). Pick a
 limit (or press 1 to 7 for 10 to 70 mph), then click a road to set it on that road, or shift-click a
-lane to set it on that lane only (`maxspeed:lanes`). The national speed limit keeps the road's type,
-or sets 70 mph with `maxspeed:type=GB:motorway` on a motorway, 70 mph with `GB:nsl_dual` on a dual
-carriageway and 60 mph with `GB:nsl_single` elsewhere. Esc lets go of the limit, then leaves the tool.
+lane to set it on that lane only (`maxspeed:lanes`). The panel offers the same signs as the Lanes
+section, the UK limit types included (set on whole roads only). Esc lets go of the limit, then leaves
+the tool.
 
 Switch the panel from **Speed limit** to **Minimum speed** to do the same with minimum speeds: blue
 roundels, lanes coloured by their `minspeed:lanes` or their road's `minspeed` (roads with none are
@@ -70,19 +71,21 @@ drawn as usual), a click setting `minspeed` and a shift-click `minspeed:lanes`.
   and every other `*:lanes` tag on the road.
 - Speed limits are picked from a row of UK roundels (10 to 70 mph, and none), the current one ringed,
   and minimum speeds (`minspeed:lanes`) from a row of blue ones; with no lane selected, the road's own
-  limit and minimum speed (`minspeed`) are picked the same way, with the national speed limit too.
-- With no lane selected, **Speed limit type** sets the UK limit types (wiki: Key:maxspeed:type) with
-  their limit: national on a single carriageway (`GB:nsl_single`, 60 mph), a dual carriageway
-  (`GB:nsl_dual`, 70 mph) or a motorway (`GB:motorway`, 70 mph), or a restricted road with street
-  lights (`GB:nsl_restricted`, 30 mph). A type in `source:maxspeed` is read too, and written as
-  `maxspeed:type`. Under it, the lower limit the national limit sets for vehicles towing caravans or
-  trailers, buses and minibuses up to 12 m and HGVs (50 mph, 60 mph on a dual carriageway; 60 mph on a
-  motorway, where it doesn't apply to buses).
+  limit and minimum speed (`minspeed`) are picked the same way.
+- For a whole road, the UK limit types (wiki: Key:maxspeed:type) are signs beside the roundels, each
+  setting its type and limit: the national limit on a single carriageway (`GB:nsl_single`, 60 mph) or a
+  dual carriageway (`GB:nsl_dual`, 70 mph), a motorway (`GB:motorway`, 70 mph), a restricted road with
+  street lights (`GB:nsl_restricted`, 30 mph) and a 20 mph zone (`GB:zone20`, signed with ZONE under
+  the roundel: not the same as a plain 20). A plain number drops the type. A type in `source:maxspeed`
+  is read too, and written as `maxspeed:type`; `maxspeed=national` alone is read by the kind of road.
+  Under the signs, the lower limit the national limit sets for vehicles towing caravans or trailers,
+  buses and minibuses up to 12 m and HGVs (50 mph, 60 mph on a dual carriageway; 60 mph on a motorway,
+  where it doesn't apply to buses).
 - Click the line between two lanes of the selected road to cycle its marking: dashed, solid,
   crossable one way, crossable the other way (`change:lanes`).
 
-**Settings** (the Lane Studio pane, first in the pane bar on the right, its button Lane Studio's logo in
-black and white, shortcut `K`)
+**Settings** (the Lane Studio pane, first in the pane bar on the right, its button Lane Studio's logo's
+lane lines and arrows, shortcut `K`)
 
 - Lane surface opacity: 35% is the usual see-through look, 100% fully opaque, 0% invisible; the
   reset button returns to 35%. It applies to lanes, roads, pavements, footways and paths alike.
@@ -195,15 +198,28 @@ Trams run in the road with their rails over its lanes, unless `embedded=no`. Tun
 track has rusty rails, track being built is striped, and abandoned, razed and proposed lines are a
 dashed trackbed; a monorail is its beam. Railways pass under the roads, except:
 
-- **Level crossings** (`railway=level_crossing`), drawn as on British roads (Highway Code rules
-  291-299): panels and rails across the road; barrier booms in red and white bands with red lamps and
-  the barrier machine at the pivot, by `crossing:barrier` (`half`: across the lanes coming in, on the
-  traffic's left; `double_half`: both halves; `full`: the whole road; `gates`: white gates with red
-  targets); the road traffic light signals (two red lamps and an amber one on a black backboard edged
-  white, over a "STOP when lights show" plate) on the nearside verge facing the traffic, under a St
-  Andrew's cross at an open crossing with `crossing:light=yes` and no barriers; the white stop line;
-  and double white centre lines on the approach of a two-way road. Where a road crosses several
-  tracks, the barriers and lights stand outside them all.
+- **Level crossings** (`railway=level_crossing`), laid out as in the Office of Rail and Road's
+  typical layouts and the Highway Code (rules 291-299):
+  - panels and rails across the road, the panels coloured by `crossing:surface` (rubber, wood,
+    concrete…); a `crossing=informal` crossing has the rails alone;
+  - barrier booms in red and white bands, narrowing to the tip, with red lamps and the barrier machine
+    at the pivot, by `crossing:barrier`: `half` across the lanes coming in, on the traffic's left;
+    `full`, `double_half` and `yes` as two booms from the kerbs meeting in the middle;
+  - `gates`: at a user worked crossing (`crossing:activation=user`) one gate across the road on each
+    side, braced, between its posts, with the arc it swings through away from the line; otherwise a
+    pair of white gates with red targets;
+  - the road traffic light signals (two red lamps and an amber one on a black backboard with a red
+    and white chequered border, over a "STOP when lights show" plate) on the nearside verge facing
+    the traffic, from `crossing:light` or barriers that lower on their own (`crossing:light=no` turns
+    them off); at a user worked crossing, miniature warning lights (red over green) instead;
+  - a St Andrew's cross at an open crossing (`crossing:saltire`, or no barriers with lights or
+    `crossing=uncontrolled`): above the lights, or on its own post;
+  - the white stop line where there are barriers, gates or lights, or a give way line at an open
+    crossing without lights;
+  - whistle boards (a W) beside the line 40 m out each way where trains sound their horn
+    (`crossing:whistle`).
+
+  Where a road crosses several tracks, the barriers and lights stand outside them all.
 - **Crossings for people** (`railway=crossing`) get their panels and rails over the path, and tram
   crossings (`railway=tram_level_crossing`) their panels and rails across the road.
 
@@ -231,7 +247,9 @@ head with its kerb carried round, a pavement on the road is carried round it too
 out on the outside of a bend. Hovering or clicking a mini-roundabout or turning head selects its node,
 like a road. Road numbers in shields (UK colours: motorways blue, primary routes green, other A and B
 roads white) and motorway junction numbers; speed limit roundels where the limit changes between two
-roads that both have one, and minimum speed roundels; barriers on roads (gates and similar across the road, bollards and blocks
+roads that both have one (the road traffic arrives from is the one carrying lanes towards the change, so
+a road splitting into a dual carriageway counts; a road with only a `maxspeed:type` is painted with its
+limit, except the national limit, which isn't painted), and minimum speed roundels; barriers on roads (gates and similar across the road, bollards and blocks
 as posts, cattle grids) and on paths; fences, walls, guard rails, jersey barriers and hedges at their
 width; and small direction arrows on the lanes of one-way roads (iD's own arrows on the way line are
 hidden).
@@ -373,7 +391,7 @@ that names its `created_by` value, listed on the wiki's Editors page.
 | Strings (read as `t('_lanes.…')`) | `data/lanes.yaml` |
 | Version shown in the footer and written to changesets | `modules/lanes/version.ts` |
 | Routing | `modules/lanes/geometry/routing.ts`, `modules/lanes/core/lane_routing.ts`, `modules/lanes/core/mode_routing.ts`, `modules/lanes/ui/routing_panel.ts`, `modules/lanes/svg/routing.ts` |
-| Speed Limit tool | `modules/lanes/core/lane_speed.ts`, `modules/lanes/core/mode_speed.ts`, `modules/lanes/ui/speed_panel.ts`, `modules/lanes/ui/speed_roundels.ts` |
+| Speed Limit tool | `modules/lanes/core/lane_speed.ts`, `modules/lanes/core/mode_speed.ts`, `modules/lanes/ui/speed_panel.ts`, `modules/lanes/ui/speed_roundels.ts`, `modules/lanes/model/speed_limits.ts` (the speed tags) |
 | Railways | `modules/lanes/geometry/railway.ts` (track), `modules/lanes/geometry/rail_features.ts` (platforms, crossings, signals, equipment), `modules/lanes/svg/railway.ts` |
 | Parking spaces and car parks | `modules/lanes/geometry/parking_spaces.ts`, `modules/lanes/svg/parking_spaces.ts` |
 | What's new menu | `modules/lanes/core/whats_new.ts`, `modules/lanes/ui/whats_new.ts`; the build copies `CHANGELOG.md` to `dist/lanes-changelog.md` |

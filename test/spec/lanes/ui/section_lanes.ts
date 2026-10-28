@@ -74,15 +74,18 @@ describe('Lane Studio sidebar', () => {
         expect(context.entity('w1').tags['bus:lanes:forward']).toBe('|designated');
     });
 
-    it('sets the whole road\'s limit type and minimum speed', () => {
+    it('sets the whole road\'s limit, a UK limit type and its minimum speed from signs', () => {
         render(['w1']);
-        const type = selection.select<HTMLInputElement>('#lane-field-road-maxspeed-type');
-        expect(type.attr('readonly')).toBe('readonly');
-        type.property('value', 'National, dual carriageway (70 mph)').dispatch('change');
+        selection.select('.road-limits .speed-roundel-nsl_dual').dispatch('click');
         expect(context.entity('w1').tags).toMatchObject({ maxspeed: '70 mph', 'maxspeed:type': 'GB:nsl_dual' });
 
         render(['w1']);
+        expect(selection.select('.speed-roundel-nsl_dual').classed('active')).toBe(true);
         expect(selection.select('.speed-lower').text()).toContain('60 mph');
+        selection.select('.road-limits .speed-roundel-zone20').dispatch('click');
+        expect(context.entity('w1').tags).toMatchObject({ maxspeed: '20 mph', 'maxspeed:type': 'GB:zone20' });
+
+        render(['w1']);
         selection.select('.road-limits .speed-roundels-min .speed-roundel-40').dispatch('click');
         expect(context.entity('w1').tags.minspeed).toBe('40 mph');
     });

@@ -9,6 +9,7 @@ import {
     offsetPolyline, cumulativeLengths, polylineLength, type MetricFrame
 } from './frame';
 import { parseWidth, type LaneLayout } from './layout';
+import { roadMaxspeed, speedTypeOf } from '../model/speed_limits';
 import { cachedLayout, edgesAt, visualShift, miniRoundaboutRadius, type WayVisual } from './road_geometry';
 import { isFord } from './structures';
 import { isTrafficIsland, islandSurface, surfaceGroup, type SurfaceGroup } from '../model/street_features';
@@ -628,6 +629,12 @@ function mappedGiveWay(way: osmWay, index: number, side: number, distance: numbe
 
 /* ---------- speed limits ---------- */
 
+/** A road's limit as painted: its `maxspeed`, or the limit its UK type sets, but never the national speed limit */
+function paintedRoadLimit(tags: Tags): string | undefined {
+    if (/^GB:(nsl_single|nsl_dual|motorway)$/.test(speedTypeOf(tags) ?? '')) return undefined;
+    return roadMaxspeed(tags);
+}
+
 /** A posted limit as painted on the road (the number), or null when it is not a plain number */
 function paintedLimit(value: string | undefined): string | null {
     const match = (value ?? '').trim().toLowerCase().match(/^(\d+)\s*(mph|km\/h|kmh|kph|knots)?$/);
@@ -648,7 +655,9 @@ function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, W
     const cumulative = cumulativeLengths(points);
     const total = cumulative[cumulative.length - 1];
     if (total < 20) return;
-    const roadLimit = (w: osmWay, key: 'maxspeed' | 'minspeed', direction: 'forward' | 'backward') => w.tags[`${key}:${direction}`] ?? w.tags[key];
+    // (a road tagged only with a UK limit type is painted with its limit; the national limit is never painted)
+    const roadLimit = (w: osmWay, key: 'maxspeed' | 'minspeed', direction: 'forward' | 'backward') => w.tags[`${key}:${direction}`] ??
+        (key === 'maxspeed' ? paintedRoadLimit(w.tags) : w.tags[key]);
     // a lane's own value, else the road's
     const laneLimit = (w: osmWay, key: 'maxspeed' | 'minspeed', direction: 'forward' | 'backward', index: number) => {
         const lane = cachedLayout(w, graph).lanes.find(l => l.ref.direction === direction && l.ref.index === index);
@@ -660,8 +669,10 @@ function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, W
         // the road traffic arrives from: the one other road ending here, or the one with the same name or ref
         const entryID = direction === 'forward' ? way.first() : way.last();
         const entry = graph.entity(entryID) as osmNode;
-        const others = graph.parentWays(entry).filter(w => w.id !== way.id && isLaneRoad(w) &&
-            ((w as osmWay).first() === entryID || (w as osmWay).last() === entryID)) as osmWay[];
+        // (only roads with lanes arriving here: where a road splits into a dual carriageway, the half leaving is not one)
+        const arriving = (w: osmWay) => cachedLayout(w, graph).model.lanes[w.last() === entryID ? 'forward' : 'backward'].length > 0;
+        const others = (graph.parentWays(entry).filter(w => w.id !== way.id && isLaneRoad(w) &&
+            ((w as osmWay).first() === entryID || (w as osmWay).last() === entryID)) as osmWay[]).filter(arriving);
         let previous = others.length === 1 ? others[0] : undefined;
         if (!previous) {
             const same = others.filter(w => (way.tags.ref && w.tags.ref === way.tags.ref) || (way.tags.name && w.tags.name === way.tags.name));

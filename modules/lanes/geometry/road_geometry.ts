@@ -484,7 +484,8 @@ const hasPlacement = (way: osmWay) => !!(way.tags.placement || way.tags['placeme
 
 const isRing = (way: osmWay) => way.tags.junction === 'roundabout' || way.tags.junction === 'circular';
 
-const highwayRank: Record<string, number> = {
+/** How major a road is, to pick the main road at a junction */
+export const highwayRank: Record<string, number> = {
     motorway: 9, trunk: 8, primary: 7, secondary: 6, tertiary: 5, unclassified: 4, residential: 3,
     motorway_link: 6, trunk_link: 5, primary_link: 5, secondary_link: 4, tertiary_link: 3,
     living_street: 2, service: 1, road: 1, busway: 2, track: 0

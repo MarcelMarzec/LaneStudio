@@ -60,8 +60,12 @@ const lampColours = { red: '#ff2b1c', yellow: '#ffc21a', green: '#1fd36b' };
  * - a main signal: a Network Rail colour-light head (black, its backplate edged white) with its aspects in a
  *   column, red lit (a distant signal: yellow), over its white identification plate
  * - a shunt signal: a ground position-light signal, a red and a white lamp side by side
- * - a level crossing's road traffic light signals: two red lamps either side of an amber one on a black backboard
- *   edged white, over a "STOP when lights show" plate, at an open crossing under a St Andrew's cross
+ * - a level crossing's road traffic light signals (diagram 3014): two red lamps either side of an amber one on a
+ *   black backboard with a red and white chequered border, over a "STOP when lights show" plate, at an open crossing
+ *   under a St Andrew's cross
+ * - a St Andrew's cross on its own post (diagram 774), at an open crossing without lights
+ * - miniature warning lights at a user worked crossing: a red lamp over a green one
+ * - a whistle board beside the line: a white board with a black W
  */
 export function drawRailSymbols(group: Group, symbols: RailSymbol[], projection: Projection, zoom: number) {
     const size = signSize(zoom);
@@ -96,7 +100,14 @@ export function drawRailSymbols(group: Group, symbols: RailSymbol[], projection:
             root.append('line').attr('class', 'rail-symbol-post').attr('y2', (-post).toFixed(1));
             let top = -post;
 
-            if (d.plate && d.kind !== 'crossing-lights') {
+            // a St Andrew's cross: white arms edged red, standing on `base`
+            const saltire = (base: number, half: number) => {
+                const arms = `M${-half},${base - 2 * half} L${half},${base} M${half},${base - 2 * half} L${-half},${base}`;
+                root.append('path').attr('class', 'rail-cross-edge').attr('d', arms).attr('stroke-width', (half * 0.42).toFixed(1));
+                root.append('path').attr('class', 'rail-cross').attr('d', arms).attr('stroke-width', (half * 0.26).toFixed(1));
+            };
+
+            if (d.plate && d.kind === 'signal') {
                 // a signal's identification plate: black letters on white, under its head
                 const plateH = Math.max(7, size * 0.28);
                 const plateW = Math.max(size * 0.8, d.plate.length * plateH * 0.62);
@@ -124,6 +135,20 @@ export function drawRailSymbols(group: Group, symbols: RailSymbol[], projection:
                 rect(-width / 2, top - height, width, height, 'rail-signal-head', height * 0.25);
                 lamp(-width * 0.22, top - height / 2, height * 0.26, lampColours.red, 'rail-lamp lit');
                 lamp(width * 0.22, top - height / 2, height * 0.26, '#f4f4f4', 'rail-lamp lit');
+            } else if (d.kind === 'crossing-saltire') {
+                saltire(top, size * 0.5);
+            } else if (d.kind === 'crossing-mwl') {
+                // miniature warning lights: red (stop) over green (clear) in a black case
+                const width = size * 0.42;
+                const height = size * 0.8;
+                rect(-width / 2, top - height, width, height, 'rail-signal-head', width * 0.25);
+                lamp(0, top - height * 0.72, width * 0.3, lampColours.red, 'rail-lamp lit');
+                lamp(0, top - height * 0.28, width * 0.3, '#1d3b29', 'rail-lamp');
+            } else if (d.kind === 'whistle-board') {
+                const s = size * 0.55;
+                rect(-s / 2, top - s, s, s, 'rail-whistle-board', 1);
+                root.append('text').attr('class', 'rail-whistle-board-text').attr('text-anchor', 'middle')
+                    .attr('y', (top - s * 0.22).toFixed(1)).style('font-size', `${(s * 0.75).toFixed(1)}px`).text('W');
             } else {
                 // the road traffic light signals at a level crossing, over their plate
                 const width = size * 1.1;
@@ -140,19 +165,16 @@ export function drawRailSymbols(group: Group, symbols: RailSymbol[], projection:
                     }
                     top -= plateH + 1;
                 }
+                // the backboard's border is chequered red and white: white under a dashed red edge
                 rect(-width / 2, top - height, width, height, 'rail-crossing-backboard', height * 0.18);
+                rect(-width / 2, top - height, width, height, 'rail-crossing-backboard-check', height * 0.18)
+                    .attr('stroke-dasharray', `${(height * 0.2).toFixed(1)} ${(height * 0.2).toFixed(1)}`);
                 const r = height * 0.22;
                 lamp(-width * 0.3, top - height * 0.62, r, lampColours.red, 'rail-lamp lit');
                 lamp(width * 0.3, top - height * 0.62, r, lampColours.red, 'rail-lamp lit');
                 lamp(0, top - height * 0.3, r * 0.8, '#ffb000', 'rail-lamp amber');
                 top -= height + 2;
-                if (d.cross) {
-                    // a St Andrew's cross: white arms edged red
-                    const c = width * 0.45;
-                    const arms = `M${-c},${top - 2 * c} L${c},${top} M${c},${top - 2 * c} L${-c},${top}`;
-                    root.append('path').attr('class', 'rail-cross-edge').attr('d', arms).attr('stroke-width', (c * 0.42).toFixed(1));
-                    root.append('path').attr('class', 'rail-cross').attr('d', arms).attr('stroke-width', (c * 0.26).toFixed(1));
-                }
+                if (d.cross) saltire(top, width * 0.45);
             }
         });
 }
