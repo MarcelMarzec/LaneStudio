@@ -9,20 +9,22 @@ import { laneSettings, defaultSurfaceOpacity } from '../core/lane_settings';
 import { laneStudioLinks } from '../core/links';
 import { setWhatsNewEnabled, whatsNewEnabled } from '../core/whats_new';
 import { laneStudioVersion } from '../version';
+import { laneStudioMark } from './logo';
 import { loadChangelog, showWhatsNew } from './whats_new';
 
 type Div = d3.Selection<HTMLDivElement>;
 
-/** The icon on the pane button: three lanes with dashed lines between them */
+/** The icon on the pane button: Lane Studio's mark in black and white */
 function ensurePaneIcon() {
     if (document.getElementById('lanes-icon-pane')) return;
     const svg = d3_select(document.body).append('svg')
         .attr('class', 'lanes-icon-defs')
         .attr('width', 0).attr('height', 0)
         .style('position', 'absolute');
-    const symbol = svg.append('symbol').attr('id', 'lanes-icon-pane').attr('viewBox', '0 0 20 20');
-    symbol.append('path').attr('d', 'M3 2h1.6v16H3zM15.4 2H17v16h-1.6z');
-    symbol.append('path').attr('d', 'M7.3 2h1.2v3H7.3zM7.3 8.5h1.2v3H7.3zM7.3 15h1.2v3H7.3zM11.5 2h1.2v3h-1.2zM11.5 8.5h1.2v3h-1.2zM11.5 15h1.2v3h-1.2z');
+    // the mark's road in black, its lane lines and arrows in white
+    const inner = laneStudioMark.replace(/^<svg[^>]*>|<\/svg>$/g, '')
+        .replace('#2b313b', '#000').replace('#ff922b', '#fff');
+    svg.append('symbol').attr('id', 'lanes-icon-pane').attr('viewBox', '0 0 32 32').html(inner);
 }
 
 

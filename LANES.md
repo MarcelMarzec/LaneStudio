@@ -69,7 +69,8 @@ a dual carriageway. Esc lets go of the limit, then leaves the tool.
 - Click the line between two lanes of the selected road to cycle its marking: dashed, solid,
   crossable one way, crossable the other way (`change:lanes`).
 
-**Settings** (the Lane Studio pane, first in the pane bar on the right, shortcut `K`)
+**Settings** (the Lane Studio pane, first in the pane bar on the right, its button Lane Studio's logo in
+black and white, shortcut `K`)
 
 - Lane surface opacity: 35% is the usual see-through look, 100% fully opaque, 0% invisible; the
   reset button returns to 35%. It applies to lanes, roads, pavements, footways and paths alike.

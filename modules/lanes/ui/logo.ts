@@ -2,7 +2,8 @@ import { t } from '../../core/localizer';
 
 /**
  * Lane Studio's mark: a road of three lanes seen from above, its lane lines dashed, with a turn arrow in each lane
- * (left, ahead, right): what Lane Studio maps. lanes.html has it as the page's icon, and it is saved as
+ * (left, ahead, right): what Lane Studio maps. lanes.html has it as the page's icon, the settings pane's button has it
+ * in black and white, and it is saved as
  * docs/img/lane-studio-logo.svg and LanesWebsite/assets/img/lanestudio-mark.svg; test/spec/lanes/ui/logo.ts
  * checks they all match.
  */
