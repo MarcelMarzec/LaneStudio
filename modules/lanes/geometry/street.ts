@@ -323,25 +323,34 @@ function areaKind(tags: Tags): AreaKind | null {
 
 
 /**
- * A zebra crossing's bars across a crossing mapped as an area: half a metre wide and half a metre apart, across its
- * longest extent (the way people walk over the road), as long as the area is wide (clipped to it when drawn)
+ * An area's long axis: the direction its corners spread furthest along (their principal axis), and their middle
+ * (the line between the two corners furthest apart would be a rectangle's diagonal)
+ */
+function longAxis(points: Vec2[]): { centre: Vec2; axis: Vec2; reach: number } {
+    const ring = points.length > 1 && len(sub(points[0], points[points.length - 1])) < 1e-6 ? points.slice(0, -1) : points;
+    const centre = scale(ring.reduce((sum, p) => add(sum, p), [0, 0] as Vec2), 1 / ring.length);
+    let xx = 0, yy = 0, xy = 0;
+    for (const p of ring) {
+        const [x, y] = sub(p, centre);
+        xx += x * x;
+        yy += y * y;
+        xy += x * y;
+    }
+    const angle = 0.5 * Math.atan2(2 * xy, xx - yy);
+    const axis: Vec2 = [Math.cos(angle), Math.sin(angle)];
+    const reach = Math.max(...ring.map(p => len(sub(p, centre))));
+    return { centre, axis, reach };
+}
+
+/**
+ * A zebra crossing's bars across a crossing mapped as an area: half a metre wide and half a metre apart, along its
+ * long axis (the way people walk over the road), as long as the area is wide (clipped to it when drawn)
  */
 function zebraStripes(polygon: Vec2[]): Vec2[][] {
     const frame = metricFrame(polygon[0]);
     const points = polygon.map(frame.toMetres);
-    const centre = scale(points.reduce((sum, p) => add(sum, p), [0, 0] as Vec2), 1 / points.length);
-    // the longest extent: the direction between the two points furthest apart
-    let walk: Vec2 = [1, 0];
-    let longest = 0;
-    for (const a of points) {
-        for (const b of points) {
-            const d = len(sub(b, a));
-            if (d > longest) {
-                longest = d;
-                walk = scale(sub(b, a), 1 / d);
-            }
-        }
-    }
+    const { centre, axis: walk, reach } = longAxis(points);
+    const longest = reach * 2;
     const across = rightNormal(walk);
     const stripes: Vec2[][] = [];
     for (let t = -longest / 2; t < longest / 2; t += 1) {
@@ -365,19 +374,17 @@ const cardinals: Record<string, number> = {
 function hatchStripes(polygon: Vec2[], direction: string | undefined): Vec2[][] {
     const frame = metricFrame(polygon[0]);
     const points = polygon.map(frame.toMetres);
-    const centre = scale(points.reduce((sum, p) => add(sum, p), [0, 0] as Vec2), 1 / points.length);
-    const reach = Math.max(...points.map(p => len(sub(p, centre)))) + 1;
+    const shape = longAxis(points);
+    const centre = shape.centre;
+    const reach = shape.reach + 1;
     const tagged = direction === undefined ? NaN : cardinals[direction.toUpperCase()] ?? parseFloat(direction);
     let along: Vec2;
     if (Number.isFinite(tagged)) {
         const a = tagged * Math.PI / 180;
         along = [Math.sin(a), Math.cos(a)];
     } else {
-        // the area's longest extent, turned 45°
-        let longest: Vec2 = [1, 0];
-        let best = 0;
-        for (const a of points) for (const b of points) if (len(sub(b, a)) > best) { best = len(sub(b, a)); longest = unit(sub(b, a)); }
-        along = unit(add(longest, rightNormal(longest)));
+        // the area's long axis, turned 45°
+        along = unit(add(shape.axis, rightNormal(shape.axis)));
     }
     const across = rightNormal(along);
     const bars: Vec2[][] = [];
@@ -432,6 +439,94 @@ function crossSection(way: osmWay, nodeIndex: number, graph: coreGraph, visuals?
 function band(cs: CrossSection, a: number, b: number, left: number, right: number): Vec2[] {
     const p = (along: number, across: number) => add(scale(cs.direction, along), scale(cs.normal, across));
     return [p(a, left), p(b, left), p(b, right), p(a, right)].map(cs.frame.toLoc);
+}
+
+/**
+ * Traffic calming on a road node, as built and marked on British roads (wiki: Key:traffic_calming), each value of a
+ * `;` list, across the lanes `direction=forward|backward` says or all of them:
+ * - a hump (and a dynamic bump): a band 3.7 m long with a white triangle on each lane's approach ramp
+ * - a table: a flat top 6 m long in paving colour, triangles on both ramps; a painted table: paint alone
+ * - a bump: a short band 0.9 m long; mini bumps: a row of small domes; a rumble strip: thin bars across the lanes
+ * - cushions: a pad 1.8 m wide in the middle of each lane, with its triangle
+ * - a dip (or a double dip): a dashed outline across the road
+ * - a choker: the kerb built out into the road on both sides; a chicane: on alternate sides, one after the other
+ * - an island: a small island in the middle of the road
+ * - choked_table, choked_island: a choker with a table or an island; anything else: a hatched band
+ */
+function calmingShapes(node: osmNode, cs: CrossSection, out: StreetGeometry, left: number, right: number) {
+    const tags = node.tags;
+    const direction = tags.direction === 'forward' || tags.direction === 'backward' ? tags.direction : null;
+    const range = direction ? approachRange(cs, direction) : null;
+    const [from, to] = range ?? [left, right];
+    const p = (along: number, across: number) => cs.frame.toLoc(add(scale(cs.direction, along), scale(cs.normal, across)));
+    const push = (key: string, variant: string, points: Vec2[], closed = true) =>
+        out.markings.push({ key: `${node.id}-calming-${key}`, kind: 'calming', nodeID: node.id, closed, variant, points });
+    // a white triangle on each lane's approach ramp, pointing the way its traffic goes
+    const teeth = (key: string, a: number, b: number, lanes = cs.layout.lanes.map((_, i) => i)) => lanes.forEach(i => {
+        const lane = cs.layout.lanes[i];
+        const [l, r] = [cs.edges[i], cs.edges[i + 1]];
+        if (r <= from || l >= to || lane.ref.direction === 'both_ways') return;
+        const forward = lane.ref.direction === 'forward';
+        const edge = forward ? a : b;
+        const tip = edge + (forward ? 1 : -1) * Math.min(0.9, (b - a) / 2);
+        const mid = (l + r) / 2;
+        push(`${key}-tooth-${i}`, 'tooth', [p(edge, mid - 0.5), p(tip, mid), p(edge, mid + 0.5)]);
+    });
+    const values = tags.traffic_calming.split(';').map(v => v.trim());
+    const buildOut = (key: string, along: number, side: 'left' | 'right') => {
+        const edge = side === 'left' ? left : right;
+        const inward = side === 'left' ? 1 : -1;
+        push(key, 'buildout', [p(along - 3, edge), p(along - 1.5, edge + inward * 1.5), p(along + 1.5, edge + inward * 1.5), p(along + 3, edge)]);
+    };
+    for (const value of values) {
+        if (value === 'hump' || value === 'dynamic_bump' || value === 'speed_hump') {
+            push(value, 'hump', band(cs, -1.85, 1.85, from, to));
+            teeth(value, -1.85, 1.85);
+        } else if (value === 'table' || value === 'choked_table') {
+            push(value, 'table', band(cs, -3, 3, from, to));
+            teeth(value, -3, 3);
+        } else if (value === 'painted_table') {
+            push(value, 'painted', band(cs, -3, 3, from, to));
+        } else if (value === 'bump' || value === 'speed_bump') {
+            push(value, 'bump', band(cs, -0.45, 0.45, from, to));
+        } else if (value === 'mini_bumps') {
+            for (let across = from + 0.6, k = 0; across < to - 0.3; across += 1.2, k++) {
+                const c: Vec2 = add(scale(cs.normal, across), [0, 0]);
+                push(`${value}-${k}`, 'dome', Array.from({ length: 10 }, (_, j) => cs.frame.toLoc(add(c, scale([Math.cos(j * Math.PI / 5), Math.sin(j * Math.PI / 5)], 0.35)))));
+            }
+        } else if (value === 'rumble_strip') {
+            for (let k = 0; k < 6; k++) push(`${value}-${k}`, 'rumble', band(cs, -2 + k * 0.8, -1.85 + k * 0.8, from, to));
+        } else if (value === 'cushion') {
+            cs.layout.lanes.forEach((lane, i) => {
+                const mid = (cs.edges[i] + cs.edges[i + 1]) / 2;
+                if (mid <= from || mid >= to || lane.ref.direction === 'both_ways') return;
+                push(`${value}-${i}`, 'cushion', band(cs, -1.5, 1.5, mid - 0.9, mid + 0.9));
+            });
+            teeth(value, -1.5, 1.5);
+        } else if (value === 'dip' || value === 'double_dip') {
+            push(value, 'dip', band(cs, -2, 2, from, to));
+            if (value === 'double_dip') push(`${value}-2`, 'dip', band(cs, 3, 7, from, to));
+        } else if (value === 'island') {
+            const centre = (from + to) / 2;
+            push(value, 'island', [p(-4, centre), p(-1.5, centre - 0.8), p(1.5, centre - 0.8), p(4, centre), p(1.5, centre + 0.8), p(-1.5, centre + 0.8)]);
+        } else if (value === 'choker') {
+            // (built out on the side the direction tag gives, or both)
+            if (!direction || from <= left + 0.01) buildOut(`${value}-l`, 0, 'left');
+            if (!direction || to >= right - 0.01) buildOut(`${value}-r`, 0, 'right');
+        } else if (value === 'chicane') {
+            buildOut(`${value}-l`, -5, 'left');
+            buildOut(`${value}-r`, 5, 'right');
+        } else if (value === 'choked_island') {
+            const centre = (left + right) / 2;
+            push(value, 'island', [p(-4, centre), p(-1.5, centre - 0.8), p(1.5, centre - 0.8), p(4, centre), p(1.5, centre + 0.8), p(-1.5, centre + 0.8)]);
+        } else {
+            push(value, 'band', band(cs, -1.5, 1.5, from, to));
+        }
+        if (value === 'choked_table' || value === 'choked_island') {
+            buildOut(`${value}-l`, 0, 'left');
+            buildOut(`${value}-r`, 0, 'right');
+        }
+    }
 }
 
 /** Lane boundary range of the lanes travelling in `direction`, or null if there are none */
@@ -528,7 +623,7 @@ function crossingNodeMarkings(node: osmNode, cs: CrossSection, out: StreetGeomet
 /**
  * A passing place (wiki: Tag:highway=passing_place): the road widening into a bay where oncoming traffic can pass, on
  * the side `passing_place=*` gives (left, right or both, looking along the way; both when not tagged, as a turning
- * circle is drawn all round): 20 m long, tapering out from the carriageway's edge to 2.5 m beyond it and back
+ * circle is drawn all round): 20 m long, tapering out from the carriageway's edge to 3 m beyond it and back
  */
 function passingPlace(node: osmNode, cs: CrossSection, out: StreetGeometry, left: number, right: number) {
     const side = node.tags.passing_place;
@@ -537,7 +632,7 @@ function passingPlace(node: osmNode, cs: CrossSection, out: StreetGeometry, left
         const edge = s > 0 ? right : left;
         // (overlapping the carriageway a little, so no seam shows along its edge)
         const at = (along: number, offset: number) => cs.frame.toLoc(add(scale(cs.direction, along), scale(cs.normal, offset)));
-        const points = [at(-10, edge - s * 0.3), at(-10, edge), at(-4, edge + s * 2.5), at(4, edge + s * 2.5), at(10, edge), at(10, edge - s * 0.3)];
+        const points = [at(-10, edge - s * 0.3), at(-10, edge), at(-4, edge + s * 3), at(4, edge + s * 3), at(10, edge), at(10, edge - s * 0.3)];
         out.surfaces.push({ key: `${node.id}-passing-${s}`, kind: 'passing_place_surface', nodeID: node.id, closed: true, points });
     }
 }
@@ -623,11 +718,7 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
         }
     }
 
-    const calming = tags.traffic_calming;
-    if (calming && calming !== 'island' && calming !== 'no') {
-        const length = calming === 'table' ? 6 : calming === 'rumble_strip' ? 4 : 3;
-        out.markings.push({ key: `${node.id}-calming`, kind: 'calming', nodeID: node.id, closed: true, variant: calming, points: band(cs, -length / 2, length / 2, left, right) });
-    }
+    if (tags.traffic_calming && tags.traffic_calming !== 'no') calmingShapes(node, cs, out, left, right);
 
     // a ford on a road node: water across the road
     if (isFord(tags)) out.markings.push({ key: `${node.id}-ford`, kind: 'ford', nodeID: node.id, closed: true, points: band(cs, -2.5, 2.5, left, right) });

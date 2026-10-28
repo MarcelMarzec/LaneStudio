@@ -361,6 +361,12 @@
     display: none;
 }
 
+/* a ghost island where a road widens towards a centre turn lane: white hatching edged white; and the diagonal line
+   where a centre lane's traffic changes direction */
+.ideditor.lane-studio .lanes-layer .ghost-island-base { fill: var(--lanes-road-fill, rgb(67, 72, 82)); fill-opacity: 0.95; stroke: none; }
+.ideditor.lane-studio .lanes-layer .ghost-island { fill: url(#lanes-pattern-hatch-white); stroke: #fff; stroke-width: 1.5; stroke-opacity: 0.9; }
+.ideditor.lane-studio .lanes-layer .lane-swap { fill: none; stroke: #fff; stroke-width: 2; stroke-opacity: 0.92; }
+
 /* settings: hide land use alone (landuse=*), iD's areas and Lane Studio's surfaces drawn from them */
 .ideditor.lane-studio.lanes-hide-landuse .layer-osm .tag-landuse,
 .ideditor.lane-studio.lanes-hide-landuse .lanes-layer .lanes-landuse {

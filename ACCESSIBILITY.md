@@ -25,6 +25,7 @@ Symbols used in this document:
 |---|---|---|
 | ✅ | Light and dark themes | Lane Studio's panes, sidebar sections and Routing panel follow iD's themes and your system's setting |
 | ✅ | Lane fields | Standard form fields: usable with a keyboard and screen readers like iD's own fields, including the dropdowns (lane type, roadside features and the tools' pickers), with iD's placeholders |
+| ✅ | Turn arrow and lane change buttons | Inactive ones are drawn in the theme's text colour, so they are as clear on the dark theme as on the light one; each is named for screen readers |
 | ✅ | Look ahead and Roadside | Fold away with their headings, as iD's sections do, from the keyboard too; Roadside's sides are labelled Left and Right beside each dropdown |
 | 🟠 | Picking lanes | Lanes are picked on the map or in the sidebar's lane strip with a pointer; once one is selected, `[` and `]` step to the next lane and Delete removes the selected lanes |
 | 🟠 | Lane colours | Lane types are told apart by colour, with labels on each lane from zoom 19; the lane opacity setting (pane shortcut `K`) makes them stronger or fainter |

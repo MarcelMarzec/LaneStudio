@@ -64,6 +64,11 @@ export interface RoadPiece {
     toNode: string;
     /** the whole way is shorter than `shortWayLength`: easy to miss, so it is highlighted */
     short: boolean;
+    /**
+     * a ghost island: where a two-way road widens towards a centre turn lane on the road it joins, the hatched
+     * opening between its two directions (see WayVisual.gapStart)
+     */
+    ghost?: Vec2[];
     /** the middle of the piece, for the short-way marker */
     middle: Vec2;
 }
@@ -133,6 +138,33 @@ export interface WayVisual {
      * points in order; between points the shift is interpolated, beyond them it fades out.
      */
     fit?: [number, number][];
+    /**
+     * A ghost island at the way's start or end: the width its two directions part by there (the width of the centre
+     * turn lane on the road it joins), opening over `gapLength` metres. The lanes either side of the centre widen
+     * into it, and it is drawn hatched, so the road widens smoothly on both sides rather than stepping.
+     */
+    gapStart?: number;
+    gapEnd?: number;
+}
+
+// how far along a road a ghost island opens, in metres
+const gapLength = 40;
+
+/** The ghost island's width at distance `s` along a way: full at the end it is for, nothing `gapLength` before */
+export function gapAt(visual: WayVisual, s: number, total: number): number {
+    const length = Math.min(gapLength, total * 0.45);
+    if (length <= 0) return 0;
+    return (visual.gapStart ?? 0) * Math.max(0, 1 - s / length) + (visual.gapEnd ?? 0) * Math.max(0, 1 - (total - s) / length);
+}
+
+/** The edge between a two-way road's directions (an index into its edges), or -1 on a one-way road */
+function centreEdge(layout: LaneLayout): number {
+    for (let e = 1; e < layout.lanes.length; e++) {
+        const before = layout.lanes[e - 1].ref.direction;
+        const after = layout.lanes[e].ref.direction;
+        if (before !== after && before !== 'both_ways' && after !== 'both_ways') return e;
+    }
+    return -1;
 }
 
 const noVisual: WayVisual = { start: 0, end: 0, taperStart: [], taperEnd: [] };
@@ -244,6 +276,13 @@ export function edgesAt(layout: LaneLayout, visual: WayVisual, s: number, total:
         const lost = layout.lanes[k].width * (1 - f);
         if (side === 'left') for (let e = 0; e <= k; e++) edges[e] += lost;
         else for (let e = k + 1; e <= n; e++) edges[e] -= lost;
+    }
+    // a ghost island: the two directions part about the centre (the lanes beside it widen; the island covers that)
+    const gap = gapAt(visual, s, total);
+    const c = gap > 0 ? centreEdge(layout) : -1;
+    if (c > 0) {
+        for (let e = 0; e < c; e++) edges[e] -= gap / 2;
+        for (let e = c + 1; e <= n; e++) edges[e] += gap / 2;
     }
     return edges.map(e => e + shift);
 }
@@ -750,6 +789,8 @@ function alignAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual
         }
     }
 
+    if (openGhostIsland(node, graph, visuals, a, b, reference, moved, twoArms)) return;
+
     // a lane's travel offset at the join, with the tapers
     const offsetNow = (arm: Arm, direction: LaneDirection, index: number) => {
         const visual = visuals.get(arm.way.id) ?? noVisual;
@@ -788,6 +829,37 @@ function alignAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual
         else visual.end = delta;
         visuals.set(moved.way.id, visual);
     }
+}
+
+
+/**
+ * A ghost island: a two-way road joining one with centre turn lanes it has none of (a right turn lane at a staggered
+ * junction, as on Holbeach Road, Spalding) widens about its centre over its last stretch, both sides parting by half
+ * the turn lane, rather than being shifted a lane sideways (which put its lanes against the wrong lanes and left a
+ * step in the kerb). Sets the gap on the narrower road's end, and says whether it did.
+ */
+function openGhostIsland(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>, a: Arm, b: Arm, reference: Arm,
+    moved: Arm, twoArms: boolean): boolean {
+    if (!isTwoWay(moved.layout) || !isTwoWay(reference.layout) || isRing(moved.way) || isRing(reference.way)) return false;
+    const used = new Set<number>();
+    for (const [up, down] of [[a, b], [b, a]] as const) {
+        const direction = reference === up ? armLaneDirection(up, true) : armLaneDirection(down, false);
+        for (const pair of continuationPairs(graph, up, down, node.id, twoArms)) {
+            const index = reference === up ? pair.from : pair.to;
+            const k = reference.layout.lanes.findIndex(l => l.ref.direction === direction && l.ref.index === index);
+            if (k >= 0) used.add(k);
+        }
+    }
+    const c = centreEdge(reference.layout);
+    const unused = reference.layout.lanes.map((_, k) => k).filter(k => !used.has(k));
+    const inner = (k: number) => k === c - 1 || k === c || reference.layout.lanes[k].ref.direction === 'both_ways';
+    const gap = reference.layout.total - moved.layout.total;
+    if (c <= 0 || !unused.length || !unused.every(inner) || gap <= 0.5 || gap > maxJoinShift * 1.5) return false;
+    const visual = { ...(visuals.get(moved.way.id) ?? noVisual) };
+    if (moved.nodeIndex === 0) visual.gapStart = gap;
+    else visual.gapEnd = gap;
+    visuals.set(moved.way.id, visual);
+    return true;
 }
 
 
@@ -1041,6 +1113,10 @@ function controlledEnd(arm: Arm, graph: coreGraph): boolean {
     }
     return false;
 }
+
+/** Whether a road has lanes both ways (not a one-way road, nor only centre lanes) */
+const isTwoWay = (layout: LaneLayout) =>
+    layout.lanes.some(l => l.ref.direction === 'forward') && layout.lanes.some(l => l.ref.direction === 'backward');
 
 /** The most a slip road is shifted to meet a road: as far as that road's outer edge */
 const branchShiftLimit = (arm: Arm) => Math.max(maxJoinShift, (arm.right - arm.left) / 2 + 0.5);
@@ -1340,7 +1416,7 @@ function visualSignature(ways: osmWay[], visuals: Map<string, WayVisual>): strin
     return ways.map(w => {
         const v = visuals.get(w.id);
         return v ? `${w.id}:${v.start.toFixed(2)}:${v.end.toFixed(2)}:${v.taperStart.map(t => t.lane)}:${v.taperEnd.map(t => t.lane)}` +
-            `:${v.fit ? v.fit.map(p => `${p[0].toFixed(0)}/${p[1].toFixed(2)}`).join(',') : ''}` : '';
+            `:${v.fit ? v.fit.map(p => `${p[0].toFixed(0)}/${p[1].toFixed(2)}`).join(',') : ''}:${v.gapStart ?? ''}:${v.gapEnd ?? ''}` : '';
     }).join('|');
 }
 
@@ -2027,7 +2103,8 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
         // vertices where tapers end, so the taper is drawn as a straight slope
         const breaks = [
             ...visual.taperStart.map(t => t.length - startAt),
-            ...visual.taperEnd.map(t => total - t.length - startAt)
+            ...visual.taperEnd.map(t => total - t.length - startAt),
+            ...(visual.gapStart || visual.gapEnd ? [Math.min(gapLength, total * 0.45) - startAt, total - Math.min(gapLength, total * 0.45) - startAt] : [])
         ];
         const sliced = withVerticesAt(slicePolyline(line, trimStart, length - trimEnd), breaks);
         const local = cumulativeLengths(sliced);
@@ -2040,6 +2117,12 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
         const column = (k: number, plus = 0) => rows.map(r => r[k] + plus);
 
         const boundaries = layout.edges.map((_, k) => offset(column(k)));
+        // the ghost island, either side of the centre edge, as wide as the gap there
+        const centre = centreEdge(layout);
+        const gaps = local.map(s => gapAt(visual, startAt + s, total));
+        const ghost = centre > 0 && gaps.some(g => g > 0.05)
+            ? ring(offset(rows.map((r, i) => r[centre] - gaps[i] / 2)), offset(rows.map((r, i) => r[centre] + gaps[i] / 2)))
+            : undefined;
         const lanes = layout.lanes.map((_, i) => ring(boundaries[i], boundaries[i + 1]));
         const centres = layout.lanes.map((_, i) => offset(rows.map(r => (r[i] + r[i + 1]) / 2)));
         const dividerSides = layout.edges.map((_, k): [Vec2[], Vec2[]] =>
@@ -2187,6 +2270,7 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             fromNode: way.nodes[a],
             toNode: way.nodes[b],
             short: total < shortWayLength,
+            ghost: ghost ? toLocs(frame, ghost) : undefined,
             middle: frame.toLoc(pointAlong(sliced, pieceLength / 2).point)
         });
     }
@@ -2276,6 +2360,53 @@ export interface RoadGeometry {
     heads: TurningHead[];
     /** the road each mapped carriageway area is the surface of, by area id */
     areaRoads: Map<string, string>;
+    /**
+     * Where two roads meet end to end and a lane's traffic changes direction there (back-to-back right turn lanes
+     * in the middle of a staggered junction): a diagonal white line across the lane, from its edge before the node
+     * to its other edge after it
+     */
+    swaps: { key: string; line: Vec2[] }[];
+}
+
+/** The diagonal lines where a lane's traffic changes direction between two roads meeting end to end (see swaps) */
+function laneSwaps(pieces: RoadPiece[], graph: coreGraph): RoadGeometry['swaps'] {
+    const out: RoadGeometry['swaps'] = [];
+    const ends = new Map<string, { piece: RoadPiece; atStart: boolean }[]>();
+    for (const piece of pieces) {
+        if (piece.atWayStart) ends.set(piece.fromNode, [...(ends.get(piece.fromNode) ?? []), { piece, atStart: true }]);
+        if (piece.atWayEnd) ends.set(piece.toNode, [...(ends.get(piece.toNode) ?? []), { piece, atStart: false }]);
+    }
+    for (const [nodeID, list] of ends) {
+        if (list.length !== 2) continue;
+        const node = graph.hasEntity(nodeID as NodeId) as osmNode | undefined;
+        if (!node || (graph.parentWays(node) as osmWay[]).filter(isLaneRoad).length !== 2) continue;
+        const frame = metricFrame(node.loc as Vec2);
+        // each lane's middle at the node, and whether its traffic heads into the node
+        const at = ({ piece, atStart }: { piece: RoadPiece; atStart: boolean }) => piece.layout.lanes.map((lane, i) => {
+            const centre = piece.centres[i].map(frame.toMetres);
+            const point = atStart ? centre[0] : centre[centre.length - 1];
+            const into = lane.ref.direction === 'both_ways' ? null : (lane.ref.direction === 'forward') !== atStart;
+            const edges = [piece.boundaries[i], piece.boundaries[i + 1]].map(b => frame.toMetres(atStart ? b[0] : b[b.length - 1]));
+            return { point, into, edges, width: lane.width };
+        });
+        const [a, b] = list;
+        const lanesA = at(a);
+        const lanesB = at(b);
+        const along = (() => {
+            const c = a.piece.centres[0].map(frame.toMetres);
+            const d = a.atStart ? sub(c[0], c[1]) : sub(c[c.length - 1], c[c.length - 2]);
+            return len(d) > 1e-6 ? unit(d) : null;
+        })();
+        if (!along) continue;
+        lanesA.forEach((la, i) => {
+            const lb = lanesB.find(l => len(sub(l.point, la.point)) < Math.min(l.width, la.width) / 2);
+            // both heading away from the node (back to back) or both into it: the lane changes direction here
+            if (!lb || la.into === null || lb.into === null || la.into !== lb.into) return;
+            const [e1, e2] = la.edges;
+            out.push({ key: `${nodeID}-swap-${i}`, line: [add(e1, scale(along, -3)), add(e2, scale(along, 3))].map(frame.toLoc) });
+        });
+    }
+    return out;
 }
 
 /** Whether a traffic island lies inside a junction's polygons or within 3 m of them (beside one of its links) */
@@ -2476,7 +2607,8 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         visuals, pieces, innerPieces, channelled,
         junctions: [...junctions.values()], connections: [...connections.values()].flat(),
         heads: [...heads.values()].map(h => h.head),
-        areaRoads: new Map([...owners].map(([areaID, way]) => [areaID, way.id]))
+        areaRoads: new Map([...owners].map(([areaID, way]) => [areaID, way.id])),
+        swaps: laneSwaps(pieces, graph)
     };
 }
 

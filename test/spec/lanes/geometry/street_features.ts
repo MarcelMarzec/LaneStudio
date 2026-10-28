@@ -144,6 +144,34 @@ describe('streetGeometry surfaces and paths', () => {
 });
 
 
+describe('streetGeometry: traffic calming', () => {
+    function calming(tags: Tags) {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(50, 0), tags }),
+            new iD.osmNode({ id: 'n3', loc: at(100, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: { highway: 'residential', lanes: '2' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        return streetGeometry(entities.map(e => graph.entity(e.id)), graph).markings.filter(m => m.kind === 'calming').map(m => m.variant);
+    }
+
+    it('draws each kind as built, with a triangle on each lane\'s ramp', () => {
+        expect(calming({ traffic_calming: 'hump' })).toEqual(['hump', 'tooth', 'tooth']);
+        expect(calming({ traffic_calming: 'table' })).toEqual(['table', 'tooth', 'tooth']);
+        expect(calming({ traffic_calming: 'cushion' })).toEqual(['cushion', 'cushion', 'tooth', 'tooth']);
+        expect(calming({ traffic_calming: 'rumble_strip' })).toHaveLength(6);
+        expect(calming({ traffic_calming: 'chicane' })).toEqual(['buildout', 'buildout']);
+        expect(calming({ traffic_calming: 'choked_table' })).toEqual(['table', 'tooth', 'tooth', 'buildout', 'buildout']);
+        expect(calming({ traffic_calming: 'island' })).toEqual(['island']);
+        expect(calming({ traffic_calming: 'choker;cushion' })).toContain('buildout');
+        // one direction only: one lane's hump and triangle
+        expect(calming({ traffic_calming: 'hump', direction: 'forward' })).toEqual(['hump', 'tooth']);
+    });
+});
+
+
 describe('streetGeometry: passing places', () => {
     it('widens the road into a bay on the side tagged, or both', () => {
         const entities = [

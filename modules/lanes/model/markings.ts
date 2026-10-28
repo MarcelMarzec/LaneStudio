@@ -3,15 +3,19 @@
  * traffic signals, traffic calming and mini-roundabouts. Pure functions over tags.
  */
 
-export const markingTypes = ['none', 'crossing', 'stop', 'give_way', 'traffic_signals', 'calming', 'mini_roundabout'] as const;
+export const markingTypes = ['none', 'crossing', 'stop', 'give_way', 'traffic_signals', 'calming', 'mini_roundabout', 'passing_place'] as const;
 export type MarkingType = typeof markingTypes[number];
 
-export const calmingValues = ['bump', 'hump', 'table', 'cushion', 'rumble_strip', 'chicane', 'choker'] as const;
+/** traffic_calming=* values (wiki: Key:traffic_calming) */
+export const calmingValues = [
+    'hump', 'bump', 'table', 'painted_table', 'cushion', 'mini_bumps', 'rumble_strip', 'dip', 'double_dip',
+    'dynamic_bump', 'chicane', 'choker', 'island', 'choked_table', 'choked_island'
+] as const;
 export const crossingMarkingValues = ['zebra', 'lines', 'dots', 'no'] as const;
 
 const highwayFor: Partial<Record<MarkingType, string>> = {
     crossing: 'crossing', stop: 'stop', give_way: 'give_way',
-    traffic_signals: 'traffic_signals', mini_roundabout: 'mini_roundabout'
+    traffic_signals: 'traffic_signals', mini_roundabout: 'mini_roundabout', passing_place: 'passing_place'
 };
 
 const crossingKeys = ['crossing', 'crossing:markings', 'crossing:signals', 'crossing:island', 'crossing_ref'];
@@ -24,8 +28,9 @@ export function markingType(tags: Tags): MarkingType {
         case 'give_way': return 'give_way';
         case 'traffic_signals': return 'traffic_signals';
         case 'mini_roundabout': return 'mini_roundabout';
+        case 'passing_place': return 'passing_place';
     }
-    if (tags.traffic_calming && tags.traffic_calming !== 'no' && tags.traffic_calming !== 'island') return 'calming';
+    if (tags.traffic_calming && tags.traffic_calming !== 'no') return 'calming';
     return 'none';
 }
 
@@ -37,7 +42,11 @@ export function withMarkingType(tags: Tags, type: MarkingType): Tags {
 
     if (before === 'crossing') crossingKeys.forEach(k => delete next[k]);
     if (before === 'stop' || before === 'give_way' || before === 'traffic_signals') directionKeys.forEach(k => delete next[k]);
-    if (before === 'calming') delete next.traffic_calming;
+    if (before === 'calming') {
+        delete next.traffic_calming;
+        delete next.direction;
+    }
+    if (before === 'passing_place') delete next.passing_place;
     if (before !== 'none' && before !== 'calming') delete next.highway;
 
     if (type === 'calming') {
@@ -50,6 +59,22 @@ export function withMarkingType(tags: Tags, type: MarkingType): Tags {
         next['crossing:markings'] = 'zebra';
     }
     return next;
+}
+
+/**
+ * A passing place's side (wiki: Tag:highway=passing_place), as forward (beside traffic going along the road's drawing
+ * direction), backward or both: `passing_place=left|right|both`, forward being the road's left where traffic drives
+ * on the left
+ */
+export function passingPlaceDirection(tags: Tags, driveSide: 'left' | 'right'): 'forward' | 'backward' | 'both' {
+    const side = tags.passing_place;
+    if (side !== 'left' && side !== 'right') return 'both';
+    return side === driveSide ? 'forward' : 'backward';
+}
+
+export function withPassingPlaceDirection(tags: Tags, direction: 'forward' | 'backward' | 'both', driveSide: 'left' | 'right'): Tags {
+    const other = driveSide === 'left' ? 'right' : 'left';
+    return { ...tags, passing_place: direction === 'both' ? 'both' : direction === 'forward' ? driveSide : other };
 }
 
 export interface CrossingOptions {

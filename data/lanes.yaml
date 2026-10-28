@@ -151,6 +151,9 @@ en:
       traffic_signals: Traffic signals
       calming: Traffic calming
       mini_roundabout: Mini-roundabout
+      passing_place: Passing place
+    passing_side: Side
+    passing_hint: "Forward is the side beside traffic going along the road's drawing direction (written as passing_place=left, right or both)."
     crossing_markings: Crossing markings
     crossing:
       zebra: Zebra
@@ -168,13 +171,21 @@ en:
     all_way_stop: All-way stop
     calming: Type
     calming_types:
-      bump: Bump
       hump: Hump
+      bump: Bump
       table: Table
-      cushion: Cushion
+      painted_table: Painted table
+      cushion: Cushions
+      mini_bumps: Mini bumps
       rumble_strip: Rumble strip
+      dip: Dip
+      double_dip: Double dip
+      dynamic_bump: Dynamic bump
       chicane: Chicane
       choker: Choker
+      island: Island
+      choked_table: Choker and table
+      choked_island: Choker and island
     place: Place on the map
     place_tip: Choose what to place, then click a road on the map
     placing: "Click a road to place a {type}."

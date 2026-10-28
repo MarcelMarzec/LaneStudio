@@ -15,8 +15,10 @@
 .ideditor.lane-studio .lanes-layer .street-path-path         { fill: rgb(205, 180, 130); --lanes-a: 0.7; }
 .ideditor.lane-studio .lanes-layer .street-path-steps        { fill: url(#lanes-hatch); }
 .ideditor.lane-studio .lanes-layer .street-path-crossing     { fill: rgb(40, 44, 52); --lanes-a: 0.45; stroke: none; }
+/* a crossing with no markings (unmarked, or not tagged): nothing is painted on the road, so the road shows, with
+   only a faint dashed outline where people cross (a dark fill read as black over the road, as on Holbeach Road) */
 .ideditor.lane-studio .lanes-layer .street-path-crossing.markings-none {
-    fill: rgb(40, 44, 52); --lanes-a: 0.25;
+    fill: none;
     stroke: rgba(255, 255, 255, 0.6);
     stroke-width: 1;
     stroke-dasharray: 3, 3;
@@ -106,6 +108,18 @@
     stroke: rgba(255, 210, 60, 0.8);
     stroke-width: 1;
 }
+/* each kind of traffic calming, as built and marked on British roads */
+.ideditor.lane-studio .lanes-layer .marking-calming.hump     { fill: rgba(70, 74, 82, 0.9); stroke: rgba(255, 255, 255, 0.6); stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .marking-calming.table    { fill: rgba(170, 95, 70, 0.85); stroke: rgba(255, 255, 255, 0.6); stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .marking-calming.painted  { fill: rgba(170, 70, 60, 0.6); stroke: none; }
+.ideditor.lane-studio .lanes-layer .marking-calming.bump     { fill: rgba(40, 40, 40, 0.9); stroke: #f2c400; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .marking-calming.dome     { fill: rgba(240, 240, 240, 0.9); stroke: #333; stroke-width: 0.5; }
+.ideditor.lane-studio .lanes-layer .marking-calming.rumble   { fill: rgba(255, 255, 255, 0.85); stroke: none; }
+.ideditor.lane-studio .lanes-layer .marking-calming.cushion  { fill: rgba(170, 95, 70, 0.9); stroke: rgba(255, 255, 255, 0.7); stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .marking-calming.tooth    { fill: #fff; stroke: none; }
+.ideditor.lane-studio .lanes-layer .marking-calming.dip      { fill: none; stroke: #fff; stroke-width: 1.2; stroke-dasharray: 4 3; }
+.ideditor.lane-studio .lanes-layer .marking-calming.island   { fill: rgba(190, 190, 185, 0.95); stroke: #fff; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .marking-calming.buildout { fill: rgba(236, 205, 150, 0.95); stroke: #ddd; stroke-width: 1.5; }
 .ideditor.lane-studio .lanes-layer .marking-mini_roundabout {
     fill: rgba(255, 255, 255, 0.55);
     stroke: #fff;
@@ -225,6 +239,13 @@
     fill-opacity: var(--lanes-road-alpha, 0.545);
     fill-rule: evenodd;
     stroke: none;
+}
+.ideditor.lane-studio .lanes-layer .street-surface-passing_place_surface {
+    /* over the strip beside the road it widens into, so nearly opaque, with a light dashed edge */
+    fill-opacity: 0.92;
+    stroke: rgba(255, 255, 255, 0.5);
+    stroke-width: 1;
+    stroke-dasharray: 4 3;
 }
 .ideditor.lane-studio .lanes-layer .marking-turning_loop_island {
     fill: rgba(165, 190, 135, 0.9);

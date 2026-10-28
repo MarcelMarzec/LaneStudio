@@ -174,7 +174,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #333;
+    /* (the theme's text colour: dark on the light theme, light on the dark one, where dark grey was hard to see) */
+    color: var(--text-color, #333);
 }
 .ideditor.lane-studio .turn-grid button.active,
 .ideditor.lane-studio .change-buttons button.active { color: #fff; }

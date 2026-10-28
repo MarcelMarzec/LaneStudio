@@ -191,8 +191,7 @@ export function uiSectionLanes(context: iD.Context) {
         }
 
         if (selected.length) {
-            renderLaneLimits(wrap, road, model, selected);
-            renderInspector(wrap, model, wayID, selected);
+            renderInspector(wrap, model, wayID, selected, road);
         } else renderRoadLimits(wrap, road);
         const shoulder = state.shoulder();
         if (shoulder?.wayID === wayID) renderShoulder(wrap, road, shoulder.side);
@@ -629,7 +628,7 @@ export function uiSectionLanes(context: iD.Context) {
     }
 
 
-    function renderInspector(wrap: Div, model: LaneModel, wayID: WayId, refs: LaneRef[]) {
+    function renderInspector(wrap: Div, model: LaneModel, wayID: WayId, refs: LaneRef[], road: osmWay) {
         const inspector = wrap.append('div').attr('class', 'lane-inspector');
         const order = laneRefsInWayOrder(model);
         const first = refs[0];
@@ -688,6 +687,9 @@ export function uiSectionLanes(context: iD.Context) {
             }
         }
 
+        /* the lanes' speed limits, after their turn arrows */
+        renderLaneLimits(inspector, road, model, refs);
+
         /* lane change */
         if (!readonly('change:lanes')) {
             const current = shared('change:lanes');
@@ -730,7 +732,6 @@ export function uiSectionLanes(context: iD.Context) {
         });
 
         /* per-lane values, laid out like iD's fields with suggestions */
-        const road = context.entity(wayID) as osmWay;
         const fieldFor = (id: string, key: string, label: string) => laneField(context, inspector, {
             id,
             label,

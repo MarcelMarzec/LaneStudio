@@ -5,9 +5,11 @@ import type { osmNode } from '../../osm/node';
 import { uiSection } from '../../ui/section';
 import { laneTools } from '../core/lane_tools';
 import { isLaneRoad } from '../core/roads';
+import { laneDriveSide } from '../core/drive_side';
+import type { osmWay } from '../../osm/way';
 import {
     markingTypes, markingType, withMarkingType, crossingOptions, withCrossing, withDirection,
-    calmingValues, crossingMarkingValues, type MarkingType
+    calmingValues, crossingMarkingValues, passingPlaceDirection, withPassingPlaceDirection, type MarkingType
 } from '../model/markings';
 
 type Div = d3.Selection<HTMLDivElement>;
@@ -109,6 +111,27 @@ export function uiSectionMarkings(context: iD.Context) {
             row.append('label').text(t('_lanes.markings.calming'));
             buttons(row, calmingValues, tags.traffic_calming ?? '', v => t(`_lanes.markings.calming_types.${v}`),
                 v => change(n, { ...tags, traffic_calming: v }));
+            // a device slowing one direction only (direction=*)
+            const direction = wrap.append('div').attr('class', 'lane-row');
+            direction.append('label').text(t('_lanes.markings.direction'));
+            const current = tags.direction === 'forward' || tags.direction === 'backward' ? tags.direction : 'both';
+            buttons(direction, ['forward', 'backward', 'both'], current, v => t(`_lanes.markings.directions.${v}`), v => {
+                const next = { ...tags };
+                if (v === 'both') delete next.direction;
+                else next.direction = v;
+                change(n, next);
+            });
+        }
+
+        if (type === 'passing_place') {
+            // which side the bay is on, by the traffic beside it (written as passing_place=left|right|both)
+            const road = context.graph().parentWays(n).find(isLaneRoad) as osmWay;
+            const driveSide = laneDriveSide(road, context.graph());
+            const row = wrap.append('div').attr('class', 'lane-row');
+            row.append('label').text(t('_lanes.markings.passing_side'));
+            buttons(row, ['forward', 'backward', 'both'], passingPlaceDirection(tags, driveSide), v => t(`_lanes.markings.directions.${v}`),
+                v => change(n, withPassingPlaceDirection(tags, v as 'forward' | 'backward' | 'both', driveSide)));
+            wrap.append('p').attr('class', 'lanes-note').text(t('_lanes.markings.passing_hint'));
         }
 
         renderPlaceTool(wrap);

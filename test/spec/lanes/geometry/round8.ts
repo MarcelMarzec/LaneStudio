@@ -119,6 +119,53 @@ describe('slip roads', () => {
 });
 
 
+describe('ghost islands and centre lanes changing direction', () => {
+    const R = { highway: 'primary' };
+
+    it('widens a road about its centre towards back-to-back right turn lanes at a staggered junction', () => {
+        // as on Holbeach Road, Spalding: side roads north at j1 and south at j2, a right turn lane for each between
+        const graph = graphOf([
+            node('n1', -200, 0), node('n2', -60, 0), node('n3', 0, 0), node('n4', 60, 0), node('n5', 200, 0), node('n6', -60, 80), node('n7', 60, -80),
+            way('w1', ['n1', 'n2'], { ...R, lanes: '2' }),
+            way('w2', ['n2', 'n3'], { ...R, lanes: '3', 'lanes:forward': '1', 'lanes:backward': '2', 'turn:lanes:backward': 'none|right' }),
+            way('w3', ['n3', 'n4'], { ...R, lanes: '3', 'lanes:forward': '2', 'lanes:backward': '1', 'turn:lanes:forward': 'none|right' }),
+            way('w4', ['n4', 'n5'], { ...R, lanes: '2' }),
+            way('w5', ['n2', 'n6'], { highway: 'residential' }),
+            way('w6', ['n4', 'n7'], { highway: 'residential' })
+        ]);
+        const { visuals, pieces, swaps } = roadGeometry(waysOf(graph), graph);
+        // the roads either side open a ghost island as wide as the turn lane, rather than being shifted a lane over
+        for (const id of ['w1', 'w4']) {
+            const v = visuals.get(id)!;
+            expect((v.gapEnd ?? 0) + (v.gapStart ?? 0)).toBeGreaterThan(3);
+            expect(v.start).toBe(0);
+            expect(v.end).toBe(0);
+            expect(pieces.find(p => p.wayID === id)!.ghost).toBeDefined();
+        }
+        // both turn lanes have their arrow, and a diagonal line where the centre lane changes direction
+        expect(pieces.filter(p => p.wayID === 'w2' || p.wayID === 'w3').every(p => p.arrows.length === 1)).toBe(true);
+        expect(swaps).toHaveLength(1);
+    });
+
+    it('opens a ghost island before a right turn lane begins, but not for a turn lane at the kerb', () => {
+        const build = (turn: string, lanesForward: string) => graphOf([
+            node('n1', -200, 0), node('n2', 0, 0), node('n3', 100, 0), node('n4', 300, 0), node('n5', 100, -80),
+            way('w1', ['n1', 'n2'], { ...R, lanes: '2' }),
+            way('w2', ['n2', 'n3'], { ...R, lanes: '3', 'lanes:forward': lanesForward, 'lanes:backward': '1', 'turn:lanes:forward': turn }),
+            way('w3', ['n3', 'n4'], { ...R, lanes: '2' }),
+            way('w4', ['n3', 'n5'], { highway: 'residential' })
+        ]);
+        // a right turn lane (driving on the left: the inner one) in the middle
+        const right = build('none|right', '2');
+        const ghost = roadGeometry(waysOf(right), right).visuals.get('w1');
+        expect(ghost?.gapEnd ?? 0).toBeGreaterThan(3);
+        // a left turn lane, at the kerb: no ghost island
+        const left = build('left|none', '2');
+        expect(roadGeometry(waysOf(left), left).visuals.get('w1')?.gapEnd ?? 0).toBe(0);
+    });
+});
+
+
 describe('speed roundels', () => {
     const symbolsOf = (graph: ReturnType<typeof graphOf>) => streetGeometry(all(graph), graph).symbols;
 

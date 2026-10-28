@@ -198,7 +198,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'tram-rails', 'kerbs',
+                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs',
                 'paths-over', 'rail-over-road', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols',
                 'shields', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
                 'surface-targets', 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
@@ -260,7 +260,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const roads = roadGeometry(ways, graph, carriagewayAreas, islands);
             _geometry = { graph, ids: visibleIDs, roads, street: streetGeometry(visible, graph, roads.visuals) };
         }
-        const { pieces, innerPieces, channelled, junctions, connections, heads, areaRoads } = _geometry.roads;
+        const { pieces, innerPieces, channelled, junctions, connections, heads, areaRoads, swaps } = _geometry.roads;
         // short links inside a junction cluster are drawn only as lane guide lines (still clickable), except in a
         // junction holding traffic islands, where they are drawn whole over the junction, running between the islands
         const shown = pieces.filter(piece => !innerPieces.has(piece));
@@ -506,6 +506,15 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')));
         }
 
+
+        /* ghost islands where a road widens towards a centre turn lane, hatched, and the diagonal line where a centre
+           lane's traffic changes direction (back-to-back right turn lanes at a staggered junction) */
+        // (in the road's colour under the hatching, over the centre line, which does not run through an island)
+        joinPaths(group('ghost-islands'), markings ? shown.filter(piece => piece.ghost).flatMap(piece => [
+            { key: `${pieceKey(piece)}-base`, cls: 'ghost-island-base', d: path(piece.ghost!, true) },
+            { key: `${pieceKey(piece)}-hatch`, cls: 'ghost-island', d: path(piece.ghost!, true) }
+        ]) : [], d => d.key, d => d.cls, d => d.d);
+        joinPaths(group('lane-swaps'), markings ? swaps : [], d => d.key, () => 'lane-swap', d => path(d.line, false));
 
         /* roads and paths being built: work stripes over them */
         const works = [

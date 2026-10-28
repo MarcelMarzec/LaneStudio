@@ -8,6 +8,29 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r12
+##### 2026-Oct-28
+
+#### Lanes and junctions
+* A two-way road joining a stretch with centre right turn lanes (a staggered junction, as on Holbeach
+  Road, Spalding) is no longer shifted a lane sideways with a step in its kerb: its two directions part
+  smoothly about the centre, with a hatched ghost island between them
+* A diagonal white line crosses a centre lane where its traffic changes direction (back-to-back right
+  turn lanes)
+* Zebra bars and hatching in micro-mapped areas run along the area's length, not its diagonal
+
+#### Roads and signs
+* Traffic calming is drawn in full: humps, tables and cushions with their white triangles, painted
+  tables, bumps, mini bumps, rumble strips, dips, chokers, chicanes, islands, choked tables and islands,
+  `;` lists and `direction=*`; every kind can be picked under Road markings
+* A passing place's side can be picked as Forward, Backward or Both under Road markings, and its bay is
+  easier to see
+* An unmarked or untagged crossing no longer shows as a black band across the road
+
+#### Editing
+* With lanes selected, their speed limits come after their turn arrows
+* Inactive turn arrow and lane change buttons are clearly visible on the dark theme
+
 # 26.10.28r11
 ##### 2026-Oct-28
 

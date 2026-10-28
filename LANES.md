@@ -76,8 +76,8 @@ drawn as usual), a click setting `minspeed` and a shift-click `minspeed:lanes`.
   and every other `*:lanes` tag on the road.
 - Speed limits are picked from a row of UK roundels (10 to 70 mph, and none), the current one ringed,
   and minimum speeds from a row of blue ones: with no lane selected, the road's own (`maxspeed`,
-  `minspeed`); with lanes selected, theirs (`maxspeed:lanes`, `minspeed:lanes`), in a box laid out
-  like the road's, with the same signs (a limit type for lanes is written as `maxspeed:type:lanes`,
+  `minspeed`); with lanes selected, theirs (`maxspeed:lanes`, `minspeed:lanes`), in a box after the
+  lanes' turn arrows, laid out like the road's, with the same signs (a limit type for lanes is written as `maxspeed:type:lanes`,
   with its limit in `maxspeed:lanes`) and lower limit, which says the road's limit (lanes with none of
   their own follow it) and has a **Whole road** button to let go of the lanes and edit the road.
 - For a whole road, the UK limit types (wiki: Key:maxspeed:type) are signs beside the roundels, each
@@ -164,7 +164,9 @@ Lane Studio also looks at what is mapped next to the road:
 
 **Road markings** (sidebar section for a selected node on a road): what is there (crossing, stop,
 give way, traffic signals, traffic calming, mini-roundabout), crossing markings, signals and refuge
-island, the direction a sign applies to, all-way stop, and the kind of traffic calming.
+island, the direction a sign applies to, all-way stop, the kind of traffic calming and the direction it
+slows (`direction=forward|backward`), and which side a passing place is on (Forward, Backward or Both,
+written as `passing_place=left|right|both` by the side traffic drives on).
 
 **Islands, road markings and street parking** (sidebar section when one is selected):
 
@@ -191,9 +193,10 @@ lane lines or direction arrows. `highway=construction` without a type is left to
 **What is drawn**: lanes by type (bus, PSV, taxi, HOV, bicycle, pedestrian, no access), kerbs,
 lane lines, turn arrows, labels; junctions; pavements and cycle and parking strips from road tags,
 with unknown sides hatched; footways, paths, cycleways, steps and pedestrian streets at their real
-width; crossing ways with zebra bars or lines; `area:highway=*` areas, pedestrian areas and traffic
-islands; mapped kerbs styled by kerb height; crossings, stop and give way lines, signals, traffic
-calming and mini-roundabouts on road nodes (a stop, give way or signals' line on a pedestrian
+width; crossing ways with zebra bars or lines (an unmarked or untagged crossing leaves the road showing,
+with a faint dashed outline); `area:highway=*` areas, pedestrian areas and traffic islands; mapped kerbs
+styled by kerb height; crossings, stop and give way lines, signals, traffic calming and mini-roundabouts on
+road nodes (a stop, give way or signals' line on a pedestrian
 crossing, or up to 10 m past one, stands just before the crossing, and signals tagged as their
 crossing draw the crossing with a line each way); `road_marking=*` lines, areas and text; street parking
 with its bays and a layby joining it to the road; passing places (`highway=passing_place`) as a bay
@@ -263,6 +266,14 @@ look: asphalt, concrete, paving slabs, setts and gravel (as textures), unpaved, 
 A road mapped as an area (`area=yes` + `highway=service` etc., or `area:highway=<road>`) is the road's
 surface: ways inside it draw only their lane lines, arrows and special lanes.
 
+**Traffic calming** (wiki: Key:traffic_calming) on a road node is drawn as built and marked on British
+roads, each value of a `;` list, across the lanes `direction=forward|backward` gives or all of them: a hump
+or dynamic bump with a white triangle on each lane's approach ramp; a table (a paved flat top, triangles on
+both ramps) and a painted table; a bump; mini bumps (a row of domes); a rumble strip (thin bars); cushions
+(a pad in each lane, with its triangle); a dip or double dip (a dashed outline); a choker (the kerb built
+out on both sides) and a chicane (on alternate sides); an island in the middle; and `choked_table` and
+`choked_island` (a choker with a table or an island).
+
 **Micro-mapping** (wiki: Key:area:highway, Proposal:Street area and the mapping guidelines): areas
 tagged `area:highway=*`, the shape of a road mapped as a line, are drawn as what they are (a road mapped
 as a routable area, `area=yes` + `highway=*`, is a plaza or service area, not micro-mapping):
@@ -325,6 +336,11 @@ hidden).
 - A one-way road joining a road that carries on at a shallow angle (a slip road) has its end moved onto
   the lane it becomes, unless it gives way, stops or has traffic signals within 30 m of its end: then it
   meets the road at a junction, on its own line (as Lister Way does at Sleaford Road, Boston).
+- A two-way road joining one with centre turn lanes it has none of (back-to-back right turn lanes at a
+  staggered junction, or a right turn lane starting) is not shifted: over its last 40 m its two
+  directions part about the centre, so both kerbs taper out smoothly, and the opening between them is
+  a hatched ghost island. Where a centre lane's traffic changes direction between two roads meeting end to
+  end, a diagonal white line crosses it.
 - Shifts are capped: lining up with a joining road moves a road by at most one lane (3.5 m), and
   fitting it to an area by at most half its width; bigger gaps mean the lanes or the area do not
   match, and moving that far would push the road into its neighbours.
