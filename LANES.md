@@ -321,7 +321,8 @@ lanestudio.marcelmarzec.com; the editor is in `/editor/` (register the OAuth red
   and `error.php`; `.htaccess` gives them clean URLs (`/changelog`, `/privacy_policy`) on Apache.
 - `includes/`: the settings and links (`config.php`), header, navigation, footer, icons and the
   Markdown renderer. They are refused when requested directly.
-- `assets/`: the stylesheet and images.
+- `assets/`: the stylesheet and images. `assets/img/lanestudio-mark.svg` is the editor's logo (the
+  page icon and the mark beside the name in the header).
 
 The **Deploy LaneStudio to server** workflow deploys it (choose **website** to deploy it alone). It
 checks the PHP, copies `CHANGELOG.md` into `includes/changelog.md` for the changelog page and uploads
@@ -344,6 +345,7 @@ that names its `created_by` value, listed on the wiki's Editors page.
 | Look-ahead corridor, roundabouts | `modules/lanes/osm/` |
 | Map drawing and click targets | `modules/lanes/svg/` |
 | Sidebar sections, settings pane, welcome screen, what's new menu, logo, speed roundels | `modules/lanes/ui/` |
+| The logo as an SVG file (for the README and anywhere else it is needed) | `docs/img/lane-studio-logo.svg` |
 | Lane tags validation rule | `modules/lanes/validations/` |
 | Styles (built into `dist/lanes.css`) | `css-lanes/` |
 | Strings (read as `t('_lanes.…')`) | `data/lanes.yaml` |

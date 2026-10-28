@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+
 import { select as d3_select } from 'd3-selection';
 
 import { laneStudioMark, uiLaneStudioLogo } from '../../../../modules/lanes/ui/logo';
@@ -15,5 +17,13 @@ describe('Lane Studio logo', () => {
 
     it('is an SVG that stands alone, as the page icon in lanes.html is', () => {
         expect(laneStudioMark.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')).toBe(true);
+    });
+
+    it('is the same mark as the logo file, the website\'s mark and the page icon in lanes.html', () => {
+        const tidy = (svg: string) => svg.replace(/>\s+</g, '><').trim();
+        expect(tidy(fs.readFileSync('docs/img/lane-studio-logo.svg', 'utf8'))).toBe(laneStudioMark);
+        expect(tidy(fs.readFileSync('LanesWebsite/assets/img/lanestudio-mark.svg', 'utf8'))).toBe(laneStudioMark);
+        const icon = fs.readFileSync('lanes.html', 'utf8').match(/href='data:image\/svg\+xml,([^']+)'/)![1];
+        expect(decodeURIComponent(icon)).toBe(laneStudioMark);
     });
 });

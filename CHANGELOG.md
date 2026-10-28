@@ -8,6 +8,15 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28
+##### 2026-Oct-28
+
+#### Website
+* The website at lanestudio.marcelmarzec.com uses the editor's logo (the three-lane road with a turn
+  arrow in each lane) as its icon and beside its name, in place of the orange placeholder
+* The logo is saved in the repository as `docs/img/lane-studio-logo.svg` and shown at the top of the
+  README
+
 # 26.10.27r4
 ##### 2026-Oct-27
 

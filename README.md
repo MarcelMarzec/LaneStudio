@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/img/lane-studio-logo.svg" alt="Lane Studio logo: a three-lane road seen from above with a turn arrow in each lane" width="96" height="96">
+</p>
+
 # Lane Studio – a lane and road editor for [OpenStreetMap](https://www.openstreetmap.org/)
 
 Lane Studio draws roads the way they look from above: every lane at its real width, with its lane
