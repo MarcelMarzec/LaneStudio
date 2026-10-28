@@ -477,3 +477,11 @@
     color: var(--text-color-muted, #777);
     font-size: 12px;
 }
+
+/* the note in the Lane Studio pane about not tagging for the renderer */
+.ideditor.lane-studio .lanes-settings-note {
+    margin: 8px 0 0;
+    color: var(--passive-text-color);
+    font-size: 12px;
+    line-height: 1.4;
+}

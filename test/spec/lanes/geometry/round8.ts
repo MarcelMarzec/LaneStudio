@@ -166,6 +166,36 @@ describe('ghost islands and centre lanes changing direction', () => {
 });
 
 
+describe('rounded ends', () => {
+    it('rounds a road where it stops with nothing joining it, but not where another road joins', () => {
+        const graph = graphOf([
+            node('n1', 0, 0), node('n2', 100, 0), node('n3', 100, 60),
+            way('w1', ['n1', 'n2'], { highway: 'residential' }),
+            way('w2', ['n2', 'n3'], { highway: 'residential' })
+        ]);
+        const pieces = roadGeometry(waysOf(graph), graph).pieces.filter(p => p.wayID === 'w1');
+        // n1 is a dead end; n2 is where w2 joins
+        expect(pieces.flatMap(p => p.caps ?? [])).toHaveLength(1);
+    });
+
+    it('keeps a turn lane\'s arrow on a short link inside a junction', () => {
+        // two junctions 15 m apart, merged into one, the short link between them a right turn lane
+        const graph = graphOf([
+            node('n1', -200, 0), node('n2', 0, 0), node('n3', 15, 0), node('n4', 200, 0), node('n5', 0, 80), node('n6', 15, -80),
+            way('w1', ['n1', 'n2'], { highway: 'primary', lanes: '2' }),
+            way('w2', ['n2', 'n3'], { highway: 'primary', lanes: '3', 'lanes:forward': '2', 'lanes:backward': '1', 'turn:lanes:forward': 'none|right' }),
+            way('w3', ['n3', 'n4'], { highway: 'primary', lanes: '2' }),
+            way('w4', ['n2', 'n5'], { highway: 'residential' }),
+            way('w5', ['n3', 'n6'], { highway: 'residential' })
+        ]);
+        const { pieces, innerPieces } = roadGeometry(waysOf(graph), graph);
+        const link = pieces.find(p => p.wayID === 'w2')!;
+        expect(innerPieces.has(link)).toBe(true);
+        expect(link.arrows.length).toBeGreaterThan(0);
+    });
+});
+
+
 describe('speed roundels', () => {
     const symbolsOf = (graph: ReturnType<typeof graphOf>) => streetGeometry(all(graph), graph).symbols;
 

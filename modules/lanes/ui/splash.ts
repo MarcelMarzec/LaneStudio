@@ -10,7 +10,8 @@ const wikiLinks: [string, string][] = [
     ['Key:turn', 'https://wiki.openstreetmap.org/wiki/Key:turn'],
     ['Key:destination', 'https://wiki.openstreetmap.org/wiki/Key:destination'],
     ['Key:sidewalk', 'https://wiki.openstreetmap.org/wiki/Key:sidewalk'],
-    ['Good practice', 'https://wiki.openstreetmap.org/wiki/Good_practice']
+    ['Good practice', 'https://wiki.openstreetmap.org/wiki/Good_practice'],
+    ['Tagging for the renderer', 'https://wiki.openstreetmap.org/wiki/Tagging_for_the_renderer']
 ];
 
 /**

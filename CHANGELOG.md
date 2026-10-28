@@ -8,6 +8,22 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r14
+##### 2026-Oct-28
+
+#### Lanes and junctions
+* Turn arrows show on the short links inside a merged junction, over the junction box, where they were
+  left out before
+* Fuel station service roads (`service=fuel`) with no lanes tagged are a single shared lane
+
+#### Roads and signs
+* Dead-end roads and the free ends of footways, paths and cycleways are drawn with a rounded end
+  instead of a square cut
+
+#### Editing
+* The welcome screen, the Lane Studio settings pane and the guides remind you to map what is on the
+  ground and not to tag for the renderer, linking OSM's guidance (Tagging for the renderer)
+
 # 26.10.28r13
 ##### 2026-Oct-28
 

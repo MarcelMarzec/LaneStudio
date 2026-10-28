@@ -103,6 +103,12 @@ function uiSectionLaneDisplay(context: iD.Context) {
             });
         logosLabel.append('span').text(t('_lanes.settings.brand_logos'));
 
+        // OSM's guidance: the tags describe what is there, whatever the drawing makes of them
+        const note = enter.append('p').attr('class', 'lanes-settings-note');
+        note.append('span').text(t('_lanes.settings.renderer_note') + ' ');
+        note.append('a').attr('href', 'https://wiki.openstreetmap.org/wiki/Tagging_for_the_renderer').attr('target', '_blank')
+            .attr('rel', 'noopener').text(t('_lanes.settings.renderer_link'));
+
         // update
         container = enter.merge(container);
         const opacity = settings.surfaceOpacity();

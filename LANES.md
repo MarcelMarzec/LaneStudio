@@ -24,6 +24,13 @@ Before pushing: `npm run lint`, `npx tsc` and `npm run test:once`.
 
 ## Using it
 
+> **Don't tag for the renderer** (wiki: Tagging for the renderer). Lane Studio draws what the tags say,
+> and its drawing is a guess where the tags leave things out. Tag what is on the ground, from survey or
+> imagery you may use, even where Lane Studio then draws it oddly; never change tags, split ways, add lanes
+> or move nodes only to make the drawing look right. If the tags match what is there and the drawing is
+> wrong, report the drawing (see [CONTRIBUTING.md](CONTRIBUTING.md)). The welcome screen and the Lane Studio
+> pane say so too.
+
 Zoom levels: lanes, pavements, footways, railways and mapped areas from zoom 17; lane lines, turn
 arrows, crossings, stop and give way lines, railway sleepers and parking bay lines from zoom 18 (also
 where editing starts); labels, painted STOP text and give-way triangles from zoom 19.
@@ -35,8 +42,8 @@ in the settings. When the welcome screen or iD's prompt to restore unsaved chang
 that is closed.
 
 **Lanes when none are tagged**: two lanes, one each way (one way: one lane), including service roads; a
-single lane shared by both directions on a track, a driveway, an alley, a drive-through or an emergency
-access road (`service=*`), or a service road tagged `narrow=yes` or narrower than 4.5 m.
+single lane shared by both directions on a track, a driveway, an alley, a drive-through, a fuel station
+lane or an emergency access road (`service=*`), or a service road tagged `narrow=yes` or narrower than 4.5 m.
 
 **Top bar**: Selection (the default: select and edit roads, lanes and other features), Routing and
 Speed Limit, then iD's Point, Line and Area for adding features.
@@ -211,7 +218,9 @@ crossing, or up to 10 m past one, stands just before the crossing, and signals t
 crossing draw the crossing with a line each way); `road_marking=*` lines, areas and text; street parking
 with its bays and a layby joining it to the road; passing places (`highway=passing_place`) as a bay
 of road on the side `direction=forward|backward|both` gives (forward: beside traffic going along the road),
-else `passing_place=left|right|both`, both when not tagged; and lane connections.
+else `passing_place=left|right|both`, both when not tagged; and lane connections. A road that ends
+with nothing joining it (no turning circle, loop or mini-roundabout node) and the free end of a footway,
+path or cycleway are drawn with a rounded end.
 Footways, paths, cycleways and pedestrian ways are drawn under the roads; crossings (`footway=crossing`
 and the like) over them, and paths on a bridge or above ground (`layer` > 0) over them too. Everything
 else is drawn by iD as usual. A node Lane Studio draws as what it is (a crossing, a barrier, a sign, a
@@ -357,7 +366,7 @@ hidden).
   fitting it to an area by at most half its width; bigger gaps mean the lanes or the area do not
   match, and moving that far would push the road into its neighbours.
 - Junctions joined by a road shorter than 25 m are one junction: one box, and the short link is drawn
-  only as lane guide lines, except where the junction holds traffic islands
+  only as lane guide lines with its turn arrows over the box, except where the junction holds traffic islands
   (`area:highway=traffic_island`): there the links are drawn as whole lanes running between the
   islands, and the islands are cut out of the box. At a fork (a dual carriageway splitting) nothing
   runs through, so the carriageways stop where they meet.

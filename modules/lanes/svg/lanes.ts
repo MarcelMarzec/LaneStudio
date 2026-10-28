@@ -415,7 +415,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         /* carriageways */
         // all pieces of a road in one path: separate shapes leave a faint seam where they meet
         // (round a roundabout, at every road that joins it)
-        const carriagewayData = byWay(shown.filter(piece => !inArea.has(piece)), piece => [piece.carriageway]);
+        // (with a rounded end where a road stops with nothing joining it)
+        const carriagewayData = byWay(shown.filter(piece => !inArea.has(piece)), piece => [piece.carriageway, ...(piece.caps ?? [])]);
         const carriageways = group('carriageway').selectAll<SVGPathElement, typeof carriagewayData[number]>('path')
             .data(carriagewayData, d => d.key);
         carriageways.exit().remove();
@@ -535,6 +536,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 const key = `${piece.wayID}-${i}-${cls}`;
                 const shape = laneShapes.get(key) ?? { key, cls, polygons: [] };
                 shape.polygons.push(piece.lanes[i]);
+                // a rounded end in the colour of the road's general lanes (the first lane's, if it has none)
+                const general = piece.layout.lanes.findIndex(l => l.kind === 'general');
+                if (piece.caps?.length && !inArea.has(piece) && i === (general >= 0 ? general : 0)) shape.polygons.push(...piece.caps);
                 laneShapes.set(key, shape);
             });
         }
@@ -668,7 +672,11 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const angle = Math.atan2(q[1] - p[1], q[0] - p[0]) * 180 / Math.PI;
             return { p, pxPerMetre, angle };
         };
-        const arrowData = !markings ? [] : marked.flatMap(piece => piece.arrows.flatMap((mark, m) => {
+        // (also on the short links inside a merged junction, which are drawn only as guide lines: their turn lanes'
+        // arrows go over the junction box, or a lane there would show no arrow at all)
+        const channelledWays = new Set(channelled.map(piece => piece.wayID));
+        const innerArrows = [...innerPieces].filter(piece => !channelledWays.has(piece.wayID) && !building(piece));
+        const arrowData = !markings ? [] : [...marked, ...innerArrows].flatMap(piece => piece.arrows.flatMap((mark, m) => {
             const lane = piece.layout.lanes[mark.lane];
             const { p, pxPerMetre, angle } = screenMark(mark);
             // arrows are drawn in a 24 unit tall box pointing up; size them to the lane

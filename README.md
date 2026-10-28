@@ -54,6 +54,10 @@ The website is Lane Studio only; iD's own page is still in the repository for de
 
 The full guide (zoom levels, tools, what is drawn and how junctions work) is in [LANES.md](LANES.md).
 
+Lane Studio draws what the tags say. Tag what is on the ground, not what makes the drawing look right
+([don't tag for the renderer](https://wiki.openstreetmap.org/wiki/Tagging_for_the_renderer)); if the tags
+are right and the drawing is wrong, please report it.
+
 ## Getting started
 
 ```sh

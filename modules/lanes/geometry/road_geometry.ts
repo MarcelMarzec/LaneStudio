@@ -69,6 +69,8 @@ export interface RoadPiece {
      * opening between its two directions (see WayVisual.gapStart)
      */
     ghost?: Vec2[];
+    /** a rounded end where the road stops with nothing joining it (a half circle of road beyond the node) */
+    caps?: Vec2[][];
     /** the middle of the piece, for the short-way marker */
     middle: Vec2;
 }
@@ -2066,10 +2068,34 @@ function stopBefore(way: osmWay, graph: coreGraph, a: number, b: number, along: 
     return best;
 }
 
+/**
+ * Whether a road stops at a node with nothing joining it there (no other road or path), and no turning circle, loop or
+ * mini-roundabout drawn: its end is drawn rounded
+ */
+function isDeadEnd(way: osmWay, nodeID: string, graph: coreGraph): boolean {
+    if (way.isClosed()) return false;
+    const node = graph.entity(nodeID as NodeId) as osmNode;
+    if (['turning_circle', 'turning_loop', 'mini_roundabout'].includes(node.tags.highway ?? '')) return false;
+    return (graph.parentWays(node) as osmWay[]).filter(w => !!w.tags.highway).length === 1;
+}
+
+/** A half circle of road beyond an end, from its left kerb (`left`) round to its right, bulging `outward` */
+function roundCap(left: Vec2, right: Vec2, outward: Vec2): Vec2[] {
+    const centre = scale(add(left, right), 0.5);
+    const r = len(sub(left, centre));
+    if (r < 0.1) return [];
+    const u = unit(sub(left, centre));
+    return Array.from({ length: 13 }, (_, k) => {
+        const a = (k / 12) * Math.PI;
+        return add(centre, add(scale(u, r * Math.cos(a)), scale(outward, r * Math.sin(a))));
+    });
+}
+
 function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, visual: WayVisual,
     trimAt: (index: number, alongWay: boolean) => number,
     markAt: (index: number, alongWay: boolean) => MarkTrim | undefined,
-    partnerAt: (index: number, alongWay: boolean) => Vec2 | undefined = () => undefined): RoadPiece[] {
+    partnerAt: (index: number, alongWay: boolean) => Vec2 | undefined = () => undefined,
+    deadEnds: [boolean, boolean] = [false, false]): RoadPiece[] {
 
     const layout = cachedLayout(way, graph);
     const frame = metricFrame((graph.entity(way.first()) as osmNode).loc);
@@ -2169,7 +2195,7 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             const approach = against ? a === 0 : b === way.nodes.length - 1;
             if (!approach) return;
             if (pieceLength < 12) {
-                // (a short link inside a junction cluster is not drawn, arrows included)
+                // (a short link inside a junction cluster is drawn as guide lines, its arrows over the junction box)
                 if (pieceLength > 2.5) arrows.push(mark(pieceLength / 2, against));
                 return;
             }
@@ -2271,6 +2297,13 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             toNode: way.nodes[b],
             short: total < shortWayLength,
             ghost: ghost ? toLocs(frame, ghost) : undefined,
+            caps: [
+                ...(a === 0 && deadEnds[0] && sliced.length > 1
+                    ? [roundCap(boundaries[boundaries.length - 1][0], boundaries[0][0], unit(sub(sliced[0], sliced[1])))] : []),
+                ...(b === way.nodes.length - 1 && deadEnds[1] && sliced.length > 1
+                    ? [roundCap(boundaries[0][boundaries[0].length - 1], boundaries[boundaries.length - 1][boundaries[0].length - 1],
+                        unit(sub(sliced[sliced.length - 1], sliced[sliced.length - 2])))] : [])
+            ].filter(cap => cap.length).map(cap => toLocs(frame, cap)),
             middle: frame.toLoc(pointAlong(sliced, pieceLength / 2).point)
         });
     }
@@ -2578,6 +2611,12 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
             sig.push([...junction.marks.entries()].filter(([k]) => own(k))
                 .map(([k, v]) => `${k}=${v.left.toFixed(2)},${v.right.toFixed(2)},${v.lanes.toFixed(2)}`).join(','));
         });
+        // a dead end (nothing joining) is drawn rounded, so the ends' connections are part of the signature
+        const deadEnds: [boolean, boolean] = [
+            isDeadEnd(way, way.first(), graph) && !heads.has(way.first()),
+            isDeadEnd(way, way.last(), graph) && !heads.has(way.last())
+        ];
+        sig.push(`caps:${deadEnds.join(',')}`);
         const signature = sig.join('|');
 
         const cached = pieceCache.get(way);
@@ -2599,7 +2638,7 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
             const key = armKey(way.id, index, alongWay);
             return heads.get(way.nodes[index])?.partners.get(key) ?? byNode.get(way.nodes[index])?.partners.get(key);
         };
-        const built = buildPieces(way, graph, cutNodes, visual, trimAt, markAt, partnerAt);
+        const built = buildPieces(way, graph, cutNodes, visual, trimAt, markAt, partnerAt, deadEnds);
         pieceCache.set(way, { nodes, signature, pieces: built });
         pieces.push(...built);
     }

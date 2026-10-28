@@ -29,6 +29,9 @@ Sometimes. Lane Studio lines lanes up from `turn:lanes`, `type=connectivity` rel
 restrictions, so missing or wrong arrows show up as lanes that don't meet, or as routes that turn from
 the wrong lane. Check the tags first; the Routing tool shows what Lane Studio reads from them. If the
 tags are right, please report it with an export of the junction (see [CONTRIBUTING.md](CONTRIBUTING.md)).
+Don't change correct tags to make the drawing or the routes look right: that is tagging for the renderer
+([wiki](https://wiki.openstreetmap.org/wiki/Tagging_for_the_renderer)), and other maps and routers read
+the same tags.
 
 
 ## Does Lane Studio change tags I didn't edit?

@@ -19,12 +19,13 @@ interface KeyGroup {
     variants: Partial<Record<Variant, { tagKey: string; slots: string[] }>>;
 }
 
-// service roads that are one lane shared by both directions: a driveway, an alley, a drive-through, emergency access
-const singleLaneServices = new Set(['driveway', 'alley', 'drive-through', 'emergency_access']);
+// service roads that are one lane shared by both directions: a driveway, an alley, a drive-through, a fuel station's
+// forecourt lane, emergency access
+const singleLaneServices = new Set(['driveway', 'alley', 'drive-through', 'fuel', 'emergency_access']);
 
 /**
  * Whether a two-way road with no lanes tagged is a single lane both directions share: a track; a service road that is
- * a driveway, alley, drive-through or emergency access road, or tagged `narrow=yes` or narrower than 4.5 m. Other
+ * a driveway, alley, drive-through, fuel station lane or emergency access road, or tagged `narrow=yes` or narrower than 4.5 m. Other
  * service roads (a road round a car park, a business park's roads) have a lane each way.
  */
 export function sharesOneLane(tags: Tags): boolean {

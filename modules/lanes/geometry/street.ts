@@ -1,6 +1,6 @@
 import type { coreGraph } from '../../core/graph';
 import type { Vec2 } from '../../geo/vector';
-import type { OsmEntity } from '../../osm';
+import type { NodeId, OsmEntity } from '../../osm';
 import type { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
 import { asBuilt, builtHighway, isLaneRoad, isUnderConstruction, laneRoadHighways } from '../core/roads';
@@ -278,7 +278,22 @@ function locs(way: osmWay, graph: coreGraph): Vec2[] {
 
 /* ---------- footways and paths ---------- */
 
-const pathCache = new WeakMap<osmWay, { nodes: OsmEntity[]; stretch: [number, number]; shape: PathShape }>();
+const pathCache = new WeakMap<osmWay, { nodes: OsmEntity[]; stretch: [number, number]; ends: string; shape: PathShape }>();
+
+/** Whether a path stops at a node with no other road or path joining it there: its end is drawn rounded */
+function freeEnd(way: osmWay, nodeID: string, graph: coreGraph): boolean {
+    if (way.isClosed()) return false;
+    return (graph.parentWays(graph.entity(nodeID as NodeId)) as osmWay[]).filter(w => !!w.tags.highway).length === 1;
+}
+
+/** A half circle round `end` of radius `r`, from the path's left edge round its end to its right (`outward` the way on) */
+function endArc(end: Vec2, outward: Vec2, r: number): Vec2[] {
+    const n = rightNormal(outward);
+    return Array.from({ length: 9 }, (_, k) => {
+        const a = (k / 8) * Math.PI;
+        return add(end, add(scale(n, -r * Math.cos(a)), scale(outward, r * Math.sin(a))));
+    }).slice(1, -1);
+}
 
 export function isTrueWidthPath(entity: OsmEntity): boolean {
     if (entity.type !== 'way') return false;
@@ -322,9 +337,11 @@ function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisua
     const frame = metricFrame((nodes[0] as osmNode).loc);
     let points = locs(way, graph).map(frame.toMetres);
     const stretch: [number, number] = isCrossingPath(tags) ? crossingStretch(way, graph, points, frame, visuals) : [0, 0];
+    // a free end (nothing joining) is drawn rounded, a crossing's never (it meets the road)
+    const ends = isCrossingPath(tags) ? '' : `${freeEnd(way, way.first(), graph)},${freeEnd(way, way.last(), graph)}`;
     const cached = pathCache.get(way);
     if (cached && cached.nodes.every((n, i) => n === nodes[i]) && cached.nodes.length === nodes.length &&
-        cached.stretch[0] === stretch[0] && cached.stretch[1] === stretch[1]) return cached.shape;
+        cached.stretch[0] === stretch[0] && cached.stretch[1] === stretch[1] && cached.ends === ends) return cached.shape;
 
     if (stretch[0] || stretch[1]) {
         const first = unit(sub(points[1], points[0]));
@@ -376,9 +393,14 @@ function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisua
         surface: surfaceGroup(tags.surface), use, divider, footHalf,
         below: (!!tags.tunnel && tags.tunnel !== 'no') || Number(tags.layer) < 0,
         above: (!!tags.bridge && tags.bridge !== 'no') || Number(tags.layer) > 0,
-        polygon: [...left, ...right.reverse()].map(frame.toLoc)
+        polygon: [
+            ...left,
+            ...(ends.endsWith('true') && points.length > 1 ? endArc(points[points.length - 1], unit(sub(points[points.length - 1], points[points.length - 2])), width / 2) : []),
+            ...right.reverse(),
+            ...(ends.startsWith('true') && points.length > 1 ? endArc(points[0], unit(sub(points[0], points[1])), width / 2) : [])
+        ].map(frame.toLoc)
     };
-    pathCache.set(way, { nodes, stretch, shape });
+    pathCache.set(way, { nodes, stretch, ends, shape });
     return shape;
 }
 

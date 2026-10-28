@@ -154,7 +154,7 @@ describe('parseLanes', () => {
         const service = parseLanes({ highway: 'service' });
         expect(service.lanes.forward).toHaveLength(1);
         expect(service.lanes.backward).toHaveLength(1);
-        for (const tags of [{ service: 'driveway' }, { service: 'alley' }, { service: 'drive-through' }, { narrow: 'yes' }, { width: '3.5' }] as Tags[]) {
+        for (const tags of [{ service: 'driveway' }, { service: 'alley' }, { service: 'drive-through' }, { service: 'fuel' }, { narrow: 'yes' }, { width: '3.5' }] as Tags[]) {
             const one = parseLanes({ highway: 'service', ...tags });
             expect(one.lanes.both_ways).toHaveLength(1);
             expect(one.lanes.forward).toHaveLength(0);

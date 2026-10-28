@@ -11,7 +11,7 @@ en:
       tools: Use Paint to apply one value to many lanes, Width to drag lane widths, and Connect to link lanes across a junction.
       markings: Use Markings to place crossings, stop and give way signs, signals and traffic calming.
       save: Every change can be undone. Save uploads your changes with a changeset comment.
-    rules: "Map what is on the ground: use your own survey, the aerial imagery offered here and street-level photos you are allowed to use. Never copy from Google or other maps. Change one road at a time and check it before saving."
+    rules: "Map what is on the ground: use your own survey, the aerial imagery offered here and street-level photos you are allowed to use. Never copy from Google or other maps. Change one road at a time and check it before saving. Don't tag for the renderer: tag what is there, not what makes Lane Studio draw it the way you would like. If a road looks wrong but its tags match what is there, report it rather than changing the tags."
     wiki: "Read more on the wiki:"
     start: Start mapping
   section:
@@ -294,6 +294,8 @@ en:
     hide_landuse: Hide land use
     brand_logos: Show brand logos
     brand_logos_tip: "Shows the logo of a shop, restaurant or other brand (brand:wikidata=*) in place of its marker, looked up on Wikidata and Wikimedia Commons."
+    renderer_note: "Lane Studio draws what the tags say. Don't tag for the renderer: tag what is on the ground, even where the drawing looks wrong, and report the drawing instead."
+    renderer_link: Tagging for the renderer
     hide_landuse_tip: "Hides land use areas (landuse=*) alone. Map Data's Land Use also hides car parks and other surfaces; this keeps them."
     about: About Lane Studio
     whats_new_option: Show what's new after an update

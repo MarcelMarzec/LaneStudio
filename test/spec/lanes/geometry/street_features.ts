@@ -172,6 +172,26 @@ describe('streetGeometry: traffic calming', () => {
 });
 
 
+describe('streetGeometry: rounded path ends', () => {
+    it('rounds a footway\'s free ends, and not a crossing\'s', () => {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(40, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags: { highway: 'footway' } }),
+            new iD.osmNode({ id: 'n3', loc: at(0, 20) }),
+            new iD.osmNode({ id: 'n4', loc: at(0, 30) }),
+            new iD.osmWay({ id: 'w2', nodes: ['n3', 'n4'], tags: { highway: 'footway', footway: 'crossing' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const { paths } = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
+        // two straight sides of two points each, and a half circle at each end
+        expect(paths.find(p => p.id === 'w1')!.polygon.length).toBeGreaterThan(8);
+        expect(paths.find(p => p.id === 'w2')!.polygon.length).toBe(4);
+    });
+});
+
+
 describe('streetGeometry: forward, backward or both', () => {
     function build(tags: Tags) {
         const entities = [
