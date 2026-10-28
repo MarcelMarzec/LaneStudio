@@ -209,6 +209,45 @@
 .ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-70, .ideditor.lane-studio .speed-swatch.speed-70 { fill: var(--speed-70); background: var(--speed-70); }
 .ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-other, .ideditor.lane-studio .speed-swatch.speed-other { fill: var(--speed-other); background: var(--speed-other); }
 .ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-missing, .ideditor.lane-studio .speed-swatch.speed-missing { fill: var(--speed-missing); background: var(--speed-missing); }
+/* a limit set by its type is the same colour with a pattern over it (lanes-speed-<kind>-<class> in svg/defs.ts) */
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-10.speed-kind-national { fill: url(#lanes-speed-national-10); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-20.speed-kind-national { fill: url(#lanes-speed-national-20); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-30.speed-kind-national { fill: url(#lanes-speed-national-30); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-40.speed-kind-national { fill: url(#lanes-speed-national-40); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-50.speed-kind-national { fill: url(#lanes-speed-national-50); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-60.speed-kind-national { fill: url(#lanes-speed-national-60); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-70.speed-kind-national { fill: url(#lanes-speed-national-70); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-other.speed-kind-national { fill: url(#lanes-speed-national-other); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-10.speed-kind-motorway { fill: url(#lanes-speed-motorway-10); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-20.speed-kind-motorway { fill: url(#lanes-speed-motorway-20); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-30.speed-kind-motorway { fill: url(#lanes-speed-motorway-30); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-40.speed-kind-motorway { fill: url(#lanes-speed-motorway-40); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-50.speed-kind-motorway { fill: url(#lanes-speed-motorway-50); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-60.speed-kind-motorway { fill: url(#lanes-speed-motorway-60); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-70.speed-kind-motorway { fill: url(#lanes-speed-motorway-70); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-other.speed-kind-motorway { fill: url(#lanes-speed-motorway-other); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-10.speed-kind-zone { fill: url(#lanes-speed-zone-10); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-20.speed-kind-zone { fill: url(#lanes-speed-zone-20); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-30.speed-kind-zone { fill: url(#lanes-speed-zone-30); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-40.speed-kind-zone { fill: url(#lanes-speed-zone-40); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-50.speed-kind-zone { fill: url(#lanes-speed-zone-50); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-60.speed-kind-zone { fill: url(#lanes-speed-zone-60); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-70.speed-kind-zone { fill: url(#lanes-speed-zone-70); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-other.speed-kind-zone { fill: url(#lanes-speed-zone-other); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-10.speed-kind-restricted { fill: url(#lanes-speed-restricted-10); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-20.speed-kind-restricted { fill: url(#lanes-speed-restricted-20); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-30.speed-kind-restricted { fill: url(#lanes-speed-restricted-30); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-40.speed-kind-restricted { fill: url(#lanes-speed-restricted-40); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-50.speed-kind-restricted { fill: url(#lanes-speed-restricted-50); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-60.speed-kind-restricted { fill: url(#lanes-speed-restricted-60); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-70.speed-kind-restricted { fill: url(#lanes-speed-restricted-70); }
+.ideditor.lane-studio.lanes-speed .lanes-layer .lanes-group path.speed-other.speed-kind-restricted { fill: url(#lanes-speed-restricted-other); }
+/* and in the key: the pattern over a neutral grey */
+.ideditor.lane-studio .speed-swatch.speed-kind-national { background: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.5) 0 3px, var(--speed-other) 3px 7px); }
+.ideditor.lane-studio .speed-swatch.speed-kind-motorway { background: repeating-linear-gradient(45deg, #1d5bbf 0 3px, var(--speed-other) 3px 7px); }
+.ideditor.lane-studio .speed-swatch.speed-kind-zone { background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 1.5px, transparent 2px) 0 0 / 6px 6px, var(--speed-other); }
+.ideditor.lane-studio .speed-swatch.speed-kind-restricted { background: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.45) 0 1px, transparent 1px 5px), repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.45) 0 1px, var(--speed-other) 1px 5px); }
+
 /* with a limit picked, the lane under the pointer shows where a click lands */
 .ideditor.lane-studio.lanes-speed .lanes-layer .lane-target:hover {
     fill: rgba(255, 255, 255, 0.2);

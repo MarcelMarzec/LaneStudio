@@ -49,7 +49,10 @@ footway or pavement to see the streets reachable on foot and the crossings used.
 **Speed Limit** (top bar, or leave with Esc): every lane is coloured by its limit (its own
 `maxspeed:lanes`, else its road's `maxspeed`, or the limit its `maxspeed:type` sets), in mph: 10 to
 70 mph in their own colours, other limits grey, and roads with no limit red with a dashed edge
-(footways and pedestrian ways are not coloured). Junctions are coloured by their roads' limit where
+(footways and pedestrian ways are not coloured). A limit set by its UK type rather than a number
+alone has a pattern over its colour: diagonal black bands for the national limit, blue stripes for a
+motorway, white dots for a 20 zone and cross-hatching for a restricted road, explained under the
+colours in the panel. Junctions are coloured by their roads' limit where
 they agree, else by the main road's (the most major road meeting there). The sidebar shows the colours with how many roads in
 view have each, and lists the roads in view with no limit by name (click one to go to it). Pick a
 limit (or press 1 to 7 for 10 to 70 mph), then click a road to set it on that road, or shift-click a

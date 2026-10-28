@@ -9,7 +9,7 @@ import { actionAddMarking } from '../actions/add_marking';
 import { actionAddSign } from '../actions/add_sign';
 import { laneState } from '../core/lane_state';
 import { laneRouting } from '../core/lane_routing';
-import { junctionSpeedClass, laneSpeed, speedClassOf } from '../core/lane_speed';
+import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind } from '../core/lane_speed';
 import { drawRoutes, laneUnder } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
 import { roadGeometry, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
@@ -411,7 +411,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             if (!road) return '';
             const measure = speed.measure();
             const cls = speedClassOf(lane.values[`${measure}:lanes`], road, measure);
-            return measure === 'minspeed' && cls === 'missing' ? '' : ` speed-${cls}`;
+            if (measure === 'minspeed' && cls === 'missing') return '';
+            // a limit set by its type (national, motorway, 20 zone, restricted road) is patterned over its colour
+            const kind = measure === 'maxspeed' && cls !== 'missing' ? speedTypeKind(lane.values['maxspeed:lanes'], road) : null;
+            return ` speed-${cls}` + (kind ? ` speed-kind-${kind}` : '');
         };
         const laneClass = (piece: RoadPiece, lane: LaneInfo) => {
             const surface = surfaceGroup(lane.values['surface:lanes']) ?? surfaceOf(piece);

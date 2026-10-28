@@ -1,3 +1,4 @@
+import { speedPatternClasses, type SpeedTypeKind } from '../core/lane_speed';
 import { markingColourValues } from './street';
 
 /**
@@ -83,6 +84,28 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
         stroke(pattern('chevron', 14) as any, 'M0 10L7 3L14 10', 2.5);
         stroke(pattern('zigzag', 12) as any, 'M0 9L6 3L12 9', 1.5);
         pattern('dots', 8).append('circle').attr('cx', 4).attr('cy', 4).attr('r', 1.6).attr('fill', colour);
+    }
+
+    // the Speed Limit tool's colours with a pattern over them where the limit is set by its type rather than a
+    // number alone: diagonal black bands for the national limit (as on its sign), blue stripes for a motorway,
+    // white dots for a 20 zone and fine cross-hatching for a restricted road
+    for (const cls of speedPatternClasses) {
+        const pattern = (kind: SpeedTypeKind, size: number, rotate = 0) => {
+            const p = defs.append('pattern')
+                .attr('id', `lanes-speed-${kind}-${cls}`)
+                .attr('patternUnits', 'userSpaceOnUse')
+                .attr('width', size)
+                .attr('height', size)
+                .attr('patternTransform', rotate ? `rotate(${rotate})` : null);
+            // (the colour is the tool's, set in 40_routing.css)
+            p.append('rect').attr('width', size).attr('height', size).style('fill', `var(--speed-${cls})`);
+            return p;
+        };
+        pattern('national', 10, 45).append('rect').attr('width', 3).attr('height', 10).attr('fill', 'rgba(0, 0, 0, 0.5)');
+        pattern('motorway', 10, 45).append('rect').attr('width', 3).attr('height', 10).attr('fill', '#1d5bbf');
+        pattern('zone', 8).append('circle').attr('cx', 4).attr('cy', 4).attr('r', 1.5).attr('fill', 'rgba(255, 255, 255, 0.85)');
+        pattern('restricted', 8, 45).append('path').attr('d', 'M0 0V8M0 0H8')
+            .attr('fill', 'none').attr('stroke', 'rgba(0, 0, 0, 0.45)').attr('stroke-width', 1.5);
     }
 
     // surface textures seen from above: paving slabs, setts, gravel

@@ -2,7 +2,7 @@ import { t } from '../../core/localizer';
 import { modeBrowse } from '../../modes/browse';
 import type { osmWay } from '../../osm/way';
 import { svgIcon } from '../../svg/icon';
-import { colouredLimits, laneSpeed, speedClassOf, type SpeedClass, type SpeedMeasure } from '../core/lane_speed';
+import { colouredLimits, laneSpeed, speedClassOf, speedTypeKind, type SpeedClass, type SpeedMeasure, type SpeedTypeKind } from '../core/lane_speed';
 import { isLaneRoad } from '../core/roads';
 import { samePick, speedRoundels } from './speed_roundels';
 
@@ -84,6 +84,23 @@ export function speedPanel(context: iD.Context) {
             item.append('span').attr('class', 'speed-key-label')
                 .text(typeof cls === 'number' ? t('_lanes.speed.mph', { n: cls }) : t(`_lanes.speed_tool.${cls}`));
             item.append('span').attr('class', 'speed-key-count').text(t('_lanes.speed_tool.roads', { n: counts.get(cls) ?? 0 }));
+        }
+
+        // limits set by their type are patterned over their colour: what each pattern means
+        if (!minimum) {
+            const kinds = new Map<SpeedTypeKind, number>();
+            for (const road of roads) {
+                const kind = speedTypeKind(undefined, road);
+                if (kind) kinds.set(kind, (kinds.get(kind) ?? 0) + 1);
+            }
+            legend.append('p').attr('class', 'routing-hint').text(t('_lanes.speed_tool.patterns_hint'));
+            const patterns = legend.append('ul').attr('class', 'speed-key speed-key-patterns');
+            for (const kind of ['national', 'motorway', 'zone', 'restricted'] as SpeedTypeKind[]) {
+                const item = patterns.append('li').classed('none-in-view', !kinds.get(kind));
+                item.append('span').attr('class', `speed-swatch speed-kind-${kind}`);
+                item.append('span').attr('class', 'speed-key-label').text(t(`_lanes.speed_tool.patterns.${kind}`));
+                item.append('span').attr('class', 'speed-key-count').text(t('_lanes.speed_tool.roads', { n: kinds.get(kind) ?? 0 }));
+            }
         }
 
         // roads with no limit, one line per road name (a road is often many ways): click one to go to it

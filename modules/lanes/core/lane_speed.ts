@@ -2,10 +2,27 @@ import { dispatch as d3_dispatch } from 'd3-dispatch';
 
 import type { osmWay } from '../../osm/way';
 import { highwayRank } from '../geometry/road_geometry';
-import { mphOf, roadMaxspeed, type SpeedPick } from '../model/speed_limits';
+import { mphOf, roadMaxspeed, speedTypeOf, type SpeedPick } from '../model/speed_limits';
 
 /** How a lane's speed limit is coloured: a limit in mph, a limit no roundel shows, or none tagged */
 export type SpeedClass = number | 'other' | 'missing';
+
+/** How a limit set by its UK type is patterned over its colour: the national limit, a motorway, a 20 zone, a restricted road */
+export type SpeedTypeKind = 'national' | 'motorway' | 'zone' | 'restricted';
+
+/** The colour classes that can carry a pattern (see `lanes-speed-<kind>-<class>` in svg/defs.ts) */
+export const speedPatternClasses = ['10', '20', '30', '40', '50', '60', '70', 'other'];
+
+/**
+ * The pattern a lane's speed limit gets in the Speed Limit tool: its road's UK limit type, unless the lane has a
+ * limit of its own (`maxspeed:lanes`), which is a number
+ */
+export function speedTypeKind(laneValue: string | undefined, road: osmWay): SpeedTypeKind | null {
+    if (laneValue) return null;
+    const type = speedTypeOf(road.tags);
+    return type === 'GB:motorway' ? 'motorway' : type === 'GB:zone20' ? 'zone' : type === 'GB:nsl_restricted' ? 'restricted'
+        : type ? 'national' : null;
+}
 
 /** What the Speed Limit tool shows and sets: the speed limit (`maxspeed`) or the minimum speed (`minspeed`) */
 export type SpeedMeasure = 'maxspeed' | 'minspeed';

@@ -401,6 +401,12 @@ en:
     hint: Pick a limit, then click roads to set it. Lanes are coloured by their limit; roads with none are red.
     hint_picked: Click a road to set this limit on the whole road; shift-click a lane to set it on that lane only. Esc lets go.
     key: On the map
+    patterns_hint: "Limits set by their type rather than a number alone have a pattern over their colour:"
+    patterns:
+      national: National speed limit
+      motorway: Motorway
+      zone: 20 mph zone
+      restricted: Restricted road
     other: Another limit
     missing: No speed limit
     roads: "{n} in view"

@@ -8,6 +8,15 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r7
+##### 2026-Oct-28
+
+#### Roads and signs
+* In the Speed Limit tool, a limit set by its type has a pattern over its colour, so it stands apart
+  from a plain `maxspeed`: diagonal bands for the national limit, blue stripes for a motorway, dots
+  for a 20 zone and cross-hatching for a restricted road, with what each means under the colours in
+  the panel
+
 # 26.10.28r6
 ##### 2026-Oct-28
 

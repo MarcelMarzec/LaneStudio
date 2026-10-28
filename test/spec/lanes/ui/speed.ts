@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { load as loadYaml } from 'js-yaml';
 import { select as d3_select } from 'd3-selection';
 
-import { junctionSpeedClass, laneSpeed, speedClassOf } from '../../../../modules/lanes/core/lane_speed';
+import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind } from '../../../../modules/lanes/core/lane_speed';
 import {
     mphOf, roadMaxspeed, roadSpeedPick, samePick, speedTypeOf, withRoadMinspeed, withRoadSpeed, withSpeedType
 } from '../../../../modules/lanes/ui/speed_roundels';
@@ -59,6 +59,16 @@ describe('speed limits in mph', () => {
         expect(roadSpeedPick({ 'maxspeed:type': 'GB:nsl_restricted' })).toEqual({ kind: 'type', type: 'GB:nsl_restricted' });
         // maxspeed=national alone, by the kind of road
         expect(roadSpeedPick({ highway: 'trunk', dual_carriageway: 'yes', maxspeed: 'national' })).toEqual({ kind: 'type', type: 'GB:nsl_dual' });
+    });
+
+    it('patterns a limit set by its type, unless the lane has a number of its own', () => {
+        expect(speedTypeKind(undefined, road({ 'maxspeed:type': 'GB:nsl_single' }))).toBe('national');
+        expect(speedTypeKind(undefined, road({ 'maxspeed:type': 'GB:nsl_dual', maxspeed: '70 mph' }))).toBe('national');
+        expect(speedTypeKind(undefined, road({ 'source:maxspeed': 'GB:motorway' }))).toBe('motorway');
+        expect(speedTypeKind(undefined, road({ 'maxspeed:type': 'GB:zone20' }))).toBe('zone');
+        expect(speedTypeKind(undefined, road({ 'maxspeed:type': 'GB:nsl_restricted' }))).toBe('restricted');
+        expect(speedTypeKind(undefined, road({ maxspeed: '30 mph' }))).toBeNull();
+        expect(speedTypeKind('40 mph', road({ 'maxspeed:type': 'GB:nsl_single' }))).toBeNull();
     });
 
     it('colours a junction by its roads\' limit, or the main road\'s where they differ', () => {
