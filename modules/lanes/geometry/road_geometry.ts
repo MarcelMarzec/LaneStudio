@@ -1026,6 +1026,22 @@ function alignBranches(node: osmNode, graph: coreGraph, visuals: Map<string, Way
     }
 }
 
+/**
+ * Whether traffic is stopped or gives way where a road ends at a junction: a give way, stop or traffic signals on
+ * it within 30 m of its end. Such a road meets the road it joins at a junction rather than merging into its lanes.
+ */
+function controlledEnd(arm: Arm, graph: coreGraph): boolean {
+    const ids = arm.nodeIndex === 0 ? arm.way.nodes : [...arm.way.nodes].reverse();
+    const end = graph.entity(ids[0]) as osmNode;
+    const frame = metricFrame(end.loc as Vec2);
+    for (const id of ids) {
+        const node = graph.entity(id) as osmNode;
+        if (len(frame.toMetres(node.loc as Vec2)) > 30) break;
+        if (['give_way', 'stop', 'traffic_signals'].includes(node.tags.highway ?? '')) return true;
+    }
+    return false;
+}
+
 /** The most a slip road is shifted to meet a road: as far as that road's outer edge */
 const branchShiftLimit = (arm: Arm) => Math.max(maxJoinShift, (arm.right - arm.left) / 2 + 0.5);
 
@@ -1055,8 +1071,10 @@ function alignMerges(node: osmNode, graph: coreGraph, visuals: Map<string, WayVi
             if (through.includes(k) || !side.isEnd || hasPlacement(side.way) || side.way.id === down.way.id) return;
             const sideDirection = armLaneDirection(side, true);
             const sideLanes = side.layout.model.lanes[sideDirection];
-            // only a one-way road arriving at a shallow angle, not a side road
+            // only a one-way road arriving at a shallow angle, not a side road (nor one that gives way, stops or has
+            // signals at its end, as Lister Way does at Sleaford Road, Boston: it meets the road, it doesn't merge)
             if (!sideLanes.length || side.layout.model.lanes[armLaneDirection(side, false)].length) return;
+            if (controlledEnd(side, graph)) return;
             const arriving = scale(side.direction, -1);
             const angle = Math.acos(Math.max(-1, Math.min(1, dot(unit(arriving), unit(down.direction))))) * 180 / Math.PI;
             if (angle > 60) return;

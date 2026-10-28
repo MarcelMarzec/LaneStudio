@@ -337,14 +337,15 @@
 .ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm g.vertex.lanes-drawn-feature.active {
     display: inline;
 }
-/* brand logos from Wikidata, on a white tile, in place of iD's point markers (hidden under them) */
+/* brand logos from Wikidata, on a white tile, in place of iD's point markers: in iD's points layer, over every
+   other area and feature */
 .ideditor.lane-studio .surface.lanes-visible .layer-osm .points g.point.lanes-logo-feature {
     display: none;
 }
-.ideditor.lane-studio .lanes-layer .brand-logo { cursor: pointer; pointer-events: visiblePainted; }
-.ideditor.lane-studio .lanes-layer .brand-logo-tile { fill: #fff; stroke: rgba(0, 0, 0, 0.45); stroke-width: 1; }
-.ideditor.lane-studio .lanes-layer .brand-logo.hover .brand-logo-tile { stroke: #ffee00; stroke-width: 2; }
-.ideditor.lane-studio .lanes-layer .brand-logo.selected .brand-logo-tile { stroke: #f6634f; stroke-width: 2.5; }
+.ideditor.lane-studio .layer-osm .brand-logo { cursor: pointer; pointer-events: visiblePainted; }
+.ideditor.lane-studio .layer-osm .brand-logo-tile { fill: #fff; stroke: rgba(0, 0, 0, 0.45); stroke-width: 1; }
+.ideditor.lane-studio .layer-osm .brand-logo.hover .brand-logo-tile { stroke: #ffee00; stroke-width: 2; }
+.ideditor.lane-studio .layer-osm .brand-logo.selected .brand-logo-tile { stroke: #f6634f; stroke-width: 2.5; }
 
 /* settings: hide land use alone (landuse=*), iD's areas and Lane Studio's surfaces drawn from them */
 .ideditor.lane-studio.lanes-hide-landuse .layer-osm .tag-landuse,

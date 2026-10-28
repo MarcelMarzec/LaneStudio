@@ -104,6 +104,18 @@ describe('slip roads', () => {
         // the gained lane is the left one of the four
         expect(visuals.get('w3')?.end).toBeCloseTo((after.edges[0] + after.edges[1]) / 2, 1);
     });
+
+    it('keeps a one-way road that gives way at its end on its way, not merged into a lane', () => {
+        // as Lister Way meets Sleaford Road, Boston: one lane arriving at a slant, giving way 5 m before the road
+        const graph = graphOf([
+            node('n1', -300, 0), node('n2', 0, 0), node('n3', 300, 0), node('n4', -200, 40), node('n6', -5, 1, { highway: 'give_way' }),
+            way('w1', ['n1', 'n2'], { highway: 'trunk', oneway: 'yes', lanes: '1' }),
+            way('w2', ['n2', 'n3'], { highway: 'trunk', oneway: 'yes', lanes: '2' }),
+            way('w3', ['n4', 'n6', 'n2'], { highway: 'tertiary', oneway: 'yes', lanes: '1' })
+        ]);
+        const { visuals } = roadGeometry(waysOf(graph), graph);
+        expect(visuals.get('w3')?.end ?? 0).toBe(0);
+    });
 });
 
 

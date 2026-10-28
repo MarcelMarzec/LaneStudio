@@ -8,6 +8,17 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r9
+##### 2026-Oct-28
+
+#### Lanes and junctions
+* A one-way road that gives way, stops or has traffic signals at its end is no longer moved sideways to
+  merge into a lane of the road it meets: Lister Way at Sleaford Road, Boston, was drawn a lane over,
+  across the pavement and cycle path
+
+#### Editing
+* Brand logos are drawn over every other area and feature, not under them
+
 # 26.10.28r8
 ##### 2026-Oct-28
 

@@ -103,7 +103,7 @@ lane lines and arrows, shortcut `K`)
   filter also hides car parks and other surfaces; this keeps them.
 - Show brand logos (on unless turned off): a shop, restaurant or other feature tagged
   `brand:wikidata=*` shows its brand's logo on a white tile in place of iD's marker (at a point, or in
-  the middle of an area), from zoom 17. The logo is the brand's small logo (P8972) or logo image (P154)
+  the middle of an area), from zoom 17, drawn over every other area and feature. The logo is the brand's small logo (P8972) or logo image (P154)
   on Wikidata, loaded from Wikimedia Commons; a brand without one keeps iD's marker. Clicking the tile
   selects the feature.
 - About Lane Studio: "Show what's new after an update" (on unless turned off), "See what's new" (the
@@ -308,6 +308,9 @@ hidden).
   the middle of it (stop, give way and signal lines, symbols and crossings move with it), the area is
   drawn as its surface, and hovering or clicking the area selects that road. A road the area only
   touches, like the main road a side road's area reaches, is left as it is (no box, unbroken kerbs).
+- A one-way road joining a road that carries on at a shallow angle (a slip road) has its end moved onto
+  the lane it becomes, unless it gives way, stops or has traffic signals within 30 m of its end: then it
+  meets the road at a junction, on its own line (as Lister Way does at Sleaford Road, Boston).
 - Shifts are capped: lining up with a joining road moves a road by at most one lane (3.5 m), and
   fitting it to an area by at most half its width; bigger gaps mean the lanes or the area do not
   match, and moving that far would push the road into its neighbours.

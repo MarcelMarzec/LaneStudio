@@ -158,6 +158,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function clear() {
         _marked = null;
         _layer.selectAll('g.lanes-group > *').remove();
+        context.surface().selectAll('g.lanes-brand-logos > *').remove();
         hideIdLabels([]);
         markSurface(false);
     }
@@ -181,11 +182,24 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     }
 
 
+    /**
+     * Where brand logos are drawn: in iD's points layer, above its areas, lines and markers (the lanes layer is under
+     * iD's data)
+     */
+    function logoLayer(): Selection {
+        const points = context.surface().select<SVGGElement>('.layer-osm.points');
+        let layer = points.select<SVGGElement>('g.lanes-brand-logos');
+        if (layer.empty()) layer = points.append('g').attr('class', 'lanes-brand-logos');
+        // kept last, so the logos stay on top of the markers iD adds
+        (layer.node()?.parentNode as Element | null)?.appendChild(layer.node()!);
+        return layer as unknown as Selection;
+    }
+
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
                 'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'tram-rails', 'kerbs',
-                'paths-over', 'rail-over-road', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols', 'logos',
+                'paths-over', 'rail-over-road', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols',
                 'shields', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
                 'surface-targets', 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
             ])
@@ -765,8 +779,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const way = graph.hasEntity(id as osmWay['id']) as osmWay | undefined;
             if (way?.type === 'way') way.nodes.forEach(n => drawnNodes.add(n));
         }
-        // brands' logos from Wikidata, from the zoom iD shows points at
-        const logos = drawBrandLogos(group('logos'), visible, graph, projection, settings.showLogos() && zoom >= 17);
+        // brands' logos from Wikidata, from the zoom iD shows points at, over everything else on the map
+        const logos = drawBrandLogos(logoLayer(), visible, graph, projection, settings.showLogos() && zoom >= 17);
         _marked = { drawn, drawnWays, drawnNodes, spaces: new Set(parkingSpaces.spaces.map(space => space.id)), logos };
         markIdFeatures();
     }
