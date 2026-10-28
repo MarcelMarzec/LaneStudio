@@ -194,7 +194,7 @@ en:
       camera_red_light: Red light camera
   connect:
     pick_from: Click the lane traffic comes from, near the junction.
-    pick_to: Now click the lane on the next road it leads to. Clicking the same pair again removes the connection.
+    pick_to: Now click the lane on the next road it leads to. The lanes it can lead to are outlined in blue, and those it is already connected to are filled. Clicking the same pair again removes the connection.
     same_road: Pick a lane on another road.
     not_joined: These roads do not meet at an end node. Split the roads at the junction first.
     wrong_direction: Traffic in the first lane cannot drive into the second lane here.

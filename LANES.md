@@ -55,7 +55,7 @@ them (the pin survives panning; click the map again to let go). Pick Car, Bus, B
 keeps to the lanes, access tags, height and weight limits and roads open to it. Routes follow turn
 arrows, lane connections and turn restrictions (via nodes and via ways, including U-turns through the
 gap of a dual carriageway), keep to their lane at the first junction and along links too short to
-change lanes on, and leave a roundabout only by the exits the entry lane's arrows point to. Hover a
+change lanes on (a lane connected to several lanes of the next road carries on from each of them), and leave a roundabout only by the exits the entry lane's arrows point to. Hover a
 footway or pavement to see the streets reachable on foot and the crossings used.
 
 **Speed Limit** (top bar, or leave with Esc): every lane is coloured by its limit (its own
@@ -131,7 +131,7 @@ lane lines and arrows, shortcut `K`)
 | Paint | Pick a lane type or a value (turn, lane change, speed, access, surface, width), then click lanes to apply it, one undo step per click |
 | Width | Drag lane lines and kerbs of the selected road; writes `width:lanes` in metres |
 | Markings | Click a road to place a crossing, stop or give way sign, traffic signals, traffic calming or a mini-roundabout |
-| Connect | Click the lane traffic comes from, then the lane on the next road; creates a `type=connectivity` relation (click the same pair again to remove it) |
+| Connect | Click the lane traffic comes from, then the lane on the next road; creates a `type=connectivity` relation (click the same pair again to remove it). Once the first lane is picked, every lane it can be connected to is outlined in blue, and the lanes it is already connected to are filled |
 | Signs | Pick a sign (UK signs, a variable message sign or a camera), then click a lane to place it beside the road facing that lane's traffic |
 
 Esc, clicking empty map or selecting nothing returns to Select.

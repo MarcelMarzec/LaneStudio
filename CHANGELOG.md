@@ -8,6 +8,18 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r15
+##### 2026-Oct-28
+
+#### Routing tool
+* A lane connected to several lanes of the next road is followed into each of them, so routes carry on
+  through a short link from every lane the connection names: Lumley Road at Roman Bank now reaches
+  Wainfleet Road as well as Richmond Drive
+
+#### Editing
+* With the Connect tool, once the first lane is picked, every lane it can be connected to is outlined
+  in blue, and the lanes it is already connected to are filled
+
 # 26.10.28r14
 ##### 2026-Oct-28
 

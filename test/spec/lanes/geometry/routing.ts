@@ -94,6 +94,29 @@ describe('routes through a junction', () => {
         expect(result.incoming.map(r => r.runs[0].wayID).sort()).toEqual(['w1', 'w4']);
         expect(result.incoming.find(r => r.runs[0].wayID === 'w1')!.runs[0]).toMatchObject({ from: 0, to: 1 });
     });
+
+    it('follows a lane connection into every lane it names, across a link too short to change lanes on', () => {
+        // Lumley Road (w1, one lane) joins Roman Bank (w5) at n0, onto a 12 m link (w2: left|through|through)
+        // that splits at n6 into a road off to the left (w3) and the road ahead (w4); the connection takes
+        // Lumley Road's lane into all three lanes of the link
+        const graph = graphOf([
+            new iD.osmNode({ id: 'n1', loc: at(80, -20) }), new iD.osmNode({ id: 'n5', loc: at(80, 30) }), new iD.osmNode({ id: 'n0', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n6', loc: at(-12, 0) }), new iD.osmNode({ id: 'n3', loc: at(-12, -80) }), new iD.osmNode({ id: 'n4', loc: at(-100, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n0'], tags: { highway: 'secondary', oneway: 'yes', lanes: '1' } }),
+            new iD.osmWay({ id: 'w5', nodes: ['n5', 'n0'], tags: { highway: 'trunk', oneway: 'yes', lanes: '2', 'turn:lanes': 'through|through' } }),
+            new iD.osmWay({ id: 'w2', nodes: ['n0', 'n6'], tags: { highway: 'trunk', oneway: 'yes', lanes: '3', 'turn:lanes': 'left|through|through' } }),
+            new iD.osmWay({ id: 'w3', nodes: ['n6', 'n3'], tags: { highway: 'residential', oneway: 'yes', lanes: '1' } }),
+            new iD.osmWay({ id: 'w4', nodes: ['n6', 'n4'], tags: { highway: 'trunk', oneway: 'yes', lanes: '2' } }),
+            new iD.osmRelation({
+                id: 'r1', tags: { type: 'connectivity', connectivity: '1:1,2,3' },
+                members: [{ id: 'w1', type: 'way', role: 'from' }, { id: 'n0', type: 'node', role: 'via' }, { id: 'w2', type: 'way', role: 'to' }]
+            })
+        ]);
+        const routes = vehicleRoutes(graph, 'w1', { direction: 'forward', index: 0 }, 0, 1).routes;
+        expect([...new Set(routes.map(r => r.moves[1]?.toWayID))].sort()).toEqual(['w3', 'w4']);
+        // one route per way through, not one per lane
+        expect(routes.length).toBe(new Set(routes.map(r => r.moves.map(m => m.toWayID).join())).size);
+    });
 });
 
 

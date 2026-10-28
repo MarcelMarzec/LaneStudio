@@ -240,6 +240,18 @@
     stroke: #6cf;
     stroke-width: 2;
 }
+/* the lanes the picked lane can be connected to, and those it already is */
+.ideditor.lane-studio .lanes-layer .lane-connect-to {
+    fill: rgba(102, 204, 255, 0.12);
+    stroke: #6cf;
+    stroke-width: 1.5;
+    stroke-dasharray: 5, 4;
+}
+.ideditor.lane-studio .lanes-layer .lane-connect-connected {
+    fill: rgba(102, 204, 255, 0.28);
+    stroke: #6cf;
+    stroke-width: 2;
+}
 .ideditor.lane-studio.lanes-tool-connect .lanes-layer .lane-target { cursor: alias; }
 .ideditor.lane-studio.lanes-tool-connect .layer-touch .target { pointer-events: none; }
 

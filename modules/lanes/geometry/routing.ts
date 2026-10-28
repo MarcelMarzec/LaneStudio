@@ -403,6 +403,9 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
     const routes: Route[] = [];
     const blocked: BlockedMove[] = [];
     const blockedKeys = new Set<string>();
+    const routeKeys = new Set<string>();
+    /** the lanes already explored onward from each road reached, by the roads taken to it */
+    const explored = new Set<string>();
     const way = graph.entity(wayID) as osmWay;
     const step = from <= to ? 1 : -1;
     const startRef: LaneRef = ref.direction === 'both_ways' ? { direction: directionOf(step), index: 0 } : ref;
@@ -450,6 +453,10 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
         if (end !== 'limit' && (last?.ring === 'enter' || last?.ring === 'round')) return;
         // nor is a lane that goes nowhere: the panel says so, and the ways it may not take are drawn
         if (!s.moves.length) return;
+        // one route per sequence of roads: the same roads through another lane (a connection into several lanes) are the same route
+        const key = `${s.moves.map(m => `${m.nodeID}>${m.toWayID}`).join(',')}:${end}`;
+        if (routeKeys.has(key)) return;
+        routeKeys.add(key);
         if (routes.length < limit.routes) routes.push({ runs: [...s.runs, run], moves: s.moves, length: s.length, end });
     };
 
@@ -476,14 +483,16 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
         const lanes = s.strict || short ? [s.enter.index] : options.map((_, lane) => lane)
             .filter(lane => !laneClosed(j.arms[i].layout, { direction: s.enter.direction, index: lane }, upWay.tags, profile));
         // one way on per road reached, from the lane nearest the one driven in
-        const byExit = new Map<number, { lane: number; move: Move }>();
+        // (a lane connection may lead one lane into several: each is a way on)
+        const byExit = new Map<number, { lane: number; moves: Move[] }>();
         for (const lane of lanes.sort((a, b) => Math.abs(a - s.enter.index) - Math.abs(b - s.enter.index))) {
             for (const [k, moves] of options[lane] ?? []) {
-                if (!byExit.has(k)) byExit.set(k, { lane, move: moves[0] });
+                if (!byExit.has(k)) byExit.set(k, { lane, moves });
             }
         }
         let went = 0;
-        for (const [k, { lane, move }] of byExit) {
+        for (const [k, { lane, moves: laneMoves }] of byExit) {
+            const move = laneMoves[0];
             const down = j.arms[k];
             const downDirection = junctionRules.armLaneDirection(down, false);
             // on the roundabout or not, by the roads' own tags (where a ring drawn as one closed way closes, only it meets)
@@ -518,12 +527,13 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
                 blockMove(j, upWay, down, 'road closed to this vehicle');
                 continue;
             }
-            // into the lane lined up, or the nearest lane open to the vehicle
+            // into each lane lined up, or the nearest lane open to the vehicle
             const count = lanesOf(down.way, graph, downDirection).length;
-            const open = Array.from({ length: count }, (_, m) => m)
-                .filter(m => !laneClosed(down.layout, { direction: downDirection, index: m }, down.way.tags, profile))
-                .sort((a, b) => Math.abs(a - move.toLane) - Math.abs(b - move.toLane));
-            if (!open.length) {
+            const openLanes = Array.from({ length: count }, (_, m) => m)
+                .filter(m => !laneClosed(down.layout, { direction: downDirection, index: m }, down.way.tags, profile));
+            const nearest = (toLane: number) => openLanes.reduce<number | undefined>((a, m) => (a === undefined || Math.abs(m - toLane) < Math.abs(a - toLane) ? m : a), undefined);
+            const entries = [...new Set(laneMoves.map(m => nearest(m.toLane)))].filter((m): m is number => m !== undefined);
+            if (!entries.length) {
                 blockMove(j, upWay, down, laneClosed(down.layout, { direction: downDirection, index: move.toLane }, down.way.tags, profile) ?? 'closed');
                 continue;
             }
@@ -544,12 +554,19 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
                 ...(ring === 'exit' ? { exit: ringExits + 1 } : {})
             };
             went++;
-            explore({
-                way: down.way, from: down.nodeIndex, step: nextStep,
-                enter: { direction: downDirection, index: open[0] }, strict: false,
-                runs: [...s.runs, { ...run, leave: { direction: s.enter.direction, index: lane } }],
-                moves: [...s.moves, moveInfo], length: length + 3, visited: new Set([...s.visited, key]), ringExits, ringArrows, feeders
-            });
+            const moves = [...s.moves, moveInfo];
+            const roads = moves.map(m => `${m.nodeID}>${m.toWayID}`).join(',');
+            for (const entry of entries) {
+                // (the same roads into the same lane lead on the same ways)
+                if (explored.has(`${roads}:${entry}`)) continue;
+                explored.add(`${roads}:${entry}`);
+                explore({
+                    way: down.way, from: down.nodeIndex, step: nextStep,
+                    enter: { direction: downDirection, index: entry }, strict: false,
+                    runs: [...s.runs, { ...run, leave: { direction: s.enter.direction, index: lane } }],
+                    moves, length: length + 3, visited: new Set([...s.visited, key]), ringExits, ringArrows, feeders
+                });
+            }
         }
         if (!went) finish(here, run, byExit.size ? 'blocked' : 'dead_end');
     };

@@ -16,7 +16,7 @@ import { roadGeometry, type LaneSwap, type LineTrim, type RoadGeometry, type Roa
 import type { LaneInfo, ParkingLayout } from '../geometry/layout';
 import { t } from '../../core/localizer';
 import {
-    parseLanes, parseTurn, formatTurn, dividerAt, setDivider, nextDivider, setLaneValue, setLaneKind,
+    parseLanes, parseTurn, formatTurn, dividerAt, setDivider, nextDivider, setLaneValue, setLaneKind, parseConnectivity,
     type LaneDirection, type LaneModel, type LaneRef
 } from '../model';
 import { laneTools } from '../core/lane_tools';
@@ -24,7 +24,7 @@ import { laneLayout } from '../geometry/layout';
 import { offsetFromWay } from '../geometry/measure';
 import { svgLaneDefs, turnArrowSymbol } from './defs';
 import { drawStreet, drawParking, drawRoadMarkings, joinPaths, pathFor, classChanged, withIdState, attrChanged } from './street';
-import { actionConnectLanes, connectionNode } from '../actions/connect_lanes';
+import { actionConnectLanes, connectionNode, findConnectivity } from '../actions/connect_lanes';
 import { streetGeometry, isCarriagewayArea, type StreetGeometry } from '../geometry/street';
 import { parkingGeometry } from '../geometry/parking';
 import { roadMarkingGeometry } from '../geometry/road_marking';
@@ -786,7 +786,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const fromData = !from ? [] : pieces.filter(piece => piece.wayID === from.wayID).flatMap(piece =>
             piece.layout.lanes.map((lane, i) => ({ lane, key: `${pieceKey(piece)}-${i}`, polygon: piece.lanes[i] }))
                 .filter(x => x.lane.ref.direction === from.ref.direction && x.lane.ref.index === from.ref.index));
-        joinPaths(group('connect-from'), fromData, d => d.key, () => 'lane-connect-from', d => path(d.polygon, true));
+        const toData = connectTargets(from, pieces, graph);
+        joinPaths(group('connect-from'), [...fromData.map(d => ({ ...d, kind: 'from' })), ...toData.map(d => ({ ...d, kind: d.connected ? 'connected' : 'to' }))],
+            d => `${d.kind}-${d.key}`, d => `lane-connect-${d.kind}`, d => path(d.polygon, true));
 
 
         /* selected lanes */
@@ -1275,4 +1277,27 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     drawLanes.redraw = draw;
 
     return drawLanes;
+}
+
+/**
+ * Connect tool: the lanes the lane picked first can be connected to (the lanes leaving the junctions at its
+ * road's ends), and whether it already is
+ */
+function connectTargets(from: { wayID: osmWay['id']; ref: LaneRef } | null, pieces: RoadPiece[], graph: iD.Graph) {
+    const fromWay = from ? graph.hasEntity(from.wayID) as osmWay | undefined : undefined;
+    if (!from || !fromWay) return [];
+    return pieces.filter(piece => piece.wayID !== from.wayID).flatMap(piece => {
+        const toWay = graph.entity(piece.wayID) as osmWay;
+        return piece.layout.lanes.flatMap((lane, i) => {
+            const result = connectionNode(fromWay, from.ref, toWay, lane.ref);
+            if ('problem' in result) return [];
+            // (only the stretch of the next road at the junction)
+            const atJunction = (piece.atWayStart && piece.fromNode === result.nodeID) || (piece.atWayEnd && piece.toNode === result.nodeID);
+            if (!atJunction) return [];
+            const relation = findConnectivity(graph, fromWay.id, result.nodeID, toWay.id);
+            const connected = !!relation && parseConnectivity(relation.tags.connectivity ?? '')
+                .some(g => g.from === `${from.ref.index + 1}` && g.to.some(c => c.to === `${lane.ref.index + 1}`));
+            return [{ key: `${piece.wayID}-${piece.index}-${i}`, polygon: piece.lanes[i], connected }];
+        });
+    });
 }
