@@ -347,6 +347,13 @@
 .ideditor.lane-studio .layer-osm .brand-logo.hover .brand-logo-tile { stroke: #ffee00; stroke-width: 2; }
 .ideditor.lane-studio .layer-osm .brand-logo.selected .brand-logo-tile { stroke: #f6634f; stroke-width: 2.5; }
 
+/* a node Lane Studio draws as what it is (a buffer stop, a sign, a crossing, a road marking): iD's icon is not
+   drawn over it; a vertex keeps a small plain marker and a point its shadow, so either can still be clicked and dragged */
+.ideditor.lane-studio .surface.lanes-visible .layer-osm g.lanes-rendered-node .icon,
+.ideditor.lane-studio .surface.lanes-visible .layer-osm .points g.point.lanes-rendered-node .stroke {
+    display: none;
+}
+
 /* settings: hide land use alone (landuse=*), iD's areas and Lane Studio's surfaces drawn from them */
 .ideditor.lane-studio.lanes-hide-landuse .layer-osm .tag-landuse,
 .ideditor.lane-studio.lanes-hide-landuse .lanes-layer .lanes-landuse {

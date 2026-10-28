@@ -221,7 +221,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             context.features().hidden()].join('|');
     };
     let _drawn: { graph: iD.Graph; key: string } | null = null;
-    let _marked: { drawn: Set<string>; drawnWays: Set<string>; drawnNodes: Set<string>; spaces: Set<string>; logos: Set<string> } | null = null;
+    let _marked: { drawn: Set<string>; drawnWays: Set<string>; drawnNodes: Set<string>; renderedNodes: Set<string>; spaces: Set<string>; logos: Set<string> } | null = null;
     let _geometry: { graph: iD.Graph; ids: string; roads: RoadGeometry; street: StreetGeometry } | null = null;
     let _frame = 0;
 
@@ -775,13 +775,17 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         for (const space of [...parkingSpaces.spaces, ...parkingSpaces.carParks]) drawnWays.add(space.id);
         for (const shape of [...rail.ground, ...rail.trackside, ...rail.overRoad, ...rail.symbols]) (shape.id.startsWith('n') ? drawnNodes : drawnWays).add(shape.id);
         for (const text of roadMarkings.texts) drawnNodes.add(text.id);
+        // the nodes drawn here as what they are (markings, signs, railway equipment…), whose icons iD need not draw too
+        const renderedNodes = new Set<string>([...street.markings, ...street.surfaces, ...signData.signs].map(m => m.nodeID));
+        for (const shape of [...rail.ground, ...rail.trackside, ...rail.overRoad, ...rail.symbols]) if (shape.id.startsWith('n')) renderedNodes.add(shape.id);
+        for (const text of roadMarkings.texts) renderedNodes.add(text.id);
         for (const id of drawnWays) {
             const way = graph.hasEntity(id as osmWay['id']) as osmWay | undefined;
             if (way?.type === 'way') way.nodes.forEach(n => drawnNodes.add(n));
         }
         // brands' logos from Wikidata, from the zoom iD shows points at, over everything else on the map
         const logos = drawBrandLogos(logoLayer(), visible, graph, projection, settings.showLogos() && zoom >= 17);
-        _marked = { drawn, drawnWays, drawnNodes, spaces: new Set(parkingSpaces.spaces.map(space => space.id)), logos };
+        _marked = { drawn, drawnWays, drawnNodes, renderedNodes, spaces: new Set(parkingSpaces.spaces.map(space => space.id)), logos };
         markIdFeatures();
     }
 
@@ -792,7 +796,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
      */
     function markIdFeatures() {
         if (!_marked) return;
-        const { drawn, drawnWays, drawnNodes, spaces, logos } = _marked;
+        const { drawn, drawnWays, drawnNodes, renderedNodes, spaces, logos } = _marked;
         const graph = context.graph();
         const surface = context.surface();
         // (iD draws lines below ground, like tunnels and cuttings, in its `covered` group rather than `lines`)
@@ -803,6 +807,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .each(classChanged('lanes-drawn-feature', d => !!d && drawnWays.has(d.id)));
         surface.selectAll<SVGGElement, OsmEntity>('.layer-osm .vertices g.vertex, .layer-osm .points g.point')
             .each(classChanged('lanes-drawn-feature', d => !!d && drawnNodes.has(d.id)))
+            // a node drawn here as what it is (a buffer stop, a sign, a crossing) loses iD's icon, keeping its marker to click
+            .each(classChanged('lanes-rendered-node', d => !!d && renderedNodes.has(d.id)))
             // street-side parking mapped as a point on a road is already shown by the road's parking strip
             .each(classChanged('lanes-redundant', d => !!d && isStreetParking(d.tags) && graph.parentWays(d).some(isLaneRoad)));
         // a parking space drawn here shows its kind by its colour and symbol, so iD's icon in its middle goes

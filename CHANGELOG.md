@@ -8,6 +8,13 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r10
+##### 2026-Oct-28
+
+#### Editing
+* iD's icons are no longer drawn over features Lane Studio draws itself, such as buffer stops, crossings,
+  gates, signs and road markings; their markers stay, to click and drag
+
 # 26.10.28r9
 ##### 2026-Oct-28
 

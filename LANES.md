@@ -194,7 +194,9 @@ crossing, or up to 10 m past one, stands just before the crossing, and signals t
 crossing draw the crossing with a line each way); `road_marking=*` lines, areas and text; street parking
 with its bays and a layby joining it to the road; and lane connections. Footways, paths, cycleways and
 pedestrian ways are drawn over the roads (where one meets or crosses a road it shows); those in a
-tunnel or below ground (`layer` < 0) stay under them. Everything else is drawn by iD as usual.
+tunnel or below ground (`layer` < 0) stay under them. Everything else is drawn by iD as usual. A node
+Lane Studio draws as what it is (a crossing, a barrier, a sign, a road marking, a buffer stop or other
+railway equipment) has no iD icon drawn over it; it keeps a plain marker to click and drag.
 
 **Parking spaces and car parks**: a parking space mapped as an area of its own
 (`amenity=parking_space`) is drawn with white bay lines on every side but the one facing the aisle or
