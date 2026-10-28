@@ -203,7 +203,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             context.features().hidden()].join('|');
     };
     let _drawn: { graph: iD.Graph; key: string } | null = null;
-    let _marked: { drawn: Set<string>; drawnWays: Set<string>; drawnNodes: Set<string> } | null = null;
+    let _marked: { drawn: Set<string>; drawnWays: Set<string>; drawnNodes: Set<string>; spaces: Set<string> } | null = null;
     let _geometry: { graph: iD.Graph; ids: string; roads: RoadGeometry; street: StreetGeometry } | null = null;
     let _frame = 0;
 
@@ -697,7 +697,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const way = graph.hasEntity(id as osmWay['id']) as osmWay | undefined;
             if (way?.type === 'way') way.nodes.forEach(n => drawnNodes.add(n));
         }
-        _marked = { drawn, drawnWays, drawnNodes };
+        _marked = { drawn, drawnWays, drawnNodes, spaces: new Set(parkingSpaces.spaces.map(space => space.id)) };
         markIdFeatures();
     }
 
@@ -708,7 +708,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
      */
     function markIdFeatures() {
         if (!_marked) return;
-        const { drawn, drawnWays, drawnNodes } = _marked;
+        const { drawn, drawnWays, drawnNodes, spaces } = _marked;
         const graph = context.graph();
         const surface = context.surface();
         // (iD draws lines below ground, like tunnels and cuttings, in its `covered` group rather than `lines`)
@@ -721,6 +721,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .each(classChanged('lanes-drawn-feature', d => !!d && drawnNodes.has(d.id)))
             // street-side parking mapped as a point on a road is already shown by the road's parking strip
             .each(classChanged('lanes-redundant', d => !!d && isStreetParking(d.tags) && graph.parentWays(d).some(isLaneRoad)));
+        // a parking space drawn here shows its kind by its colour and symbol, so iD's icon in its middle goes
+        surface.selectAll<SVGUseElement, { entity: OsmEntity }>('.layer-osm.labels use.areaicon, .layer-osm.labels use.areaicon-halo')
+            .each(classChanged('lanes-redundant', d => !!d?.entity && spaces.has(d.entity.id)));
         // iD's one-way markers on the way line are replaced by arrows on the lanes themselves
         surface.selectAll<SVGPathElement, { id: string }>('.layer-osm .onewaygroup path')
             .each(classChanged('lanes-drawn-oneway', d => !!d && drawn.has(d.id)));

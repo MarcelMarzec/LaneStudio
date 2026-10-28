@@ -161,8 +161,8 @@ tunnel or below ground (`layer` < 0) stay under them. Everything else is drawn b
 **Parking spaces and car parks**: a parking space mapped as an area of its own
 (`amenity=parking_space`) is drawn with white bay lines on every side but the one facing the aisle or
 road it is driven into from, coloured by `parking_space=*`: blue with yellow lines and a wheelchair for
-disabled bays, green with a bolt for charging, purple for parent and child, orange for motorcycles. A
-car park (`amenity=parking` with no `parking=*` or `parking=surface`) is drawn as asphalt.
+disabled bays, green with a bolt for charging, purple for parent and child, orange for motorcycles; iD's
+parking icon in the middle of the bay is hidden. A car park (`amenity=parking` with no `parking=*` or `parking=surface`) is drawn as asphalt.
 
 **Railways** (wiki: Key:railway): track is drawn at its gauge, from `gauge` (mm) or the usual one:
 1435 mm for main lines, the Underground, light rail and trams, 600 mm for narrow gauge, 184 mm for
