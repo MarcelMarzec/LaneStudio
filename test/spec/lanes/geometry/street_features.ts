@@ -144,6 +144,28 @@ describe('streetGeometry surfaces and paths', () => {
 });
 
 
+describe('streetGeometry: passing places', () => {
+    it('widens the road into a bay on the side tagged, or both', () => {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(50, 0), tags: { highway: 'passing_place', passing_place: 'left' } }),
+            new iD.osmNode({ id: 'n3', loc: at(100, 0), tags: { highway: 'passing_place' } }),
+            new iD.osmNode({ id: 'n4', loc: at(150, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3', 'n4'], tags: { highway: 'unclassified', lanes: '1' } })
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const { surfaces } = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
+        const bays = surfaces.filter(s => s.kind === 'passing_place_surface');
+        expect(bays.filter(s => s.nodeID === 'n2')).toHaveLength(1);
+        expect(bays.filter(s => s.nodeID === 'n3')).toHaveLength(2);
+        // the left bay of an eastbound way lies north of it
+        const north = bays.find(s => s.nodeID === 'n2')!.points.map(p => (p[1] - origin[1]) / m);
+        expect(Math.max(...north)).toBeGreaterThan(2);
+    });
+});
+
+
 describe('streetGeometry: highway areas (area:highway)', () => {
     // a 6 m × 12 m rectangle with the given tags
     function areaOf(id: number, tags: Tags, dx = 0) {

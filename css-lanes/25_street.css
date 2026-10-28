@@ -28,7 +28,10 @@
 .ideditor.lane-studio .lanes-layer .street-area-cycleway           { fill: rgb(45, 170, 95); --lanes-a: 0.6; }
 .ideditor.lane-studio .lanes-layer .street-area-other              { fill: rgb(150, 170, 120); --lanes-a: 0.3; }
 /* areas painted over the road (area:highway=emergency/prohibited, crossings mapped as areas) */
-.ideditor.lane-studio .lanes-layer .painted-area-hatched .painted-area-fill { fill: url(#lanes-pattern-hatch-white); stroke: #fff; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .painted-area-hatched .painted-area-fill { fill: none; stroke: #fff; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .painted-area-hatched .painted-area-stripes { fill: #fff; fill-opacity: 0.85; }
+.ideditor.lane-studio .lanes-layer .painted-area-bus .painted-area-fill { fill: rgba(179, 58, 58, 0.55); stroke: #fff; stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .painted-area-shoulder .painted-area-fill { fill: rgba(120, 124, 132, 0.6); stroke: #fff; stroke-width: 1.5; }
 .ideditor.lane-studio .lanes-layer .painted-area-crossing .painted-area-fill { fill: rgba(30, 32, 36, 0.35); stroke: none; }
 .ideditor.lane-studio .lanes-layer .painted-area-crossing .painted-area-stripes { fill: #fff; fill-opacity: 0.92; }
 .ideditor.lane-studio .lanes-layer .painted-area-cycle_crossing .painted-area-fill { fill: rgba(45, 170, 95, 0.35); stroke: #fff; stroke-width: 1.5; stroke-dasharray: 4 3; }

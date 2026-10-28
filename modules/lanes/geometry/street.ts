@@ -48,20 +48,23 @@ export interface PathShape {
     marks: Vec2[][];
     /** being built (`highway=construction`) */
     construction?: boolean;
-    /** in a tunnel or below ground (`layer` < 0): drawn under the roads, where other paths are drawn over them */
+    /** in a tunnel or below ground (`layer` < 0) */
     below?: boolean;
+    /** on a bridge or above ground (`layer` > 0): drawn over the roads, where other paths are drawn under them */
+    above?: boolean;
 }
 
 /**
- * What a mapped area is drawn as (wiki: Key:area:highway): a traffic island, a pavement or other footway area, a
- * cycleway, a road's carriageway (a stretch of road, a junction or a turning circle), something else beside the road
- * (a verge), white hatching on the road (`emergency`, `prohibited`), or a crossing painted over the road (a zebra, or
- * a cycle crossing)
+ * What a mapped area is drawn as (wiki: Key:area:highway, Proposal:Street area): a traffic island, a pavement or other
+ * footway area, a cycleway, a road's carriageway (a stretch of road, a junction, a turning circle or loop, a passing
+ * place, an escape lane), something else beside the road (a verge), or, painted over the road inside its area, white
+ * hatching (`emergency`, `prohibited`), a bus or taxi area (`bus`, `bus_stop`, `taxi_stop`), a hard shoulder
+ * (`shoulder`), or a crossing (a zebra, or a cycle crossing)
  */
-export type AreaKind = 'island' | 'pavement' | 'cycleway' | 'carriageway' | 'other' | 'hatched' | 'crossing' | 'cycle_crossing';
+export type AreaKind = 'island' | 'pavement' | 'cycleway' | 'carriageway' | 'other' | 'hatched' | 'bus' | 'shoulder' | 'crossing' | 'cycle_crossing';
 
 /** The kinds of area painted over the road, above its lanes, rather than lying under them */
-export const paintedAreaKinds = new Set<AreaKind>(['hatched', 'crossing', 'cycle_crossing']);
+export const paintedAreaKinds = new Set<AreaKind>(['hatched', 'bus', 'shoulder', 'crossing', 'cycle_crossing']);
 
 export interface AreaShape {
     id: string;
@@ -69,7 +72,7 @@ export interface AreaShape {
     polygon: Vec2[];
     /** what the area is covered with (always set for traffic islands, which default to concrete) */
     surface?: SurfaceGroup;
-    /** a zebra crossing's white bars, across the way people walk (clipped to the area when drawn) */
+    /** a zebra crossing's white bars, across the way people walk, or hatching's (clipped to the area when drawn) */
     stripes?: Vec2[][];
 }
 
@@ -84,7 +87,7 @@ export type MarkingKind =
     | 'crossing' | 'zebra_bar' | 'crossing_line' | 'island'
     | 'stop_line' | 'give_way_line' | 'signal_line'
     | 'calming' | 'mini_roundabout' | 'kerb_node' | 'ford'
-    | 'mini_roundabout_surface' | 'turning_loop_island'
+    | 'mini_roundabout_surface' | 'passing_place_surface' | 'turning_loop_island'
     | 'barrier_line' | 'barrier_post' | 'barrier_node' | 'cattle_grid';
 
 export interface MarkingShape {
@@ -286,6 +289,7 @@ function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisua
         id: way.id, kind, assumed: tagged === undefined, markings, marks, construction: isUnderConstruction(way.tags),
         surface: surfaceGroup(tags.surface), use, divider, footHalf,
         below: (!!tags.tunnel && tags.tunnel !== 'no') || Number(tags.layer) < 0,
+        above: (!!tags.bridge && tags.bridge !== 'no') || Number(tags.layer) > 0,
         polygon: [...left, ...right.reverse()].map(frame.toLoc)
     };
     pathCache.set(way, { nodes, stretch, shape });
@@ -304,6 +308,8 @@ function areaKind(tags: Tags): AreaKind | null {
         if (['footway', 'pedestrian', 'path', 'steps', 'bridleway', 'corridor'].includes(value)) return 'pavement';
         if (value === 'cycleway') return 'cycleway';
         if (value === 'emergency' || value === 'prohibited') return 'hatched';
+        if (value === 'bus' || value === 'bus_stop' || value === 'taxi_stop') return 'bus';
+        if (value === 'shoulder') return 'shoulder';
         if (value === 'verge' || value === 'grass') return 'other';
         // a road's carriageway: a stretch of road, a junction (junction=yes), a turning circle, a bus bay…
         return 'carriageway';
@@ -345,6 +351,42 @@ function zebraStripes(polygon: Vec2[]): Vec2[][] {
             .map(frame.toLoc));
     }
     return stripes;
+}
+
+const cardinals: Record<string, number> = {
+    N: 0, NNE: 22.5, NE: 45, ENE: 67.5, E: 90, ESE: 112.5, SE: 135, SSE: 157.5,
+    S: 180, SSW: 202.5, SW: 225, WSW: 247.5, W: 270, WNW: 292.5, NW: 315, NNW: 337.5
+};
+
+/**
+ * Hatching's white bars across an area (`area:highway=emergency`): 0.3 m wide every 1.5 m, running the way
+ * `direction=*` gives (degrees or a compass point), else at 45° to the area's length (clipped to the area when drawn)
+ */
+function hatchStripes(polygon: Vec2[], direction: string | undefined): Vec2[][] {
+    const frame = metricFrame(polygon[0]);
+    const points = polygon.map(frame.toMetres);
+    const centre = scale(points.reduce((sum, p) => add(sum, p), [0, 0] as Vec2), 1 / points.length);
+    const reach = Math.max(...points.map(p => len(sub(p, centre)))) + 1;
+    const tagged = direction === undefined ? NaN : cardinals[direction.toUpperCase()] ?? parseFloat(direction);
+    let along: Vec2;
+    if (Number.isFinite(tagged)) {
+        const a = tagged * Math.PI / 180;
+        along = [Math.sin(a), Math.cos(a)];
+    } else {
+        // the area's longest extent, turned 45°
+        let longest: Vec2 = [1, 0];
+        let best = 0;
+        for (const a of points) for (const b of points) if (len(sub(b, a)) > best) { best = len(sub(b, a)); longest = unit(sub(b, a)); }
+        along = unit(add(longest, rightNormal(longest)));
+    }
+    const across = rightNormal(along);
+    const bars: Vec2[][] = [];
+    for (let t = -reach; t < reach; t += 1.5) {
+        const a = add(centre, scale(across, t));
+        const b = add(a, scale(across, 0.3));
+        bars.push([add(a, scale(along, reach)), add(b, scale(along, reach)), sub(b, scale(along, reach)), sub(a, scale(along, reach))].map(frame.toLoc));
+    }
+    return bars;
 }
 
 /** A mapped area that is a road's carriageway, which roads inside it are fitted to */
@@ -483,6 +525,23 @@ function crossingNodeMarkings(node: osmNode, cs: CrossSection, out: StreetGeomet
 }
 
 
+/**
+ * A passing place (wiki: Tag:highway=passing_place): the road widening into a bay where oncoming traffic can pass, on
+ * the side `passing_place=*` gives (left, right or both, looking along the way; both when not tagged, as a turning
+ * circle is drawn all round): 20 m long, tapering out from the carriageway's edge to 2.5 m beyond it and back
+ */
+function passingPlace(node: osmNode, cs: CrossSection, out: StreetGeometry, left: number, right: number) {
+    const side = node.tags.passing_place;
+    const sides = side === 'left' ? [-1] : side === 'right' ? [1] : [-1, 1];
+    for (const s of sides) {
+        const edge = s > 0 ? right : left;
+        // (overlapping the carriageway a little, so no seam shows along its edge)
+        const at = (along: number, offset: number) => cs.frame.toLoc(add(scale(cs.direction, along), scale(cs.normal, offset)));
+        const points = [at(-10, edge - s * 0.3), at(-10, edge), at(-4, edge + s * 2.5), at(4, edge + s * 2.5), at(10, edge), at(10, edge - s * 0.3)];
+        out.surfaces.push({ key: `${node.id}-passing-${s}`, kind: 'passing_place_surface', nodeID: node.id, closed: true, points });
+    }
+}
+
 function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visuals?: Map<string, WayVisual>) {
     const tags = node.tags;
     const parents = graph.parentWays(node);
@@ -521,6 +580,7 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
     if ((highway === 'crossing' || (tags.crossing && !highway) || signalCrossing) && !crossingWay) {
         crossingNodeMarkings(node, cs, out, signalCrossing);
     }
+    if (highway === 'passing_place') passingPlace(node, cs, out, left, right);
 
     // signals, stop or give way tagged on a junction node itself: the lines go on the approaches, at the
     // edge of the junction, not across the middle of it
@@ -710,13 +770,14 @@ function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, W
     const cumulative = cumulativeLengths(points);
     const total = cumulative[cumulative.length - 1];
     if (total < 20) return;
-    // (a road tagged only with a UK limit type is painted with its limit; the national limit is never painted)
-    const roadLimit = (w: osmWay, key: 'maxspeed' | 'minspeed', direction: 'forward' | 'backward') => w.tags[`${key}:${direction}`] ??
-        (key === 'maxspeed' ? paintedRoadLimit(w.tags) : w.tags[key]);
+    // (a road tagged only with a UK limit type is painted with its limit; the national limit is never painted, but
+    // counts as the limit before a change, so 50 after the national limit is painted)
+    const roadLimit = (w: osmWay, key: 'maxspeed' | 'minspeed', direction: 'forward' | 'backward', painted = true) => w.tags[`${key}:${direction}`] ??
+        (key === 'maxspeed' ? (painted ? paintedRoadLimit(w.tags) : roadMaxspeed(w.tags)) : w.tags[key]);
     // a lane's own value, else the road's
-    const laneLimit = (w: osmWay, key: 'maxspeed' | 'minspeed', direction: 'forward' | 'backward', index: number) => {
+    const laneLimit = (w: osmWay, key: 'maxspeed' | 'minspeed', direction: 'forward' | 'backward', index: number, painted = true) => {
         const lane = cachedLayout(w, graph).lanes.find(l => l.ref.direction === direction && l.ref.index === index);
-        return paintedLimit(lane?.values[`${key}:lanes`] || roadLimit(w, key, direction));
+        return paintedLimit(lane?.values[`${key}:lanes`] || roadLimit(w, key, direction, painted));
     };
 
     for (const direction of ['forward', 'backward'] as const) {
@@ -740,7 +801,7 @@ function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, W
             if (!previous) return null;
             const keepLeft = layout.model.driveSide === 'left';
             const i = keepLeft ? index : previousCount - (count - index);
-            return i >= 0 && i < previousCount ? laneLimit(previous, key, previousDirection, i) : paintedLimit(roadLimit(previous, key, previousDirection));
+            return i >= 0 && i < previousCount ? laneLimit(previous, key, previousDirection, i, false) : paintedLimit(roadLimit(previous, key, previousDirection, false));
         };
 
         const s = direction === 'forward' ? 10 : total - 10;
@@ -799,7 +860,8 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?
                     out.areas.push({
                         id: way.id, kind, polygon, surface: kind === 'island' ? islandSurface(tags) : surfaceGroup(tags.surface),
                         ...(kind === 'crossing' && (tags.crossing === 'zebra' || tags['crossing:markings'] === 'zebra' || !tags['crossing:markings'] ||
-                            tags['crossing:markings'] === 'yes') && tags['crossing:markings'] !== 'no' ? { stripes: zebraStripes(polygon) } : {})
+                            tags['crossing:markings'] === 'yes') && tags['crossing:markings'] !== 'no' ? { stripes: zebraStripes(polygon) } : {}),
+                        ...(kind === 'hatched' ? { stripes: hatchStripes(polygon, tags.direction) } : {})
                     });
                 }
             }

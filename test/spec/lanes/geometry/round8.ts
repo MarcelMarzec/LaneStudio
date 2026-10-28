@@ -167,6 +167,24 @@ describe('speed roundels', () => {
         expect(signs.map(s => [s.key.split('-')[0], s.kind])).toEqual([['w2', 'national_limit'], ['w4', 'motorway_start']]);
     });
 
+    it('paints every change between limits, the national limit and a motorway\'s', () => {
+        // along one road: 40, national (single), 50, motorway, national (dual), 20 zone
+        const tags: Tags[] = [
+            { maxspeed: '40 mph' }, { 'maxspeed:type': 'GB:nsl_single' }, { maxspeed: '50 mph' },
+            { highway: 'motorway', 'maxspeed:type': 'GB:motorway' }, { 'maxspeed:type': 'GB:nsl_dual' }, { 'maxspeed:type': 'GB:zone20' }
+        ];
+        const graph = graphOf([
+            ...tags.map((_, i) => node(`n${i + 1}`, i * 200, 0)), node('n7', 1200, 0),
+            ...tags.map((t, i) => way(`w${i + 1}`, [`n${i + 1}`, `n${i + 2}`], { highway: 'primary', oneway: 'yes', lanes: '1', ...t }))
+        ]);
+        const painted = symbolsOf(graph)
+            .filter(s => ['speed_limit', 'national_limit', 'motorway_start'].includes(s.kind))
+            .map(s => [s.key.split('-')[0], s.kind === 'speed_limit' ? s.text : s.kind]);
+        expect(painted).toEqual([
+            ['w2', 'national_limit'], ['w3', '50'], ['w4', 'motorway_start'], ['w5', 'national_limit'], ['w6', '20']
+        ]);
+    });
+
     it('paints each lane where the road limit changes', () => {
         const graph = graphOf([
             node('n1', -200, 0), node('n2', 0, 0), node('n3', 200, 0),

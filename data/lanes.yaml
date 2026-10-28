@@ -251,11 +251,15 @@ en:
     copy_tip: Copies lane counts and lane tags (not turn or destination lanes) onto the next road, as one undo step
   roadside:
     title: Roadside
-    hint: Left and right are as seen looking along the way's drawing direction.
+    hint: "Forward is the side beside traffic going along the way's drawing direction, backward the side beside traffic going the other way."
     left: Left side
     right: Right side
     left_short: Left
     right_short: Right
+    forward: Forward side
+    backward: Backward side
+    forward_short: Forward
+    backward_short: Backward
     shoulder: Hard shoulder
     shoulder_yes: There is a hard shoulder
     shoulder_no: No hard shoulder

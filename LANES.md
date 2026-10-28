@@ -31,7 +31,8 @@ where editing starts); labels, painted STOP text and give-way triangles from zoo
 Lane Studio's name and logo are at the top left, above the sidebar. After an update, a **what's new**
 menu lists every version since the one you last used, with what changed in each (from
 [CHANGELOG.md](CHANGELOG.md)); tick "Don't show what's new after updates" to stop it, or turn it back on
-in the settings.
+in the settings. When the welcome screen or iD's prompt to restore unsaved changes is open, it waits until
+that is closed.
 
 **Top bar**: Selection (the default: select and edit roads, lanes and other features), Routing and
 Speed Limit, then iD's Point, Line and Area for adding features.
@@ -76,8 +77,9 @@ drawn as usual), a click setting `minspeed` and a shift-click `minspeed:lanes`.
 - Speed limits are picked from a row of UK roundels (10 to 70 mph, and none), the current one ringed,
   and minimum speeds from a row of blue ones: with no lane selected, the road's own (`maxspeed`,
   `minspeed`); with lanes selected, theirs (`maxspeed:lanes`, `minspeed:lanes`), in a box laid out
-  like the road's, which says the road's limit (lanes with none of their own follow it) and has a
-  **Whole road** button to let go of the lanes and edit the road.
+  like the road's, with the same signs (a limit type for lanes is written as `maxspeed:type:lanes`,
+  with its limit in `maxspeed:lanes`) and lower limit, which says the road's limit (lanes with none of
+  their own follow it) and has a **Whole road** button to let go of the lanes and edit the road.
 - For a whole road, the UK limit types (wiki: Key:maxspeed:type) are signs beside the roundels, each
   setting its type and limit: the national limit on a single carriageway (`GB:nsl_single`, 60 mph) or a
   dual carriageway (`GB:nsl_dual`, 70 mph), a motorway (`GB:motorway`, 70 mph), a restricted road with
@@ -151,7 +153,9 @@ average-speed camera system (`type=enforcement`) shows the stretch of road it co
 
 **Roadside**: hard shoulders (with width; drawn 2.5 m wide until one is tagged), and pavement,
 cycleway and parking per side (`sidewalk:<side>`, `cycleway:<side>`,
-`parking:<side>`): one field each, with a Left and a Right dropdown as in iD's cycle lane field.
+`parking:<side>`): one field each, with a Forward and a Backward dropdown as in iD's cycle lane field.
+Forward is the side beside traffic going along the way's drawing direction (the way's left where traffic
+drives on the left, its right elsewhere), backward the other; the tags stay `:left` and `:right`.
 Lane Studio also looks at what is mapped next to the road:
 
 - a separately mapped pavement on a side → "Set to mapped separately" (or a double-mapping warning);
@@ -192,11 +196,15 @@ islands; mapped kerbs styled by kerb height; crossings, stop and give way lines,
 calming and mini-roundabouts on road nodes (a stop, give way or signals' line on a pedestrian
 crossing, or up to 10 m past one, stands just before the crossing, and signals tagged as their
 crossing draw the crossing with a line each way); `road_marking=*` lines, areas and text; street parking
-with its bays and a layby joining it to the road; and lane connections. Footways, paths, cycleways and
-pedestrian ways are drawn over the roads (where one meets or crosses a road it shows); those in a
-tunnel or below ground (`layer` < 0) stay under them. Everything else is drawn by iD as usual. A node
-Lane Studio draws as what it is (a crossing, a barrier, a sign, a road marking, a buffer stop or other
-railway equipment) has no iD icon drawn over it; it keeps a plain marker to click and drag.
+with its bays and a layby joining it to the road; passing places (`highway=passing_place`) as a bay
+of road on the side `passing_place=left|right|both` gives (both when not tagged); and lane connections.
+Footways, paths, cycleways and pedestrian ways are drawn under the roads; crossings (`footway=crossing`
+and the like) over them, and paths on a bridge or above ground (`layer` > 0) over them too. Everything
+else is drawn by iD as usual. A node Lane Studio draws as what it is (a crossing, a barrier, a sign, a
+road marking, a passing place, a buffer stop or other railway equipment) is not drawn by iD as well: no
+marker, icon or direction cone, only iD's highlight when it is hovered or selected (it can still be
+clicked and dragged). Nor is iD's fill drawn along the edge of an area Lane Studio draws as a surface
+(a car park, a parking space, a highway area), so it doesn't lie over the roads beside it.
 
 **Parking spaces and car parks**: a parking space mapped as an area of its own
 (`amenity=parking_space`) is drawn with white bay lines on every side but the one facing the aisle or
@@ -255,18 +263,22 @@ look: asphalt, concrete, paving slabs, setts and gravel (as textures), unpaved, 
 A road mapped as an area (`area=yes` + `highway=service` etc., or `area:highway=<road>`) is the road's
 surface: ways inside it draw only their lane lines, arrows and special lanes.
 
-**Micro-mapping** (wiki: Key:area:highway and its mapping guidelines): highway areas are drawn as
-what they are:
+**Micro-mapping** (wiki: Key:area:highway, Proposal:Street area and the mapping guidelines): areas
+tagged `area:highway=*`, the shape of a road mapped as a line, are drawn as what they are (a road mapped
+as a routable area, `area=yes` + `highway=*`, is a plaza or service area, not micro-mapping):
 
-- road areas (`area:highway=primary`, `residential`, `service`… and `bus_bay` and the like) as the
-  road's surface, with the road fitted inside (below); a junction area (`junction=yes`) is the
-  junction's surface in place of Lane Studio's junction box, and a turning circle area
-  (`area:highway=turning_circle`, or a road area round a road's end) in place of its turning head;
+- road areas (`area:highway=primary`, `residential`, `service`, `road`, `passing_place`, `escape`…)
+  as the road's surface, with the road fitted inside (below); a junction area (`junction=yes`,
+  `roundabout`, `y_junction`) is the junction's surface in place of Lane Studio's junction box, and a
+  turning circle or loop area (`area:highway=turning_circle`, `turning_loop`, or a road area round a
+  road's end) in place of its turning head;
 - footway, pedestrian, path, steps, bridleway and corridor areas as pavement, cycleway areas as
   cycleway, verges as grass, traffic islands as islands;
-- painted over the lanes: hatching (`area:highway=emergency`, `prohibited`) edged white, a crossing
-  (`area:highway=footway` + `footway=crossing`) with zebra bars across the way people walk unless
-  `crossing:markings` says otherwise, and a cycle crossing (`area:highway=cycleway` +
+- painted over the lanes, inside the road's area: hatching (`area:highway=emergency`, `prohibited`) in
+  white bars along `direction=*` (degrees or a compass point; else at 45° to the area) edged white; bus
+  and taxi areas (`bus`, `bus_stop`, `taxi_stop`) in the bus lane red; a hard shoulder (`shoulder`);
+  a crossing area (`area:highway=footway` + `footway=crossing`) with zebra bars across the way people
+  walk unless `crossing:markings` says otherwise, and a cycle crossing area (`area:highway=cycleway` +
   `cycleway=crossing`) with a dashed edge.
 
 Highway areas are areas drawn from closed ways; multipolygons are not drawn yet. Shared foot and cycle

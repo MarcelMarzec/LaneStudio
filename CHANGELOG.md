@@ -8,6 +8,33 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r11
+##### 2026-Oct-28
+
+#### Editing
+* Fixed since the last version: nodes Lane Studio draws (signals, crossings, gates, buffer stops…) showed
+  iD's empty white markers and direction cones; iD no longer draws them at all, only its highlight when
+  one is hovered or selected
+* iD's fill along the edge of a car park, parking space or highway area is no longer drawn over the
+  roads beside it (the car park by Boston station)
+* Roadside's sides are Forward and Backward, by the traffic beside them, in place of Left and Right
+* The what's new menu waits for iD's prompt to restore unsaved changes (or the welcome screen) to close,
+  rather than not showing at all
+* Footways, paths and cycleways are drawn under the roads; crossings, and paths on bridges, over them
+
+#### Roads and signs
+* A limit after the national limit or a motorway is painted on the road (50 after the national limit
+  on Skegness Road was missing); every change between limits, the national limit, motorways and 20 zones
+  is checked
+* Selected lanes have the same speed signs as the whole road, limit types included
+  (`maxspeed:type:lanes`), with the lower national limit for some vehicles
+* Passing places (`highway=passing_place`) are drawn as a bay of road on the side `passing_place=*`
+  gives, or both
+
+#### Lanes and junctions
+* Micro-mapping follows the Street area proposal: only `area:highway` areas stand in for turning heads;
+  bus, taxi and hard shoulder areas are painted inside the road's area; hatching follows `direction=*`
+
 # 26.10.28r10
 ##### 2026-Oct-28
 

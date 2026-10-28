@@ -26,7 +26,8 @@ import { uiTooltip } from '../../ui/tooltip';
 import { isLaneRoad } from '../core/roads';
 import { isTrafficIsland } from '../model/street_features';
 import {
-    mphLimits, mphOf, roadSpeedPick, speedPickLabel, speedRoundels, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed, type SpeedPick
+    mphLimits, mphOf, roadSpeedPick, speedPickLabel, speedRoundels, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed,
+    type SpeedPick, type UkSpeedType
 } from './speed_roundels';
 import {
     parseLanes, laneRefsInWayOrder, laneCount, insertLane, removeLane, moveLane, setLaneValue, laneValue,
@@ -55,7 +56,7 @@ const textFields: { id: string; key: string }[] = [
 ];
 
 const handledKeys = new Set([
-    'turn:lanes', 'change:lanes', ...textFields.map(f => f.key),
+    'turn:lanes', 'change:lanes', 'maxspeed:type:lanes', ...textFields.map(f => f.key),
     ...Object.values(laneKindKeys).filter((k): k is string => !!k)
 ]);
 
@@ -394,15 +395,26 @@ export function uiSectionLanes(context: iD.Context) {
      * The speed limit or minimum speed of the selected lanes, picked from roundels (blue for a minimum speed);
      * no roundel clears the lanes' own, so they follow the road
      */
-    function renderLaneSpeed(parent: Div, wayID: WayId, refs: LaneRef[], measure: 'maxspeed' | 'minspeed', value: string | undefined) {
+    function renderLaneSpeed(parent: Div, wayID: WayId, refs: LaneRef[], measure: 'maxspeed' | 'minspeed', value: string | undefined,
+        type?: string) {
         const mph = mphOf(value);
-        const current: SpeedPick | undefined = value === undefined ? undefined : !value ? { kind: 'none' } : mph === null ? undefined : { kind: 'mph', mph };
-        const unusual = value === undefined ? t('inspector.multiple_values') : unusualSpeed(value);
         const minimum = measure === 'minspeed';
+        // a lane's limit type (maxspeed:type:lanes), like a road's: the national limit, a motorway, a 20 zone…
+        const typed = !minimum && type && Object.hasOwn(ukSpeedTypes, type) ? type as UkSpeedType : undefined;
+        const current: SpeedPick | undefined = value === undefined ? undefined : typed ? { kind: 'type', type: typed }
+            : !value ? { kind: 'none' } : mph === null ? undefined : { kind: 'mph', mph };
+        const unusual = value === undefined ? t('inspector.multiple_values') : typed ? undefined : unusualSpeed(value);
         speedField(parent, t(minimum ? '_lanes.speed.min_road_label' : '_lanes.speed.road_label'), unusual, row => speedRoundels(row, {
-            current, minimum, none: true, noneLabel: t('_lanes.speed.lanes_none'),
-            onPick: pick => perform(wayID, m => setLaneValue(m, refs, `${measure}:lanes`, pick.kind === 'mph' ? `${pick.mph} mph` : ''), 'value')
+            current, minimum, types: !minimum, none: true, noneLabel: t('_lanes.speed.lanes_none'),
+            onPick: pick => perform(wayID, m => {
+                const next = setLaneValue(m, refs, `${measure}:lanes`,
+                    pick.kind === 'mph' ? `${pick.mph} mph` : pick.kind === 'type' ? `${ukSpeedTypes[pick.type].mph} mph` : '');
+                return minimum ? next : setLaneValue(next, refs, 'maxspeed:type:lanes', pick.kind === 'type' ? pick.type : '');
+            }, 'value')
         }));
+        // the lower national limit for some vehicles, as for the whole road
+        const lower = typed ? ukSpeedTypes[typed].lower : undefined;
+        if (lower) parent.append('p').attr('class', 'lanes-note speed-lower').text(t(`_lanes.speed.lower.${lower.vehicles}`, { mph: lower.mph }));
     }
 
     /**
@@ -425,7 +437,8 @@ export function uiSectionLanes(context: iD.Context) {
             return values.every(v => v === values[0]) ? values[0] : undefined;
         };
         for (const key of keys) {
-            renderLaneSpeed(box, road.id, refs, key === 'maxspeed:lanes' ? 'maxspeed' : 'minspeed', shared(key));
+            renderLaneSpeed(box, road.id, refs, key === 'maxspeed:lanes' ? 'maxspeed' : 'minspeed', shared(key),
+                key === 'maxspeed:lanes' ? shared('maxspeed:type:lanes') : undefined);
         }
     }
 
@@ -554,14 +567,19 @@ export function uiSectionLanes(context: iD.Context) {
             { id: 'parking', values: ['lane', 'street_side', 'half_on_kerb', 'on_kerb', 'separate', 'no'], read: side => parkingValue(tags, side),
                 write: (side, v) => withParking(tags, side, v) }
         ];
+        // the sides by the traffic beside them: forward (along the way's drawing direction) keeps to the left where
+        // traffic drives on the left, so its side is the way's left (tags stay :left and :right)
+        const forwardSide: 'left' | 'right' = driveSide === 'left' ? 'left' : 'right';
+        const sideOf = (side: 'left' | 'right') => (side === forwardSide ? 'forward' : 'backward');
+        const sides = [forwardSide, forwardSide === 'left' ? 'right' : 'left'] as const;
         for (const feature of features) {
-            sidedField(context, box, `roadside-${feature.id}`, t(`_lanes.roadside.${feature.id}`), (['left', 'right'] as const).map(side => {
+            sidedField(context, box, `roadside-${feature.id}`, t(`_lanes.roadside.${feature.id}`), sides.map(side => {
                 const current = feature.read(side);
                 // a value Lane Studio doesn't offer is kept in the list, so it shows as tagged
                 const values = [...feature.values, ...(current && !feature.values.includes(current) ? [current] : [])];
                 return {
                     id: `roadside-${feature.id}-${side}`,
-                    label: t(`_lanes.roadside.${side}_short`),
+                    label: t(`_lanes.roadside.${sideOf(side)}_short`),
                     value: current ?? '',
                     strict: true,
                     emptyTitle: t('_lanes.roadside.unknown'),
@@ -572,11 +590,11 @@ export function uiSectionLanes(context: iD.Context) {
 
             // under the pavements: a pavement mapped separately that the road's tags don't say
             if (feature.id !== 'sidewalk') continue;
-            for (const side of ['left', 'right'] as const) {
+            for (const side of sides) {
                 const found = sidewalks[side][0];
                 const current = sidewalkValue(tags, side);
                 if (!found || current === 'separate') continue;
-                const sideName = t(`_lanes.roadside.${side}`).toLowerCase();
+                const sideName = t(`_lanes.roadside.${sideOf(side)}`).toLowerCase();
                 const note = box.append('p').attr('class', 'lanes-note lanes-suggestion');
                 note.text(current === 'yes'
                     ? t('_lanes.roadside.double_mapped', { side: sideName })

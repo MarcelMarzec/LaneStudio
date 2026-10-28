@@ -127,19 +127,19 @@ export function drawStreet(
         d => `street-area street-area-island ${d.id} surface-${d.surface ?? 'concrete'}`, d => path(d.polygon, true));
 
     // paths by kind, surface and use; segregated foot and cycle paths get a line down the middle. Footways, paths and
-    // pedestrian ways are drawn over the roads (where they meet one, the path shows), those in tunnels under them
+    // pedestrian ways are drawn under the roads (crossings, drawn on their own, go over them), those on bridges over
     const sidePaths = street.paths.filter(p => p.kind !== 'crossing');
     const pathShapes = sidePaths.flatMap(p => [
         {
-            key: p.id, d: path(p.polygon, true), below: p.below,
+            key: p.id, d: path(p.polygon, true), above: p.above,
             cls: `street-path street-path-${p.kind} ${p.id}` + (p.assumed ? ' assumed' : '') +
                 (p.surface ? ` surface-${p.surface}` : '') + (p.use ? ` use-${p.use}` : '') + (p.construction ? ' lanes-construction' : '')
         },
-        ...(p.footHalf ? [{ key: `${p.id}-foot`, cls: 'street-path-foot-half', d: path(p.footHalf, true), below: p.below }] : []),
-        ...(p.divider && markings ? [{ key: `${p.id}-divider`, cls: 'street-path-divider', d: path(p.divider, false), below: p.below }] : [])
+        ...(p.footHalf ? [{ key: `${p.id}-foot`, cls: 'street-path-foot-half', d: path(p.footHalf, true), above: p.above }] : []),
+        ...(p.divider && markings ? [{ key: `${p.id}-divider`, cls: 'street-path-divider', d: path(p.divider, false), above: p.above }] : [])
     ]);
-    joinPaths(group('paths'), pathShapes.filter(p => p.below), d => d.key, d => d.cls, d => d.d);
-    joinPaths(group('paths-over'), pathShapes.filter(p => !p.below), d => d.key, d => d.cls, d => d.d);
+    joinPaths(group('paths'), pathShapes.filter(p => !p.above), d => d.key, d => d.cls, d => d.d);
+    joinPaths(group('paths-over'), pathShapes.filter(p => p.above), d => d.key, d => d.cls, d => d.d);
 
     // crossings sit on top of the road they cross
     const crossings = street.paths.filter(p => p.kind === 'crossing');

@@ -14,12 +14,12 @@ export type SpeedTypeKind = 'national' | 'motorway' | 'zone' | 'restricted';
 export const speedPatternClasses = ['10', '20', '30', '40', '50', '60', '70', 'other'];
 
 /**
- * The pattern a lane's speed limit gets in the Speed Limit tool: its road's UK limit type, unless the lane has a
- * limit of its own (`maxspeed:lanes`), which is a number
+ * The pattern a lane's speed limit gets in the Speed Limit tool: its own UK limit type (`maxspeed:type:lanes`), or,
+ * with no limit of its own (`maxspeed:lanes`), its road's
  */
-export function speedTypeKind(laneValue: string | undefined, road: osmWay): SpeedTypeKind | null {
-    if (laneValue) return null;
-    const type = speedTypeOf(road.tags);
+export function speedTypeKind(laneValue: string | undefined, road: osmWay, laneType?: string): SpeedTypeKind | null {
+    if (laneValue && !laneType) return null;
+    const type = laneValue ? speedTypeOf({ 'maxspeed:type': laneType! }) : speedTypeOf(road.tags);
     return type === 'GB:motorway' ? 'motorway' : type === 'GB:zone20' ? 'zone' : type === 'GB:nsl_restricted' ? 'restricted'
         : type ? 'national' : null;
 }

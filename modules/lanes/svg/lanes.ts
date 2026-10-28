@@ -221,7 +221,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             context.features().hidden()].join('|');
     };
     let _drawn: { graph: iD.Graph; key: string } | null = null;
-    let _marked: { drawn: Set<string>; drawnWays: Set<string>; drawnNodes: Set<string>; renderedNodes: Set<string>; spaces: Set<string>; logos: Set<string> } | null = null;
+    let _marked: { drawn: Set<string>; drawnWays: Set<string>; drawnNodes: Set<string>; renderedNodes: Set<string>; filledAreas: Set<string>; spaces: Set<string>; logos: Set<string> } | null = null;
     let _geometry: { graph: iD.Graph; ids: string; roads: RoadGeometry; street: StreetGeometry } | null = null;
     let _frame = 0;
 
@@ -426,9 +426,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* turning circles, loops and hammerheads: road surface carried on from the road's end (not where a turning
            circle is mapped as an area, area:highway=turning_circle or a road area round the end: that is its surface) */
+        // (micro-mapping: only areas tagged area:highway stand in for it, not a routable area=yes road)
         const inRoadArea = (nodeID: string) => {
             const node = graph.hasEntity(nodeID as NodeId) as osmNode | undefined;
-            return !!node && roadAreas.some(a => pointInPolygon(node.loc, a.polygon));
+            return !!node && roadAreas.some(a => !!graph.hasEntity(a.id as osmWay['id'])?.tags['area:highway'] && pointInPolygon(node.loc, a.polygon));
         };
         const headShapes = heads.filter(head => !inRoadArea(head.nodeID)).flatMap(head => [
             { key: head.nodeID, cls: `turning-head ${head.nodeID}` + nodeSpeed(head.nodeID), d: head.polygons.map(ring => path(ring, true)).join('') },
@@ -447,8 +448,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 const cls = junctionSpeedClass(roads, speed.measure());
                 if (cls !== null && !(speed.measure() === 'minspeed' && cls === 'missing')) this.classList.add(`speed-${cls}`);
             });
-        // mini-roundabouts' carriageways (drawn with the street features) take their roads' colour in the Speed Limit tool
-        group('node-surfaces').selectAll<SVGPathElement, { kind: string; nodeID: string }>('path.street-surface-mini_roundabout_surface')
+        // mini-roundabouts' carriageways and passing places (drawn with the street features) take their roads' colour in
+        // the Speed Limit tool
+        group('node-surfaces').selectAll<SVGPathElement, { kind: string; nodeID: string }>('path.street-surface-mini_roundabout_surface, path.street-surface-passing_place_surface')
             .each(function(d) {
                 const cls = nodeSpeed(d.nodeID).trim();
                 for (const name of [...this.classList].filter(c => c.startsWith('speed-'))) this.classList.remove(name);
@@ -467,7 +469,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const cls = speedClassOf(lane.values[`${measure}:lanes`], road, measure);
             if (measure === 'minspeed' && cls === 'missing') return '';
             // a limit set by its type (national, motorway, 20 zone, restricted road) is patterned over its colour
-            const kind = measure === 'maxspeed' && cls !== 'missing' ? speedTypeKind(lane.values['maxspeed:lanes'], road) : null;
+            const kind = measure === 'maxspeed' && cls !== 'missing' ? speedTypeKind(lane.values['maxspeed:lanes'], road, lane.values['maxspeed:type:lanes']) : null;
             return ` speed-${cls}` + (kind ? ` speed-kind-${kind}` : '');
         };
         const laneClass = (piece: RoadPiece, lane: LaneInfo) => {
@@ -751,7 +753,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         // hatching, a crossing
         drawEntityTargets(group('surface-targets'), [
             ...parkingSpaces.carParks, ...parkingSpaces.spaces,
-            ...street.areas.filter(area => area.kind !== 'island' && !areaRoads.has(area.id))
+            ...street.areas.filter(area => !areaRoads.has(area.id))
         ].map(shape => ({ key: shape.id, entityID: shape.id, d: path(shape.polygon, true) })));
         // a road's carriageway area selects the road (under the lanes, so roads crossing it stay clickable)
         drawEntityTargets(group('area-targets'), roadAreas.filter(area => areaRoads.has(area.id))
@@ -785,7 +787,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         }
         // brands' logos from Wikidata, from the zoom iD shows points at, over everything else on the map
         const logos = drawBrandLogos(logoLayer(), visible, graph, projection, settings.showLogos() && zoom >= 17);
-        _marked = { drawn, drawnWays, drawnNodes, renderedNodes, spaces: new Set(parkingSpaces.spaces.map(space => space.id)), logos };
+        // the areas drawn here as a surface (car parks, parking spaces, highway areas, islands): iD's fill is not needed
+        const filledAreas = new Set<string>([...parkingSpaces.carParks, ...parkingSpaces.spaces, ...street.areas].map(area => area.id));
+        _marked = { drawn, drawnWays, drawnNodes, renderedNodes, filledAreas, spaces: new Set(parkingSpaces.spaces.map(space => space.id)), logos };
         markIdFeatures();
     }
 
@@ -796,7 +800,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
      */
     function markIdFeatures() {
         if (!_marked) return;
-        const { drawn, drawnWays, drawnNodes, renderedNodes, spaces, logos } = _marked;
+        const { drawn, drawnWays, drawnNodes, renderedNodes, filledAreas, spaces, logos } = _marked;
         const graph = context.graph();
         const surface = context.surface();
         // (iD draws lines below ground, like tunnels and cuttings, in its `covered` group rather than `lines`)
@@ -804,10 +808,14 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .each(classChanged('lanes-drawn', d => !!d && drawn.has(d.id)))
             .each(classChanged('lanes-drawn-feature', d => !!d && drawnWays.has(d.id)));
         surface.selectAll<SVGPathElement, { id: string }>('.layer-osm.areas path')
-            .each(classChanged('lanes-drawn-feature', d => !!d && drawnWays.has(d.id)));
+            .each(classChanged('lanes-drawn-feature', d => !!d && drawnWays.has(d.id)))
+            // iD's fill along the edge of an area drawn here would lie over the roads beside it (a car park's over the
+            // road round it): Lane Studio's own surface is shown, and selects the area anywhere on it
+            .each(classChanged('lanes-filled-area', d => !!d && filledAreas.has(d.id)));
         surface.selectAll<SVGGElement, OsmEntity>('.layer-osm .vertices g.vertex, .layer-osm .points g.point')
             .each(classChanged('lanes-drawn-feature', d => !!d && drawnNodes.has(d.id)))
-            // a node drawn here as what it is (a buffer stop, a sign, a crossing) loses iD's icon, keeping its marker to click
+            // a node drawn here as what it is (a buffer stop, a sign, a crossing) is not drawn by iD as well: its marker,
+            // icon and direction cone go, keeping the shadow iD shows when it is hovered or selected
             .each(classChanged('lanes-rendered-node', d => !!d && renderedNodes.has(d.id)))
             // street-side parking mapped as a point on a road is already shown by the road's parking strip
             .each(classChanged('lanes-redundant', d => !!d && isStreetParking(d.tags) && graph.parentWays(d).some(isLaneRoad)));

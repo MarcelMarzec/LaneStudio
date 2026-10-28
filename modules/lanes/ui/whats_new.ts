@@ -88,9 +88,27 @@ export function laneStudioWhatsNew(context: iD.Context) {
     Promise.all([context.ui().ensureLoaded(), loadChangelog(context)])
         .then(([, changelog]) => {
             const versions = versionsSince(changelog, since);
-            // the welcome screen or iD's restore-your-changes prompt comes first
-            if (!versions.length || !context.container().select('.modal').empty()) return;
-            showWhatsNew(context, versions, since);
+            if (!versions.length) return;
+            // the welcome screen or iD's restore-your-changes prompt (when there are unsaved edits) comes first: the
+            // menu waits until it is closed
+            whenNoDialog(context, () => showWhatsNew(context, versions, since));
         })
         .catch(() => { /* without the changelog there is nothing to show */ });
+}
+
+/** Calls `then` once no dialog is open, straight away if none is */
+function whenNoDialog(context: iD.Context, then: () => void) {
+    const container = context.container();
+    const open = () => !container.select('.modal').empty();
+    if (!open()) {
+        then();
+        return;
+    }
+    const observer = new MutationObserver(() => {
+        if (open()) return;
+        observer.disconnect();
+        // (a moment later, so a dialog that opens as another closes, as iD's do, is seen first)
+        window.setTimeout(() => whenNoDialog(context, then), 300);
+    });
+    observer.observe(container.node()!, { childList: true, subtree: true });
 }

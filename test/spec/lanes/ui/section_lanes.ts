@@ -92,6 +92,9 @@ describe('Lane Studio sidebar', () => {
 
     it('picks roadside features per side from dropdowns, as one edit each', () => {
         render(['w1']);
+        // the rows are named by the traffic beside them (driving on the left: forward is the way's left)
+        expect(selection.selectAll('.form-field-lane-roadside-sidewalk .labeled-input .label').nodes().map((n: any) => n.textContent))
+            .toEqual(['Forward', 'Backward']);
         const left = selection.select<HTMLInputElement>('#lane-field-roadside-sidewalk-left');
         expect(left.attr('placeholder')).toBe('Yes, No, Mapped separately…');
         const edits = context.history().difference().summary().length;
@@ -116,6 +119,12 @@ describe('Lane Studio sidebar', () => {
         expect(selection.select('.lane-limits').empty()).toBe(false);
         selection.select('.lane-limits .speed-roundels:not(.speed-roundels-min) .speed-roundel-40').dispatch('click');
         expect(context.entity('w1').tags['maxspeed:lanes:forward']).toBe('40 mph|');
+        // the road's limit types are offered for lanes too
+        render(['w1']);
+        selection.select('.lane-limits .speed-roundel-nsl_single').dispatch('click');
+        expect(context.entity('w1').tags).toMatchObject({ 'maxspeed:lanes:forward': '60 mph|', 'maxspeed:type:lanes:forward': 'GB:nsl_single|' });
+        render(['w1']);
+        expect(selection.select('.lane-limits .speed-lower').empty()).toBe(false);
         selection.select('.lane-limits-road').dispatch('click');
         expect(state.selected()).toBeNull();
     });
