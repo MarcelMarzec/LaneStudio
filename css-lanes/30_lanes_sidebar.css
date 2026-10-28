@@ -370,6 +370,18 @@
 .ideditor.lane-studio .speed-roundel .roundel-min-disc { fill: #1d5bbf; stroke: #fff; stroke-width: 1; }
 .ideditor.lane-studio .speed-roundel .roundel-min-number { fill: #fff; }
 .ideditor.lane-studio .speed-roundel .roundel-none-text { fill: var(--passive-text-color); font-size: 12px; }
+.ideditor.lane-studio .lane-limits-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.ideditor.lane-studio .lane-limits-head h4 { margin: 0; }
+.ideditor.lane-studio .lane-limits-road {
+    height: auto;
+    padding: 3px 8px;
+    font-size: 12px;
+}
 .ideditor.lane-studio .speed-tagged {
     margin: 4px 0 0;
     color: var(--passive-text-color);

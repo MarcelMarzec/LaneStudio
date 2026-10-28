@@ -29,6 +29,7 @@ Symbols used in this document:
 | 🟠 | Picking lanes | Lanes are picked on the map or in the sidebar's lane strip with a pointer; once one is selected, `[` and `]` step to the next lane and Delete removes the selected lanes |
 | 🟠 | Lane colours | Lane types are told apart by colour, with labels on each lane from zoom 19; the lane opacity setting (pane shortcut `K`) makes them stronger or fainter |
 | 🟠 | Speed Limit tool | Lanes are coloured by their speed limit or minimum speed, with a pattern as well as a colour for limits set by their type (national, motorway, 20 zone, restricted road); the sidebar lists what each colour means, and the limit itself is shown in the inspector's speed roundels (each named for screen readers). The Speed limit / Minimum speed switch is a pair of buttons. Keys `1` to `7` pick 10 to 70 mph and Esc lets go; setting the limit still needs a click on the road |
+| 🟠 | Brand logos | Shown in place of a feature's marker; selecting it shows its name and tags in the inspector as usual. Turned off in the Lane Studio pane |
 | 🟠 | Railways, signals and level crossings | Drawn as symbols on the map; what each one is shows in the inspector when it is selected, as for any feature in iD |
 | 🟩 | What's new menu | A dialog listing the changes since the version you last used; closed with Esc or its button, and turned off under About in the Lane Studio pane |
 | ❌ | Routing tool | Routes are shown for the lane under the pointer; there is no keyboard way to pick a lane in it yet |

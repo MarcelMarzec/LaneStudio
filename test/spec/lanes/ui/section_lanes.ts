@@ -108,6 +108,18 @@ describe('Lane Studio sidebar', () => {
         expect(fieldPlaceholder([], false, 'Place names…')).toBe('Place names…');
     });
 
+    it('sets selected lanes\' speeds in a box like the road\'s, and goes back to the whole road', () => {
+        context.enter(selectMode(['w1']));
+        const state = laneState(context);
+        state.select('w1', [{ direction: 'forward', index: 0 }]);
+        render(['w1']);
+        expect(selection.select('.lane-limits').empty()).toBe(false);
+        selection.select('.lane-limits .speed-roundels:not(.speed-roundels-min) .speed-roundel-40').dispatch('click');
+        expect(context.entity('w1').tags['maxspeed:lanes:forward']).toBe('40 mph|');
+        selection.select('.lane-limits-road').dispatch('click');
+        expect(state.selected()).toBeNull();
+    });
+
     it('clears selected lanes when the road is deselected', () => {
         const state = laneState(context);
         context.enter(selectMode(['w1']));

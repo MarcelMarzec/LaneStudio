@@ -52,8 +52,9 @@ footway or pavement to see the streets reachable on foot and the crossings used.
 (footways and pedestrian ways are not coloured). A limit set by its UK type rather than a number
 alone has a pattern over its colour: diagonal black bands for the national limit, blue stripes for a
 motorway, white dots for a 20 zone and cross-hatching for a restricted road, explained under the
-colours in the panel. Junctions are coloured by their roads' limit where
-they agree, else by the main road's (the most major road meeting there). The sidebar shows the colours with how many roads in
+colours in the panel. Junctions (merged ones too), mini-roundabouts, turning heads and roads mapped as
+areas are coloured by their roads' limit where they agree, else by the main road's (the most major road
+meeting there); inside a road area its general lanes are coloured too. The sidebar shows the colours with how many roads in
 view have each, and lists the roads in view with no limit by name (click one to go to it). Pick a
 limit (or press 1 to 7 for 10 to 70 mph), then click a road to set it on that road, or shift-click a
 lane to set it on that lane only (`maxspeed:lanes`). The panel offers the same signs as the Lanes
@@ -73,8 +74,10 @@ drawn as usual), a click setting `minspeed` and a shift-click `minspeed:lanes`.
   lane type, speed limits, destination, access, width, width and height limits, surface,
   and every other `*:lanes` tag on the road.
 - Speed limits are picked from a row of UK roundels (10 to 70 mph, and none), the current one ringed,
-  and minimum speeds (`minspeed:lanes`) from a row of blue ones; with no lane selected, the road's own
-  limit and minimum speed (`minspeed`) are picked the same way.
+  and minimum speeds from a row of blue ones: with no lane selected, the road's own (`maxspeed`,
+  `minspeed`); with lanes selected, theirs (`maxspeed:lanes`, `minspeed:lanes`), in a box laid out
+  like the road's, which says the road's limit (lanes with none of their own follow it) and has a
+  **Whole road** button to let go of the lanes and edit the road.
 - For a whole road, the UK limit types (wiki: Key:maxspeed:type) are signs beside the roundels, each
   setting its type and limit: the national limit on a single carriageway (`GB:nsl_single`, 60 mph) or a
   dual carriageway (`GB:nsl_dual`, 70 mph), a motorway (`GB:motorway`, 70 mph), a restricted road with
@@ -96,6 +99,13 @@ lane lines and arrows, shortcut `K`)
   cones for everything Lane Studio draws. They can still be clicked, and hovering or selecting a road
   highlights Lane Studio's drawing of it. The selected road keeps a thin line and its nodes, so its
   nodes and midpoints can still be dragged to reshape it.
+- Hide land use: hides land use areas (`landuse=*`) alone, iD's and Lane Studio's. Map Data's Land Use
+  filter also hides car parks and other surfaces; this keeps them.
+- Show brand logos (on unless turned off): a shop, restaurant or other feature tagged
+  `brand:wikidata=*` shows its brand's logo on a white tile in place of iD's marker (at a point, or in
+  the middle of an area), from zoom 17. The logo is the brand's small logo (P8972) or logo image (P154)
+  on Wikidata, loaded from Wikimedia Commons; a brand without one keeps iD's marker. Clicking the tile
+  selects the feature.
 - About Lane Studio: "Show what's new after an update" (on unless turned off), "See what's new" (the
   latest versions' changes at any time), and links to the website, privacy policy and contact page
   (set in `modules/lanes/core/links.ts`).
@@ -191,6 +201,8 @@ tunnel or below ground (`layer` < 0) stay under them. Everything else is drawn b
 road it is driven into from, coloured by `parking_space=*`: blue with yellow lines and a wheelchair for
 disabled bays, green with a bolt for charging, purple for parent and child, orange for motorcycles; iD's
 parking icon in the middle of the bay is hidden. A car park (`amenity=parking` with no `parking=*` or `parking=surface`) is drawn as asphalt.
+Car parks, parking spaces and mapped highway areas can be hovered and clicked anywhere on their surface,
+not only on their edge.
 
 **Railways** (wiki: Key:railway): track is drawn at its gauge, from `gauge` (mm) or the usual one:
 1435 mm for main lines, the Underground, light rail and trams, 600 mm for narrow gauge, 184 mm for
@@ -239,7 +251,23 @@ railway buildings are left to iD's icons and buildings.
 **Surfaces**: `surface=*` (and `surface:lanes`) changes how carriageways, lanes, paths and mapped areas
 look: asphalt, concrete, paving slabs, setts and gravel (as textures), unpaved, grass, wood and metal.
 A road mapped as an area (`area=yes` + `highway=service` etc., or `area:highway=<road>`) is the road's
-surface: ways inside it draw only their lane lines, arrows and special lanes. Shared foot and cycle
+surface: ways inside it draw only their lane lines, arrows and special lanes.
+
+**Micro-mapping** (wiki: Key:area:highway and its mapping guidelines): highway areas are drawn as
+what they are:
+
+- road areas (`area:highway=primary`, `residential`, `service`… and `bus_bay` and the like) as the
+  road's surface, with the road fitted inside (below); a junction area (`junction=yes`) is the
+  junction's surface in place of Lane Studio's junction box, and a turning circle area
+  (`area:highway=turning_circle`, or a road area round a road's end) in place of its turning head;
+- footway, pedestrian, path, steps, bridleway and corridor areas as pavement, cycleway areas as
+  cycleway, verges as grass, traffic islands as islands;
+- painted over the lanes: hatching (`area:highway=emergency`, `prohibited`) edged white, a crossing
+  (`area:highway=footway` + `footway=crossing`) with zebra bars across the way people walk unless
+  `crossing:markings` says otherwise, and a cycle crossing (`area:highway=cycleway` +
+  `cycleway=crossing`) with a dashed edge.
+
+Highway areas are areas drawn from closed ways; multipolygons are not drawn yet. Shared foot and cycle
 paths are striped with both colours, segregated ones split in two.
 
 **Also drawn**: mini-roundabouts (a circular carriageway from `diameter=*` or the roads, the white
@@ -252,7 +280,8 @@ like a road. Road numbers in shields (UK colours: motorways blue, primary routes
 roads white) and motorway junction numbers; speed limit roundels where the limit changes between two
 roads that both have one (the road traffic arrives from is the one carrying lanes towards the change, so
 a road splitting into a dual carriageway counts; a road with only a `maxspeed:type` is painted with its
-limit, except the national limit, which isn't painted), and minimum speed roundels; barriers on roads (gates and similar across the road, bollards and blocks
+limit), where the limit becomes the national limit its sign (a white disc with a black band) and where
+it becomes a motorway's the blue motorway sign, and minimum speed roundels; barriers on roads (gates and similar across the road, bollards and blocks
 as posts, cattle grids) and on paths; fences, walls, guard rails, jersey barriers and hedges at their
 width; and small direction arrows on the lanes of one-way roads (iD's own arrows on the way line are
 hidden).
@@ -394,6 +423,7 @@ that names its `created_by` value, listed on the wiki's Editors page.
 | Strings (read as `t('_lanes.…')`) | `data/lanes.yaml` |
 | Version shown in the footer and written to changesets | `modules/lanes/version.ts` |
 | Routing | `modules/lanes/geometry/routing.ts`, `modules/lanes/core/lane_routing.ts`, `modules/lanes/core/mode_routing.ts`, `modules/lanes/ui/routing_panel.ts`, `modules/lanes/svg/routing.ts` |
+| Brand logos | `modules/lanes/core/brand_logos.ts` (looking them up on Wikidata), `modules/lanes/svg/brand_logos.ts` (drawing them) |
 | Speed Limit tool | `modules/lanes/core/lane_speed.ts`, `modules/lanes/core/mode_speed.ts`, `modules/lanes/ui/speed_panel.ts`, `modules/lanes/ui/speed_roundels.ts`, `modules/lanes/model/speed_limits.ts` (the speed tags) |
 | Railways | `modules/lanes/geometry/railway.ts` (track), `modules/lanes/geometry/rail_features.ts` (platforms, crossings, signals, equipment), `modules/lanes/svg/railway.ts` |
 | Parking spaces and car parks | `modules/lanes/geometry/parking_spaces.ts`, `modules/lanes/svg/parking_spaces.ts` |

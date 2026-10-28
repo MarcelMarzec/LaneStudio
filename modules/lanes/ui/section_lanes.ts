@@ -26,7 +26,7 @@ import { uiTooltip } from '../../ui/tooltip';
 import { isLaneRoad } from '../core/roads';
 import { isTrafficIsland } from '../model/street_features';
 import {
-    mphLimits, mphOf, roadSpeedPick, speedRoundels, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed, type SpeedPick
+    mphLimits, mphOf, roadSpeedPick, speedPickLabel, speedRoundels, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed, type SpeedPick
 } from './speed_roundels';
 import {
     parseLanes, laneRefsInWayOrder, laneCount, insertLane, removeLane, moveLane, setLaneValue, laneValue,
@@ -189,8 +189,10 @@ export function uiSectionLanes(context: iD.Context) {
             }
         }
 
-        if (selected.length) renderInspector(wrap, model, wayID, selected);
-        else renderRoadLimits(wrap, road);
+        if (selected.length) {
+            renderLaneLimits(wrap, road, model, selected);
+            renderInspector(wrap, model, wayID, selected);
+        } else renderRoadLimits(wrap, road);
         const shoulder = state.shoulder();
         if (shoulder?.wayID === wayID) renderShoulder(wrap, road, shoulder.side);
         const ring = roundaboutOf(road, graph);
@@ -397,10 +399,34 @@ export function uiSectionLanes(context: iD.Context) {
         const current: SpeedPick | undefined = value === undefined ? undefined : !value ? { kind: 'none' } : mph === null ? undefined : { kind: 'mph', mph };
         const unusual = value === undefined ? t('inspector.multiple_values') : unusualSpeed(value);
         const minimum = measure === 'minspeed';
-        speedField(parent, t(minimum ? '_lanes.speed.min_lanes_label' : '_lanes.speed.lanes_label'), unusual, row => speedRoundels(row, {
+        speedField(parent, t(minimum ? '_lanes.speed.min_road_label' : '_lanes.speed.road_label'), unusual, row => speedRoundels(row, {
             current, minimum, none: true, noneLabel: t('_lanes.speed.lanes_none'),
             onPick: pick => perform(wayID, m => setLaneValue(m, refs, `${measure}:lanes`, pick.kind === 'mph' ? `${pick.mph} mph` : ''), 'value')
         }));
+    }
+
+    /**
+     * The selected lanes' speed limit and minimum speed, laid out as the whole road's are, with what the road's own
+     * limit is (which the lanes follow when they have none of their own), and a button to edit the whole road instead
+     */
+    function renderLaneLimits(wrap: Div, road: osmWay, model: LaneModel, refs: LaneRef[]) {
+        const keys = ['maxspeed:lanes', 'minspeed:lanes'].filter(key => !model.keys[key]?.readonly);
+        const box = wrap.append('div').attr('class', 'lane-inspector road-limits lane-limits');
+        const head = box.append('div').attr('class', 'lane-limits-head');
+        head.append('h4').text(t(refs.length === 1 ? '_lanes.speed.lane_title' : '_lanes.speed.lanes_title', { n: refs.length }));
+        head.append('button').attr('class', 'lane-limits-road')
+            .text(t('_lanes.speed.whole_road'))
+            .call(tooltip(t('_lanes.speed.whole_road_tip')))
+            .on('click', () => state.clear());
+        box.append('p').attr('class', 'lanes-note')
+            .text(t('_lanes.speed.road_is', { limit: speedPickLabel(roadSpeedPick(road.tags)) }));
+        const shared = (key: string) => {
+            const values = refs.map(ref => laneValue(model, ref, key));
+            return values.every(v => v === values[0]) ? values[0] : undefined;
+        };
+        for (const key of keys) {
+            renderLaneSpeed(box, road.id, refs, key === 'maxspeed:lanes' ? 'maxspeed' : 'minspeed', shared(key));
+        }
     }
 
     /** Limits for the whole road, shown while no lane is selected */
@@ -697,10 +723,10 @@ export function uiSectionLanes(context: iD.Context) {
             onChange: value => perform(wayID, m => setLaneValue(m, refs, key, value), 'value')
         });
         for (const field of textFields) {
-            // speed limits and minimum speeds are picked from roundels, unless the road's lane speeds can't be edited here
-            if ((field.id === 'maxspeed' || field.id === 'minspeed') && !readonly(field.key)) {
-                renderLaneSpeed(inspector, wayID, refs, field.id, shared(field.key));
-            } else fieldFor(field.id, field.key, t(`_lanes.field.${field.id}`));
+            // speed limits and minimum speeds are picked from roundels above, unless the road's lane speeds can't be
+            // edited here
+            if ((field.id === 'maxspeed' || field.id === 'minspeed') && !readonly(field.key)) continue;
+            fieldFor(field.id, field.key, t(`_lanes.field.${field.id}`));
         }
 
         /* other lane keys on the road, so nothing is hidden */

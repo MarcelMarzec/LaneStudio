@@ -58,6 +58,12 @@ national limit on a single or dual carriageway, a motorway, a restricted road an
 road selected and no lane picked, the Lanes section also sets the road's minimum speed.
 
 
+## How do I hide land use without hiding car parks?
+
+Map Data's Land Use filter hides car parks and other surfaces along with `landuse=*`. Turn on **Hide
+land use** in the Lane Studio pane (shortcut `K`) instead: it hides land use areas alone.
+
+
 ## Are railways drawn?
 
 Yes. Railways, the Underground and tram lines are drawn with their ballast, sleepers and rails at their

@@ -27,6 +27,13 @@
 .ideditor.lane-studio .lanes-layer .street-area-pavement           { fill: rgb(236, 205, 150); --lanes-a: 0.65; }
 .ideditor.lane-studio .lanes-layer .street-area-cycleway           { fill: rgb(45, 170, 95); --lanes-a: 0.6; }
 .ideditor.lane-studio .lanes-layer .street-area-other              { fill: rgb(150, 170, 120); --lanes-a: 0.3; }
+/* areas painted over the road (area:highway=emergency/prohibited, crossings mapped as areas) */
+.ideditor.lane-studio .lanes-layer .painted-area-hatched .painted-area-fill { fill: url(#lanes-pattern-hatch-white); stroke: #fff; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .painted-area-crossing .painted-area-fill { fill: rgba(30, 32, 36, 0.35); stroke: none; }
+.ideditor.lane-studio .lanes-layer .painted-area-crossing .painted-area-stripes { fill: #fff; fill-opacity: 0.92; }
+.ideditor.lane-studio .lanes-layer .painted-area-cycle_crossing .painted-area-fill { fill: rgba(45, 170, 95, 0.35); stroke: #fff; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.ideditor.lane-studio .lanes-layer .painted-area.hover .painted-area-fill { stroke: #ffee00; stroke-width: 2; }
+.ideditor.lane-studio .lanes-layer .painted-area.selected .painted-area-fill { stroke: #f6634f; stroke-width: 2.5; }
 .ideditor.lane-studio .lanes-layer .street-area-island {
     fill: rgb(165, 190, 135); --lanes-a: 0.85;
     stroke: #f2f2f2;
@@ -280,6 +287,10 @@
 /* minimum speed: a blue disc with a white number */
 .ideditor.lane-studio .lanes-layer .symbol-min_speed .speed-ring { fill: #1d5bbf; stroke: #fff; }
 .ideditor.lane-studio .lanes-layer .symbol-min_speed .speed-number { fill: #fff; font-weight: 700; }
+.ideditor.lane-studio .lanes-layer .symbol-national_limit .national-disc { fill: #fff; stroke: #111; }
+.ideditor.lane-studio .lanes-layer .symbol-national_limit .national-band { fill: #111; }
+.ideditor.lane-studio .lanes-layer .symbol-motorway_start .motorway-plate { fill: #1d5bbf; stroke: #fff; stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .symbol-motorway_start .motorway-symbol { fill: none; stroke: #fff; stroke-linecap: round; }
 
 /* structures (wiki: bridge, tunnel, covered, cutting, embankment, ford) */
 .ideditor.lane-studio .lanes-layer .structure { pointer-events: none; }

@@ -142,6 +142,19 @@ describe('speed roundels', () => {
         expect(symbolsOf(graph).filter(s => s.kind === 'speed_limit').map(s => s.text)).toEqual(['20']);
     });
 
+    it('paints the national limit\'s sign and a motorway\'s where they begin', () => {
+        const graph = graphOf([
+            node('n1', -200, 0), node('n2', 0, 0), node('n3', 200, 0), node('n4', 400, 0), node('n5', 600, 0),
+            way('w1', ['n1', 'n2'], { highway: 'primary', oneway: 'yes', lanes: '1', maxspeed: '40 mph' }),
+            way('w2', ['n2', 'n3'], { highway: 'primary', oneway: 'yes', lanes: '1', 'maxspeed:type': 'GB:nsl_single' }),
+            way('w3', ['n3', 'n4'], { highway: 'primary', oneway: 'yes', lanes: '1', 'maxspeed:type': 'GB:nsl_dual' }),
+            way('w4', ['n4', 'n5'], { highway: 'motorway', oneway: 'yes', lanes: '1', 'maxspeed:type': 'GB:motorway' })
+        ]);
+        const signs = symbolsOf(graph).filter(s => s.kind === 'national_limit' || s.kind === 'motorway_start');
+        // the national limit begins on w2 (not again on w3, still the national limit), the motorway on w4
+        expect(signs.map(s => [s.key.split('-')[0], s.kind])).toEqual([['w2', 'national_limit'], ['w4', 'motorway_start']]);
+    });
+
     it('paints each lane where the road limit changes', () => {
         const graph = graphOf([
             node('n1', -200, 0), node('n2', 0, 0), node('n3', 200, 0),

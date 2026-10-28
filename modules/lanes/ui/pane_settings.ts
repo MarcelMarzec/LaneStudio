@@ -80,6 +80,28 @@ function uiSectionLaneDisplay(context: iD.Context) {
                 settings.setHideOriginals(this.checked);
             });
         label.append('span').text(t('_lanes.settings.hide_originals'));
+        // land use alone: Map Data's Land Use filter also hides car parks, and other surfaces Lane Studio draws
+        const landuse = list.append('li')
+            .attr('class', 'lanes-hide-landuse-option')
+            .call((uiTooltip() as any).title(() => t.append('_lanes.settings.hide_landuse_tip')).placement('top'));
+        const landuseLabel = landuse.append('label');
+        landuseLabel.append('input')
+            .attr('type', 'checkbox')
+            .on('change', function(this: HTMLInputElement) {
+                settings.setHideLanduse(this.checked);
+            });
+        landuseLabel.append('span').text(t('_lanes.settings.hide_landuse'));
+        // brand logos from Wikidata in place of iD's markers
+        const logos = list.append('li')
+            .attr('class', 'lanes-brand-logos-option')
+            .call((uiTooltip() as any).title(() => t.append('_lanes.settings.brand_logos_tip')).placement('top'));
+        const logosLabel = logos.append('label');
+        logosLabel.append('input')
+            .attr('type', 'checkbox')
+            .on('change', function(this: HTMLInputElement) {
+                settings.setShowLogos(this.checked);
+            });
+        logosLabel.append('span').text(t('_lanes.settings.brand_logos'));
 
         // update
         container = enter.merge(container);
@@ -91,6 +113,14 @@ function uiSectionLaneDisplay(context: iD.Context) {
             .classed('active', settings.hideOriginals())
             .select('input')
             .property('checked', settings.hideOriginals());
+        container.select('.lanes-brand-logos-option')
+            .classed('active', settings.showLogos())
+            .select('input')
+            .property('checked', settings.showLogos());
+        container.select('.lanes-hide-landuse-option')
+            .classed('active', settings.hideLanduse())
+            .select('input')
+            .property('checked', settings.hideLanduse());
     }
 
     return section;

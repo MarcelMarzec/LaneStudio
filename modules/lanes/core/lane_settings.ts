@@ -15,6 +15,12 @@ export interface LaneSettings {
     /** hide iD's own lines, vertices, points and direction cones for everything Lane Studio draws */
     hideOriginals(): boolean;
     setHideOriginals(value: boolean): void;
+    /** hide land use (`landuse=*`) alone, iD's and Lane Studio's, leaving car parks and other surfaces shown */
+    hideLanduse(): boolean;
+    setHideLanduse(value: boolean): void;
+    /** show brands' logos from Wikidata in place of iD's markers (on unless turned off) */
+    showLogos(): boolean;
+    setShowLogos(value: boolean): void;
     on(type: `change${string}`, listener: (() => void) | null): LaneSettings;
 }
 
@@ -29,6 +35,8 @@ export function laneSettings(context: iD.Context): LaneSettings {
     const stored = parseFloat(prefs('lanes-surface-alpha') ?? '');
     let _opacity = Number.isFinite(stored) ? Math.max(0, Math.min(1, stored)) : defaultSurfaceOpacity;
     let _hide = prefs('lanes-hide-originals') === 'true';
+    let _hideLanduse = prefs('lanes-hide-landuse') === 'true';
+    let _showLogos = prefs('lanes-brand-logos') !== 'false';
 
     function apply() {
         const container = context.container();
@@ -56,6 +64,7 @@ export function laneSettings(context: iD.Context): LaneSettings {
         const junction = colour.map((c, i) => Math.min(255, c + [7, 8, 12][i]));
         container.style('--lanes-junction-fill', `rgb(${junction.join(', ')})`);
         container.classed('lanes-hide-originals', _hide);
+        container.classed('lanes-hide-landuse', _hideLanduse);
     }
 
     const settings: LaneSettings = {
@@ -74,6 +83,21 @@ export function laneSettings(context: iD.Context): LaneSettings {
             _hide = value;
             prefs('lanes-hide-originals', value ? 'true' : null);
             apply();
+            dispatch.call('change', settings);
+        },
+        hideLanduse: () => _hideLanduse,
+        setHideLanduse(value) {
+            if (value === _hideLanduse) return;
+            _hideLanduse = value;
+            prefs('lanes-hide-landuse', value ? 'true' : null);
+            apply();
+            dispatch.call('change', settings);
+        },
+        showLogos: () => _showLogos,
+        setShowLogos(value) {
+            if (value === _showLogos) return;
+            _showLogos = value;
+            prefs('lanes-brand-logos', value ? null : 'false');
             dispatch.call('change', settings);
         },
         on(type, listener) {

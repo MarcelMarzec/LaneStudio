@@ -102,14 +102,17 @@ en:
   speed:
     mph: "{n} mph"
     none: No speed limit tagged
-    lanes_label: Speed limit of these lanes
     lanes_none: Same as the road
     road_label: Speed limit
     tagged: "Tagged: {value}"
     min_mph: "Minimum {n} mph"
-    min_lanes_label: Minimum speed of these lanes
     min_road_label: Minimum speed
     min_none: No minimum speed
+    lane_title: Speed of this lane
+    lanes_title: "Speed of these {n} lanes"
+    whole_road: Whole road
+    whole_road_tip: Edit the whole road's speed limit instead of these lanes
+    road_is: "The road: {limit}. Lanes with no limit of their own follow it."
     types:
       nsl_single: "National, single carriageway ({mph} mph)"
       nsl_dual: "National, dual carriageway ({mph} mph)"
@@ -310,6 +313,10 @@ en:
     reset_opacity: Reset lane surface opacity
     hide_originals: Hide iD's lines and points under lanes
     hide_originals_tip: Hides iD's own way lines, vertices, points and direction cones for roads, paths, markings and areas Lane Studio draws. They can still be clicked.
+    hide_landuse: Hide land use
+    brand_logos: Show brand logos
+    brand_logos_tip: "Shows the logo of a shop, restaurant or other brand (brand:wikidata=*) in place of its marker, looked up on Wikidata and Wikimedia Commons."
+    hide_landuse_tip: "Hides land use areas (landuse=*) alone. Map Data's Land Use also hides car parks and other surfaces; this keeps them."
     about: About Lane Studio
     whats_new_option: Show what's new after an update
     whats_new_tip: After Lane Studio is updated, list what changed since the version you last used.

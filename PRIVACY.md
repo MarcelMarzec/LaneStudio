@@ -21,8 +21,8 @@ typefaces from Google Fonts, so Google receives your IP address when one of them
 
 Lane Studio does not set tracking cookies and does not collect analytics. It stores some information
 in your browser's local storage so you don't have to re-enter it: your settings (such as lane opacity,
-the map layers shown, whether the what's new menu is shown and whether the Lanes section's Look ahead
-and Roadside are folded away), the Lane Studio version you last used
+the map layers shown, whether the what's new menu is shown, whether the Lanes section's Look ahead
+and Roadside are folded away, and whether land use and brand logos are shown), the Lane Studio version you last used
 (so the what's new menu shows only what changed since) and edits you have not saved yet, under keys
 starting with `lanes_`, and
 your OpenStreetMap login token, under a key named after the OpenStreetMap server. This stays on your
@@ -57,6 +57,12 @@ parties, do not use these features.
 
 Lane Studio's changelog, for the what's new menu, is fetched from the site Lane Studio is served from.
 
+Brand logos (Lane Studio pane, "Show brand logos", on unless turned off) are looked up on
+[Wikidata](https://www.wikidata.org/) for the brands (`brand:wikidata=*`) of features in view, and the
+logo images loaded from [Wikimedia Commons](https://commons.wikimedia.org/). The Wikimedia Foundation's
+[privacy policy](https://foundation.wikimedia.org/wiki/Policy:Privacy_policy) governs that use. Turn the
+setting off not to contact them for logos.
+
 Lane Studio fetches some resources (tagging presets and indexes) from the [jsDelivr](https://www.jsdelivr.com/)
 content delivery network, governed by its
 [privacy policy](https://www.jsdelivr.com/terms/privacy-policy-jsdelivr-net).
@@ -76,6 +82,7 @@ law, or want to ask about it, open an issue at
 
 ### Changelog
 
+* _2026-Oct-28_ - Brand logos are looked up on Wikidata and loaded from Wikimedia Commons (can be turned off); the land use and brand logo settings are stored with your settings.
 * _2026-Oct-28_ - Whether Look ahead and Roadside are folded away is stored with your settings.
 * _2026-Oct-27_ - The website's pages, now part of this project, load fonts from Google Fonts.
 * _2026-Oct-27_ - The version last used and the what's new setting are stored; the changelog is fetched from the site itself.

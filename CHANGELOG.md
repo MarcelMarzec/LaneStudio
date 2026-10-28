@@ -8,6 +8,31 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.28r8
+##### 2026-Oct-28
+
+#### Roads and signs
+* The Speed Limit tool colours merged junctions (round the roundabout by Asda on Lister Way),
+  mini-roundabouts, turning heads and roads mapped as areas, which stayed grey
+* Where the limit becomes the national limit, its sign (a white disc with a black band) is painted on
+  the road, and where a road becomes a motorway, the blue motorway sign
+* With lanes selected, their speed limit and minimum speed are in a box laid out like the whole road's,
+  saying what the road's limit is, with a **Whole road** button to go back to the road
+
+#### Editing
+* Car parks and parking spaces can be hovered and selected anywhere on their surface, not only on
+  their edge
+* **Hide land use** in the Lane Studio pane hides `landuse=*` alone; Map Data's Land Use also hides car
+  parks and other surfaces
+* Brand logos: a shop, restaurant or other feature with `brand:wikidata` shows its brand's logo from
+  Wikidata in place of its marker (turned off with **Show brand logos** in the Lane Studio pane)
+
+#### Lanes and junctions
+* Micro-mapping (`area:highway=*`): junction and turning circle areas stand in for Lane Studio's own
+  junction boxes and turning heads; `emergency` and `prohibited` areas are hatched; crossings mapped as
+  areas get zebra bars (or a dashed edge for a cycle crossing); steps, bridleway and corridor areas are
+  drawn as pavement; and every highway area can be selected anywhere on its surface
+
 # 26.10.28r7
 ##### 2026-Oct-28
 

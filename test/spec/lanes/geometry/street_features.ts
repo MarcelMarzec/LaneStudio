@@ -144,6 +144,37 @@ describe('streetGeometry surfaces and paths', () => {
 });
 
 
+describe('streetGeometry: highway areas (area:highway)', () => {
+    // a 6 m × 12 m rectangle with the given tags
+    function areaOf(id: number, tags: Tags, dx = 0) {
+        const nodes = [[0, 0], [6, 0], [6, 12], [0, 12]].map(([x, y], i) => new iD.osmNode({ id: `n${id * 10 + i}`, loc: at(dx + x, y) }));
+        return [...nodes, new iD.osmWay({ id: `w${id}`, nodes: [...nodes.map(n => n.id), nodes[0].id], tags })];
+    }
+
+    it('draws each kind of highway area', () => {
+        const entities = [
+            ...areaOf(1, { 'area:highway': 'emergency' }),
+            ...areaOf(2, { 'area:highway': 'footway', footway: 'crossing', 'crossing:markings': 'zebra' }, 20),
+            ...areaOf(3, { 'area:highway': 'cycleway', cycleway: 'crossing' }, 40),
+            ...areaOf(4, { 'area:highway': 'turning_circle' }, 60),
+            ...areaOf(5, { 'area:highway': 'primary', junction: 'yes' }, 80),
+            ...areaOf(6, { 'area:highway': 'steps' }, 100),
+            ...areaOf(7, { 'area:highway': 'verge' }, 120)
+        ];
+        // @ts-expect-error -- the constructor also takes a list of entities
+        const graph = new iD.coreGraph(entities);
+        const { areas } = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
+        expect(areas.map(a => [a.id, a.kind])).toEqual([
+            ['w1', 'hatched'], ['w2', 'crossing'], ['w3', 'cycle_crossing'], ['w4', 'carriageway'], ['w5', 'carriageway'], ['w6', 'pavement'], ['w7', 'other']
+        ]);
+        // a zebra's bars, half a metre wide every metre along its 12 m length (the way people walk)
+        const zebra = areas.find(a => a.id === 'w2')!;
+        expect(zebra.stripes!.length).toBeGreaterThanOrEqual(12);
+        expect(areas.find(a => a.id === 'w3')!.stripes).toBeUndefined();
+    });
+});
+
+
 describe('streetGeometry: mini-roundabouts, turning circles, barriers, speed limits', () => {
     function build(extra: InstanceType<typeof iD.osmNode | typeof iD.osmWay>[] = []) {
         const entities = [

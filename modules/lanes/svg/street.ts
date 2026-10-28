@@ -1,6 +1,6 @@
 import type { Projection } from '../../geo/raw_mercator';
 import type { Vec2 } from '../../geo/vector';
-import type { StreetGeometry, SymbolShape } from '../geometry/street';
+import { paintedAreaKinds, type AreaShape, type StreetGeometry, type SymbolShape } from '../geometry/street';
 import type { ParkingShape } from '../geometry/parking';
 import type { RoadMarkings } from '../geometry/road_marking';
 import type { MarkingColour, StrokeStyle } from '../model/street_features';
@@ -117,9 +117,11 @@ export function drawStreet(
     const symbols = zoom >= zooms.labels;
 
     // a road's carriageway area carries the road's id too, so it lights up with the road
-    joinPaths(group('areas'), street.areas.filter(a => a.kind !== 'island'), d => d.id,
+    joinPaths(group('areas'), street.areas.filter(a => a.kind !== 'island' && !paintedAreaKinds.has(a.kind)), d => d.id,
         d => `street-area street-area-${d.kind} ${d.id}` + (areaRoads.has(d.id) ? ` ${areaRoads.get(d.id)}` : '') +
             (d.surface ? ` surface-${d.surface}` : ''), d => path(d.polygon, true));
+
+    drawPaintedAreas(group('area-markings'), street.areas.filter(a => paintedAreaKinds.has(a.kind)), path);
 
     joinPaths(group('islands'), street.areas.filter(a => a.kind === 'island'), d => d.id,
         d => `street-area street-area-island ${d.id} surface-${d.surface ?? 'concrete'}`, d => path(d.polygon, true));
@@ -203,7 +205,14 @@ function drawSymbols(group: Group, data: SymbolShape[], projection: Projection) 
     roundel.append('text').each(attrChanged('class', 'speed-number'))
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'central');
-    enter.filter(d => d.kind !== 'stop_text' && d.kind !== 'speed_limit' && d.kind !== 'min_speed').append('use');
+    // the national limit: a white disc with a black band; the start of a motorway: its blue sign
+    const national = enter.filter(d => d.kind === 'national_limit');
+    national.append('circle').each(attrChanged('class', 'national-disc'));
+    national.append('path').each(attrChanged('class', 'national-band'));
+    const motorway = enter.filter(d => d.kind === 'motorway_start');
+    motorway.append('rect').each(attrChanged('class', 'motorway-plate'));
+    motorway.append('path').each(attrChanged('class', 'motorway-symbol'));
+    enter.filter(d => !['stop_text', 'speed_limit', 'min_speed', 'national_limit', 'motorway_start'].includes(d.kind)).append('use');
 
     const all = enter.merge(symbols)
         .each(attrChanged('transform', d => d.transform));
@@ -215,9 +224,47 @@ function drawSymbols(group: Group, data: SymbolShape[], projection: Projection) 
     all.filter(d => d.kind === 'speed_limit' || d.kind === 'min_speed').select('text')
         .attr('font-size', d => (d.k * 0.48).toFixed(1))
         .text(d => d.text ?? '');
+    all.filter(d => d.kind === 'national_limit').select('circle')
+        .each(attrChanged('r', d => (d.k / 2).toFixed(1)))
+        .attr('stroke-width', d => Math.max(0.8, d.k * 0.05).toFixed(1));
+    all.filter(d => d.kind === 'national_limit').select('path')
+        .attr('d', d => {
+            const r = d.k / 2;
+            const [a, b] = [r * 0.72, r * 0.42];
+            return `M${-a} ${b}L${b} ${-a}L${a} ${-b}L${-b} ${a}Z`;
+        });
+    all.filter(d => d.kind === 'motorway_start').select('rect')
+        .attr('x', d => (-d.k / 2).toFixed(1)).attr('y', d => (-d.k / 2).toFixed(1))
+        .attr('width', d => d.k.toFixed(1)).attr('height', d => d.k.toFixed(1)).attr('rx', d => (d.k * 0.12).toFixed(1));
+    all.filter(d => d.kind === 'motorway_start').select('path')
+        .attr('d', d => {
+            const u = d.k / 26;
+            return `M${-7 * u} ${9 * u}L${-2.2 * u} ${-4 * u}M${7 * u} ${9 * u}L${2.2 * u} ${-4 * u}M0 ${9 * u}V${5 * u}M0 ${2 * u}V${-1 * u}M${-8 * u} ${-6.5 * u}H${8 * u}`;
+        })
+        .attr('stroke-width', d => Math.max(1, d.k * 0.07).toFixed(1));
     all.select('use')
         .each(attrChanged('href', d => (d.kind === 'signals' ? '#lanes-signals' : '#lanes-giveway')))
         .each(attrChanged('transform', d => `scale(${(d.k / 20).toFixed(3)})`));
+}
+
+
+/**
+ * Areas painted over the road, above its lanes (wiki: Key:area:highway): white hatching (`emergency`, `prohibited`)
+ * edged with a white line, a zebra crossing's white bars clipped to the crossing's outline, and a cycle crossing's
+ * dashed edges
+ */
+function drawPaintedAreas(group: Group, areas: AreaShape[], path: ReturnType<typeof pathFor>) {
+    const items = group.selectAll<SVGGElement, AreaShape>('g.painted-area').data(areas, d => d.id);
+    items.exit().remove();
+    const enter = items.enter().append('g');
+    enter.append('clipPath').attr('id', d => `lanes-clip-${d.id}`).append('path');
+    enter.append('path').attr('class', 'painted-area-fill');
+    enter.append('path').attr('class', 'painted-area-stripes').attr('clip-path', d => `url(#lanes-clip-${d.id})`);
+    const all = enter.merge(items)
+        .each(attrChanged('class', function(d) { return withIdState(this, `painted-area painted-area-${d.kind} ${d.id}`); }));
+    all.select('clipPath').select('path').each(attrChanged('d', d => path(d.polygon, true)));
+    all.select('.painted-area-fill').each(attrChanged('d', d => path(d.polygon, true)));
+    all.select('.painted-area-stripes').each(attrChanged('d', d => (d.stripes ?? []).map(bar => path(bar, true)).join('')));
 }
 
 

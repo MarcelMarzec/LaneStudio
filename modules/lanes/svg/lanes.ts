@@ -43,6 +43,9 @@ import { drawJunctionLabels, drawShields } from './route_labels';
 import type { AreaShape } from '../geometry/street';
 import type { osmNode } from '../../osm/node';
 import type { NodeId, OsmEntity } from '../../osm';
+import { onBrandLogos } from '../core/brand_logos';
+import { laneSettings } from '../core/lane_settings';
+import { drawBrandLogos } from './brand_logos';
 
 /** Zoom levels where each level of detail appears (see the plan's zoom rules) */
 export const laneZooms = {
@@ -137,6 +140,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     const tools = laneTools(context);
     const routing = laneRouting(context);
     const speed = laneSpeed(context);
+    const settings = laneSettings(context);
     // the pieces last drawn, for redrawing routes alone as the pointer moves
     let _pieces: RoadPiece[] = [];
 
@@ -180,10 +184,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'islands', 'dividers', 'tram-rails', 'kerbs',
-                'paths-over', 'rail-over-road', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols',
+                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'tram-rails', 'kerbs',
+                'paths-over', 'rail-over-road', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols', 'logos',
                 'shields', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
-                'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
+                'surface-targets', 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
             ])
             .enter()
             .append('g')
@@ -203,7 +207,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             context.features().hidden()].join('|');
     };
     let _drawn: { graph: iD.Graph; key: string } | null = null;
-    let _marked: { drawn: Set<string>; drawnWays: Set<string>; drawnNodes: Set<string>; spaces: Set<string> } | null = null;
+    let _marked: { drawn: Set<string>; drawnWays: Set<string>; drawnNodes: Set<string>; spaces: Set<string>; logos: Set<string> } | null = null;
     let _geometry: { graph: iD.Graph; ids: string; roads: RoadGeometry; street: StreetGeometry } | null = null;
     let _frame = 0;
 
@@ -276,6 +280,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const parking = parkingGeometry(visible, graph);
         const roadMarkings = markings ? roadMarkingGeometry(visible, graph) : { lines: [], areas: [], texts: [] };
         drawStreet(group, street, projection, zoom, laneZooms, areaRoads);
+        // land use, which the "hide land use" setting hides on its own
+        group('areas').selectAll<SVGPathElement, { id: string }>('path')
+            .each(classChanged('lanes-landuse', d => !!graph.hasEntity(d.id as NodeId)?.tags.landuse));
 
         /* railways, the Underground and trams (sleepers once they can be seen) */
         const tracks = railGeometry(visible, graph, markings);
@@ -363,6 +370,20 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')));
 
 
+        // the Speed Limit tool's class for road surface at a node: a junction, a mini-roundabout, a turning circle (a
+        // merged junction is keyed `cluster-<node>-<node>…`: all its nodes' roads count)
+        const nodeSpeed = (key: string) => {
+            if (!speed.active()) return '';
+            const ids = key.startsWith('cluster-') ? key.slice('cluster-'.length).split('-') : [key];
+            const roads = new Set<osmWay>();
+            for (const id of ids) {
+                const node = graph.hasEntity(id as NodeId) as osmNode | undefined;
+                if (node) graph.parentWays(node).filter(isLaneRoad).forEach(way => roads.add(way as osmWay));
+            }
+            const cls = junctionSpeedClass([...roads], speed.measure());
+            return cls === null || (speed.measure() === 'minspeed' && cls === 'missing') ? '' : ` speed-${cls}`;
+        };
+
         /* junction areas (not inside a road mapped as an area, which is their surface) */
         const shownJunctions = roadAreas.length ? junctions.filter(j => {
             const node = graph.hasEntity(j.nodeID as NodeId) as osmNode | undefined;
@@ -370,12 +391,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         }) : junctions;
         // all junctions of a kind in one path, so where they overlap the surface is one even colour rather than
         // see-through boxes stacked on each other (the Speed Limit tool colours them too: one path per colour)
-        const junctionSpeed = (j: typeof shownJunctions[number]) => {
-            if (!speed.active()) return '';
-            const node = graph.hasEntity(j.nodeID as NodeId) as osmNode | undefined;
-            const cls = node ? junctionSpeedClass(graph.parentWays(node).filter(isLaneRoad) as osmWay[], speed.measure()) : null;
-            return cls === null || (speed.measure() === 'minspeed' && cls === 'missing') ? '' : ` speed-${cls}`;
-        };
+        const junctionSpeed = (j: typeof shownJunctions[number]) => nodeSpeed(j.nodeID);
         const junctionGroups = new Map<string, { key: string; kind: 'junction' | 'flare'; cls: string; polygons: Vec2[][] }>();
         for (const j of shownJunctions) {
             const cls = junctionSpeed(j);
@@ -394,12 +410,36 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')));
 
 
-        /* turning circles, loops and hammerheads: road surface carried on from the road's end */
-        const headShapes = heads.flatMap(head => [
-            { key: head.nodeID, cls: `turning-head ${head.nodeID}`, d: head.polygons.map(ring => path(ring, true)).join('') },
+        /* turning circles, loops and hammerheads: road surface carried on from the road's end (not where a turning
+           circle is mapped as an area, area:highway=turning_circle or a road area round the end: that is its surface) */
+        const inRoadArea = (nodeID: string) => {
+            const node = graph.hasEntity(nodeID as NodeId) as osmNode | undefined;
+            return !!node && roadAreas.some(a => pointInPolygon(node.loc, a.polygon));
+        };
+        const headShapes = heads.filter(head => !inRoadArea(head.nodeID)).flatMap(head => [
+            { key: head.nodeID, cls: `turning-head ${head.nodeID}` + nodeSpeed(head.nodeID), d: head.polygons.map(ring => path(ring, true)).join('') },
             ...(head.island ? [{ key: `${head.nodeID}-island`, cls: 'marking marking-turning_loop_island', d: path(head.island, true) }] : [])
         ]);
         joinPaths(group('heads'), headShapes, d => d.key, d => d.cls, d => d.d);
+        // roads mapped as areas take their road's colour in the Speed Limit tool, or, an area of its own (a junction, a
+        // turning circle), the colour of the roads that run into it
+        group('areas').selectAll<SVGPathElement, { id: string; kind: string; polygon: Vec2[] }>('path.street-area-carriageway')
+            .each(function(d) {
+                for (const name of [...this.classList].filter(c => c.startsWith('speed-'))) this.classList.remove(name);
+                if (!speed.active()) return;
+                const roadID = areaRoads.get(d.id);
+                const roads = roadID ? [graph.hasEntity(roadID as osmWay['id']) as osmWay].filter(Boolean)
+                    : ways.filter(way => (way as osmWay).nodes.some(id => pointInPolygon((graph.entity(id) as osmNode).loc as Vec2, d.polygon))) as osmWay[];
+                const cls = junctionSpeedClass(roads, speed.measure());
+                if (cls !== null && !(speed.measure() === 'minspeed' && cls === 'missing')) this.classList.add(`speed-${cls}`);
+            });
+        // mini-roundabouts' carriageways (drawn with the street features) take their roads' colour in the Speed Limit tool
+        group('node-surfaces').selectAll<SVGPathElement, { kind: string; nodeID: string }>('path.street-surface-mini_roundabout_surface')
+            .each(function(d) {
+                const cls = nodeSpeed(d.nodeID).trim();
+                for (const name of [...this.classList].filter(c => c.startsWith('speed-'))) this.classList.remove(name);
+                if (cls) this.classList.add(cls);
+            });
 
 
         /* lane ribbons */
@@ -424,7 +464,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const laneShapes = new Map<string, { key: string; cls: string; polygons: Vec2[][] }>();
         for (const piece of shown) {
             piece.layout.lanes.forEach((lane, i) => {
-                if (inArea.has(piece) && lane.kind === 'general') return;
+                // (inside a road mapped as an area, its surface stands for the general lanes, except in the Speed Limit tool)
+                if (inArea.has(piece) && lane.kind === 'general' && !speed.active()) return;
                 const cls = laneClass(piece, lane);
                 const key = `${piece.wayID}-${i}-${cls}`;
                 const shape = laneShapes.get(key) ?? { key, cls, polygons: [] };
@@ -690,6 +731,14 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             ...street.surfaces.map(surface => ({ key: surface.key, entityID: surface.nodeID, d: path(surface.points, true) })),
             ...heads.map(head => ({ key: head.nodeID, entityID: head.nodeID, d: head.polygons.map(ring => path(ring, true)).join('') }))
         ]);
+        // a car park or parking space is selected anywhere on its surface, not only on its edge as an iD area is
+        // (under every other target, so the roads, lanes and points on it stay clickable)
+        // and so is a mapped highway area (area:highway=*) that isn't a road's own carriageway: a junction, a pavement,
+        // hatching, a crossing
+        drawEntityTargets(group('surface-targets'), [
+            ...parkingSpaces.carParks, ...parkingSpaces.spaces,
+            ...street.areas.filter(area => area.kind !== 'island' && !areaRoads.has(area.id))
+        ].map(shape => ({ key: shape.id, entityID: shape.id, d: path(shape.polygon, true) })));
         // a road's carriageway area selects the road (under the lanes, so roads crossing it stay clickable)
         drawEntityTargets(group('area-targets'), roadAreas.filter(area => areaRoads.has(area.id))
             .map(area => ({ key: area.id, entityID: areaRoads.get(area.id)!, d: path(area.polygon, true) })));
@@ -716,7 +765,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const way = graph.hasEntity(id as osmWay['id']) as osmWay | undefined;
             if (way?.type === 'way') way.nodes.forEach(n => drawnNodes.add(n));
         }
-        _marked = { drawn, drawnWays, drawnNodes, spaces: new Set(parkingSpaces.spaces.map(space => space.id)) };
+        // brands' logos from Wikidata, from the zoom iD shows points at
+        const logos = drawBrandLogos(group('logos'), visible, graph, projection, settings.showLogos() && zoom >= 17);
+        _marked = { drawn, drawnWays, drawnNodes, spaces: new Set(parkingSpaces.spaces.map(space => space.id)), logos };
         markIdFeatures();
     }
 
@@ -727,7 +778,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
      */
     function markIdFeatures() {
         if (!_marked) return;
-        const { drawn, drawnWays, drawnNodes, spaces } = _marked;
+        const { drawn, drawnWays, drawnNodes, spaces, logos } = _marked;
         const graph = context.graph();
         const surface = context.surface();
         // (iD draws lines below ground, like tunnels and cuttings, in its `covered` group rather than `lines`)
@@ -742,7 +793,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .each(classChanged('lanes-redundant', d => !!d && isStreetParking(d.tags) && graph.parentWays(d).some(isLaneRoad)));
         // a parking space drawn here shows its kind by its colour and symbol, so iD's icon in its middle goes
         surface.selectAll<SVGUseElement, { entity: OsmEntity }>('.layer-osm.labels use.areaicon, .layer-osm.labels use.areaicon-halo')
-            .each(classChanged('lanes-redundant', d => !!d?.entity && spaces.has(d.entity.id)));
+            .each(classChanged('lanes-redundant', d => !!d?.entity && (spaces.has(d.entity.id) || logos.has(d.entity.id))));
+        // a point drawn as its brand's logo: the logo stands in for iD's marker
+        surface.selectAll<SVGGElement, OsmEntity>('.layer-osm .points g.point')
+            .each(classChanged('lanes-logo-feature', d => !!d && logos.has(d.id)));
         // iD's one-way markers on the way line are replaced by arrows on the lanes themselves
         surface.selectAll<SVGPathElement, { id: string }>('.layer-osm .onewaygroup path')
             .each(classChanged('lanes-drawn-oneway', d => !!d && drawn.has(d.id)));
@@ -1102,6 +1156,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     // iD redraws edited features without redrawing layers, so follow map draws (those that change anything)
     context.map().on('drawn.lanes', drawWhenChanged);
     state.on('change.layer', draw);
+    // logos as they arrive from Wikidata, and when they are turned on or off
+    onBrandLogos('change.layer', () => { if (_enabled) draw(); });
+    settings.on('change.layer', draw);
     state.on('corridor.layer', draw);
     tools.on('change.layer', draw);
     speed.on('change.layer', draw);

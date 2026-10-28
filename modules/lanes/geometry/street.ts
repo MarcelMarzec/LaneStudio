@@ -5,7 +5,7 @@ import type { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
 import { asBuilt, builtHighway, isLaneRoad, isUnderConstruction, laneRoadHighways } from '../core/roads';
 import {
-    metricFrame, sub, add, scale, unit, dot, rightNormal, pointAlong,
+    metricFrame, sub, add, scale, unit, dot, len, rightNormal, pointAlong,
     offsetPolyline, cumulativeLengths, polylineLength, type MetricFrame
 } from './frame';
 import { parseWidth, type LaneLayout } from './layout';
@@ -52,7 +52,16 @@ export interface PathShape {
     below?: boolean;
 }
 
-export type AreaKind = 'island' | 'pavement' | 'cycleway' | 'carriageway' | 'other';
+/**
+ * What a mapped area is drawn as (wiki: Key:area:highway): a traffic island, a pavement or other footway area, a
+ * cycleway, a road's carriageway (a stretch of road, a junction or a turning circle), something else beside the road
+ * (a verge), white hatching on the road (`emergency`, `prohibited`), or a crossing painted over the road (a zebra, or
+ * a cycle crossing)
+ */
+export type AreaKind = 'island' | 'pavement' | 'cycleway' | 'carriageway' | 'other' | 'hatched' | 'crossing' | 'cycle_crossing';
+
+/** The kinds of area painted over the road, above its lanes, rather than lying under them */
+export const paintedAreaKinds = new Set<AreaKind>(['hatched', 'crossing', 'cycle_crossing']);
 
 export interface AreaShape {
     id: string;
@@ -60,6 +69,8 @@ export interface AreaShape {
     polygon: Vec2[];
     /** what the area is covered with (always set for traffic islands, which default to concrete) */
     surface?: SurfaceGroup;
+    /** a zebra crossing's white bars, across the way people walk (clipped to the area when drawn) */
+    stripes?: Vec2[][];
 }
 
 export interface KerbLine {
@@ -86,7 +97,7 @@ export interface MarkingShape {
     variant?: string;
 }
 
-export type SymbolKind = 'stop_text' | 'give_way_triangle' | 'signals' | 'speed_limit' | 'min_speed';
+export type SymbolKind = 'stop_text' | 'give_way_triangle' | 'signals' | 'speed_limit' | 'min_speed' | 'national_limit' | 'motorway_start';
 
 export interface SymbolShape {
     key: string;
@@ -288,9 +299,13 @@ function areaKind(tags: Tags): AreaKind | null {
     const value = tags['area:highway'];
     if (isTrafficIsland(tags)) return 'island';
     if (value) {
-        if (['footway', 'pedestrian', 'path', 'steps'].includes(value)) return 'pavement';
+        if (value === 'footway' && tags.footway === 'crossing') return 'crossing';
+        if (value === 'cycleway' && tags.cycleway === 'crossing') return 'cycle_crossing';
+        if (['footway', 'pedestrian', 'path', 'steps', 'bridleway', 'corridor'].includes(value)) return 'pavement';
         if (value === 'cycleway') return 'cycleway';
-        if (value === 'emergency' || value === 'verge') return 'other';
+        if (value === 'emergency' || value === 'prohibited') return 'hatched';
+        if (value === 'verge' || value === 'grass') return 'other';
+        // a road's carriageway: a stretch of road, a junction (junction=yes), a turning circle, a bus bay…
         return 'carriageway';
     }
     // a road mapped as an area (area=yes + highway=service etc.) is the road's surface
@@ -300,6 +315,37 @@ function areaKind(tags: Tags): AreaKind | null {
     return null;
 }
 
+
+/**
+ * A zebra crossing's bars across a crossing mapped as an area: half a metre wide and half a metre apart, across its
+ * longest extent (the way people walk over the road), as long as the area is wide (clipped to it when drawn)
+ */
+function zebraStripes(polygon: Vec2[]): Vec2[][] {
+    const frame = metricFrame(polygon[0]);
+    const points = polygon.map(frame.toMetres);
+    const centre = scale(points.reduce((sum, p) => add(sum, p), [0, 0] as Vec2), 1 / points.length);
+    // the longest extent: the direction between the two points furthest apart
+    let walk: Vec2 = [1, 0];
+    let longest = 0;
+    for (const a of points) {
+        for (const b of points) {
+            const d = len(sub(b, a));
+            if (d > longest) {
+                longest = d;
+                walk = scale(sub(b, a), 1 / d);
+            }
+        }
+    }
+    const across = rightNormal(walk);
+    const stripes: Vec2[][] = [];
+    for (let t = -longest / 2; t < longest / 2; t += 1) {
+        const a = add(centre, scale(walk, t));
+        const b = add(a, scale(walk, 0.5));
+        stripes.push([add(a, scale(across, longest)), add(b, scale(across, longest)), sub(b, scale(across, longest)), sub(a, scale(across, longest))]
+            .map(frame.toLoc));
+    }
+    return stripes;
+}
 
 /** A mapped area that is a road's carriageway, which roads inside it are fitted to */
 export function isCarriagewayArea(entity: OsmEntity): boolean {
@@ -635,6 +681,13 @@ function paintedRoadLimit(tags: Tags): string | undefined {
     return roadMaxspeed(tags);
 }
 
+/** Whether a road's limit is the national limit or a motorway's, by its type (or `maxspeed=national`) */
+function nationalKindOf(tags: Tags): 'national' | 'motorway' | undefined {
+    const type = speedTypeOf(tags);
+    if (type === 'GB:motorway') return 'motorway';
+    return type === 'GB:nsl_single' || type === 'GB:nsl_dual' || tags.maxspeed === 'national' ? 'national' : undefined;
+}
+
 /** A posted limit as painted on the road (the number), or null when it is not a plain number */
 function paintedLimit(value: string | undefined): string | null {
     const match = (value ?? '').trim().toLowerCase().match(/^(\d+)\s*(mph|km\/h|kmh|kph|knots)?$/);
@@ -647,6 +700,8 @@ function paintedLimit(value: string | undefined): string | null {
  *    before had a limit: a limit appearing from nothing is not painted), or where a lane has its own
  *    limit (`maxspeed:lanes`) that differs from the road's
  *  - a blue minimum speed (`minspeed`, `minspeed:lanes`) where one begins or changes
+ *  - the national speed limit's sign (a white disc with a black band) or a motorway's (blue, with the motorway
+ *    symbol) where the limit becomes the national limit or a motorway's, from a road with another limit
  */
 function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, WayVisual> | undefined, out: StreetGeometry) {
     const layout = cachedLayout(way, graph);
@@ -709,6 +764,13 @@ function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, W
             if (changed || ownLimit) {
                 out.symbols.push({ key: `${way.id}-speed-${direction}-${k}`, kind: 'speed_limit', text: limit!, size, ...place(0) });
             }
+            // the start of the national limit or a motorway (a lane with a number of its own keeps that)
+            const kindHere = lane.values['maxspeed:lanes'] ? undefined : nationalKindOf(way.tags);
+            const kindBefore = previous ? nationalKindOf(previous.tags) : undefined;
+            const hadLimit = !!previous && (!!kindBefore || !!roadMaxspeed(previous.tags));
+            if (kindHere && hadLimit && kindHere !== kindBefore) {
+                out.symbols.push({ key: `${way.id}-${kindHere}-${direction}-${k}`, kind: kindHere === 'motorway' ? 'motorway_start' : 'national_limit', size, ...place(0) });
+            }
 
             const minimum = laneLimit(way, 'minspeed', direction, lane.ref.index);
             if (minimum && minimum !== before('minspeed', lane.ref.index, count)) {
@@ -732,7 +794,14 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?
                 out.paths.push(pathShape(way, graph, visuals));
             } else if (way.isClosed() && way.nodes.length > 3) {
                 const kind = areaKind(tags);
-                if (kind) out.areas.push({ id: way.id, kind, polygon: locs(way, graph), surface: kind === 'island' ? islandSurface(tags) : surfaceGroup(tags.surface) });
+                const polygon = locs(way, graph);
+                if (kind) {
+                    out.areas.push({
+                        id: way.id, kind, polygon, surface: kind === 'island' ? islandSurface(tags) : surfaceGroup(tags.surface),
+                        ...(kind === 'crossing' && (tags.crossing === 'zebra' || tags['crossing:markings'] === 'zebra' || !tags['crossing:markings'] ||
+                            tags['crossing:markings'] === 'yes') && tags['crossing:markings'] !== 'no' ? { stripes: zebraStripes(polygon) } : {})
+                    });
+                }
             }
             if (tags.barrier === 'kerb') {
                 out.kerbs.push({ id: way.id, kerb: tags.kerb ?? 'raised', line: locs(way, graph) });

@@ -35,7 +35,8 @@ The website is Lane Studio only; iD's own page is still in the repository for de
 * **Street features**: pavements, footways and crossings at their width (paths drawn over the roads
   they cross), stop and give way lines, traffic signals, islands, road markings, street parking,
   parking spaces and car parks, traffic signs, message signs, cameras, bridges, tunnels and roads
-  under construction.
+  under construction; micro-mapped highway areas (`area:highway=*`: road and junction areas, hatching,
+  crossings); and brand logos from Wikidata in place of shop and restaurant markers.
 * **Railways**: track at its gauge (ballast, sleepers, rails and conductor rails) for main lines, the
   Underground, light rail, trams, narrow gauge and more; platforms; level crossings with UK-style
   barriers, light signals and road markings; Network Rail colour-light and shunt signals; buffer
