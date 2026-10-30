@@ -8,6 +8,15 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.10.30
+##### 2026-Oct-30
+
+#### Performance
+* Ways draw their points only where they end or meet other ways, or where a node is tagged: a hedge or
+  fence along a field edge (as around Lister Way, Boston) no longer shows every point it shares with
+  the field, and below zoom 18 fences, hedges, field edges and buildings show no points until selected
+  or hovered. The map redraws faster with fewer points to draw
+
 # 26.10.28r15
 ##### 2026-Oct-28
 

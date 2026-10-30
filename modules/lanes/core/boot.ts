@@ -6,10 +6,12 @@ import { uiEntityEditorAddSection } from '../../ui/entity_editor';
 import { uiInitAddPane, uiInitSetSidebarHeader } from '../../ui/init';
 import { uiTopToolbarAddTool } from '../../ui/top_toolbar';
 import { uiVersionSetProduct } from '../../ui/version';
+import { svgVerticesSetImportance } from '../../svg/vertices';
 import { services } from '../../services';
 import { utilStringQs } from '../../util';
 import { laneKeys } from './lane_keys';
 import { svgLanes } from '../svg/lanes';
+import { vertexImportance } from '../svg/vertices';
 import { validationLaneTags } from '../validations/lane_tags';
 import { uiSectionLanes } from '../ui/section_lanes';
 import { laneStudioCrossingSignals, laneStudioPresetFields } from './preset_fields';
@@ -35,6 +37,9 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
 
     // Lane Studio's own strings, read with `t('_lanes.…')`
     localizer.addLocaleDir('lanes', 'locales/lanes');
+
+    // vertices only where ways meet or end, and on fences, hedges and other minor ways only close in
+    svgVerticesSetImportance(vertexImportance);
 
     // the lane tags rule runs with iD's own validation rules
     coreValidatorAddRule(validationLaneTags);

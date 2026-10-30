@@ -26,6 +26,6 @@ export { svgTagClasses } from './tag_classes.js';
 export { svgTagPattern } from './tag_pattern.js';
 export { svgTouch } from './touch.js';
 export { svgTurns } from './turns.js';
-export { svgVertices } from './vertices.js';
+export { svgVertices, svgVerticesSetImportance } from './vertices.js';
 export { svgMapilioImages } from './mapilio_images.js';
 export { svgPanoramaxImages } from './panoramax_images.js';

@@ -8,6 +8,12 @@ import { svgPassiveVertex, svgPointTransform } from './helpers';
 import { getRadiiInPixels } from '../core';
 import { svgTagClasses } from './tag_classes';
 
+// Lane Studio hook: decides whether a vertex is drawn without being selected or hovered, given iD's own answer
+var _vertexImportance = null;
+export function svgVerticesSetImportance(fn) {
+    _vertexImportance = fn;
+}
+
 export function svgVertices(projection, context) {
     var radiuses = {
         //       z16-, z17,   z18+,  w/icon
@@ -396,11 +402,13 @@ export function svgVertices(projection, context) {
                 keep = true;
 
             // a vertex of some importance..
-            } else if (geometry === 'vertex' &&
-                (entity.hasInterestingTags() || entity.isEndpoint(graph) || entity.isConnected(graph)
-                || (visualDiff && isEditedNode(entity, base, graph)))) {
-                _currPersistent[entity.id] = entity;
-                keep = true;
+            } else if (geometry === 'vertex') {
+                var important = entity.hasInterestingTags() || entity.isEndpoint(graph) || entity.isConnected(graph);
+                if (important && _vertexImportance && !wireframe) important = _vertexImportance(entity, graph, zoom);
+                if (important || (visualDiff && isEditedNode(entity, base, graph))) {
+                    _currPersistent[entity.id] = entity;
+                    keep = true;
+                }
             }
 
             // whatever this is, it's not a persistent vertex..

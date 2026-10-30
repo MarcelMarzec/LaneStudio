@@ -229,6 +229,12 @@ marker, icon or direction cone, only iD's highlight when it is hovered or select
 clicked and dragged). Nor is iD's fill drawn along the edge of an area Lane Studio draws as a surface
 (a car park, a parking space, a highway area), so it doesn't lie over the roads beside it.
 
+iD's vertices (the grey points on a way) are drawn only where they matter: tagged nodes, the ends of
+ways, and nodes where ways meet. A node two ways only share as they run along each other (a hedge or
+fence on a field edge, a wall along a building) isn't drawn, and below zoom 18 fences, hedges, field
+edges, buildings and other ways that aren't roads, railways or waterways show no plain vertices at
+all. A selected or hovered way still shows every vertex, and the wireframe view is unchanged.
+
 **Parking spaces and car parks**: a parking space mapped as an area of its own
 (`amenity=parking_space`) is drawn with white bay lines on every side but the one facing the aisle or
 road it is driven into from, coloured by `parking_space=*`: blue with yellow lines and a wheelchair for
@@ -501,6 +507,7 @@ configured:
 | `uiTopToolbarAddTool()` for extra top bar tools | `modules/ui/top_toolbar.js` | none |
 | `uiVersionSetProduct()` for the version in the footer | `modules/ui/version.js` | iD's version |
 | `coreValidatorAddRule()` for extra validation rules | `modules/core/validator.js` | none |
+| `svgVerticesSetImportance()` to leave out vertices iD would draw unselected | `modules/svg/vertices.js` | iD's own choice |
 | Second esbuild entry, CSS bundle and strings file (`scripts/build_lanes_strings.js`) | `config/`, `scripts/` | iD unchanged |
 
 Lane Studio saves changesets with `created_by=LaneStudio <version>`, keeps its saved edits and
