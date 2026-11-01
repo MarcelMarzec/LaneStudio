@@ -8,6 +8,19 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.01
+##### 2026-Nov-01
+
+#### Lanes and junctions
+* The line between lanes going opposite ways follows the Highway Code: a dashed white centre line, as on
+  Wainfleet Road, Skegness, in place of the double yellow line. `overtaking=no` draws a double solid white
+  line, and `overtaking=forward`, `overtaking=backward` or `overtaking:forward|backward=no` a double white
+  line that is solid on the side of the traffic that may not overtake and dashed on the other
+* The carriageway edge is always a solid line, no longer dashed where the road's width is a guess (it is
+  fainter there instead)
+* Roads and junctions mapped as areas (`area:highway=*`) have the same edge line round their outline,
+  left open where traffic drives across it
+
 # 26.10.30
 ##### 2026-Oct-30
 

@@ -25,10 +25,10 @@ import { offsetFromWay } from '../geometry/measure';
 import { svgLaneDefs, turnArrowSymbol } from './defs';
 import { drawStreet, drawParking, drawRoadMarkings, joinPaths, pathFor, classChanged, withIdState, attrChanged } from './street';
 import { actionConnectLanes, connectionNode, findConnectivity } from '../actions/connect_lanes';
-import { streetGeometry, isCarriagewayArea, type StreetGeometry } from '../geometry/street';
+import { streetGeometry, carriagewayAreaEdges, isCarriagewayArea, type StreetGeometry } from '../geometry/street';
 import { parkingGeometry } from '../geometry/parking';
 import { roadMarkingGeometry } from '../geometry/road_marking';
-import { isStreetParking, isTrafficIsland, surfaceGroup } from '../model/street_features';
+import { isStreetParking, isTrafficIsland, overtakingBanned, surfaceGroup } from '../model/street_features';
 import { metricFrame, pointAlong, pointInPolygon, polylineLength } from '../geometry/frame';
 import { edgeStructures, isCovered, ringEdges, type StructureShape } from '../geometry/structures';
 import { signGeometry } from '../geometry/signs';
@@ -95,10 +95,20 @@ export function parkingBays(key: string, polygon: Vec2[], parking: ParkingLayout
 }
 
 
-/** The line style between two neighbouring lanes, from `change:lanes` (left and right as seen along the way) */
-function dividerClass(left: LaneInfo, right: LaneInfo, layoutMarkings: boolean): string {
+/**
+ * The line style between two neighbouring lanes, from `change:lanes` (left and right as seen along the way). Between
+ * lanes going opposite ways it follows the Highway Code: a dashed centre line, unless `overtaking=*` bars a direction,
+ * when a double white line is solid on the side of the traffic that may not cross it.
+ */
+export function dividerClass(left: LaneInfo, right: LaneInfo, layoutMarkings: boolean, tags: Tags): string {
     if (!layoutMarkings) return 'none';
-    if (left.ref.direction !== right.ref.direction) return 'centre';
+    if (left.ref.direction !== right.ref.direction) {
+        const leftBanned = overtakingBanned(tags, left.ref.direction);
+        const rightBanned = overtakingBanned(tags, right.ref.direction);
+        if (leftBanned && rightBanned) return 'double-solid';
+        if (leftBanned) return 'solid-left';
+        return rightBanned ? 'solid-right' : 'dashed';
+    }
     // a variable-access lane (a running hard shoulder) is kept apart by a solid line
     if ((left.kind === 'variable') !== (right.kind === 'variable')) return 'solid';
     if (!left.change && !right.change) return 'dashed unknown';
@@ -584,15 +594,15 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const lanes = piece.layout.lanes;
             const result: { key: string; style: string; line: string; piece: RoadPiece; k: number }[] = [];
             for (let k = 1; k < lanes.length; k++) {
-                const style = dividerClass(lanes[k - 1], lanes[k], piece.layout.markings);
+                const style = dividerClass(lanes[k - 1], lanes[k], piece.layout.markings, tagsOf(piece.wayID));
                 if (style === 'none') continue;
                 const key = `${pieceKey(piece)}-${k}`;
                 // a double marking: one line either side of the boundary
-                if (style === 'centre' || style.startsWith('solid-')) {
-                    const leftStyle = style === 'centre' || style === 'solid-left' ? 'solid' : 'dashed';
-                    const rightStyle = style === 'centre' || style === 'solid-right' ? 'solid' : 'dashed';
-                    result.push({ key: key + 'l', style: `${leftStyle} double${style === 'centre' ? ' centre' : ''}`, line: path(trimmed(piece, k, piece.lineSides[k][0]), false), piece, k });
-                    result.push({ key: key + 'r', style: `${rightStyle} double${style === 'centre' ? ' centre' : ''}`, line: path(trimmed(piece, k, piece.lineSides[k][1]), false), piece, k });
+                if (style === 'double-solid' || style.startsWith('solid-')) {
+                    const leftStyle = style === 'solid-right' ? 'dashed' : 'solid';
+                    const rightStyle = style === 'solid-left' ? 'dashed' : 'solid';
+                    result.push({ key: key + 'l', style: `${leftStyle} double`, line: path(trimmed(piece, k, piece.lineSides[k][0]), false), piece, k });
+                    result.push({ key: key + 'r', style: `${rightStyle} double`, line: path(trimmed(piece, k, piece.lineSides[k][1]), false), piece, k });
                 } else {
                     result.push({ key, style, line: path(trimmed(piece, k, piece.lines[k]), false), piece, k });
                 }
@@ -628,6 +638,12 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                     ...(strips[0]?.kind === 'shoulder' ? [{ key: `${key}-edge`, line: edge, assumed: false, construction: false, shoulder: true }] : [])
                 ];
             })),
+            // roads and junctions mapped as areas: their outlines, open where traffic drives across
+            ...roadAreas.flatMap(area => carriagewayAreaEdges(area.polygon,
+                ways.map(way => way.nodes.map(id => (graph.entity(id) as osmNode).loc as Vec2)),
+                pieces.filter(piece => !inArea.has(piece)).map(piece => piece.carriageway),
+                roadAreas.filter(other => other !== area).map(other => other.polygon)
+            ).map((line, i) => ({ key: `${area.id}-kerb-${i}`, line, assumed: false }))),
             // junction corners between neighbouring roads
             ...shownJunctions.flatMap(j => j.kerbs.map((kerb, i) => ({ key: `${j.nodeID}-kerb-${i}`, line: kerb.line, assumed: kerb.assumed }))),
             // round turning heads, from one kerb of the road to the other

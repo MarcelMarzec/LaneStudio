@@ -205,6 +205,13 @@ lifecycle prefix): roads and paths are drawn as the type they will be, with thei
 pavements, faded, with yellow and black work stripes and dashed orange kerbs, and without turn arrows,
 lane lines or direction arrows. `highway=construction` without a type is left to iD.
 
+**Lines down the road** follow the Highway Code. The carriageway edge is a solid line, fainter where the
+road's width is a guess; a road mapped as an area (`area:highway=*`) has the same line round its outline,
+left open where traffic drives across it. Between lanes going opposite ways is a dashed white centre line,
+unless overtaking is banned: `overtaking=no` draws a double solid white line, and `overtaking=forward`,
+`overtaking=backward` or `overtaking:forward|backward=no` a double white line that is solid on the side of
+the traffic that may not overtake and dashed on the other.
+
 **What is drawn**: lanes by type (bus, PSV, taxi, HOV, bicycle, pedestrian, no access), kerbs,
 lane lines, turn arrows, labels; junctions; pavements and cycle and parking strips from road tags,
 with unknown sides hatched; footways, paths, cycleways, steps and pedestrian streets at their real

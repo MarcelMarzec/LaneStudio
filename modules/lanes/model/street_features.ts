@@ -3,6 +3,8 @@
  * traffic islands, painted road markings (`road_marking=*`) and street parking areas.
  */
 
+import type { LaneDirection } from './types';
+
 /** A traffic island mapped as an area */
 export function isTrafficIsland(tags: Tags): boolean {
     const areaHighway = tags['area:highway'];
@@ -80,6 +82,19 @@ export function markingColour(tags: Tags): MarkingColour {
     if (/^#?(f00|ff0000|e00|c00)/.test(colour)) return 'red';
     return 'white';
 }
+
+/**
+ * Whether traffic may not overtake in a direction (wiki: Key:overtaking): `overtaking:forward|backward` where tagged,
+ * else `overtaking=no`, or `overtaking=forward|backward` for the other direction. A lane used both ways is only
+ * barred by `overtaking=no`
+ */
+export function overtakingBanned(tags: Tags, direction: LaneDirection): boolean {
+    if (direction === 'both_ways') return tags.overtaking === 'no';
+    const own = tags[`overtaking:${direction}`];
+    if (own) return own === 'no';
+    return tags.overtaking === 'no' || tags.overtaking === (direction === 'forward' ? 'backward' : 'forward');
+}
+
 
 /** How a road marking is painted, from `road_marking`, `stroke`, `stroke:left|right`, `colour`, `width`, `dasharray` and `pattern` */
 export function roadMarkingStyle(tags: Tags): RoadMarkingStyle {

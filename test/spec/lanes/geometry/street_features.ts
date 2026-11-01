@@ -1,5 +1,5 @@
-import { isTrafficIsland, islandSurface, roadMarkingStyle, isStreetParking, surfaceGroup } from '../../../../modules/lanes/model/street_features';
-import { streetGeometry } from '../../../../modules/lanes/geometry/street';
+import { isTrafficIsland, islandSurface, overtakingBanned, roadMarkingStyle, isStreetParking, surfaceGroup } from '../../../../modules/lanes/model/street_features';
+import { carriagewayAreaEdges, streetGeometry } from '../../../../modules/lanes/geometry/street';
 import { parkingGeometry } from '../../../../modules/lanes/geometry/parking';
 import { roadMarkingGeometry } from '../../../../modules/lanes/geometry/road_marking';
 import { metricFrame } from '../../../../modules/lanes/geometry/frame';
@@ -8,6 +8,70 @@ const m = 1 / 111320;
 const mx = m / Math.cos(52.95 * Math.PI / 180);
 const origin: [number, number] = [-1.15, 52.95];
 const at = (dx: number, dy: number): [number, number] => [origin[0] + dx * mx, origin[1] + dy * m];
+
+
+describe('carriageway area edges', () => {
+    // a road area 40 m long and 10 m wide, its road running through the middle of its two short sides
+    const area = [at(0, 0), at(40, 0), at(40, 10), at(0, 10), at(0, 0)];
+
+    it('is the whole outline with no road meeting it', () => {
+        expect(carriagewayAreaEdges(area, [], [], [])).toEqual([area]);
+    });
+
+    it('leaves the area open where a road crosses its edge', () => {
+        const edges = carriagewayAreaEdges(area, [[at(-10, 5), at(50, 5)]], [], []);
+        expect(edges).toEqual([[at(40, 10), at(0, 10)], [at(0, 0), at(40, 0)]]);
+    });
+
+    it('leaves the area open where a road ends on its edge', () => {
+        const edges = carriagewayAreaEdges(area, [[at(-10, 5), at(0, 5)]], [], []);
+        expect(edges).toEqual([[at(0, 0), at(40, 0), at(40, 10), at(0, 10)]]);
+    });
+
+    it('leaves the area open along a neighbouring carriageway area', () => {
+        const neighbour = [at(40, 0), at(80, 0), at(80, 10), at(40, 10), at(40, 0)];
+        const edges = carriagewayAreaEdges(area, [], [], [neighbour]);
+        expect(edges).toEqual([[at(40, 10), at(0, 10), at(0, 0), at(40, 0)]]);
+    });
+
+    it('leaves the area open on a road drawn up to it', () => {
+        const road = [at(30, -1), at(50, -1), at(50, 11), at(30, 11), at(30, -1)];
+        const edges = carriagewayAreaEdges(area, [], [road], []);
+        expect(edges).toEqual([[at(40, 10), at(0, 10), at(0, 0), at(40, 0)]]);
+    });
+
+    it('ignores roads away from the area', () => {
+        expect(carriagewayAreaEdges(area, [[at(-10, 50), at(50, 50)]], [], [])).toEqual([area]);
+    });
+});
+
+
+describe('overtaking', () => {
+    it('is banned both ways by overtaking=no', () => {
+        expect(overtakingBanned({ overtaking: 'no' }, 'forward')).toBe(true);
+        expect(overtakingBanned({ overtaking: 'no' }, 'backward')).toBe(true);
+        expect(overtakingBanned({ overtaking: 'no' }, 'both_ways')).toBe(true);
+    });
+
+    it('is allowed when untagged or allowed', () => {
+        for (const tags of [{}, { overtaking: 'yes' }, { overtaking: 'both' }, { overtaking: 'caution' }] as Record<string, string>[]) {
+            expect(overtakingBanned(tags, 'forward')).toBe(false);
+            expect(overtakingBanned(tags, 'backward')).toBe(false);
+        }
+    });
+
+    it('is banned for the other direction by overtaking=forward|backward', () => {
+        expect(overtakingBanned({ overtaking: 'forward' }, 'forward')).toBe(false);
+        expect(overtakingBanned({ overtaking: 'forward' }, 'backward')).toBe(true);
+        expect(overtakingBanned({ overtaking: 'backward' }, 'forward')).toBe(true);
+    });
+
+    it('takes a direction\'s own tag first', () => {
+        expect(overtakingBanned({ 'overtaking:forward': 'no' }, 'forward')).toBe(true);
+        expect(overtakingBanned({ 'overtaking:forward': 'no' }, 'backward')).toBe(false);
+        expect(overtakingBanned({ overtaking: 'no', 'overtaking:backward': 'yes' }, 'backward')).toBe(false);
+    });
+});
 
 
 describe('street feature tags', () => {

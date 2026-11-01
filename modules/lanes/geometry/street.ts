@@ -6,7 +6,7 @@ import type { osmWay } from '../../osm/way';
 import { asBuilt, builtHighway, isLaneRoad, isUnderConstruction, laneRoadHighways } from '../core/roads';
 import {
     metricFrame, sub, add, scale, unit, dot, len, rightNormal, pointAlong,
-    offsetPolyline, cumulativeLengths, polylineLength, type MetricFrame
+    offsetPolyline, cumulativeLengths, pointInPolygon, polylineLength, type MetricFrame
 } from './frame';
 import { parseWidth, type LaneLayout } from './layout';
 import { roadMaxspeed, speedTypeOf } from '../model/speed_limits';
@@ -507,6 +507,59 @@ function hatchStripes(polygon: Vec2[], direction: string | undefined): Vec2[][] 
 /** A mapped area that is a road's carriageway, which roads inside it are fitted to */
 export function isCarriagewayArea(entity: OsmEntity): boolean {
     return entity.type === 'way' && (entity as osmWay).isClosed() && areaKind(entity.tags) === 'carriageway';
+}
+
+
+/** Whether two line segments cross or touch */
+function segmentsMeet(a: Vec2, b: Vec2, c: Vec2, d: Vec2): boolean {
+    const side = (p: Vec2, q: Vec2, r: Vec2) => (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]);
+    return side(a, b, c) * side(a, b, d) <= 0 && side(c, d, a) * side(c, d, b) <= 0;
+}
+
+
+/**
+ * The road edges of a carriageway area: its outline, without the stretches traffic drives across. A stretch is open
+ * where a road's line crosses or reaches it, where it lies on a road drawn up to the area (`surfaces`), and where it
+ * is shared with another carriageway area (`neighbours`)
+ */
+export function carriagewayAreaEdges(polygon: Vec2[], roads: Vec2[][], surfaces: Vec2[][], neighbours: Vec2[][]): Vec2[][] {
+    const first = polygon[0];
+    const last = polygon[polygon.length - 1];
+    const ring = first[0] === last[0] && first[1] === last[1] ? polygon.slice(0, -1) : polygon;
+    const lons = ring.map(p => p[0]);
+    const lats = ring.map(p => p[1]);
+    const box = [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)];
+
+    // only the road segments near the area, as an area's outline is checked against each of them
+    const near = roads.flatMap(road => road.slice(1).map((p, i): [Vec2, Vec2] => [road[i], p]))
+        .filter(([a, b]) => Math.max(a[0], b[0]) >= box[0] && Math.min(a[0], b[0]) <= box[2] &&
+            Math.max(a[1], b[1]) >= box[1] && Math.min(a[1], b[1]) <= box[3]);
+    const shared = new Set(neighbours.flatMap(other => other.slice(1).flatMap((p, i) => [`${other[i]}|${p}`, `${p}|${other[i]}`])));
+
+    const open = ring.map((a, i) => {
+        const b = ring[(i + 1) % ring.length];
+        const middle: Vec2 = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        return shared.has(`${a}|${b}`) || near.some(([c, d]) => segmentsMeet(a, b, c, d)) ||
+            surfaces.some(surface => pointInPolygon(middle, surface));
+    });
+
+    const start = open.indexOf(true);
+    if (start < 0) return [[...ring, ring[0]]];
+    const lines: Vec2[][] = [];
+    let line: Vec2[] = [];
+    // starting after an open stretch, so a line never runs across where the ring was closed
+    for (let i = 1; i <= ring.length; i++) {
+        const k = (start + i) % ring.length;
+        if (open[k]) {
+            if (line.length) lines.push([...line, ring[k]]);
+            line = [];
+        } else if (!line.length) {
+            line = [ring[k]];
+        } else {
+            line.push(ring[k]);
+        }
+    }
+    return lines;
 }
 
 

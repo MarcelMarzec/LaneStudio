@@ -57,7 +57,6 @@
 .ideditor.lane-studio .lanes-layer .divider.unknown { stroke-opacity: 0.5; }
 .ideditor.lane-studio .lanes-layer .divider.double  { stroke-width: 1.25; }
 .ideditor.lane-studio .lanes-layer .divider.double.dashed { stroke-dasharray: 6, 6; }
-.ideditor.lane-studio .lanes-layer .divider.centre  { stroke: #ffd84d; }
 
 .ideditor.lane-studio .lanes-layer .kerb {
     fill: none;
@@ -65,7 +64,6 @@
     stroke-width: 1.5;
 }
 .ideditor.lane-studio .lanes-layer .kerb.assumed {
-    stroke-dasharray: 4, 4;
     stroke-opacity: 0.7;
 }
 
