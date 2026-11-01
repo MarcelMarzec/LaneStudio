@@ -3,7 +3,7 @@ import type { NodeId } from '../../osm';
 import type { osmWay } from '../../osm/way';
 import { laneDriveSide } from '../core/drive_side';
 import { builtHighway, isLaneRoad, sidewalkExpectedHighways } from '../core/roads';
-import { shoulderValue } from '../core/roadside';
+import { assumedShoulder, shoulderValue } from '../core/roadside';
 import {
     parseLanes, laneRefsInWayOrder, parseChange,
     type LaneChange, type LaneModel, type LaneRef
@@ -143,11 +143,11 @@ function sideValue(tags: Tags, key: string, side: 'left' | 'right'): string | un
     return plain;
 }
 
-function roadsideStrips(tags: Tags, side: 'left' | 'right', shoulderSide: 'left' | 'right' | null): RoadsideStrip[] {
+function roadsideStrips(tags: Tags, side: 'left' | 'right', shoulderSide: 'left' | 'right' | null, runningShoulder: boolean): RoadsideStrip[] {
     const strips: RoadsideStrip[] = [];
 
     // a hard shoulder runs right beside the carriageway (wiki: Key:shoulder)
-    if (shoulderValue(tags, side, shoulderSide) === 'yes') {
+    if (shoulderValue(tags, side, shoulderSide) === 'yes' || assumedShoulder(tags, side, shoulderSide, runningShoulder)) {
         const width = parseWidth(tags[`shoulder:${side}:width`] ?? tags['shoulder:both:width'] ?? tags['shoulder:width']);
         strips.push({ kind: 'shoulder', width: width ?? 2.5, assumed: width === undefined });
     }
@@ -223,6 +223,7 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
 
     // a plain shoulder=yes on a one-way road is on the side traffic keeps to (the left in the UK)
     const driveSide = laneDriveSide(way, graph);
+    const runningShoulder = lanes.some(lane => lane.kind === 'variable');
     const shoulderSide = model.oneway === 'forward' ? driveSide : model.oneway === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
 
     const total = lanes.reduce((sum, l) => sum + l.width, 0);
@@ -263,6 +264,9 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
         edges,
         shiftStart,
         shiftEnd,
-        roadside: { left: roadsideStrips(tags, 'left', shoulderSide), right: roadsideStrips(tags, 'right', shoulderSide) }
+        roadside: {
+            left: roadsideStrips(tags, 'left', shoulderSide, runningShoulder),
+            right: roadsideStrips(tags, 'right', shoulderSide, runningShoulder)
+        }
     };
 }

@@ -252,6 +252,13 @@
     stroke-width: 1;
     stroke-dasharray: 4 3;
 }
+/* an emergency bay: orange, as UK refuge areas are, with a solid edge */
+.ideditor.lane-studio .lanes-layer .street-surface-emergency_bay_surface {
+    fill: rgb(214, 112, 30);
+    fill-opacity: 0.85;
+    stroke: #fff;
+    stroke-width: 1.25;
+}
 .ideditor.lane-studio .lanes-layer .marking-turning_loop_island {
     fill: rgba(165, 190, 135, 0.9);
     stroke: #f2f2f2;

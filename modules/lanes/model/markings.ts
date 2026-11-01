@@ -3,7 +3,7 @@
  * traffic signals, traffic calming and mini-roundabouts. Pure functions over tags.
  */
 
-export const markingTypes = ['none', 'crossing', 'stop', 'give_way', 'traffic_signals', 'calming', 'mini_roundabout', 'passing_place'] as const;
+export const markingTypes = ['none', 'crossing', 'stop', 'give_way', 'traffic_signals', 'calming', 'mini_roundabout', 'passing_place', 'emergency_bay'] as const;
 export type MarkingType = typeof markingTypes[number];
 
 /** traffic_calming=* values (wiki: Key:traffic_calming) */
@@ -15,7 +15,7 @@ export const crossingMarkingValues = ['zebra', 'lines', 'dots', 'no'] as const;
 
 const highwayFor: Partial<Record<MarkingType, string>> = {
     crossing: 'crossing', stop: 'stop', give_way: 'give_way',
-    traffic_signals: 'traffic_signals', mini_roundabout: 'mini_roundabout', passing_place: 'passing_place'
+    traffic_signals: 'traffic_signals', mini_roundabout: 'mini_roundabout', passing_place: 'passing_place', emergency_bay: 'emergency_bay'
 };
 
 const crossingKeys = ['crossing', 'crossing:markings', 'crossing:signals', 'crossing:island', 'crossing_ref'];
@@ -29,6 +29,7 @@ export function markingType(tags: Tags): MarkingType {
         case 'traffic_signals': return 'traffic_signals';
         case 'mini_roundabout': return 'mini_roundabout';
         case 'passing_place': return 'passing_place';
+        case 'emergency_bay': return 'emergency_bay';
     }
     if (tags.traffic_calming && tags.traffic_calming !== 'no') return 'calming';
     return 'none';
@@ -50,6 +51,7 @@ export function withMarkingType(tags: Tags, type: MarkingType): Tags {
         delete next.passing_place;
         delete next.direction;
     }
+    if (before === 'emergency_bay') delete next.direction;
     if (before !== 'none' && before !== 'calming') delete next.highway;
 
     if (type === 'calming') {

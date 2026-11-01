@@ -1,4 +1,4 @@
-import { parallelWays, isSidewalkWay, isKerbWay, sidewalkValue, withSidewalk, withCycleway } from '../../../../modules/lanes/core/roadside';
+import { assumedShoulder, parallelWays, isSidewalkWay, isKerbWay, sidewalkValue, withSidewalk, withCycleway } from '../../../../modules/lanes/core/roadside';
 
 const m = 1 / 111320;
 const mx = m / Math.cos(52.52 * Math.PI / 180);
@@ -40,5 +40,29 @@ describe('roadside', () => {
         expect(withSidewalk({ 'sidewalk:left': 'no' }, 'right', 'no')).toEqual({ 'sidewalk:both': 'no' });
         expect(withSidewalk({ 'sidewalk:right': 'yes' }, 'right', undefined)).toEqual({});
         expect(withCycleway({ cycleway: 'lane' }, 'left', 'track')).toEqual({ 'cycleway:left': 'track', 'cycleway:right': 'lane' });
+    });
+});
+
+
+describe('assumedShoulder', () => {
+    it('gives a motorway a shoulder on its driving side', () => {
+        expect(assumedShoulder({ highway: 'motorway' }, 'left', 'left', false)).toBe(true);
+        expect(assumedShoulder({ highway: 'motorway' }, 'right', 'left', false)).toBe(false);
+    });
+
+    it('gives a two-way motorway one on each side', () => {
+        expect(assumedShoulder({ highway: 'motorway' }, 'left', null, false)).toBe(true);
+        expect(assumedShoulder({ highway: 'motorway' }, 'right', null, false)).toBe(true);
+    });
+
+    it('only assumes it on motorways', () => {
+        expect(assumedShoulder({ highway: 'trunk' }, 'left', 'left', false)).toBe(false);
+        expect(assumedShoulder({ highway: 'motorway_link' }, 'left', 'left', false)).toBe(false);
+    });
+
+    it('goes by the tags, and a running hard shoulder', () => {
+        expect(assumedShoulder({ highway: 'motorway', shoulder: 'no' }, 'left', 'left', false)).toBe(false);
+        expect(assumedShoulder({ highway: 'motorway', 'shoulder:left': 'no' }, 'left', 'left', false)).toBe(false);
+        expect(assumedShoulder({ highway: 'motorway' }, 'left', 'left', true)).toBe(false);
     });
 });

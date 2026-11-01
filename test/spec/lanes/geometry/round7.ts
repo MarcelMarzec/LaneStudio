@@ -125,6 +125,11 @@ describe('traffic sign values', () => {
 
 
 describe('sign placement', () => {
+    it('draws an emergency phone', () => {
+        const graph = graphOf(eastRoad({ lanes: '2' }, { emergency: 'phone' }));
+        expect(signGeometry(entitiesOf(graph), graph).signs.map(sign => sign.kind)).toEqual(['phone']);
+    });
+
     it('stands a sign on a road node at the near-side kerb of its traffic, facing it', () => {
         // forward traffic runs east; in the UK its near side is the north kerb, and the sign faces west
         const graph = graphOf(eastRoad({ lanes: '2' }, { traffic_sign: 'GB:670[30]', direction: 'forward' }));

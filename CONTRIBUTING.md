@@ -8,7 +8,7 @@ Everyone involved is subject to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Reporting issues
 
-Open an issue at https://github.com/MarcelMarzec/iD/issues. The most useful reports have:
+Open an issue at https://github.com/MarcelMarzec/LaneStudio/issues. The most useful reports have:
 
 * **Where**: the map URL from the address bar (it holds the location, `#map=zoom/lat/lon`), or the
   OSM ids of the roads or nodes involved (`w123`, `n456`).

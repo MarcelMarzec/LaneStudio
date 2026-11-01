@@ -12,7 +12,7 @@ import { cachedLayout } from './road_geometry';
 /*
  * Traffic signs (wiki: Key:traffic_sign), variable message signs (Tag:traffic_sign=variable_message)
  * on their gantries (man_made=gantry), and enforcement cameras (Tag:highway=speed_camera,
- * Relation:enforcement): where each stands, which way it faces, and what it shows.
+ * Relation:enforcement) and emergency phones (Tag:emergency=phone): where each stands, which way it faces, and what it shows.
  */
 
 /** One sign on a post: its code as tagged (`GB:670`), and a value given with it (`40` from `GB:670[40]`) */
@@ -21,7 +21,7 @@ export interface SignFace {
     value?: string;
 }
 
-export type SignKind = 'sign' | 'message' | 'camera';
+export type SignKind = 'sign' | 'message' | 'camera' | 'phone';
 export type CameraKind = 'speed' | 'average_speed' | 'red_light' | 'other';
 
 export interface SignShape {
@@ -207,7 +207,8 @@ export function signGeometry(entities: OsmEntity[], graph: coreGraph): SignGeome
         const message = isMessageSign(tags);
         const camera = isCamera(tags) || graph.parentRelations(node).some(r => r.tags.type === 'enforcement' && r.memberById(node.id)?.role === 'device');
         const faces = message ? [] : parseTrafficSign(tags.traffic_sign ?? tags['traffic_sign:forward'] ?? tags['traffic_sign:backward']);
-        if (!message && !camera && !faces.length) continue;
+        const phone = tags.emergency === 'phone';
+        if (!message && !camera && !phone && !faces.length) continue;
 
         const parents = graph.parentWays(node);
         const road = parents.find(isLaneRoad) as osmWay | undefined;
@@ -221,7 +222,9 @@ export function signGeometry(entities: OsmEntity[], graph: coreGraph): SignGeome
             facing = placed.facing ?? facing;
         }
 
-        if (camera) {
+        if (phone) {
+            signs.push({ key: `${node.id}-phone`, nodeID: node.id, kind: 'phone', anchor, facing, overhead, faces: [] });
+        } else if (camera) {
             const limit = cameraLimit(node, graph, road);
             signs.push({ key: `${node.id}-camera`, nodeID: node.id, kind: 'camera', anchor, facing, overhead, faces: limit ? [{ code: 'maxspeed', value: speedNumber(limit) }] : [], camera: cameraKind(node, graph) });
         } else if (message) {

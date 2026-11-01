@@ -108,6 +108,7 @@ lane lines and arrows, shortcut `K`)
 
 - Lane surface opacity: 35% is the usual see-through look, 100% fully opaque, 0% invisible; the
   reset button returns to 35%. It applies to lanes, roads, pavements, footways and paths alike.
+- Hide natural features: hides `natural=*` alone, iD's and Lane Studio's.
 - Hide iD's lines and points under lanes: hides iD's own way lines, vertices, points and direction
   cones for everything Lane Studio draws. They can still be clicked, and hovering or selecting a road
   highlights Lane Studio's drawing of it. The selected road keeps a thin line and its nodes, so its
@@ -204,6 +205,20 @@ road as a band of water across it.
 lifecycle prefix): roads and paths are drawn as the type they will be, with their lanes, widths and
 pavements, faded, with yellow and black work stripes and dashed orange kerbs, and without turn arrows,
 lane lines or direction arrows. `highway=construction` without a type is left to iD.
+
+**Motorways and active traffic management**: a motorway has a hard shoulder on the driving side (both
+sides of a two-way one), 2.5 m wide, unless that side is tagged (`shoulder=*`) or a lane is the running
+hard shoulder (`access:lanes=…|variable`). Motorways and trunk roads have an Active traffic management
+part in the Lanes section: None, Controlled (`active_traffic_management=yes`, `maxspeed:variable=yes`),
+All lanes running (also `shoulder=no`) or Dynamic hard shoulder (also adds a variable lane on the driving
+side, one-way roads only). Under it Variable speed limit sets `maxspeed:variable=yes`, or the reasons
+ticked. No scheme keeps a variable limit, which is also found on its own. A managed road has a dotted blue
+line along its lanes, and from zoom 18 a road with a scheme or a variable limit has a badge saying which.
+
+**Emergency bays and phones**: `highway=emergency_bay` on a road's node is an orange layby 100 m long and
+4.6 m deep past any hard shoulder, on the side `direction=forward|backward` gives, else beside the road's
+traffic; the Markings tool places one. A bay mapped as its own short way is a one-lane orange road. An
+`emergency=phone` node is an orange box with a handset.
 
 **Lines down the road** follow the Highway Code. The carriageway edge is a solid line, fainter where the
 road's width is a guess; a road mapped as an area (`area:highway=*`) has the same line round its outline,
@@ -477,7 +492,7 @@ that names its `created_by` value, listed on the wiki's Editors page.
 | Part | Where |
 | --- | --- |
 | Entry point and boot | `modules/lanes/index.ts`, `modules/lanes/core/boot.ts`, `lanes.html` |
-| Lane model (parse, edit, write `*:lanes` tags), lane types, markings, connectivity, street feature tags | `modules/lanes/model/` |
+| Lane model (parse, edit, write `*:lanes` tags), lane types, markings, connectivity, street feature tags, active traffic management | `modules/lanes/model/` |
 | Actions (lanes, markings, copy, connect), each one undo step | `modules/lanes/actions/` |
 | Selected lanes, tools, keyboard, settings, roadside detection, the what's new state, links | `modules/lanes/core/` |
 | Geometry in metres: lanes, junctions and lane connections, street features, road markings, parking, parking spaces, railways and their features | `modules/lanes/geometry/` |

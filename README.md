@@ -12,7 +12,7 @@ imagery. You edit lanes where they are drawn, and Lane Studio writes the OpenStr
 > **Lane Studio is a fork of [iD](https://github.com/openstreetmap/iD)**, OpenStreetMap's in-browser
 > editor. It keeps iD's map, history, imagery, validator and save flow, and adds lane editing on top.
 > It is not made or supported by the iD project: report Lane Studio problems
-> [here](https://github.com/MarcelMarzec/iD/issues), not to iD.
+> [here](https://github.com/MarcelMarzec/LaneStudio/issues), not to iD.
 >
 > **Lane Studio was written with AI.** Its code, tests and documentation were written with
 > [Claude Code](https://claude.com/claude-code), Anthropic's AI coding tool, directed and reviewed by
@@ -23,7 +23,8 @@ The website is Lane Studio only; iD's own page is still in the repository for de
 ## What it does
 
 * **Lanes on the map**: lanes by type (general, bus, PSV, taxi, HOV, cycle, pedestrian, variable,
-  no access) and hard shoulders, with kerbs, lane lines, turn arrows and labels, drawn at the tagged
+  no access) and hard shoulders (assumed on motorways), active traffic management, emergency bays and
+  phones, with kerbs, lane lines, turn arrows and labels, drawn at the tagged
   widths.
 * **Lane editing**: click a lane to select it; add, remove and move lanes; set turn arrows, lane
   changes, lane types, speeds, destinations, access, widths and limits; drag lane widths; paint

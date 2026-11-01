@@ -67,6 +67,17 @@ Map Data's Land Use filter hides car parks and other surfaces along with `landus
 land use** in the Lane Studio pane (shortcut `K`) instead: it hides land use areas alone.
 
 
+## Why are there no roads when I zoom out?
+
+OSM data is only loaded from zoom 16, so below that the map is the imagery alone. iD covers that with its
+Locator Overlay, but Mapbox refuses those tiles to Lane Studio. A site running Lane Studio can set its own
+overlay with `locatorOverlay` (see [API.md](API.md)).
+
+## Why does a motorway have a hard shoulder I didn't tag?
+
+Motorways are presumed to have one. Tag `shoulder=no` where there isn't one, or use Active traffic
+management in the Lanes section, which sets it for all lanes running and dynamic hard shoulder.
+
 ## Are railways drawn?
 
 Yes. Railways, the Underground and tram lines are drawn with their ballast, sleepers and rails at their

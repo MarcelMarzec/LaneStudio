@@ -17,6 +17,20 @@ const shieldColours: Record<ShieldStyle, { fill: string; text: string; stroke: s
 };
 
 /** Shields at their placements, several numbers side by side */
+/** A badge on the road naming its active traffic management scheme, or a variable limit */
+export function drawManagedBadges(group: Group, badges: { key: string; point: [number, number]; text: string }[]) {
+    const items = group.selectAll<SVGGElement, typeof badges[number]>('g.managed-badge').data(badges, d => d.key);
+    items.exit().remove();
+    const enter = items.enter().append('g').each(attrChanged('class', 'managed-badge'));
+    enter.append('rect').attr('rx', 3).attr('y', -9).attr('height', 18);
+    enter.append('text').attr('dy', '0.35em');
+    const all = enter.merge(items)
+        .each(attrChanged('transform', d => `translate(${d.point[0].toFixed(1)},${d.point[1].toFixed(1)})`));
+    all.select('text').text(d => d.text);
+    all.select('rect').attr('x', d => -(d.text.length * 3.2 + 7)).attr('width', d => (d.text.length * 3.2 + 7) * 2);
+}
+
+
 export function drawShields(group: Group, placements: ShieldPlacement[], zoom: number) {
     const height = Math.max(15, Math.min(22, 15 + (zoom - 17) * 2.5));
     const shields = group.selectAll<SVGGElement, ShieldPlacement>('g.road-shield')

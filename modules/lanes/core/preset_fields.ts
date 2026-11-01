@@ -10,7 +10,7 @@ export const crossingSignalsField = 'lanes/crossing_signals';
  * fields (the Road markings section that did this is gone):
  * - every crossing: Traffic signals (`crossing:signals`)
  * - every kind of traffic calming: its Type, as a dropdown, and Direction Affected (`direction=*`)
- * - a passing place: Direction Affected, the side it is on (forward, backward or both)
+ * - a passing place or emergency bay: Direction Affected, the side it is on (forward, backward or both)
  */
 export function laneStudioPresetFields() {
     presetManager.ensureLoaded().then(() => {
@@ -36,7 +36,7 @@ export function laneStudioPresetFields() {
                 if (!fields.includes('traffic_calming')) fields.unshift('traffic_calming');
                 add(fields, 'direction_vertex');
             }
-            if (tags.highway === 'passing_place') add(fields, 'direction_vertex');
+            if (tags.highway === 'passing_place' || tags.highway === 'emergency_bay') add(fields, 'direction_vertex');
         }
     }).catch(() => { /* without presets there are no fields to add to */ });
 }

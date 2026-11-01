@@ -21,6 +21,10 @@ Lane Studio runs on). `lanes.html` is the reference page; the site build copies 
 
 * __`LaneStudio.init(container, options)`__ boots iD's core with Lane Studio's map layer, sidebar
   sections, tools, settings pane and validation rule, and returns the iD context.
+  * `options.locatorOverlay`: a tile URL (`{zoom}`, `{x}`, `{y}`) for the roads shown over the imagery when
+    zoomed out below zoom 16, where OSM data isn't loaded, in place of iD's Locator Overlay. Mapbox doesn't serve
+    that overlay to Lane Studio, so without this nothing is shown there.
+    `options.locatorOverlayCredit` is the credit to show for it.
   * `options.assetPath`: where the `dist/` folder (icons, data, translations) is served from,
     relative to the page. Default `'dist/'`. The what's new menu reads `lanes-changelog.md` from this
     folder (a copy of `CHANGELOG.md` made by the build); without it, the menu is not shown.

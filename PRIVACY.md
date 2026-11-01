@@ -5,7 +5,7 @@ You do not need Lane Studio to use or edit OpenStreetMap, and the OpenStreetMap 
 operate it. You can learn more about OpenStreetMap and the OpenStreetMap Foundation at
 [https://www.openstreetmap.org/about](https://www.openstreetmap.org/about) and
 [https://wiki.osmfoundation.org/wiki/Main_Page](https://wiki.osmfoundation.org/wiki/Main_Page).
-The project's code and issues are at [https://github.com/MarcelMarzec/iD](https://github.com/MarcelMarzec/iD).
+The project's code and issues are at [https://github.com/MarcelMarzec/LaneStudio](https://github.com/MarcelMarzec/LaneStudio).
 
 ### The website and source code
 
@@ -55,6 +55,9 @@ Searching uses OpenStreetMap's [Nominatim](https://nominatim.openstreetmap.org/)
 use [taginfo](https://taginfo.openstreetmap.org/). If you do not wish to interact with these third
 parties, do not use these features.
 
+A site running Lane Studio can set a roads overlay for when zoomed out (`locatorOverlay`); your browser then asks
+that host for the map tiles in view.
+
 Lane Studio's changelog, for the what's new menu, is fetched from the site Lane Studio is served from.
 
 Brand logos (Lane Studio pane, "Show brand logos", on unless turned off) are looked up on
@@ -78,10 +81,11 @@ You can turn this off in Preferences → Privacy.
 
 If you believe information about you has been processed in violation of this policy or applicable
 law, or want to ask about it, open an issue at
-[https://github.com/MarcelMarzec/iD/issues](https://github.com/MarcelMarzec/iD/issues).
+[https://github.com/MarcelMarzec/LaneStudio/issues](https://github.com/MarcelMarzec/LaneStudio/issues).
 
 ### Changelog
 
+* _2026-Nov-01_ - The hide natural features setting is stored with your settings. A site running Lane Studio can name its own roads overlay, whose host then receives the map tiles in view.
 * _2026-Oct-28_ - Brand logos are looked up on Wikidata and loaded from Wikimedia Commons (can be turned off); the land use and brand logo settings are stored with your settings.
 * _2026-Oct-28_ - Whether Look ahead and Roadside are folded away is stored with your settings.
 * _2026-Oct-27_ - The website's pages, now part of this project, load fonts from Google Fonts.

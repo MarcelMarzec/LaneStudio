@@ -1,6 +1,7 @@
 import { coreContext, type coreContext as Context } from '../../core/context';
 import { localizer, t } from '../../core/localizer';
 import { coreValidatorAddRule } from '../../core/validator';
+import { rendererBackgroundSource } from '../../renderer/background_source';
 import { prefs } from '../../core/preferences';
 import { uiEntityEditorAddSection } from '../../ui/entity_editor';
 import { uiInitAddPane, uiInitSetSidebarHeader } from '../../ui/init';
@@ -28,6 +29,13 @@ import { laneStudioRepository, laneStudioVersion } from '../version';
 export interface LaneStudioOptions {
     /** where `dist/` is served from, relative to the page */
     assetPath?: string;
+    /**
+     * The tiles of the roads shown over the imagery when zoomed out to where OSM data isn't loaded, `{zoom}`, `{x}` and
+     * `{y}` in a URL, in place of iD's Locator Overlay, whose tiles Mapbox only serves to iD's own sites
+     */
+    locatorOverlay?: string;
+    /** the credit to show for `locatorOverlay` */
+    locatorOverlayCredit?: string;
 }
 
 /** Boots iD's core with Lane Studio's settings and returns the iD context */
@@ -100,6 +108,19 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
         redirect.search = '';
         redirect.hash = '';
         osm.switch({ url: osm.getUrlRoot(), apiUrl: osm.getApiUrlRoot(), redirect_uri: redirect.href });
+    }
+
+    // the locator overlay from the page's own source
+    if (options.locatorOverlay) {
+        context.background().ensureLoaded().then(() => {
+            const background = context.background() as any;
+            const iDs = background.overlayLayerSources().find((source: any) => source.isLocatorOverlay());
+            if (iDs) background.toggleOverlayLayer(iDs);
+            background.toggleOverlayLayer(rendererBackgroundSource({
+                id: 'mapbox_locator_overlay', name: 'Locator Overlay', overlay: true, zoomExtent: [0, 16],
+                template: options.locatorOverlay, terms_text: options.locatorOverlayCredit
+            }));
+        }).catch(() => { /* without imagery there is nothing to lay it over */ });
     }
 
     // the lanes layer, drawn under iD's own data

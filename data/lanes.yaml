@@ -152,6 +152,7 @@ en:
       calming: Traffic calming
       mini_roundabout: Mini-roundabout
       passing_place: Passing place
+      emergency_bay: Emergency bay
     placing: "Click a road to place a {type}."
   signs:
     title: Traffic sign
@@ -223,6 +224,35 @@ en:
     select_lanes: Select lanes to use an exit's turn or destination.
     copy: "Copy lanes to {road}"
     copy_tip: Copies lane counts and lane tags (not turn or destination lanes) onto the next road, as one undo step
+  managed:
+    title: Active traffic management
+    hint: Smart motorways and other roads where signs change the limit or open a lane.
+    schemes:
+      none: None
+      controlled: Controlled
+      all_lanes_running: All lanes running
+      dynamic_hard_shoulder: Dynamic hard shoulder
+    scheme_tips:
+      none: No active traffic management.
+      controlled: "Variable limits, and the hard shoulder is kept (active_traffic_management=yes)."
+      all_lanes_running: "The hard shoulder is a permanent lane (shoulder=no)."
+      dynamic_hard_shoulder: "The hard shoulder is a lane opened by signs: adds a variable lane on the driving side (access:lanes=…|variable). One-way roads only."
+    badge:
+      controlled: Controlled
+      all_lanes_running: All lanes running
+      dynamic_hard_shoulder: Dynamic hard shoulder
+      variable_speed: Variable limit
+    variable: Variable speed limit
+    variable_tip: "Signs can lower the road's speed limit (maxspeed:variable=*); the speed limit tagged is the highest it can be."
+    reasons_label: "Why it changes, if known"
+    reasons:
+      peak_traffic: Peak traffic
+      weather: Weather
+      environment: Emissions or noise
+      obstruction: Accidents and obstructions
+      school_zone: School zone
+      border_control: Border control
+    signals: "maxspeed=signals is the old way to tag this. Give the highest limit in maxspeed, and tick Variable speed limit."
   roadside:
     title: Roadside
     hint: "Forward is the side beside traffic going along the way's drawing direction, backward the side beside traffic going the other way."
@@ -239,6 +269,7 @@ en:
     shoulder_no: No hard shoulder
     shoulder_width: Width (m)
     shoulder_assumed: Drawn 2.5 m wide until a width is tagged.
+    shoulder_motorway: "Motorways are drawn with a hard shoulder until the road says otherwise: tag shoulder=no, or make a lane the running hard shoulder."
     sidewalk: Pavement
     cycleway: Cycleway
     parking: Parking
@@ -292,6 +323,8 @@ en:
     hide_originals: Hide iD's lines and points under lanes
     hide_originals_tip: Hides iD's own way lines, vertices, points and direction cones for roads, paths, markings and areas Lane Studio draws. They can still be clicked.
     hide_landuse: Hide land use
+    hide_natural: Hide natural features
+    hide_natural_tip: "Hides natural features (natural=*) alone: woods, water, scrub, trees and so on."
     brand_logos: Show brand logos
     brand_logos_tip: "Shows the logo of a shop, restaurant or other brand (brand:wikidata=*) in place of its marker, looked up on Wikidata and Wikimedia Commons."
     renderer_note: "Lane Studio draws what the tags say. Don't tag for the renderer: tag what is on the ground, even where the drawing looks wrong, and report the drawing instead."
@@ -302,6 +335,7 @@ en:
     whats_new_tip: After Lane Studio is updated, list what changed since the version you last used.
     show_whats_new: See what's new
     website: Website
+    github: GitHub repository
     privacy: Privacy policy
     contact: Contact and feedback
   whats_new:
@@ -349,6 +383,7 @@ en:
     sign: Changed a traffic sign.
     street_feature: Changed a street feature.
     roadside: Changed the roadside.
+    managed: Changed active traffic management.
     copy: Copied lanes to the next road.
     connect: Changed lane connections.
     roundabout: Changed a roundabout.

@@ -5,7 +5,7 @@ import type { osmWay } from '../../osm/way';
 export const laneRoadHighways = new Set([
     'motorway', 'motorway_link', 'trunk', 'trunk_link', 'primary', 'primary_link',
     'secondary', 'secondary_link', 'tertiary', 'tertiary_link', 'unclassified', 'residential',
-    'living_street', 'service', 'road', 'busway', 'track'
+    'living_street', 'service', 'road', 'busway', 'track', 'emergency_bay'
 ]);
 
 /** Roads where pavements are expected, so an untagged side is shown as unknown */

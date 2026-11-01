@@ -24,13 +24,13 @@ interface KeyGroup {
 const singleLaneServices = new Set(['driveway', 'alley', 'drive-through', 'fuel', 'emergency_access']);
 
 /**
- * Whether a two-way road with no lanes tagged is a single lane both directions share: a track; a service road that is
+ * Whether a two-way road with no lanes tagged is a single lane both directions share: a track; an emergency bay; a service road that is
  * a driveway, alley, drive-through, fuel station lane or emergency access road, or tagged `narrow=yes` or narrower than 4.5 m. Other
  * service roads (a road round a car park, a business park's roads) have a lane each way.
  */
 export function sharesOneLane(tags: Tags): boolean {
     const highway = builtHighway(tags);
-    if (highway === 'track') return true;
+    if (highway === 'track' || highway === 'emergency_bay') return true;
     if (highway !== 'service') return false;
     const width = parseFloat(tags.width ?? '');
     return singleLaneServices.has(tags.service ?? '') || tags.narrow === 'yes' || (Number.isFinite(width) && width < 4.5);

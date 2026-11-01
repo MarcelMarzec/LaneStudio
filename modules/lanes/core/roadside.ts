@@ -5,6 +5,7 @@ import type { osmWay } from '../../osm/way';
 import type { Vec2 } from '../../geo/vector';
 import { metricFrame, pointAlong, polylineLength } from '../geometry/frame';
 import { offsetFromWay } from '../geometry/measure';
+import { builtHighway } from './roads';
 
 export type Side = 'left' | 'right';
 
@@ -94,6 +95,16 @@ export function shoulderValue(tags: Tags, side: Side, oneSide: Side | null = nul
     if (plain === 'both') return 'yes';
     if (plain === 'left' || plain === 'right') return plain === side ? 'yes' : 'no';
     return oneSide && oneSide !== side ? 'no' : 'yes';
+}
+
+/**
+ * Whether a side of the road is drawn with a hard shoulder the tags don't mention: a motorway has one on the driving
+ * side of a one-way carriageway (`oneSide`), or both sides of a two-way one (wiki: Key:active_traffic_management, Motorways
+ * are presumed to have one), unless that side is tagged or a lane is the running hard shoulder (`runningShoulder`)
+ */
+export function assumedShoulder(tags: Tags, side: Side, oneSide: Side | null, runningShoulder: boolean): boolean {
+    return builtHighway(tags) === 'motorway' && !runningShoulder && shoulderValue(tags, side, oneSide) === undefined &&
+        (!oneSide || oneSide === side);
 }
 
 /** Sets one side's shoulder, written as `shoulder=left/right/both/no`; `undefined` leaves that side untagged */

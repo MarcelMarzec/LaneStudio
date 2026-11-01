@@ -31,6 +31,7 @@ import { roadMarkingGeometry } from '../geometry/road_marking';
 import { isStreetParking, isTrafficIsland, overtakingBanned, surfaceGroup } from '../model/street_features';
 import { metricFrame, pointAlong, pointInPolygon, polylineLength } from '../geometry/frame';
 import { edgeStructures, isCovered, ringEdges, type StructureShape } from '../geometry/structures';
+import { managedBadge } from '../model/managed';
 import { signGeometry } from '../geometry/signs';
 import { drawSigns } from './signs';
 import { drawRailFeatures, drawRailways } from './railway';
@@ -39,7 +40,7 @@ import { railFeatures } from '../geometry/rail_features';
 import { parkingSpaceGeometry } from '../geometry/parking_spaces';
 import { drawParkingSpaces } from './parking_spaces';
 import { junctionLabels, placeShields, shieldRefs } from '../geometry/route_labels';
-import { drawJunctionLabels, drawShields } from './route_labels';
+import { drawJunctionLabels, drawManagedBadges, drawShields } from './route_labels';
 import type { AreaShape } from '../geometry/street';
 import type { osmNode } from '../../osm/node';
 import type { NodeId, OsmEntity } from '../../osm';
@@ -121,6 +122,29 @@ export function dividerClass(left: LaneInfo, right: LaneInfo, layoutMarkings: bo
     if (!leftCrosses && !rightCrosses) return 'solid';
     // the solid line sits on the side of the lane that may not cross
     return leftCrosses ? 'solid-right' : 'solid-left';
+}
+
+
+/** Active traffic management: a dotted line along a road's lanes, and on its longest stretch in view a badge naming the scheme or a variable limit */
+function drawManaged(group: (name: string) => Selection, pieces: RoadPiece[], tagsOf: (id: string) => Tags, path: ReturnType<typeof pathFor>,
+    projection: Projection, markings: boolean) {
+    const badgeOf = (piece: RoadPiece) => managedBadge(tagsOf(piece.wayID), piece.layout.lanes.some(lane => lane.kind === 'variable'));
+    const managed = markings ? pieces.filter(badgeOf) : [];
+    joinPaths(group('managed-edges'), managed.filter(piece => badgeOf(piece) !== 'variable_speed').flatMap(piece => [
+        { key: `${piece.wayID}-${piece.index}-l`, line: piece.lines[0] },
+        { key: `${piece.wayID}-${piece.index}-r`, line: piece.lines[piece.lines.length - 1] }
+    ]), d => d.key, () => 'managed-edge', d => path(d.line, false));
+    const longest = new Map<string, { piece: RoadPiece; line: Vec2[]; length: number }>();
+    for (const piece of managed) {
+        const line = piece.centres[0] ?? [];
+        const length = polylineLength(line);
+        if (length > (longest.get(piece.wayID)?.length ?? 0)) longest.set(piece.wayID, { piece, line, length });
+    }
+    drawManagedBadges(group('managed-badges'), [...longest].map(([wayID, { piece, line, length }]) => ({
+        key: wayID,
+        point: projection(pointAlong(line, length / 2).point) as [number, number],
+        text: t(`_lanes.managed.badge.${badgeOf(piece)}`)
+    })));
 }
 
 
@@ -257,9 +281,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs',
+                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs', 'managed-edges',
                 'paths-over', 'rail-over-road', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols',
-                'shields', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
+                'shields', 'managed-badges', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
                 'surface-targets', 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
             ])
             .enter()
@@ -353,9 +377,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const parking = parkingGeometry(visible, graph);
         const roadMarkings = markings ? roadMarkingGeometry(visible, graph) : { lines: [], areas: [], texts: [] };
         drawStreet(group, street, projection, zoom, laneZooms, areaRoads);
-        // land use, which the "hide land use" setting hides on its own
+        // land use and natural areas, which their settings hide on their own
         group('areas').selectAll<SVGPathElement, { id: string }>('path')
-            .each(classChanged('lanes-landuse', d => !!graph.hasEntity(d.id as NodeId)?.tags.landuse));
+            .each(classChanged('lanes-landuse', d => !!graph.hasEntity(d.id as NodeId)?.tags.landuse))
+            .each(classChanged('lanes-natural', d => !!graph.hasEntity(d.id as NodeId)?.tags.natural));
 
         /* railways, the Underground and trams (sleepers once they can be seen) */
         const tracks = railGeometry(visible, graph, markings);
@@ -437,6 +462,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 const piece = d.piece;
                 return withIdState(this, `carriageway ${piece.wayID}` + coveredTag(piece.wayID) + (building(piece) ? ' lanes-construction' : '') +
                     (piece.layout.assumed ? ' assumed' : '') +
+                    (tagsOf(piece.wayID).highway === 'emergency_bay' ? ' lanes-emergency-bay' : '') +
                     (surfaceOf(piece) ? ` surface-${surfaceOf(piece)}` : '') +
                     (selected.has(piece.wayID) ? ' selected' : '') +
                     (corridor.has(piece.wayID) && !selected.has(piece.wayID) ? ' corridor' : ''));
@@ -657,6 +683,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .each(attrChanged('class', d => ('shoulder' in d && d.shoulder ? 'shoulder-edge' : 'kerb') + (d.assumed ? ' assumed' : '') +
                 ('construction' in d && d.construction ? ' construction' : '')))
             .each(attrChanged('d', d => path(d.line, false)));
+
+
+        /* active traffic management */
+        drawManaged(group, marked, tagsOf, path, projection, markings);
 
 
         /* structures: bridge parapets, tunnel walls, cutting and embankment slopes, fords */

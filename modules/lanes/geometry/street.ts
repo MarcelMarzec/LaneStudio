@@ -171,7 +171,7 @@ export type MarkingKind =
     | 'crossing' | 'zebra_bar' | 'crossing_line' | 'crossing_surface' | 'crossing_pictogram' | 'island'
     | 'stop_line' | 'give_way_line' | 'signal_line'
     | 'calming' | 'mini_roundabout' | 'kerb_node' | 'ford'
-    | 'mini_roundabout_surface' | 'passing_place_surface' | 'turning_loop_island'
+    | 'mini_roundabout_surface' | 'passing_place_surface' | 'emergency_bay_surface' | 'turning_loop_island'
     | 'barrier_line' | 'barrier_post' | 'barrier_node' | 'cattle_grid';
 
 export interface MarkingShape {
@@ -806,6 +806,22 @@ function passingPlace(node: osmNode, cs: CrossSection, out: StreetGeometry, left
     }
 }
 
+/**
+ * An emergency bay (wiki: Tag:highway=emergency_bay, an emergency refuge area in the UK): a layby beside the road, past
+ * any hard shoulder, on the side `direction=forward|backward` gives, else the side of the road's traffic. 100 m long with
+ * its 30 m tapers, and 4.6 m deep, as UK refuge areas are
+ */
+function emergencyBay(node: osmNode, cs: CrossSection, out: StreetGeometry, left: number, right: number) {
+    const forwardSide = cs.layout.model.driveSide === 'left' ? -1 : 1;
+    const backward = node.tags.direction ? node.tags.direction === 'backward' : cs.layout.model.oneway === 'backward';
+    const s = backward ? -forwardSide : forwardSide;
+    const strips = cs.layout.roadside[s > 0 ? 'right' : 'left'].filter(strip => strip.kind === 'shoulder' || strip.kind === 'cycle_lane');
+    const edge = (s > 0 ? right : left) + s * strips.reduce((sum, strip) => sum + strip.width, 0);
+    const at = (along: number, offset: number) => cs.frame.toLoc(add(scale(cs.direction, along), scale(cs.normal, offset)));
+    const points = [at(-50, edge - s * 0.3), at(-50, edge), at(-20, edge + s * 4.6), at(20, edge + s * 4.6), at(50, edge), at(50, edge - s * 0.3)];
+    out.surfaces.push({ key: `${node.id}-emergency-bay`, kind: 'emergency_bay_surface', nodeID: node.id, closed: true, points });
+}
+
 function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visuals?: Map<string, WayVisual>) {
     const tags = node.tags;
     const parents = graph.parentWays(node);
@@ -845,6 +861,7 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
         crossingNodeMarkings(node, cs, out, signalCrossing);
     }
     if (highway === 'passing_place') passingPlace(node, cs, out, left, right);
+    if (highway === 'emergency_bay') emergencyBay(node, cs, out, left, right);
 
     // signals, stop or give way tagged on a junction node itself: the lines go on the approaches, at the
     // edge of the junction, not across the middle of it

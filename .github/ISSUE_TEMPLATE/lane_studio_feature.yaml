@@ -1,6 +1,30 @@
 name: 'Lane Studio: Feature, Idea, Question'
 description: You want a feature, have an idea, or have a question about Lane Studio.
 body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of Lane Studio is it about?
+      multiple: true
+      options:
+        - Lanes, turn arrows and lane connections
+        - Junctions and roundabouts
+        - Lane lines and road edges
+        - Hard shoulders and active traffic management
+        - Emergency bays and emergency phones
+        - Roadside (pavements, cycleways, parking)
+        - Parking areas and spaces
+        - Crossings, traffic calming and road markings
+        - Road and speed limit signs, gantries and cameras
+        - Speed Limit tool
+        - Routing tool
+        - Railways and trams
+        - Highway areas and traffic islands
+        - Building or brand logos, and other map features
+        - Settings and display
+        - Something else
+    validations:
+      required: false
   - type: textarea
     id: idea
     attributes:

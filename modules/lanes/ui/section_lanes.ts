@@ -11,10 +11,14 @@ import { uiSection } from '../../ui/section';
 import { utilHighlightEntities } from '../../util';
 import {
     parallelWays, isSidewalkWay, isKerbWay, sidewalkValue, withSidewalk, cyclewayValue, withCycleway,
-    parkingValue, withParking, shoulderValue, withShoulder
+    parkingValue, withParking, assumedShoulder, shoulderValue, withShoulder
 } from '../core/roadside';
 import { laneLayout } from '../geometry/layout';
 import { roundaboutOf, withTurbo, turboRestrictionCount, type Roundabout } from '../osm/roundabout';
+import {
+    canBeManaged, managedScheme, managedSchemes, variableSpeedReasons, variableSpeedReasonsOf, withManagedScheme, withVariableSpeed,
+    type ManagedScheme
+} from '../model/managed';
 import { markingTypes, type MarkingType } from '../model/markings';
 import { signChoices, signNameKey, type SignChoice } from '../model/signs';
 import { actionChangeLanes } from '../actions/change_lanes';
@@ -202,6 +206,7 @@ export function uiSectionLanes(context: iD.Context) {
             const ahead = lookAhead(road, model, selected);
             subsection(wrap, 'lanes-lookahead', t('_lanes.lookahead.title'), content => renderLookAhead(content, road, model, selected, ahead));
         }
+        if (canBeManaged(road.tags)) subsection(wrap, 'lanes-managed', t('_lanes.managed.title'), content => renderManaged(content, road));
         subsection(wrap, 'lanes-roadside', t('_lanes.roadside.title'), content => renderRoadside(content, road));
     }
 
@@ -534,6 +539,74 @@ export function uiSectionLanes(context: iD.Context) {
 
 
     /**
+     * Active traffic management: the scheme, and whether the limit is variable and why. Picking dynamic hard shoulder adds
+     * the running hard shoulder as a variable lane on the driving side, and picking another scheme takes it away, as one edit.
+     */
+    function renderManaged(box: Div, road: osmWay) {
+        const tags = road.tags;
+        const model = parseLanes(tags, { driveSide: laneDriveSide(road, context.graph()) });
+        const order = laneRefsInWayOrder(model);
+        const running = order.filter(ref => laneKindOf(model, ref) === 'variable');
+        const current = managedScheme(tags, running.length > 0);
+        const retag = (next: Tags) => context.perform(actionChangeTags(road.id, next), t('_lanes.annotation.managed'));
+
+        const lanesFor = (scheme: ManagedScheme) => (m: LaneModel) => {
+            // from the last lane back, so the lanes still to go keep their places
+            if (scheme !== 'dynamic_hard_shoulder') {
+                return running.slice().sort((a, b) => b.index - a.index).reduce((next, ref) => removeLane(next, ref), m);
+            }
+            if (running.length || !m.oneway) return m;
+            const direction = m.oneway === 'backward' ? 'backward' : 'forward';
+            const index = m.driveSide === 'left' ? 0 : m.lanes[direction].length;
+            return setLaneKind(insertLane(m, direction, index), [{ direction, index }], 'variable');
+        };
+
+        box.append('p').attr('class', 'lanes-note').text(t('_lanes.managed.hint'));
+        const buttons = box.append('div').attr('class', 'lane-row').append('div').attr('class', 'lane-buttons lanes-managed-schemes');
+        for (const scheme of managedSchemes) {
+            buttons.append('button')
+                .attr('class', scheme === current ? 'active' : null)
+                .attr('aria-pressed', scheme === current)
+                .attr('title', t(`_lanes.managed.scheme_tips.${scheme}`))
+                .attr('disabled', scheme === 'dynamic_hard_shoulder' && !model.oneway ? true : null)
+                .text(t(`_lanes.managed.schemes.${scheme}`))
+                .on('click', () => {
+                    if (scheme === current) return;
+                    context.perform((graph: iD.Graph) => {
+                        const changed = actionChangeLanes(road.id, lanesFor(scheme))(graph);
+                        const way = changed.entity(road.id) as osmWay;
+                        return actionChangeTags(road.id, withManagedScheme(way.tags, scheme))(changed);
+                    }, t('_lanes.annotation.managed'));
+                });
+        }
+
+        const variable = tags['maxspeed:variable'] !== undefined && tags['maxspeed:variable'] !== 'no';
+        const reasons = variableSpeedReasonsOf(tags);
+        const label = box.append('label').attr('class', 'lane-check').attr('title', t('_lanes.managed.variable_tip'));
+        label.append('input').attr('type', 'checkbox')
+            .property('checked', variable)
+            .on('change', function(this: HTMLInputElement) {
+                retag(withVariableSpeed(tags, this.checked, reasons));
+            });
+        label.append('span').text(t('_lanes.managed.variable'));
+        if (tags.maxspeed === 'signals') box.append('p').attr('class', 'lanes-note').text(t('_lanes.managed.signals'));
+        if (!variable) return;
+
+        box.append('p').attr('class', 'lanes-note').text(t('_lanes.managed.reasons_label'));
+        for (const reason of variableSpeedReasons) {
+            const check = box.append('label').attr('class', 'lane-check');
+            check.append('input').attr('type', 'checkbox')
+                .property('checked', reasons.includes(reason))
+                .on('change', function(this: HTMLInputElement) {
+                    const next = this.checked ? [...reasons, reason] : reasons.filter(r => r !== reason);
+                    retag(withVariableSpeed(tags, true, next));
+                });
+            check.append('span').text(t(`_lanes.managed.reasons.${reason}`));
+        }
+    }
+
+
+    /**
      * Hard shoulders, pavements, cycleways and parking, one field each with a dropdown per side as iD's own
      * two-sided fields, with what separately mapped ways and kerbs suggest under them
      */
@@ -586,6 +659,10 @@ export function uiSectionLanes(context: iD.Context) {
                     onChange: (value: string) => retag(feature.write(side, value || undefined))
                 };
             }));
+
+            if (feature.id === 'shoulder' && sides.some(side => assumedShoulder(tags, side, oneSide, layout.lanes.some(l => l.kind === 'variable')))) {
+                box.append('p').attr('class', 'lanes-note').text(t('_lanes.roadside.shoulder_motorway'));
+            }
 
             // under the pavements: a pavement mapped separately that the road's tags don't say
             if (feature.id !== 'sidewalk') continue;

@@ -19,7 +19,7 @@ Two rules run through it:
 
 | Folder | What it holds |
 | --- | --- |
-| `model/` | The lane model: `parseLanes` reads `lanes`, `*:lanes`, `*:lanes:forward|backward|both_ways` and the direction tags into lanes per direction; `serialiseLanes` writes a model back as tags, touching only the keys that changed. Lane types, markings, signs, connectivity and street feature tags. Pure functions, no iD state. |
+| `model/` | The lane model: `parseLanes` reads `lanes`, `*:lanes`, `*:lanes:forward|backward|both_ways` and the direction tags into lanes per direction; `serialiseLanes` writes a model back as tags, touching only the keys that changed. Lane types, markings, signs, connectivity, street feature tags and active traffic management. Pure functions, no iD state. |
 | `actions/` | iD actions (graph in, graph out) for lane edits, markings, signs, copying lanes and lane connections. |
 | `geometry/` | Everything drawn, in metres: `laneLayout` (lane widths and order across the road), `roadGeometry` (roads, junctions, guide lines, links channelled between traffic islands), `streetGeometry` (pavements, footways, crossings, stop lines, islands, structures), `parkingGeometry` and `parkingSpaceGeometry` (street parking, parking spaces and car parks), `railGeometry` and `railFeatures` (track, level crossings, platforms, signals and equipment), `signGeometry` (signs, gantries, cameras), and `routing.ts` (the Routing tool's route finding). |
 | `svg/` | The `lanes` map layer (`svgLanes`): runs the geometry for the roads in view and draws it, plus click targets (car parks and highway areas across their surface), signs, brand logos and routes; `vertices.ts` decides which of iD's vertices are drawn unselected (only where ways meet or end). |

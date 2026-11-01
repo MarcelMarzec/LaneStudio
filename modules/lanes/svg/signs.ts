@@ -212,6 +212,17 @@ function messagePanel(g: G, r: number) {
     g.append('rect').each(attrChanged('x', -r * 1.2)).each(attrChanged('y', -r * 0.5)).each(attrChanged('width', r * 2.4)).each(attrChanged('height', r * 1.0)).attr('fill', 'url(#lanes-message-dots)');
 }
 
+/** An emergency phone: an orange box with a white handset, as beside a motorway */
+function phonePanel(g: G, r: number) {
+    g.append('rect').each(attrChanged('x', -r)).each(attrChanged('y', -r)).each(attrChanged('width', r * 2)).each(attrChanged('height', r * 2)).attr('rx', r * 0.2)
+        .attr('fill', '#e8791d').attr('stroke', white).attr('stroke-width', Math.max(1, r * 0.1));
+    g.append('path').each(attrChanged('d', `M${-r * 0.6},${r * 0.2} A${r * 0.68},${r * 0.68} 0 0 1 ${r * 0.6},${r * 0.2}`))
+        .attr('fill', 'none').attr('stroke', white).attr('stroke-width', r * 0.28);
+    for (const x of [-r * 0.78, r * 0.34]) {
+        g.append('rect').each(attrChanged('x', x)).each(attrChanged('y', r * 0.1)).each(attrChanged('width', r * 0.44)).each(attrChanged('height', r * 0.34)).attr('rx', r * 0.08).attr('fill', white);
+    }
+}
+
 function camera(g: G, r: number, sign: SignShape) {
     g.append('rect').each(attrChanged('x', -r * 0.85)).each(attrChanged('y', -r * 0.55)).each(attrChanged('width', r * 1.7)).each(attrChanged('height', r * 1.1)).attr('rx', r * 0.15)
         .attr('fill', '#2c2f36').attr('stroke', '#f2c400').attr('stroke-width', Math.max(1, r * 0.1));
@@ -300,6 +311,7 @@ export function drawSigns(group: (name: string) => Group, data: SignGeometry, pr
             const y = -post - r - i * (size + 2);
             const g = root.append('g').each(attrChanged('class', 'sign-face')).each(attrChanged('transform', `translate(0,${(d.overhead ? 0 : y).toFixed(1)})`));
             if (d.kind === 'message') messagePanel(g, r);
+            else if (d.kind === 'phone') phonePanel(g, r);
             else if (d.kind === 'camera') camera(g, r, d);
             else drawFace(g, r, face);
         });

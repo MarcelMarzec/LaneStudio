@@ -8,6 +8,29 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.01r2
+##### 2026-Nov-01
+
+#### Roads and signs
+* Motorways are drawn with a hard shoulder on the driving side unless the road says otherwise: `shoulder=no`
+  or a lane that is the running hard shoulder
+* Active traffic management, on motorways and trunk roads: a section in the sidebar picks controlled, all
+  lanes running or dynamic hard shoulder (`active_traffic_management`, `shoulder`, `access:lanes`), and sets a
+  variable limit and why it changes (`maxspeed:variable`). The map shows a dotted line along the road and a
+  badge naming the scheme or variable limit
+* Emergency bays (`highway=emergency_bay`) are drawn as orange laybys past the hard shoulder, or as an orange
+  road when mapped as their own way, and can be placed with the Markings tool
+* Emergency phones (`emergency=phone`) are drawn as orange boxes
+
+#### Website
+* The Lane Studio settings link to the GitHub repository, and links name it as LaneStudio
+* Issue templates ask which part of Lane Studio a report or idea is about
+
+#### Editing
+* Settings: Hide natural features hides `natural=*` on its own
+* A site running Lane Studio can set its own roads overlay for when zoomed out (`locatorOverlay`), as iD's
+  Locator Overlay isn't served to Lane Studio
+
 # 26.11.01
 ##### 2026-Nov-01
 

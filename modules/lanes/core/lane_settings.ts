@@ -18,6 +18,9 @@ export interface LaneSettings {
     /** hide land use (`landuse=*`) alone, iD's and Lane Studio's, leaving car parks and other surfaces shown */
     hideLanduse(): boolean;
     setHideLanduse(value: boolean): void;
+    /** hide natural features (`natural=*`) alone, iD's and Lane Studio's */
+    hideNatural(): boolean;
+    setHideNatural(value: boolean): void;
     /** show brands' logos from Wikidata in place of iD's markers (on unless turned off) */
     showLogos(): boolean;
     setShowLogos(value: boolean): void;
@@ -36,6 +39,7 @@ export function laneSettings(context: iD.Context): LaneSettings {
     let _opacity = Number.isFinite(stored) ? Math.max(0, Math.min(1, stored)) : defaultSurfaceOpacity;
     let _hide = prefs('lanes-hide-originals') === 'true';
     let _hideLanduse = prefs('lanes-hide-landuse') === 'true';
+    let _hideNatural = prefs('lanes-hide-natural') === 'true';
     let _showLogos = prefs('lanes-brand-logos') !== 'false';
 
     function apply() {
@@ -65,6 +69,7 @@ export function laneSettings(context: iD.Context): LaneSettings {
         container.style('--lanes-junction-fill', `rgb(${junction.join(', ')})`);
         container.classed('lanes-hide-originals', _hide);
         container.classed('lanes-hide-landuse', _hideLanduse);
+        container.classed('lanes-hide-natural', _hideNatural);
     }
 
     const settings: LaneSettings = {
@@ -90,6 +95,14 @@ export function laneSettings(context: iD.Context): LaneSettings {
             if (value === _hideLanduse) return;
             _hideLanduse = value;
             prefs('lanes-hide-landuse', value ? 'true' : null);
+            apply();
+            dispatch.call('change', settings);
+        },
+        hideNatural: () => _hideNatural,
+        setHideNatural(value) {
+            if (value === _hideNatural) return;
+            _hideNatural = value;
+            prefs('lanes-hide-natural', value ? 'true' : null);
             apply();
             dispatch.call('change', settings);
         },

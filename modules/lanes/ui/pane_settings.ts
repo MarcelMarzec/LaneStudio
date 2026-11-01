@@ -91,6 +91,17 @@ function uiSectionLaneDisplay(context: iD.Context) {
                 settings.setHideLanduse(this.checked);
             });
         landuseLabel.append('span').text(t('_lanes.settings.hide_landuse'));
+        // natural features alone
+        const natural = list.append('li')
+            .attr('class', 'lanes-hide-natural-option')
+            .call((uiTooltip() as any).title(() => t.append('_lanes.settings.hide_natural_tip')).placement('top'));
+        const naturalLabel = natural.append('label');
+        naturalLabel.append('input')
+            .attr('type', 'checkbox')
+            .on('change', function(this: HTMLInputElement) {
+                settings.setHideNatural(this.checked);
+            });
+        naturalLabel.append('span').text(t('_lanes.settings.hide_natural'));
         // brand logos from Wikidata in place of iD's markers
         const logos = list.append('li')
             .attr('class', 'lanes-brand-logos-option')
@@ -127,6 +138,10 @@ function uiSectionLaneDisplay(context: iD.Context) {
             .classed('active', settings.hideLanduse())
             .select('input')
             .property('checked', settings.hideLanduse());
+        container.select('.lanes-hide-natural-option')
+            .classed('active', settings.hideNatural())
+            .select('input')
+            .property('checked', settings.hideNatural());
     }
 
     return section;
@@ -134,7 +149,7 @@ function uiSectionLaneDisplay(context: iD.Context) {
 
 
 /** "About Lane Studio": the what's new menu (and whether it shows after updates), and links to the website,
- *  privacy policy and contact page */
+ *  GitHub repository, privacy policy and contact page */
 function uiSectionLaneAbout(context: iD.Context) {
     const section = (uiSection('lanes-about', context) as any)
         .label(() => t.append('_lanes.settings.about'))
@@ -167,7 +182,7 @@ function uiSectionLaneAbout(context: iD.Context) {
             });
 
         const links = enter.append('ul').attr('class', 'lanes-about-links');
-        for (const key of ['website', 'privacy', 'contact'] as const) {
+        for (const key of ['website', 'github', 'privacy', 'contact'] as const) {
             links.append('li').append('a')
                 .attr('href', laneStudioLinks[key]).attr('target', '_blank').attr('rel', 'noopener')
                 .call(svgIcon('#iD-icon-out-link', 'inline') as any)

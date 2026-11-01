@@ -286,6 +286,35 @@ describe('streetGeometry: forward, backward or both', () => {
 });
 
 
+describe('streetGeometry: emergency bays', () => {
+    function surfaceOf(wayTags: Tags, nodeTags: Tags) {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(100, 0), tags: { highway: 'emergency_bay', ...nodeTags } }),
+            new iD.osmNode({ id: 'n3', loc: at(200, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: wayTags })
+        ];
+        const graph = new iD.coreGraph(entities);
+        const { surfaces } = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
+        return surfaces.find(s => s.kind === 'emergency_bay_surface');
+    }
+    const farthest = (points: [number, number][]) => Math.max(...points.map(p => Math.abs(p[1] - origin[1]) / m));
+
+    it('lies past the assumed hard shoulder of a motorway', () => {
+        const road = { highway: 'motorway', oneway: 'yes', lanes: '2' };
+        const beside = surfaceOf({ ...road, shoulder: 'no' }, {})!;
+        const past = surfaceOf(road, {})!;
+        expect(farthest(past.points as [number, number][]) - farthest(beside.points as [number, number][])).toBeCloseTo(2.5, 1);
+    });
+
+    it('goes on the side tagged', () => {
+        const road = { highway: 'primary', lanes: '2' };
+        const side = (tags: Tags) => Math.sign(surfaceOf(road, tags)!.points[2][1] - origin[1]);
+        expect(side({ direction: 'forward' })).toBe(-side({ direction: 'backward' }));
+    });
+});
+
+
 describe('streetGeometry: passing places', () => {
     it('widens the road into a bay on the side tagged, or both', () => {
         const entities = [
