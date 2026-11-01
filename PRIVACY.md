@@ -52,7 +52,9 @@ Your browser fetches map data from the OpenStreetMap API, and, if you use them, 
 street-level imagery from third-party hosts. Each host's privacy policy governs that use. The
 [Editor Layer Index](https://github.com/osmlab/editor-layer-index) lists the imagery sources.
 Searching uses OpenStreetMap's [Nominatim](https://nominatim.openstreetmap.org/), and tag suggestions
-use [taginfo](https://taginfo.openstreetmap.org/). If you do not wish to interact with these third
+use [taginfo](https://taginfo.openstreetmap.org/). After you save edits, your browser asks
+[OpenStreetMap Calendar](https://osmcal.org/) for mapping events near them, sending the location rounded to two
+decimal places (about a kilometre). If you do not wish to interact with these third
 parties, do not use these features.
 
 A site running Lane Studio can set a roads overlay for when zoomed out (`locatorOverlay`); your browser then asks
@@ -85,6 +87,7 @@ law, or want to ask about it, open an issue at
 
 ### Changelog
 
+* _2026-Nov-01_ - Saving edits asks OpenStreetMap Calendar for mapping events nearby, as iD now does.
 * _2026-Nov-01_ - The hide natural features setting is stored with your settings. A site running Lane Studio can name its own roads overlay, whose host then receives the map tiles in view.
 * _2026-Oct-28_ - Brand logos are looked up on Wikidata and loaded from Wikimedia Commons (can be turned off); the land use and brand logo settings are stored with your settings.
 * _2026-Oct-28_ - Whether Look ahead and Roadside are folded away is stored with your settings.

@@ -10,7 +10,6 @@ const frame = metricFrame(at(0, 0));
 type Entity = InstanceType<typeof iD.osmNode | typeof iD.osmWay | typeof iD.osmRelation>;
 
 function geometryOf(entities: Entity[]) {
-    // @ts-expect-error -- the constructor also takes a list of entities
     const graph = new iD.coreGraph(entities) as iD.Graph;
     const roads = entities.filter(e => e.type === 'way').map(e => graph.entity(e.id));
     return roadGeometry(roads as any, graph);

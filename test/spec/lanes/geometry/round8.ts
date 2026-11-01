@@ -17,7 +17,6 @@ const frame = metricFrame(origin);
 
 type Entity = InstanceType<typeof iD.osmNode | typeof iD.osmWay | typeof iD.osmRelation>;
 function graphOf(entities: Entity[]) {
-    // @ts-expect-error -- the constructor also takes a list of entities
     return new iD.coreGraph(entities);
 }
 const all = (graph: ReturnType<typeof graphOf>) => Object.values(graph.base().entities).filter(Boolean) as Parameters<typeof signGeometry>[0];

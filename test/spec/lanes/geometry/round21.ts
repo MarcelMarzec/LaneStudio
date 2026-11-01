@@ -14,7 +14,6 @@ type Way = InstanceType<typeof iD.osmWay>;
 type WayID = `w${number}`;
 
 const build = (entities: Entity[]) => {
-    // @ts-expect-error -- the constructor also takes a list of entities
     const graph = new iD.coreGraph(entities) as iD.Graph;
     const ways = entities.filter(e => e.type === 'way').map(e => graph.entity(e.id as WayID) as Way);
     return { graph, geometry: roadGeometry(ways, graph) };

@@ -17,7 +17,6 @@ function graph() {
         new iD.osmWay({ id: 'w4', nodes: ['n2', 'n5'], tags: { highway: 'residential', name: 'North Street' } }),
         new iD.osmWay({ id: 'w5', nodes: ['n3', 'n6'], tags: { highway: 'primary_link', oneway: 'yes', destination: 'Airport', 'destination:ref': 'A2' } })
     ];
-    // @ts-expect-error -- the constructor also takes a list of entities
     return new iD.coreGraph(entities);
 }
 
@@ -99,7 +98,6 @@ describe('roundabout exits', () => {
             new iD.osmWay({ id: 'w3', nodes: ['n14', 'n3'], tags: { highway: 'primary', ref: 'A3' } }),
             new iD.osmWay({ id: 'w4', nodes: ['n16', 'n4'], tags: { highway: 'primary', oneway: 'yes' } })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const g = new iD.coreGraph(entities);
         const steps = laneCorridor(g.entity('w1'), g, { direction: 'forward', maxWays: 5 });
         expect(steps).toHaveLength(1);

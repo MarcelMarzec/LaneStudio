@@ -16,7 +16,6 @@ function ring() {
         new iD.osmRelation({ id: 'r1', tags: { type: 'restriction', restriction: 'no_left_turn' }, members: [
             { id: 'w3', type: 'way', role: 'from' }, { id: 'n1', type: 'node', role: 'via' }, { id: 'w1', type: 'way', role: 'to' }] })
     ];
-    // @ts-expect-error -- the constructor also takes a list of entities
     return new iD.coreGraph(entities);
 }
 

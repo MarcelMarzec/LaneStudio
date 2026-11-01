@@ -7,7 +7,6 @@ const at = (dx: number, dy: number): [number, number] => [0.30 + dx * mx, 53.17 
 
 type Entity = InstanceType<typeof iD.osmNode | typeof iD.osmWay | typeof iD.osmRelation>;
 const graphOf = (entities: Entity[]) => {
-    // @ts-expect-error -- the constructor also takes a list of entities
     return new iD.coreGraph(entities) as iD.Graph;
 };
 

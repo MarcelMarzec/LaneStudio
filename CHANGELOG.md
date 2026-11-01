@@ -8,6 +8,19 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.01r4
+##### 2026-Nov-01
+
+#### Editing
+* Lane Studio is brought up to date with iD's latest development version (to c659f34a of 30 October). Among
+  iD's changes: mapping events near your edits after saving, from OpenStreetMap Calendar; an invert filter for
+  background imagery; clearer railway platform edges, dams and playground objects; security fixes to the
+  way text from outside is shown; and fixes for a crash in Osmose, multi-selection tick boxes, and double-click
+  zoom after cancelling a line. See [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md)
+
+#### Behind the scenes
+* New versions of Lane Studio's tools and icons come with iD's update
+
 # 26.11.01r3
 ##### 2026-Nov-01
 

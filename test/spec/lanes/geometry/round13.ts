@@ -13,7 +13,6 @@ const distance = (a: [number, number], b: [number, number]) => Math.hypot(metres
 type Entity = InstanceType<typeof iD.osmNode | typeof iD.osmWay | typeof iD.osmRelation>;
 
 function geometryOf(entities: Entity[]) {
-    // @ts-expect-error -- the constructor also takes a list of entities
     const graph = new iD.coreGraph(entities);
     return roadGeometry(entities.filter(e => e.type === 'way').map(e => graph.entity(e.id)), graph);
 }

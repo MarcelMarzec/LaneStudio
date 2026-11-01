@@ -2,7 +2,6 @@ import { vertexImportance } from '../../../../modules/lanes/svg/vertices';
 
 type Entity = InstanceType<typeof iD.osmNode | typeof iD.osmWay>;
 const graphOf = (entities: Entity[]) => {
-    // @ts-expect-error -- the constructor also takes a list of entities
     return new iD.coreGraph(entities) as iD.Graph;
 };
 const node = (id: `n${number}`, x: number, y: number, tags: Tags = {}) => new iD.osmNode({ id, loc: [x * 0.0001, y * 0.0001], tags });

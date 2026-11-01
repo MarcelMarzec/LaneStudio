@@ -34,7 +34,6 @@ function splitRing(before: number, after: number, off: number, tags: Tags) {
     const a = (10 + off) * Math.PI / 180;
     const start = [r * Math.cos(10 * Math.PI / 180), r * Math.sin(10 * Math.PI / 180)];
     entities.push(new iD.osmWay({ id: 'w3', nodes: [ids.get(10)!, N(start[0] + 90 * Math.cos(a), start[1] + 90 * Math.sin(a))], tags }));
-    // @ts-expect-error -- the constructor also takes a list of entities
     const graph = new iD.coreGraph(entities);
     const geometry = roadGeometry((['w1', 'w2', 'w3'] as const).map(id => graph.entity(id) as InstanceType<typeof iD.osmWay>), graph);
     const node = ids.get(10)!;

@@ -100,6 +100,8 @@ If Lane Studio helps you, you can support its development through
 [GitHub Sponsors](https://github.com/sponsors/marcelmarzec) (the **Sponsor** button at the top of the
 repository).
 
+iD is also published as an [npm package](https://www.npmjs.com/package/@openstreetmap/id).
+
 ## License
 
 Lane Studio is available under the [ISC License](https://opensource.org/licenses/ISC), like iD.

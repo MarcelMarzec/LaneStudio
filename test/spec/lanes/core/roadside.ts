@@ -18,7 +18,6 @@ describe('roadside', () => {
             new iD.osmWay({ id: 'w4', nodes: ['n15', 'n16'], tags: { barrier: 'kerb' } }),
             new iD.osmWay({ id: 'w5', nodes: ['n17', 'n18'], tags: { highway: 'footway', footway: 'crossing' } })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         return { g: new iD.coreGraph(entities), entities };
     }
 

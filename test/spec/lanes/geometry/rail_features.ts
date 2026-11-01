@@ -10,7 +10,6 @@ const at = (dx: number, dy: number): [number, number] => [-0.0318 + dx * mx, 52.
 const frame = metricFrame(at(0, 0));
 
 type Entity = InstanceType<typeof iD.osmNode | typeof iD.osmWay>;
-// @ts-expect-error -- the constructor also takes a list of entities
 const graphOf = (entities: Entity[]) => new iD.coreGraph(entities) as iD.Graph;
 
 describe('railway features', () => {

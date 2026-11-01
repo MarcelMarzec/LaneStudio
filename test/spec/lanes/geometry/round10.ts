@@ -31,7 +31,6 @@ function ringWithRoad(off: number, tags: Tags) {
     const a = (10 + off) * Math.PI / 180;
     const start = [r * Math.cos(10 * Math.PI / 180), r * Math.sin(10 * Math.PI / 180)];
     entities.push(new iD.osmWay({ id: 'w2', nodes: [ids.get(10)!, N(start[0] + 90 * Math.cos(a), start[1] + 90 * Math.sin(a))], tags }));
-    // @ts-expect-error -- the constructor also takes a list of entities
     const graph = new iD.coreGraph(entities);
     const geometry = roadGeometry([graph.entity('w1'), graph.entity('w2')], graph);
     const outer = r + laneLayout(graph.entity('w1'), graph).total / 2;
@@ -91,7 +90,6 @@ describe('entries and exits of a big roundabout (Exhall Interchange)', () => {
             new iD.osmWay({ id: 'w4', nodes: ['n5', 'n6', 'n2'], tags: { highway: 'primary', oneway: 'yes', lanes: '3' } }),
             new iD.osmWay({ id: 'w5', nodes: ['n3', 'n7', 'n8'], tags: { highway: 'primary', oneway: 'yes', lanes: '2' } })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph([...nodes, ...ways]);
         return roadGeometry(ways, graph).visuals;
     }
@@ -116,7 +114,6 @@ describe('entries and exits of a big roundabout (Exhall Interchange)', () => {
             new iD.osmWay({ id: 'w2', nodes: ['n2', 'n3'], tags: { highway: 'motorway', oneway: 'yes', lanes: '3' } }),
             new iD.osmWay({ id: 'w3', nodes: ['n2', 'n4', 'n5'], tags: { highway: 'motorway_link', oneway: 'yes', lanes: '2' } })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph([...nodes, ...ways]);
         expect(Math.abs(roadGeometry(ways, graph).visuals.get('w3')?.start ?? 0)).toBeLessThan(0.05);
     });
@@ -149,7 +146,6 @@ describe('roundabout edge line and lane connections', () => {
                 { id: 'w3', type: 'way', role: 'from' }, { id: 'n2', type: 'node', role: 'via' }, { id: 'w2', type: 'way', role: 'to' }
             ] })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         const geometry = roadGeometry([graph.entity('w1'), graph.entity('w2'), graph.entity('w3')], graph);
         const connections = geometry.connections.filter(c => c.kind === 'relation');

@@ -13,7 +13,6 @@ const metres = (line: [number, number][]) => line.map(frame.toMetres);
 
 type Entity = InstanceType<typeof iD.osmNode | typeof iD.osmWay>;
 function graphOf(entities: Entity[]) {
-    // @ts-expect-error -- the constructor also takes a list of entities
     return new iD.coreGraph(entities);
 }
 const waysOf = (graph: ReturnType<typeof graphOf>) => Object.values(graph.base().entities).filter(e => e?.type === 'way') as Parameters<typeof roadGeometry>[0];

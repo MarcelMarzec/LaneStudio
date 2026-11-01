@@ -40,7 +40,6 @@ function tightRing(ringTags: Tags = {}, off = 0) {
     // `off` degrees from straight out, round towards where traffic comes from
     const a = off * Math.PI / 180;
     entities.push(new iD.osmWay({ id: 'w1', nodes: [N(r + 80 * Math.cos(a), 80 * Math.sin(a)), ids[0]], tags: { highway: 'primary', oneway: 'yes', lanes: '3' } }));
-    // @ts-expect-error -- the constructor also takes a list of entities
     const graph = new iD.coreGraph(entities);
     const geometry = roadGeometry((['w1', ...ring] as WayID[]).map(id => graph.entity(id) as Way), graph);
     const outer = r + laneLayout(graph.entity('w10'), graph).total / 2;
@@ -82,7 +81,6 @@ describe('the Liquorpond Street Roundabout, Boston (OpenStreetMap)', () => {
             ...Object.entries(data.nodes).map(([id, loc]) => new iD.osmNode({ id: id as `n${number}`, loc })),
             ...data.ways.map(w => new iD.osmWay({ id: w.id as `w${number}`, nodes: w.nodes as `n${number}`[], tags: w.tags }))
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         const ways = data.ways.map(w => graph.entity(w.id as WayID) as Way);
         const ring = data.ways.filter(w => w.tags.junction === 'roundabout');

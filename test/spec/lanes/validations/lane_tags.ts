@@ -3,7 +3,6 @@ import { validationLaneTags } from '../../../../modules/lanes/validations/lane_t
 describe('lane_tags validation', () => {
     const validate = (tags: Tags) => {
         const way = new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags });
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph([new iD.osmNode({ id: 'n1', loc: [0, 0] }), new iD.osmNode({ id: 'n2', loc: [0.001, 0] }), way]);
         const context = iD.coreContext().assetPath('../dist/').init();
         return validationLaneTags(context)(way, graph);

@@ -46,7 +46,7 @@ Lane Studio fits into iD and where each part lives; [ARCHITECTURE.md](ARCHITECTU
 * Lane Studio features: `modules/lanes/` (TypeScript), styles in `css-lanes/`, strings in
   `data/lanes.yaml` (read with `t('_lanes.…')`), tests in `test/spec/lanes/`.
 * iD itself: only small hooks that keep iD's behaviour by default (see the hooks table in LANES.md).
-  Keeping iD's code close to upstream makes it possible to take in new iD releases.
+  Keeping iD's code close to upstream makes it possible to take in new iD releases and development versions.
 * `dist/` and `dist-lanes/` are built: don't edit or commit them.
 
 ### Code style

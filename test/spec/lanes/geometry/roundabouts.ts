@@ -100,7 +100,6 @@ function roundabout(layout: Layout) {
             exits.push({ id: way([ringNode(a), far], { highway: 'primary', oneway: 'yes', lanes: '1' }), arm });
         }
     }
-    // @ts-expect-error -- the constructor also takes a list of entities
     const graph = new iD.coreGraph(entities) as iD.Graph;
     return { graph, ringWays, entries, exits };
 }

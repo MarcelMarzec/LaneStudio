@@ -3,7 +3,6 @@ import { insertLane, setLaneValue, parseLanes } from '../../../../modules/lanes/
 
 describe('actionChangeLanes', () => {
     // a short road in London, so drive side is left-hand traffic
-    // @ts-expect-error -- the constructor also takes a list of entities
     const graph = () => new iD.coreGraph([
         new iD.osmNode({ id: 'n1', loc: [-0.1280, 51.5070] }),
         new iD.osmNode({ id: 'n2', loc: [-0.1270, 51.5070] }),

@@ -16,7 +16,6 @@ type Way = InstanceType<typeof iD.osmWay>;
 type WayID = `w${number}`;
 
 const build = (entities: Entity[]) => {
-    // @ts-expect-error -- the constructor also takes a list of entities
     const graph = new iD.coreGraph(entities) as iD.Graph;
     const ways = entities.filter(e => e.type === 'way').map(e => graph.entity(e.id as WayID) as Way);
     return { graph, geometry: roadGeometry(ways, graph) };
@@ -100,7 +99,6 @@ describe('turns banned via the ways between the halves of a dual carriageway', (
             members: [{ id: 'w1', type: 'way', role: 'from' }, { id: 'w2', type: 'way', role: 'via' },
                 { id: 'w5', type: 'way', role: 'via' }, { id: 'w6', type: 'way', role: 'to' }]
         });
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph([...entities, restriction]) as iD.Graph;
         const result = vehicleRoutes(graph, 'w2', { direction: 'forward', index: 1 }, 0, 1, 'car');
         const reached = result.routes.flatMap(r => r.moves.map(move => move.toWayID));
@@ -162,7 +160,6 @@ describe('stop lines at pedestrian crossings', () => {
             new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: { highway: 'primary', lanes: '2', ...wayTags } }),
             ...extra
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities) as iD.Graph;
         return streetGeometry(entities.map(e => graph.entity(e.id)), graph);
     }
@@ -194,7 +191,6 @@ describe('stop lines at pedestrian crossings', () => {
                 new iD.osmNode({ id: 'n2', loc: at(0, 0), tags: { highway: 'stop' } }), new iD.osmNode({ id: 'n3', loc: at(60, 0) }),
                 new iD.osmWay({ id: 'w1', nodes: ['n1', 'n6', 'n2', 'n3'], tags: { highway: 'primary', lanes: '2', oneway: 'yes' } })
             ];
-            // @ts-expect-error -- the constructor also takes a list of entities
             const graph = new iD.coreGraph(entities) as iD.Graph;
             const street = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
             const stop = street.markings.find(m => m.kind === 'stop_line')!;
@@ -216,7 +212,6 @@ describe('routing round the Liquorpond Street Roundabout, Boston (OpenStreetMap)
             ...Object.entries(data.nodes).map(([id, loc]) => new iD.osmNode({ id: id as `n${number}`, loc })),
             ...data.ways.map(w => new iD.osmWay({ id: w.id as `w${number}`, nodes: w.nodes as `n${number}`[], tags: w.tags }))
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         return { data, graph: new iD.coreGraph(entities) as iD.Graph };
     }
 

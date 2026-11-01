@@ -30,7 +30,6 @@ function channelised(island: boolean) {
         const corners = [[4, 6], [16, 6], [16, 10], [4, 10]].map(([x, y], i) => new iD.osmNode({ id: `n${20 + i}` as `n${number}`, loc: at(x, y) }));
         entities.push(...corners, new iD.osmWay({ id: 'w9', nodes: [...corners.map(c => c.id), corners[0].id], tags: { 'area:highway': 'traffic_island' } }));
     }
-    // @ts-expect-error -- the constructor also takes a list of entities
     const graph = new iD.coreGraph(entities) as iD.Graph;
     const roads = ['w1', 'w2', 'w3', 'w4', 'w5'].map(id => graph.entity(id as WayID) as Way);
     if (island) islands.push(graph.entity('w9') as Way);

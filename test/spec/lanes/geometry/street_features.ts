@@ -133,7 +133,6 @@ describe('parkingGeometry', () => {
             new iD.osmNode({ id: 'n6', loc: at(30, y1) }),
             new iD.osmWay({ id: 'w2', nodes: ['n3', 'n4', 'n5', 'n6', 'n3'], tags: { amenity: 'parking', ...parkingTags } })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         return parkingGeometry(entities.map(e => graph.entity(e.id)), graph);
     }
@@ -171,7 +170,6 @@ describe('roadMarkingGeometry', () => {
             new iD.osmWay({ id: 'w2', nodes: ['n3', 'n4', 'n5', 'n3'], tags: { road_marking: 'restriction', pattern: 'crosshatch' } }),
             new iD.osmNode({ id: 'n6', loc: at(5, -2), tags: { road_marking: 'text', inscription: 'SLOW' } })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         const out = roadMarkingGeometry(entities.map(e => graph.entity(e.id)), graph);
         const frame = metricFrame(origin);
@@ -197,7 +195,6 @@ describe('streetGeometry surfaces and paths', () => {
             new iD.osmNode({ id: 'n8', loc: at(40, 60) }),
             new iD.osmWay({ id: 'w3', nodes: ['n7', 'n8'], tags: { highway: 'path', foot: 'designated', bicycle: 'designated' } })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         const street = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
         expect(street.areas.map(a => [a.id, a.kind, a.surface])).toEqual([['w1', 'carriageway', 'concrete']]);
@@ -216,7 +213,6 @@ describe('streetGeometry: traffic calming', () => {
             new iD.osmNode({ id: 'n3', loc: at(100, 0) }),
             new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: { highway: 'residential', lanes: '2' } })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         return streetGeometry(entities.map(e => graph.entity(e.id)), graph).markings.filter(m => m.kind === 'calming').map(m => m.variant);
     }
@@ -246,7 +242,6 @@ describe('streetGeometry: rounded path ends', () => {
             new iD.osmNode({ id: 'n4', loc: at(0, 30) }),
             new iD.osmWay({ id: 'w2', nodes: ['n3', 'n4'], tags: { highway: 'footway', footway: 'crossing' } })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         const { paths } = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
         // two straight sides of two points each, and a half circle at each end
@@ -264,7 +259,6 @@ describe('streetGeometry: forward, backward or both', () => {
             new iD.osmNode({ id: 'n3', loc: at(100, 0) }),
             new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: { highway: 'unclassified', lanes: '2' } })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         return streetGeometry(entities.map(e => graph.entity(e.id)), graph);
     }
@@ -294,7 +288,6 @@ describe('streetGeometry: emergency bays', () => {
             new iD.osmNode({ id: 'n3', loc: at(200, 0) }),
             new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: wayTags })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         const { surfaces } = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
         return surfaces.find(s => s.kind === 'emergency_bay_surface');
@@ -325,7 +318,6 @@ describe('streetGeometry: passing places', () => {
             new iD.osmNode({ id: 'n4', loc: at(150, 0) }),
             new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3', 'n4'], tags: { highway: 'unclassified', lanes: '1' } })
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         const { surfaces } = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
         const bays = surfaces.filter(s => s.kind === 'passing_place_surface');
@@ -355,7 +347,6 @@ describe('streetGeometry: highway areas (area:highway)', () => {
             ...areaOf(6, { 'area:highway': 'steps' }, 100),
             ...areaOf(7, { 'area:highway': 'verge' }, 120)
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         const { areas } = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
         expect(areas.map(a => [a.id, a.kind])).toEqual([
@@ -383,7 +374,6 @@ describe('streetGeometry: mini-roundabouts, turning circles, barriers, speed lim
             new iD.osmWay({ id: 'w3', nodes: ['n3', 'n6', 'n5'], tags: { highway: 'residential', lanes: '2', 'width:lanes': '3|3' } }),
             ...extra
         ];
-        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         return streetGeometry(entities.map(e => graph.entity(e.id)), graph);
     }

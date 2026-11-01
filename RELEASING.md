@@ -59,6 +59,7 @@ The full rules are in [CLAUDE.md](CLAUDE.md), and `test/spec/lanes/version.ts` c
 ### Taking in a new iD release
 
 Lane Studio is built on iD and keeps iD's code close to upstream. To take in a new iD version, merge
-the iD release tag from https://github.com/openstreetmap/iD into a branch off `mm/lane-studio-main`,
-resolve conflicts in the hooked files (listed in [LANES.md](LANES.md)), then run the checks above and
+the iD release tag, or its `develop` branch for the latest work, from https://github.com/openstreetmap/iD into a branch off `mm/lane-studio-main`,
+resolve conflicts in the hooked files (listed in [LANES.md](LANES.md)), run `npm ci` and `npm run all` (iD's strings and icons
+are built, so tests can fail on old ones), then run the checks above and
 check a few junctions and roundabouts in the browser before merging.
