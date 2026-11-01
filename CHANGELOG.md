@@ -8,6 +8,12 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.01r3
+##### 2026-Nov-01
+
+#### Behind the scenes
+* A type error in the emergency bay tests is fixed
+
 # 26.11.01r2
 ##### 2026-Nov-01
 

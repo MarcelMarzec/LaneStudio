@@ -294,6 +294,7 @@ describe('streetGeometry: emergency bays', () => {
             new iD.osmNode({ id: 'n3', loc: at(200, 0) }),
             new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: wayTags })
         ];
+        // @ts-expect-error -- the constructor also takes a list of entities
         const graph = new iD.coreGraph(entities);
         const { surfaces } = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
         return surfaces.find(s => s.kind === 'emergency_bay_surface');
