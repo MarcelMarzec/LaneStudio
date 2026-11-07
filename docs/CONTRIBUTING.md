@@ -46,7 +46,8 @@ Lane Studio fits into iD and where each part lives; [ARCHITECTURE.md](ARCHITECTU
 * Lane Studio features: `modules/lanes/` (TypeScript), styles in `css-lanes/`, strings in
   `data/lanes.yaml` (read with `t('_lanes.…')`, the i buttons' overviews under `info`), tests in
   `test/spec/lanes/`. The website: `LanesWebsite/`. Documents: `docs/` (README.md, CLAUDE.md and
-  LICENSE.md stay at the root).
+  LICENSE.md stay at the root). The GitHub wiki is copied from `docs/` on every push
+  (`scripts/build_wiki.js`, the **Sync docs to the wiki** workflow), so edit the documents, not the wiki.
 * iD itself: only small hooks that keep iD's behaviour by default (see the hooks table in LANES.md).
   Keeping iD's code close to upstream makes it possible to take in new iD releases and development versions.
 * `dist/` and `dist-lanes/` are built: don't edit or commit them.

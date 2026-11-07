@@ -1,0 +1,46 @@
+name: Sync docs to the wiki
+
+# The GitHub wiki is a copy of docs/: on every change to docs/ on the main branch, the pages are rebuilt
+# (scripts/build_wiki.js) and pushed to the wiki's repository. Edit the documents in docs/, not on the wiki.
+# The wiki must be turned on (Settings → Features → Wikis) and have one page made by hand before the first run.
+
+on:
+  push:
+    branches: [mm/lane-studio-main]
+    paths: ['docs/**', 'scripts/build_wiki.js', '.github/workflows/wiki.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki
+  cancel-in-progress: false
+
+jobs:
+  wiki:
+    name: Copy docs/ to the wiki
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check out the wiki
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: git clone "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki
+      - name: Write the pages
+        run: node scripts/build_wiki.js wiki "https://github.com/${GITHUB_REPOSITORY}" "${GITHUB_REF_NAME}"
+      - name: Push the wiki
+        working-directory: wiki
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "The wiki is up to date"
+          else
+            git commit -m "Docs from ${GITHUB_SHA::8}"
+            git push
+          fi

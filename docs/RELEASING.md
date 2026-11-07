@@ -56,6 +56,13 @@ The full rules are in [CLAUDE.md](../CLAUDE.md), and `test/spec/lanes/version.ts
 2. Check the live site: the editor's footer shows the version, you can log in, and a small test
    edit's changeset on openstreetmap.org says `created_by=LaneStudio YY.MM.DD`.
 
+### The wiki
+
+The GitHub wiki is a copy of `docs/`: the **Sync docs to the wiki** workflow (`.github/workflows/wiki.yml`) runs on
+every push to `mm/lane-studio-main` that changes `docs/` (or by hand), builds the pages with `scripts/build_wiki.js`
+and pushes them to the wiki. Before the first run, turn the wiki on (Settings → Features → Wikis) and make one page
+by hand. Try it locally with `node scripts/build_wiki.js <folder>`.
+
 ### Taking in a new iD release
 
 Lane Studio is built on iD and keeps iD's code close to upstream. To take in a new iD version, merge

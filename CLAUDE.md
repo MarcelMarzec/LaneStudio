@@ -72,7 +72,8 @@ behaviour, leaves the new one out, or names files, settings or steps that no lon
 
 The documents are in `docs/`. Only [README.md](README.md), this file and [LICENSE.md](LICENSE.md) stay at the
 root, where GitHub and Claude Code look for them; a new document goes in `docs/`, and links between documents are
-relative to where each one is.
+relative to where each one is. The GitHub wiki is a copy of `docs/`, rebuilt on every push by the **Sync docs
+to the wiki** workflow (`scripts/build_wiki.js`): edit the documents here, never on the wiki.
 
 Before committing, look at what the change touches and check the documents that cover it:
 
