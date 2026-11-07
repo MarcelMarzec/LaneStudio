@@ -84,12 +84,46 @@ Before committing, look at what the change touches and check the documents that 
 | [CONTRIBUTING.md](CONTRIBUTING.md), [RELEASING.md](RELEASING.md) | How to contribute, commit, version and deploy | The workflow, checks, versioning or deploy changes |
 | This file | The rules for working here | A rule changes |
 | `.github/` (issue templates, `FUNDING.yml`, workflows) | Reporting, sponsoring, building and deploying | What they ask for or do goes out of date |
+| `LanesWebsite/` (`index.php` and the other pages) | The website: what Lane Studio does, how it works | A feature users would notice is added, changed or removed (see Keep the website up to date) |
 
 - Write documents for the person reading them, in the same plain style as the rest; name the tags,
   files and settings exactly as they are.
 - When unsure whether a document is affected, read its section on the area you changed.
 - A commit that only updates documents still gets a version and changelog section
   (`#### Behind the scenes`, or `#### Website` when it changes what users read).
+- Each field's i button overview (`info` in `data/lanes.yaml`) is documentation too: keep it accurate with the field.
+
+## One sidebar, in iD's design
+
+Lane Studio's sidebar is one menu with iD's, not two designed separately. **Every change to it keeps it that
+way**:
+
+- **Build inputs as iD's fields.** An input for a tag on the road is an iD field among iD's own in the Fields
+  section ([modules/lanes/ui/road_fields.ts](modules/lanes/ui/road_fields.ts): a `uiFields.lanes_*` type, a
+  `lanes/*` field and its place in `arrangeFields`). Anything else is built with `fieldShell`, `laneField`,
+  `sidedField` or `choiceButtons` from [modules/lanes/ui/lane_fields.ts](modules/lanes/ui/lane_fields.ts), which
+  make iD's markup (`.form-field`, `.field-label`, `.form-field-input-wrap`) so iD's styles apply. Use iD's
+  components (`uiSection`, `uiDisclosure`, `uiCombobox`, "Add field") and iD's CSS variables; never a look of
+  Lane Studio's own.
+- **Every field has iD's bin, undo where it applies, and the i button.** The i button opens a short overview
+  (`info.<topic>` in `data/lanes.yaml`) and a link to the field's OpenStreetMap wiki page (`fieldInfoPages` in
+  [modules/lanes/ui/field_info.ts](modules/lanes/ui/field_info.ts)). A new field gets a topic, an overview and a
+  wiki page; check the page (and the section, for a link to one) exists. When a field changes, keep its overview
+  and wiki link accurate.
+- **One field per tag.** When Lane Studio edits a tag iD has a field for, iD's field is left out while Lane
+  Studio's is shown ([modules/lanes/ui/field_filter.ts](modules/lanes/ui/field_filter.ts)); never show both.
+- **Keep the clutter down.** Show a field when it is tagged or the feature usually needs it; put the rest in "Add
+  field" (or the roadside + menu). Fold long groups of fields under a title (`uiDisclosure`), remembered as iD's
+  sections are.
+- Look at the result in the browser, in the light and dark themes, before committing.
+
+## Keep the website up to date
+
+The website in `LanesWebsite/` tells people what Lane Studio is and does before they open it. **Every commit that
+adds, changes or removes something users see updates the website in the same commit** where the website no longer
+describes it accurately or leaves out a feature people would look for: the features and How it works on
+`index.php`, the pictures' captions, and any other page describing the editor. Nothing it says may be untrue of the
+editor as it is. (The changelog page reads [CHANGELOG.md](CHANGELOG.md) itself.)
 
 ## Checks before pushing
 

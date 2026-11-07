@@ -21,8 +21,8 @@ typefaces from Google Fonts, so Google receives your IP address when one of them
 
 Lane Studio does not set tracking cookies and does not collect analytics. It stores some information
 in your browser's local storage so you don't have to re-enter it: your settings (such as lane opacity,
-the map layers shown, whether the what's new menu is shown, whether the Lanes section's Look ahead
-and Roadside are folded away, and whether land use and brand logos are shown), the Lane Studio version you last used
+the map layers shown, whether the what's new menu is shown, whether Lane Studio's sections (Look ahead,
+Roundabout) and each side's parking details are folded away, and whether land use and brand logos are shown), the Lane Studio version you last used
 (so the what's new menu shows only what changed since) and edits you have not saved yet, under keys
 starting with `lanes_`, and
 your OpenStreetMap login token, under a key named after the OpenStreetMap server. This stays on your
@@ -62,6 +62,10 @@ that host for the map tiles in view.
 
 Lane Studio's changelog, for the what's new menu, is fetched from the site Lane Studio is served from.
 
+The i button on Lane Studio's own fields shows an overview built into Lane Studio; its link opens the
+[OpenStreetMap wiki](https://wiki.openstreetmap.org/) in a new tab only when you follow it. The i button on iD's
+own fields looks the field up on the wiki's data items when you press it, as iD does.
+
 Brand logos (Lane Studio pane, "Show brand logos", on unless turned off) are looked up on
 [Wikidata](https://www.wikidata.org/) for the brands (`brand:wikidata=*`) of features in view, and the
 logo images loaded from [Wikimedia Commons](https://commons.wikimedia.org/). The Wikimedia Foundation's
@@ -86,6 +90,8 @@ law, or want to ask about it, open an issue at
 [https://github.com/MarcelMarzec/LaneStudio/issues](https://github.com/MarcelMarzec/LaneStudio/issues).
 
 ### Changelog
+
+* _2026-Nov-07_ - Whether each side's parking details are folded away is stored with your settings. The i button on Lane Studio's fields shows text built into Lane Studio, so nothing is fetched from the OpenStreetMap wiki until you follow its link (iD's own i buttons still look the field up on the wiki).
 
 * _2026-Nov-01_ - Saving edits asks OpenStreetMap Calendar for mapping events nearby, as iD now does.
 * _2026-Nov-01_ - The hide natural features setting is stored with your settings. A site running Lane Studio can name its own roads overlay, whose host then receives the map tiles in view.

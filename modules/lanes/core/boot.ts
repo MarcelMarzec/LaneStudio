@@ -4,6 +4,7 @@ import { coreValidatorAddRule } from '../../core/validator';
 import { rendererBackgroundSource } from '../../renderer/background_source';
 import { prefs } from '../../core/preferences';
 import { uiEntityEditorAddSection } from '../../ui/entity_editor';
+import { uiSectionPresetFieldsSetFilter } from '../../ui/sections/preset_fields';
 import { uiInitAddPane, uiInitSetSidebarHeader } from '../../ui/init';
 import { uiTopToolbarAddTool } from '../../ui/top_toolbar';
 import { uiVersionSetProduct } from '../../ui/version';
@@ -16,6 +17,9 @@ import { vertexImportance } from '../svg/vertices';
 import { validationLaneTags } from '../validations/lane_tags';
 import { uiSectionLanes } from '../ui/section_lanes';
 import { laneStudioCrossingSignals, laneStudioPresetFields } from './preset_fields';
+import { laneStudioFieldFilter } from '../ui/field_filter';
+import { uiSectionLookAhead, uiSectionRoundabout } from '../ui/section_road';
+import { laneStudioRoadFields } from '../ui/road_fields';
 import { uiSectionSign } from '../ui/section_sign';
 import { uiSectionStreetFeature } from '../ui/section_street_feature';
 import { laneStudioSplash } from '../ui/splash';
@@ -58,10 +62,16 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
         .createdBy(`LaneStudio ${laneStudioVersion}`)
         .documentTitleBase('Lane Studio');
 
-    // the Lanes section sits in iD's sidebar, after the issues and before the preset fields
+    // one sidebar: the Lanes section (and the sign and street feature sections) after the issues and before iD's
+    // Fields, where Lane Studio's road fields (number of lanes, centre line, speed limits, roadside, parking, active
+    // traffic management) sit among iD's in place of iD's for the same tags; the roundabout and look ahead after them
     uiEntityEditorAddSection(uiSectionLanes);
     uiEntityEditorAddSection(uiSectionSign);
     uiEntityEditorAddSection(uiSectionStreetFeature);
+    uiEntityEditorAddSection(uiSectionRoundabout, { afterFields: true });
+    uiEntityEditorAddSection(uiSectionLookAhead, { afterFields: true });
+    uiSectionPresetFieldsSetFilter(laneStudioFieldFilter);
+    laneStudioRoadFields();
 
     // Lane Studio's settings pane, first in the pane bar
     uiInitAddPane(uiPaneLaneStudio);

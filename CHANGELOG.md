@@ -8,6 +8,63 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.07
+##### 2026-Nov-07
+
+#### Editing
+* The sidebar is one menu with iD's: Lane Studio's road fields (Number of lanes, Centre line, Speed limit,
+  Minimum speed, Pavement, Cycleway, Hard shoulder, Parking and Active traffic management) sit among iD's own in
+  its Fields section, in place of iD's for the same tags, so each tag has one field. With several roads selected,
+  iD's own fields are back to set them on all at once
+* Every Lane Studio field has iD's label row with its bin and undo buttons, and an i button that opens a short
+  overview of what it tags and a link to its OpenStreetMap wiki page
+* Fields a road doesn't usually need (a cycleway on a residential street, a minimum speed off motorways, a
+  lane's height or weight limit) wait in "Add field" until they are tagged or picked
+* The Lanes section keeps to lane editing: the tools, the lanes along the road and the selected lanes' fields;
+  Look ahead and the roundabout follow iD's fields as their own sections
+* The number of lanes is one line per direction: its name, the count, and `−` and `+`
+* A + at each kerb of the selected road on the map (and "Add to the roadside" in the Lanes section) adds a
+  lane, hard shoulder, pavement, cycleway, parking or no-waiting lines to that side, asking for their tags, as
+  one undo step
+* Signs, cameras, traffic islands and street parking mapped on its own are edited in Lane Studio's fields in
+  place of iD's for the same tags; a sign's code and the way it faces can be typed
+
+#### Lanes and junctions
+* The centre line is set from its own field (dashed, solid on the forward or backward side, or double solid), or
+  by clicking a side of it on the map, which stops that side's traffic overtaking (`overtaking:forward=no`,
+  `overtaking:backward=no`, `overtaking=no`)
+* A selected lane's lane change buttons know what is beside it: another lane (`change:lanes`), the centre line
+  (overtaking, the double white line) or the kerb (nothing to change into). One click on the lane beside the
+  centre line bans overtaking for its traffic
+* A road's rounded end has its edge line carried round it, and hovering or clicking it hovers or selects the road
+* Active traffic management shows on motorways (every UK smart and controlled motorway is one) and on roads
+  already tagged with it; trunk roads and slip roads have it in "Add field"
+
+#### Roads and signs
+* Street parking follows the wiki's Street parking scheme in full: where cars park (on the road, in bays beside
+  it, half or fully on the pavement, on the shoulder, mapped separately, or not at all), how they park, back-in
+  and head-in parking, marked bays, restrictions at any time or at times (`restriction:conditional`), fees and
+  fees at times, charges, time limits, who may park and who it is kept for, zones, disabled bays, parking discs,
+  spaces, width, surface, staggered parking and the reasons. Each side's details fold away under a title that
+  sums them up
+* No-waiting lines are drawn along the kerb as in the UK: double yellow for no waiting at any time
+  (`parking:<side>:restriction=no_parking`), a single yellow line for no waiting at times, and red lines for
+  no stopping
+* Parking bays follow their tags: as many as `capacity` says, leaning the other way for back-in parking, none
+  where `markings=no`, in their own width and surface; bays kept for loading, charging, disabled drivers or
+  permit holders have their own colour, and a badge says P with the fee, time limit and zone
+* Roads still tagged with the old `parking:lane=*` and `parking:condition=*` scheme have an Upgrade button that
+  rewrites them in the current one
+
+#### Website
+* The website lists what Lane Studio does now: the sidebar with iD's, the roadside + menu and street parking,
+  centre lines, junctions, speed limits, routing and checks
+
+#### Behind the scenes
+* Two small iD hooks (sections after iD's fields, and leaving out preset fields), and a field's own i button
+* New rules in CLAUDE.md: one sidebar in iD's design, with an overview and wiki link for every field; and the
+  website kept up to date with every change users would notice
+
 # 26.11.01r4
 ##### 2026-Nov-01
 

@@ -9,6 +9,17 @@ import { uiField } from '../field';
 import { uiFormFields } from '../form_fields';
 import { uiSection } from '../section';
 
+// Fields an app built on iD leaves out, because it edits their tags in a section of its own
+let _fieldFilter = null;
+
+/**
+ * Sets a filter on the preset fields: `filter(field, entityIDs, graph)` returns false for a field to leave out
+ * (from the fields shown and from "Add field"). Call before the editor first renders; none by default
+ */
+export function uiSectionPresetFieldsSetFilter(filter) {
+    _fieldFilter = filter;
+}
+
 export function uiSectionPresetFields(context) {
 
     var section = uiSection('preset-fields', context)
@@ -60,11 +71,14 @@ export function uiSectionPresetFields(context) {
                 }
             });
 
+            var kept = function(field) {
+                return !_fieldFilter || _fieldFilter(field, _entityIDs, graph) !== false;
+            };
             var sharedFields = allFields.filter(function(field) {
-                return sharedTotalFields.indexOf(field) !== -1;
+                return sharedTotalFields.indexOf(field) !== -1 && kept(field);
             });
             var sharedMoreFields = allMoreFields.filter(function(field) {
-                return sharedTotalFields.indexOf(field) !== -1;
+                return sharedTotalFields.indexOf(field) !== -1 && kept(field);
             });
 
             _fieldsArr = [];
@@ -84,7 +98,7 @@ export function uiSectionPresetFields(context) {
                 );
             }
 
-            var additionalFields = utilArrayUnion(sharedMoreFields, presetsManager.universal());
+            var additionalFields = utilArrayUnion(sharedMoreFields, presetsManager.universal().filter(kept));
             additionalFields.sort(function(field1, field2) {
                 return field1.title().localeCompare(field2.title(), localizer.localeCode());
             });

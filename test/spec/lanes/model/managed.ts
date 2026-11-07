@@ -4,9 +4,10 @@ import {
 
 
 describe('active traffic management', () => {
-    it('is offered on motorways and trunk roads', () => {
+    it('is offered on motorways and trunk roads, and their slip roads', () => {
         expect(canBeManaged({ highway: 'motorway' })).toBe(true);
         expect(canBeManaged({ highway: 'trunk' })).toBe(true);
+        expect(canBeManaged({ highway: 'motorway_link' })).toBe(true);
         expect(canBeManaged({ highway: 'primary' })).toBe(false);
     });
 

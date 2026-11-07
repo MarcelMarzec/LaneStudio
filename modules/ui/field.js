@@ -236,7 +236,8 @@ export function uiField(context, presetField, entityIDs, options) {
                         key: referenceKey,
                         value: _tags[referenceKey]
                     };
-                    reference = uiTagReference(referenceOptions, context);
+                    // a field can bring its own reference (an app's overview and wiki link); iD's from the wiki otherwise
+                    reference = d.referenceComponent ? d.referenceComponent(context) : uiTagReference(referenceOptions, context);
                     if (_state === 'hover') {
                         reference.showing(false);
                     }

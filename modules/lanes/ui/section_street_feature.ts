@@ -9,7 +9,9 @@ import {
     isTrafficIsland, isStreetParking, parkingOnCarriageway, islandSurface,
     roadMarkingValues, strokeValues, patternValues, markingColours, streetParkingValues
 } from '../model/street_features';
-import { laneField } from './lane_fields';
+import type { InfoTopic } from './field_info';
+import { fieldNote, laneField, tagChrome } from './lane_fields';
+import { areaParkingScope, parkingDetails } from './parking_fields';
 
 type Div = d3.Selection<HTMLDivElement>;
 type FeatureKind = 'island' | 'road_marking' | 'parking';
@@ -17,7 +19,8 @@ type FeatureKind = 'island' | 'road_marking' | 'parking';
 const islandSurfaces = ['concrete', 'asphalt', 'paving_stones', 'sett', 'grass'];
 const kerbValues = ['raised', 'lowered', 'flush', 'rolled'];
 
-function featureKind(entity: OsmEntity): FeatureKind | null {
+/** What the street feature section edits on a feature: an island, a painted marking or street parking */
+export function featureKind(entity: OsmEntity): FeatureKind | null {
     if (entity.tags.road_marking) return 'road_marking';
     if (entity.type !== 'way') return null;
     if (isTrafficIsland(entity.tags)) return 'island';
@@ -58,8 +61,9 @@ export function uiSectionStreetFeature(context: iD.Context) {
 
     const options = (values: readonly string[]) => values.map(value => ({ value }));
 
-    function field(wrap: Div, e: OsmEntity, key: string, label: string, values: readonly string[], titles?: (v: string) => string) {
+    function field(wrap: Div, e: OsmEntity, key: string, label: string, values: readonly string[], titles?: (v: string) => string, info?: InfoTopic) {
         laneField(context, wrap as any, {
+            ...tagChrome(context, e.id, [key], t('_lanes.annotation.street_feature'), info ?? (featureKind(e) === 'island' ? 'island_surface' : 'road_marking')),
             id: `sf-${key.replace(/[^a-z_]/g, '-')}`,
             label,
             value: e.tags[key] ?? '',
@@ -79,14 +83,14 @@ export function uiSectionStreetFeature(context: iD.Context) {
             field(wrap, e, 'surface', t('_lanes.street_feature.surface'), islandSurfaces);
             // the kerb is mapped on the island's outline
             laneField(context, wrap as any, {
+                ...tagChrome(context, e.id, ['barrier', 'kerb'], t('_lanes.annotation.street_feature'), 'kerb'),
                 id: 'sf-kerb',
                 label: t('_lanes.street_feature.kerb'),
                 value: e.tags.barrier === 'kerb' ? (e.tags.kerb ?? 'raised') : '',
                 suggestions: options(kerbValues),
                 onChange: value => retag(e, value ? { barrier: 'kerb', kerb: value } : { barrier: undefined, kerb: undefined })
             });
-            wrap.append('p').attr('class', 'lanes-note')
-                .text(t('_lanes.street_feature.island_hint') + (e.tags.surface ? '' : ` (${islandSurface(e.tags)})`));
+            fieldNote(wrap, t('_lanes.street_feature.island_hint') + (e.tags.surface ? '' : ` (${islandSurface(e.tags)})`));
             return;
         }
 
@@ -110,18 +114,16 @@ export function uiSectionStreetFeature(context: iD.Context) {
             return;
         }
 
-        // street parking
+        // street parking: where it is, then the same fields as parking along a road (wiki: Street parking)
         field(wrap, e, 'parking', t('_lanes.street_feature.parking_type'), streetParkingValues,
-            v => t(`_lanes.street_feature.parking_types.${v}`));
-        field(wrap, e, 'orientation', t('_lanes.street_feature.orientation'), ['parallel', 'diagonal', 'perpendicular']);
-        field(wrap, e, 'capacity', t('_lanes.street_feature.capacity'), []);
-        field(wrap, e, 'surface', t('_lanes.street_feature.surface'), ['asphalt', 'paving_stones', 'concrete', 'sett', 'grass_paver']);
+            v => t(`_lanes.street_feature.parking_types.${v}`), 'street_parking');
+        parkingDetails(context, wrap, areaParkingScope(context, e));
 
         const graph = context.graph();
         const nearby = context.history().intersects(e.extent(graph).padByMeters(40));
         const shape = parkingGeometry([e, ...nearby.filter(n => n.id !== e.id)], graph).find(p => p.id === e.id);
         const road = shape?.roadID ? graph.hasEntity(shape.roadID as WayId) as osmWay | undefined : undefined;
-        wrap.append('p').attr('class', 'lanes-note').text(!road
+        fieldNote(wrap, !road
             ? t('_lanes.street_feature.not_joined')
             : t(parkingOnCarriageway(e.tags) ? '_lanes.street_feature.joined_lane' : '_lanes.street_feature.joined',
                 { road: utilDisplayName(road, {}) || road.tags.highway }));

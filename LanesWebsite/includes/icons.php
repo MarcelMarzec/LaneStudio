@@ -47,6 +47,30 @@ function icon_checks(): void { ?>
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 12 4 4 7-7"/><path d="m12 16 2 2 8-8"/></svg>
 <?php }
 
+function icon_parking(): void { ?>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>
+<?php }
+
+function icon_sidebar(): void { ?>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M12.5 8h5"/><path d="M12.5 12h5"/><path d="M12.5 16h3"/></svg>
+<?php }
+
+function icon_centre_line(): void { ?>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 3v18"/><path d="M20 3v18"/><path d="M10.5 3v18"/><path d="M13.5 4v3"/><path d="M13.5 10.5v3"/><path d="M13.5 17v3"/></svg>
+<?php }
+
+function icon_junction(): void { ?>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22V12"/><path d="M12 12 5 4"/><path d="M12 12l7-8"/><path d="M5 9V4h5"/><path d="M14 4h5v5"/></svg>
+<?php }
+
+function icon_speed(): void { ?>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="6"/><path d="M10 10v4"/><path d="M13 10h2v4h-2z"/></svg>
+<?php }
+
+function icon_route(): void { ?>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/></svg>
+<?php }
+
 function icon_code(): void { ?>
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 18-6-6 6-6"/><path d="m16 6 6 6-6 6"/></svg>
 <?php }

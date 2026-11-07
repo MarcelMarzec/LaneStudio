@@ -298,21 +298,38 @@ describe('parking', () => {
         ]);
         const { roadside } = laneLayout(graph.entity('w1'), graph);
         expect(roadside.left.map(s => s.kind)).toEqual(['parking', 'sidewalk']);
-        expect(roadside.left[0].parking).toEqual({ orientation: 'parallel', position: 'lane' });
+        expect(roadside.left[0].parking).toMatchObject({ orientation: 'parallel', position: 'lane', markings: true });
         expect(roadside.right[0]).toMatchObject({ kind: 'parking', width: 5, parking: { orientation: 'perpendicular', position: 'on_kerb' } });
     });
 
     it('marks bays by how cars park', () => {
         // a 60 m strip, 2.2 m deep
         const polygon = [at(0, 0), at(60, 0), at(60, 2.2), at(0, 2.2)];
-        const parallel = parkingBays('a', polygon, { orientation: 'parallel', position: 'lane' });
-        const perpendicular = parkingBays('b', polygon, { orientation: 'perpendicular', position: 'lane' });
+        const parallel = parkingBays('a', polygon, { orientation: 'parallel', position: 'lane', markings: true });
+        const perpendicular = parkingBays('b', polygon, { orientation: 'perpendicular', position: 'lane', markings: true });
         expect(parallel.dividers).toHaveLength(9);
         expect(perpendicular.dividers.length).toBeGreaterThan(20);
-        const diagonal = parkingBays('c', polygon, { orientation: 'diagonal', position: 'lane' });
+        const diagonal = parkingBays('c', polygon, { orientation: 'diagonal', position: 'lane', markings: true });
         const [p, q] = diagonal.dividers[0].map(frame.toMetres);
-        // a diagonal bay line leans along the road
+        // a diagonal bay line leans along the road, the other way for back-in parking
         expect(Math.abs(q[0] - p[0])).toBeGreaterThan(1);
+        const backIn = parkingBays('d', polygon, { orientation: 'diagonal', position: 'lane', markings: true, direction: 'back_in' });
+        const [r, u] = backIn.dividers[0].map(frame.toMetres);
+        expect(Math.sign(u[0] - r[0])).toBe(-Math.sign(q[0] - p[0]));
+        // as many bays as tagged, and none where they are not marked
+        expect(parkingBays('e', polygon, { orientation: 'parallel', position: 'lane', markings: true, capacity: 4 }).dividers).toHaveLength(3);
+        expect(parkingBays('f', polygon, { orientation: 'parallel', position: 'lane', markings: false }).dividers).toHaveLength(0);
+    });
+
+    it('reads the restriction along the kerb, and the parking\'s own width', () => {
+        const graph = graphOf([
+            node('n1', -50, 0), node('n2', 50, 0),
+            way('w1', ['n1', 'n2'], { highway: 'residential', 'parking:left': 'no', 'parking:left:restriction': 'no_stopping',
+                'parking:right': 'street_side', 'parking:right:width': '3', 'parking:right:markings': 'no' })
+        ]);
+        const layout = laneLayout(graph.entity('w1'), graph);
+        expect(layout.kerbMarkings).toEqual({ left: 'double_red', right: undefined });
+        expect(layout.roadside.right[0]).toMatchObject({ kind: 'parking', width: 3, assumed: false, parking: { markings: false } });
     });
 });
 

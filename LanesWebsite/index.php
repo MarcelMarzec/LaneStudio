@@ -111,9 +111,9 @@ require __DIR__ . '/includes/head.php';
         <div class="feature-icon"><?php icon_lanes(); ?></div>
         <h3>Lay out the carriageway</h3>
         <p>
-          Add, remove and reorder lanes on a drawing of the road itself. Direction, turn markings,
-          bus and cycle lanes, width — set per lane, in the order you'd see them from the driver's
-          seat.
+          Every lane is drawn at its real width over the imagery. Add, remove and reorder lanes, set
+          their direction, turn arrows, bus and cycle lanes, widths and limits — in the order you'd see
+          them from the driver's seat.
         </p>
       </article>
 
@@ -121,9 +121,66 @@ require __DIR__ . '/includes/head.php';
         <div class="feature-icon"><?php icon_tag(); ?></div>
         <h3>Correct tags, written for you</h3>
         <p>
-          Lane Studio generates the <code>lanes</code>, <code>turn:lanes</code> and
-          <code>:forward</code>/<code>:backward</code> keys from what you drew, in the order the
-          wiki specifies. You can still see and edit the raw tags at any point.
+          Lane Studio writes the <code>lanes</code>, <code>turn:lanes</code> and
+          <code>:forward</code>/<code>:backward</code> keys from what you drew, touching only the keys
+          that changed. Every edit is one undo step, and the raw tags stay in view.
+        </p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon"><?php icon_sidebar(); ?></div>
+        <h3>One sidebar with iD's</h3>
+        <p>
+          Number of lanes, centre line, speed limits, pavements, cycleways, hard shoulders and parking
+          sit among iD's own fields, in iD's style. Each has an <strong>i</strong> button with a short
+          overview and a link to the wiki; fields a road rarely needs wait under “Add field”.
+        </p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon"><?php icon_parking(); ?></div>
+        <h3>Roadside and street parking</h3>
+        <p>
+          A <strong>+</strong> at each kerb adds a lane, hard shoulder, pavement, cycleway, parking or
+          no-waiting lines. Street parking follows the wiki's scheme in full — bays, restrictions and
+          times, fees, time limits, zones and permits — drawn with UK yellow and red lines.
+        </p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon"><?php icon_centre_line(); ?></div>
+        <h3>Centre lines and overtaking</h3>
+        <p>
+          A dashed centre line, or a double white line solid on the side that may not overtake. Set it in
+          the sidebar, from the lane beside it, or by clicking the side of the line on the map.
+        </p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon"><?php icon_junction(); ?></div>
+        <h3>Junctions drawn as they are</h3>
+        <p>
+          The main road runs through, lanes that carry on line up, added lanes taper, and guide lines carry
+          each lane to where it leads. Roundabouts, traffic islands, crossings, stop lines, signs and
+          railways are drawn too.
+        </p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon"><?php icon_speed(); ?></div>
+        <h3>Speed limits at a glance</h3>
+        <p>
+          The Speed Limit tool colours every lane by its limit, with roads missing one in red. Pick a UK
+          roundel, the national limit or a 20 zone, and click roads or lanes to set it.
+        </p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon"><?php icon_route(); ?></div>
+        <h3>See where a lane goes</h3>
+        <p>
+          Hover a lane to see every route a car, bus, bicycle or lorry can take from it, following turn
+          arrows, lane connections and turn restrictions — a quick way to catch a wrong arrow.
         </p>
       </article>
 
@@ -131,9 +188,9 @@ require __DIR__ . '/includes/head.php';
         <div class="feature-icon"><?php icon_checks(); ?></div>
         <h3>Checks before upload</h3>
         <p>
-          Counts that don't add up, turn lists that disagree with the lane total, a bus lane
-          tagged on the wrong side — flagged while you're still editing, not after a router
-          trips over it.
+          Lane values that don't match the lane count, unknown turn arrows, deprecated values and
+          destinations on two-way roads are flagged while you're still editing, with a fix where the
+          answer is certain.
         </p>
       </article>
     </div>
@@ -161,8 +218,8 @@ require __DIR__ . '/includes/head.php';
         <div class="step-num">2</div>
         <h3>Lay out the lanes</h3>
         <p>
-          Work on the carriageway directly — split a lane, mark it left-turn only, make the
-          nearside a bus lane. The tag preview updates as you go.
+          Work on the carriageway directly — add a lane, mark it left-turn only, make the nearside a
+          bus lane, or use the + at the kerb for pavements and parking. The tag list updates as you go.
         </p>
       </article>
 

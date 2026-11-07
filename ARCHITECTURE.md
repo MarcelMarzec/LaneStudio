@@ -19,13 +19,13 @@ Two rules run through it:
 
 | Folder | What it holds |
 | --- | --- |
-| `model/` | The lane model: `parseLanes` reads `lanes`, `*:lanes`, `*:lanes:forward|backward|both_ways` and the direction tags into lanes per direction; `serialiseLanes` writes a model back as tags, touching only the keys that changed. Lane types, markings, signs, connectivity, street feature tags and active traffic management. Pure functions, no iD state. |
+| `model/` | The lane model: `parseLanes` reads `lanes`, `*:lanes`, `*:lanes:forward|backward|both_ways` and the direction tags into lanes per direction; `serialiseLanes` writes a model back as tags, touching only the keys that changed. Lane types, markings, signs, connectivity, street feature tags (with the centre line's `overtaking`), street parking (`parking.ts`: sides, restrictions, values at times, the no-waiting lines, the old scheme's upgrade) and active traffic management. Pure functions, no iD state. |
 | `actions/` | iD actions (graph in, graph out) for lane edits, markings, signs, copying lanes and lane connections. |
 | `geometry/` | Everything drawn, in metres: `laneLayout` (lane widths and order across the road), `roadGeometry` (roads, junctions, guide lines, links channelled between traffic islands), `streetGeometry` (pavements, footways, crossings, stop lines, islands, structures), `parkingGeometry` and `parkingSpaceGeometry` (street parking, parking spaces and car parks), `railGeometry` and `railFeatures` (track, level crossings, platforms, signals and equipment), `signGeometry` (signs, gantries, cameras), and `routing.ts` (the Routing tool's route finding). |
 | `svg/` | The `lanes` map layer (`svgLanes`): runs the geometry for the roads in view and draws it, plus click targets (car parks and highway areas across their surface), signs, brand logos and routes; `vertices.ts` decides which of iD's vertices are drawn unselected (only where ways meet or end). |
 | `core/` | Lane Studio state with d3 dispatch events: the selected lanes (`laneState`), tools (`laneTools`), settings, the Routing tool's state (`laneRouting`) and mode, the Speed Limit tool's state (`laneSpeed`) and mode (`modeLaneSpeed`), brand logos looked up on Wikidata (`brand_logos.ts`), keyboard, the what's new menu's changelog reading (`whats_new.ts`), the links in About (`links.ts`), and boot (`laneStudioInit`). |
 | `osm/` | Looking along roads: the corridor ahead, roundabouts and their exits. |
-| `ui/` | Sidebar sections (lanes, signs, street features; the fields Lane Studio adds to iD's presets are in `core/preset_fields.ts`), the settings pane, the Routing panel, the Speed Limit panel and speed roundels, the top bar tools, the logo, the welcome screen and the what's new menu. |
+| `ui/` | The sidebar (see below): the Lanes, sign, street feature, roundabout and look-ahead sections, Lane Studio's road fields in iD's Fields section (`road_fields.ts`), the field parts they share (`lane_fields.ts`, the i button's topics in `field_info.ts`), street parking's fields (`parking_fields.ts`), the roadside + menu (`roadside_menu.ts`) and the filter that leaves out iD's fields for the same tags (`field_filter.ts`); the crossing fields Lane Studio adds to iD's presets are in `core/preset_fields.ts`. Also the settings pane, the Routing panel, the Speed Limit panel and speed roundels, the top bar tools, the logo, the welcome screen and the what's new menu. |
 | `validations/` | The lane tags rule in iD's Issues pane. |
 
 Styles are in `css-lanes/` (bundled into `dist/lanes.css`) and strings in `data/lanes.yaml` (built into
@@ -56,8 +56,11 @@ Styles are in `css-lanes/` (bundled into `dist/lanes.css`) and strings in `data/
 3. `streetGeometry` and `signGeometry` work out the rest, using the same shifts so markings stay on
    their roads; `railGeometry` and `railFeatures` the railways, and `parkingGeometry` and
    `parkingSpaceGeometry` the parking.
-4. The layer draws it all, with invisible click targets for lanes, lane lines, nodes and signs, then
-   marks iD's own lines and points for what it drew (`markIdFeatures`), so they can be thinned or hidden.
+4. The layer draws it all, with invisible click targets for lanes, lane lines (the centre line too),
+   roads' rounded ends, nodes and signs, then marks iD's own lines and points for what it drew
+   (`markIdFeatures`), so they can be thinned or hidden. Street parking adds its bays (by orientation, back-in
+   parking, `capacity` and `markings`), the UK no-waiting lines along the kerb (`kerbMarkings` in the layout) and a
+   badge with its fee, time limit and zone.
 
 What is drawn always matches the data, but work is skipped when nothing changed:
 
@@ -75,6 +78,30 @@ Clicking a lane selects it in `laneState`; the Lanes section reads the selected 
 it through `setLaneValue`, `insertLane`, `removeLane` and the like, then `actionChangeLanes` writes the
 new tags in one iD action. Tools (`laneTools`) change what a click on the map does (paint a value, drag
 widths, place markings or signs, connect lanes); Esc returns to Select.
+
+### The sidebar: one menu with iD's
+
+Lane Studio's inputs are iD's fields, or built exactly like them, so the sidebar reads as one menu:
+
+* **Road fields in iD's Fields section** (`ui/road_fields.ts`): the number of lanes, the centre line, the speed
+  limit and minimum speed, hard shoulders, pavements, cycleways, street parking and active traffic management are
+  registered as iD field types (`uiFields.lanes_*`) and fields (`lanes/*`), and put into the presets of the roads Lane
+  Studio edits by `arrangeFields`: where iD has Lanes and its speed limit, and after iD's fields for the roadside.
+  Fields a road usually needs are in the preset's `fields`; the rest are in `moreFields`, so iD lists them in
+  "Add field" until they are tagged. iD draws their label rows, bin and undo buttons; their i button is Lane
+  Studio's (`referenceComponent`). They edit one road at a time (`supportsMultiselection = false`).
+* **No duplicates**: `field_filter.ts` is iD's preset field filter. While Lane Studio's field or section for a
+  feature is shown (one road, a sign, a camera, an island, street parking mapped on its own), iD's fields for the
+  same tags are left out; with several features selected, iD's are kept.
+* **Lane Studio's own sections** (the Lanes section above Fields; signs, cameras and street features; the roundabout
+  and look ahead after Fields) build their fields with `fieldShell` and `laneField`, which make iD's markup
+  (`.form-field`, `.field-label` with `.remove-icon`, `.modified-icon` and `.tag-reference-button`,
+  `.form-field-input-wrap`), so iD's styles apply. Rarely used fields wait in an "Add field" list (`moreFields`).
+* **The i button** (`fieldReference`) opens the topic's overview (`_lanes.info.<topic>` in `data/lanes.yaml`) and a
+  link to its wiki page (`fieldInfoPages` in `ui/field_info.ts`); every topic has both, which a test checks.
+* **The roadside + menu** (`ui/roadside_menu.ts`) opens from the + at each kerb of the selected road (drawn in
+  Lane Studio's own layer group, above iD's touch targets) and from "Add to the roadside": pick a side and a
+  feature, fill in its tags, and it is written as one undo step.
 
 ### Speed Limit tool
 

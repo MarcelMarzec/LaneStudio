@@ -69,28 +69,59 @@ areas are coloured by their roads' limit where they agree, else by the main road
 meeting there); inside a road area its general lanes are coloured too. The sidebar shows the colours with how many roads in
 view have each, and lists the roads in view with no limit by name (click one to go to it). Pick a
 limit (or press 1 to 7 for 10 to 70 mph), then click a road to set it on that road, or shift-click a
-lane to set it on that lane only (`maxspeed:lanes`). The panel offers the same signs as the Lanes
-section, the UK limit types included (set on whole roads only). Esc lets go of the limit, then leaves
+lane to set it on that lane only (`maxspeed:lanes`). The panel offers the same signs as the road's
+Speed limit field, the UK limit types included (set on whole roads only). Esc lets go of the limit, then leaves
 the tool.
 
 Switch the panel from **Speed limit** to **Minimum speed** to do the same with minimum speeds: blue
 roundels, lanes coloured by their `minspeed:lanes` or their road's `minspeed` (roads with none are
 drawn as usual), a click setting `minspeed` and a shift-click `minspeed:lanes`.
 
-**Lanes** (sidebar section for a selected road)
+**The sidebar is one menu.** For a selected road it reads, top to bottom: iD's feature type and issues;
+the **Lanes** section (the tools, the lanes along the road, "Add to the roadside", and the selected lanes'
+fields); iD's **Fields**, where Lane Studio's road fields sit among iD's own; then **Roundabout** or
+**Look ahead**, and iD's tags. Every Lane Studio field is laid out as iD's: a label row with iD's bin
+(removes the field's tags) and undo (puts back what was there at the last save), and an **i** button that
+opens a short overview and a link to the field's wiki page. Fields that are rarely needed wait in an "Add
+field" list until they are tagged or picked, as in iD.
 
-- Click a lane on the map or in the lane strip to select it; shift-click to add lanes.
-  `[` and `]` step to the lane left or right; Delete removes the selected lanes, never the road.
-- Lane counts per direction with `+` and `−`.
-- Inspector: direction of travel, position (move left or right), turn arrows, lane change,
-  lane type, speed limits, destination, access, width, width and height limits, surface,
-  and every other `*:lanes` tag on the road.
+**Lane Studio's fields in iD's Fields section** (for one selected road, in place of iD's fields for the
+same tags; with several roads selected iD's own fields are shown instead, to set them on all at once):
+
+- **Number of lanes**: each direction on one line, the count with `−` and `+` (or type it): `lanes`,
+  `lanes:forward`, `lanes:backward`, `lanes:both_ways`.
+- **Centre line** (two-way roads): dashed, a double white line solid on the forward or the backward side
+  (that traffic may not overtake: `overtaking:forward=no`, `overtaking:backward=no`), or double solid
+  (`overtaking=no`); dashed writes `overtaking=yes`.
+- **Speed limit** and **Minimum speed** (shown on motorways, or once tagged), as roundels (see below).
+- **Pavement**, **Cycleway**, **Hard shoulder** and **Parking**: one dropdown per side (see Roadside).
+- **Active traffic management**: on motorways, or any road already tagged (see below).
+
+Which show from the start depends on the road: pavements on streets where they are expected, parking on
+residential streets and living streets, hard shoulders on motorways and trunk roads, the centre line on
+two-way roads that aren't slip roads; the rest are in "Add field".
+
+**Lanes** (sidebar section for a selected road, above iD's fields)
+
+- Click a lane on the map or in the lane strip ("Lanes along the road") to select it; shift-click to add
+  lanes. `[` and `]` step to the lane left or right; Delete removes the selected lanes, never the road.
+- **Add to the roadside** opens the roadside menu (below), as the + at each kerb on the map does; under it,
+  the kerb-to-kerb width of mapped kerbs (with "Set width") and the traffic islands on the road.
+- The selected lanes' fields, under their title (with **Whole road** to let go of them): direction of
+  travel, turn arrows, lane change and overtaking, speed limit, lane type, destination (on motorways,
+  trunk and primary roads), access, width, position (move left or right), and every other `*:lanes` tag
+  on the road. Minimum speed, destination road number, width, height and weight limits and surface are in
+  "Add field" until tagged.
+- **Lane change and overtaking** knows what is beside each selected lane: another lane going the same way
+  (its `change:lanes`), the centre line (overtaking: the road's `overtaking:forward` or
+  `overtaking:backward`, drawn as the double white line), or the kerb (nothing to change into, so the
+  button is off). So one click on the lane beside the centre line bans overtaking for its traffic.
 - Speed limits are picked from a row of UK roundels (10 to 70 mph, and none), the current one ringed,
-  and minimum speeds from a row of blue ones: with no lane selected, the road's own (`maxspeed`,
-  `minspeed`); with lanes selected, theirs (`maxspeed:lanes`, `minspeed:lanes`), in a box after the
-  lanes' turn arrows, laid out like the road's, with the same signs (a limit type for lanes is written as `maxspeed:type:lanes`,
-  with its limit in `maxspeed:lanes`) and lower limit, which says the road's limit (lanes with none of
-  their own follow it) and has a **Whole road** button to let go of the lanes and edit the road.
+  and minimum speeds from a row of blue ones: the road's own (`maxspeed`, `minspeed`) in iD's Fields
+  section; the selected lanes' (`maxspeed:lanes`, `minspeed:lanes`) in the Lanes section after their turn
+  arrows and lane change, with the same signs (a limit type for lanes is written as `maxspeed:type:lanes`,
+  with its limit in `maxspeed:lanes`) and lower limit, and a note of the road's limit (lanes with none of
+  their own follow it).
 - For a whole road, the UK limit types (wiki: Key:maxspeed:type) are signs beside the roundels, each
   setting its type and limit: the national limit on a single carriageway (`GB:nsl_single`, 60 mph) or a
   dual carriageway (`GB:nsl_dual`, 70 mph), a motorway (`GB:motorway`, 70 mph), a restricted road with
@@ -137,15 +168,16 @@ lane lines and arrows, shortcut `K`)
 
 Esc, clicking empty map or selecting nothing returns to Select.
 
-Lane fields in the inspector work like iD's own fields: type or pick from the suggestions (speeds in
-the country's units, access and surface values, widths, destinations used on nearby roads). A field
-with a fixed set of choices (lane type, the tools' marking, sign and paint pickers, roadside features)
-is a dropdown that can't be typed in. As in iD, an empty field's placeholder shows its first few
-choices ("Yes, No, Mapped separately…"), and a field whose selected lanes differ shows "Multiple
-Values".
+Lane fields work like iD's own fields: type or pick from the suggestions (speeds in the country's
+units, access and surface values, widths, destinations used on nearby roads). A field with a fixed set of
+choices (lane type, the tools' marking, sign and paint pickers, roadside and parking values) is a dropdown
+that can't be typed in. As in iD, an empty field's placeholder shows its first few choices ("Yes, No,
+Mapped separately…"), and a field whose selected lanes differ shows "Multiple Values". Every Lane Studio
+field's i button (its topics and wiki pages are listed in `modules/lanes/ui/field_info.ts`, its overviews
+under `info` in `data/lanes.yaml`) opens the overview under the field, and it stays open as you edit.
 
-Look ahead and Roadside fold away like iD's own sections (click their heading), and stay as you
-left them.
+Look ahead, Roundabout and each side's parking details fold away like iD's own sections (click their
+heading), and stay as you left them.
 
 **Look ahead**: how many roads to follow (1 to 10, with `−` and `+`), then the roads the selected
 road leads on to (highlighted on the map), one line each with its lanes and how far along it is, the exits at its
@@ -157,22 +189,50 @@ or destination lanes; one road per click).
 (`roundabout=turbo`, `change:lanes=no|no`), the segments still untagged, and the number of turn
 restrictions against the six a standard turbo roundabout needs.
 
-**Signs** (sidebar section for a selected sign or camera): which sign (`traffic_sign=GB:670[40]` and
-the rest; several on one post), the value on it, the way it faces (`direction=*`, with Turn round),
-and for cameras the enforced speed. UK signs are drawn as their pictures beside the road, other codes
+**Signs** (sidebar section for a selected sign or camera, in place of iD's sign, direction and speed
+fields): which sign, picked from pictures of UK signs, and its code as tagged (`traffic_sign=GB:670[40]` and
+the rest; several on one post), the value on it, the way it faces (`direction=*`, typed or with Turn
+round), and for cameras the enforced speed. UK signs are drawn as their pictures beside the road, other codes
 as a plate with the code; variable message signs stand on their gantry (`man_made=gantry`), and an
 average-speed camera system (`type=enforcement`) shows the stretch of road it covers.
 
-**Roadside**: hard shoulders (with width; drawn 2.5 m wide until one is tagged), and pavement,
-cycleway and parking per side (`sidewalk:<side>`, `cycleway:<side>`,
+**Roadside** (fields in iD's Fields section): hard shoulders (with their widths; drawn 2.5 m wide until one
+is tagged), and pavement, cycleway and parking per side (`sidewalk:<side>`, `cycleway:<side>`,
 `parking:<side>`): one field each, with a Forward and a Backward dropdown as in iD's cycle lane field.
 Forward is the side beside traffic going along the way's drawing direction (the way's left where traffic
 drives on the left, its right elsewhere), backward the other; the tags stay `:left` and `:right`.
-Lane Studio also looks at what is mapped next to the road:
+Clicking a hard shoulder on the map selects its road and marks the Hard shoulder field. Lane Studio also
+looks at what is mapped next to the road:
 
-- a separately mapped pavement on a side → "Set to mapped separately" (or a double-mapping warning);
-- mapped `barrier=kerb` lines on both sides → the kerb-to-kerb width, with "Set width";
-- traffic islands on the road are counted.
+- a separately mapped pavement on a side → "Set to mapped separately" (or a double-mapping warning),
+  under Pavement;
+- mapped `barrier=kerb` lines on both sides → the kerb-to-kerb width, with "Set width" (Lanes section);
+- traffic islands on the road are counted (Lanes section).
+
+**The roadside + menu**: with a road selected (and the Select tool), a + stands just outside each kerb on
+the map, halfway along the road; "Add to the roadside" in the Lanes section opens the same menu. Pick the
+side (forward or backward) and what to add: a **lane** beside the kerb (with its type), a **hard shoulder**
+(with its width), a **pavement** (yes or mapped separately, with its width), a **cycleway** (lane, track,
+shared lane…), **parking** (where, how cars park, fee, time limit, zone) or **no-waiting lines** (double or
+single yellow, double or single red, with the times for a single line). What is already on that side is
+ticked, and picking it changes it. Add writes it as one undo step. Esc or a click elsewhere closes it.
+
+**Street parking** (wiki: Street parking), in the Parking field: where cars park on each side
+(`parking:<side>`: on the road `lane`, in bays beside it `street_side`, `half_on_kerb`, `on_kerb`,
+`shoulder`, `yes`, `separate`, `no`), then each side's details, folded away under a title that sums them up
+("Backward side parking: lane on the road, diagonal, pay, 2h, zone A"). Shown from the start: how cars park
+(`orientation`: parallel, diagonal, perpendicular), the restriction (`restriction`: no parking, no stopping,
+no standing, loading only, charging only, none), the restriction at times (`restriction:conditional`, what
+and when, as `no_parking @ (Mo-Sa 08:00-18:30)`), pay to park (`fee`), the time limit (`maxstay`), who may
+park (`access`) and the zone (`zone`); where nobody parks, only the restriction and the reason. In "Add
+field": parked facing (`direction`: back_in, head_in), bays marked (`markings`), the charge (`charge`), fee,
+time limit and access at times (`fee:conditional`, `maxstay:conditional`, `access:conditional`), who it is
+kept for (`private`), disabled drivers (`disabled`), a parking disc (`authentication:disc`), spaces
+(`capacity`), width, surface, staggered parking (`staggered`) and the reasons (`reason`,
+`restriction:reason`). A side's keys are written as `parking:<side>:<key>`, or `parking:both:<key>` when
+both sides match. A road still tagged with the old scheme (`parking:lane=*`, `parking:condition=*`) has an
+**Upgrade** button that rewrites what can be read for sure (positions, orientations, no parking and no
+stopping, fees, discs, residents, customers, time limits and times) and keeps the rest.
 
 **Road features in iD's fields**: a crossing, stop, give way, traffic signals, traffic calming, mini-roundabout
 or passing place on a road is set with iD's own preset and fields, to which Lane Studio adds what its drawing
@@ -192,7 +252,9 @@ passing place's bay.
 - `road_marking=*`: the marking, `stroke` (or `stroke:left` and `stroke:right`), `pattern`, `width`,
   `dasharray`, `colour`, and `inscription` for painted text on a node.
 - street parking (`amenity=parking` with `parking=street_side|lane|layby|on_kerb|half_on_kerb`):
-  where, direction, spaces, surface, and which road it is joined to.
+  where, then the same fields as a side of a road's parking (keyed without the `parking:<side>:` prefix:
+  `orientation`, `restriction`, `fee`, `maxstay`, `access`, `zone`, `capacity`, `surface` and the rest), and
+  which road it is joined to. iD's fields for the same tags are left out.
 
 **Structures** (drawn on roads and paths; iD's own cutting and embankment triangles are hidden):
 bridges (`bridge=*`) get parapets along their outer edges; tunnels and covered ways (`tunnel=*`,
@@ -208,8 +270,10 @@ lane lines or direction arrows. `highway=construction` without a type is left to
 
 **Motorways and active traffic management**: a motorway has a hard shoulder on the driving side (both
 sides of a two-way one), 2.5 m wide, unless that side is tagged (`shoulder=*`) or a lane is the running
-hard shoulder (`access:lanes=…|variable`). Motorways and trunk roads have an Active traffic management
-part in the Lanes section: None, Controlled (`active_traffic_management=yes`, `maxspeed:variable=yes`),
+hard shoulder (`access:lanes=…|variable`). Every UK smart and controlled motorway is a motorway (A-road
+motorways such as the A1(M) too), so the Active traffic management field shows on motorways, and on any road
+already tagged with a scheme or a variable limit; trunk roads and slip roads have it in "Add field". It
+offers None, Controlled (`active_traffic_management=yes`, `maxspeed:variable=yes`),
 All lanes running (also `shoulder=no`) or Dynamic hard shoulder (also adds a variable lane on the driving
 side, one-way roads only). Under it Variable speed limit sets `maxspeed:variable=yes`, or the reasons
 ticked. No scheme keeps a variable limit, which is also found on its own. A managed road has a dotted blue
@@ -222,14 +286,25 @@ traffic; the Markings tool places one. A bay mapped as its own short way is a on
 
 **Lines down the road** follow the Highway Code. The carriageway edge is a solid line, fainter where the
 road's width is a guess; a road mapped as an area (`area:highway=*`) has the same line round its outline,
-left open where traffic drives across it. Between lanes going opposite ways is a dashed white centre line,
-unless overtaking is banned: `overtaking=no` draws a double solid white line, and `overtaking=forward`,
-`overtaking=backward` or `overtaking:forward|backward=no` a double white line that is solid on the side of
-the traffic that may not overtake and dashed on the other.
+left open where traffic drives across it, and carried round a road's rounded end. Between lanes going
+opposite ways is a dashed white centre line, unless overtaking is banned: `overtaking=no` draws a double
+solid white line, and `overtaking=forward`, `overtaking=backward` or `overtaking:forward|backward=no` a
+double white line that is solid on the side of the traffic that may not overtake and dashed on the other.
+With the road selected, clicking a side of the centre line stops that side's traffic overtaking, or lets it
+overtake again (one undo step); the Centre line field and the lane change buttons set it too.
+
+**No-waiting lines** (drawn as in the UK, just inside the kerb, where nobody parks on the road on that side):
+double yellow where waiting is banned at any time (`parking:<side>:restriction=no_parking` or `no_standing`),
+a single yellow line where it is banned at times only (`restriction:conditional=no_parking @ …`, or
+`no_parking` lifted at times with `none @ …`), and double or single red for no stopping (a red route,
+`no_stopping`).
 
 **What is drawn**: lanes by type (bus, PSV, taxi, HOV, bicycle, pedestrian, no access), kerbs,
 lane lines, turn arrows, labels; junctions; pavements and cycle and parking strips from road tags,
-with unknown sides hatched; footways, paths, cycleways, steps and pedestrian streets at their real
+with unknown sides hatched (parking bays by orientation, leaning the other way for back-in parking,
+as many as `capacity` says, none where `markings=no`, in the parking's own width and surface; bays kept
+for loading, charging, disabled drivers or permit holders in their own colour; and from zoom 19 a badge
+saying P with the fee, time limit, zone and what it is kept for); footways, paths, cycleways, steps and pedestrian streets at their real
 width; crossings, on a node or as a way, painted by `crossing:markings` (wiki: Key:crossing:markings): a
 zebra, a double zebra (two side by side), paired bars, a bicolour zebra (red and white), lines, paired lines,
 a ladder (lines and bars), a skewed or paired ladder, dashes, dots, a coloured surface or pictograms (an
@@ -242,7 +317,8 @@ with its bays and a layby joining it to the road; passing places (`highway=passi
 of road on the side `direction=forward|backward|both` gives (forward: beside traffic going along the road),
 else `passing_place=left|right|both`, both when not tagged; and lane connections. A road that ends
 with nothing joining it (no turning circle, loop or mini-roundabout node) and the free end of a footway,
-path or cycleway are drawn with a rounded end.
+path or cycleway are drawn with a rounded end; a road's rounded end has its edge line carried round it,
+and hovering or clicking it hovers or selects the road.
 Footways, paths, cycleways and pedestrian ways are drawn under the roads; crossings (`footway=crossing`
 and the like) over them, and paths on a bridge or above ground (`layer` > 0) over them too. Everything
 else is drawn by iD as usual. A node Lane Studio draws as what it is (a crossing, a barrier, a sign, a
@@ -492,13 +568,13 @@ that names its `created_by` value, listed on the wiki's Editors page.
 | Part | Where |
 | --- | --- |
 | Entry point and boot | `modules/lanes/index.ts`, `modules/lanes/core/boot.ts`, `lanes.html` |
-| Lane model (parse, edit, write `*:lanes` tags), lane types, markings, connectivity, street feature tags, active traffic management | `modules/lanes/model/` |
+| Lane model (parse, edit, write `*:lanes` tags), lane types, markings, connectivity, street feature tags and the centre line, street parking (`parking.ts`), active traffic management | `modules/lanes/model/` |
 | Actions (lanes, markings, copy, connect), each one undo step | `modules/lanes/actions/` |
 | Selected lanes, tools, keyboard, settings, roadside detection, the what's new state, links | `modules/lanes/core/` |
 | Geometry in metres: lanes, junctions and lane connections, street features, road markings, parking, parking spaces, railways and their features | `modules/lanes/geometry/` |
 | Look-ahead corridor, roundabouts | `modules/lanes/osm/` |
 | Map drawing and click targets | `modules/lanes/svg/` |
-| Sidebar sections, settings pane, welcome screen, what's new menu, logo, speed roundels | `modules/lanes/ui/` |
+| The sidebar: Lanes, sign, street feature, roundabout and look-ahead sections; Lane Studio's road fields in iD's Fields section (`road_fields.ts`); the parts every field shares (`lane_fields.ts`), the i button's topics and wiki pages (`field_info.ts`); street parking's fields (`parking_fields.ts`); the roadside + menu (`roadside_menu.ts`); the filter leaving out iD's fields for the same tags (`field_filter.ts`). Also the settings pane, welcome screen, what's new menu, logo, speed roundels | `modules/lanes/ui/` |
 | The logo as an SVG file (for the README and anywhere else it is needed) | `docs/img/lane-studio-logo.svg` |
 | Lane tags validation rule | `modules/lanes/validations/` |
 | Styles (built into `dist/lanes.css`) | `css-lanes/` |
@@ -523,7 +599,9 @@ configured:
 | `context.operationFilter()` to hide edit menu operations | `modules/core/context.ts`, `modules/modes/select.js` | none |
 | `prefs.prefix()` for stored keys, saved edits and the edit lock | `modules/core/preferences.js`, `modules/core/history.ts` | no prefix |
 | `localizer.addLocaleDir()` and `localizer.mergeStrings()` | `modules/core/localizer.ts` | none |
-| `uiEntityEditorAddSection()` for extra sidebar sections | `modules/ui/entity_editor.js` | none |
+| `uiEntityEditorAddSection()` for extra sidebar sections, after the issues or (`{ afterFields: true }`) after the preset fields | `modules/ui/entity_editor.js` | none |
+| `uiSectionPresetFieldsSetFilter()` to leave out preset fields an app edits in its own fields or sections | `modules/ui/sections/preset_fields.js` | none |
+| A field's `referenceComponent` for its own i button (Lane Studio's overview and wiki link) | `modules/ui/field.js` | iD's tag reference from the wiki |
 | `uiInitAddPane()` for extra map panes | `modules/ui/init.js` | none |
 | `uiInitSetSidebarHeader()` for a header above the sidebar (Lane Studio's logo) | `modules/ui/init.js` | none |
 | `uiTopToolbarAddTool()` for extra top bar tools | `modules/ui/top_toolbar.js` | none |
@@ -540,7 +618,7 @@ preferences under a `lanes_` prefix, and writes `none` for unmarked lanes in new
 Lane Studio is in use and deployed from `mm/lane-studio-main`; see [CHANGELOG.md](CHANGELOG.md) for
 what each version added.
 
-Not built yet: `+` handles on the map itself, a full replacement of iD's sidebar, detailed turbo
+Not built yet: detailed turbo
 roundabouts with one way per lane (drawn, not specially handled), `:conditional` lane tags (kept and
 shown, not edited), translations of Lane Studio's own strings (English only), and tests in a real
 browser against the dev server.

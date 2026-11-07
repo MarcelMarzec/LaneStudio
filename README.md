@@ -28,7 +28,19 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   widths.
 * **Lane editing**: click a lane to select it; add, remove and move lanes; set turn arrows, lane
   changes, lane types, speeds, destinations, access, widths and limits; drag lane widths; paint
-  values onto lanes; connect lanes across junctions.
+  values onto lanes; connect lanes across junctions; set the centre line (dashed, or a double white line
+  where overtaking is banned) from the sidebar, from a lane beside it, or by clicking it on the map.
+* **One sidebar with iD's**: Lane Studio's road fields (number of lanes, centre line, speed limits,
+  pavements, cycleways, hard shoulders, street parking, active traffic management) sit among iD's own in
+  its Fields section, in place of iD's for the same tags, each with iD's bin and undo buttons and an i
+  button giving a short overview and the wiki page. Fields a road doesn't usually need wait in "Add field".
+* **Roadside + menu**: a + at each kerb of the selected road (and "Add to the roadside" in the sidebar)
+  adds a lane, hard shoulder, pavement, cycleway, parking or no-waiting lines to that side, asking for
+  their tags.
+* **Street parking**: the whole Street parking scheme per side of a road (where and how cars park,
+  restrictions at any time or at times, fees, charges, time limits, zones, permits, disabled bays, discs
+  and more), drawn with its bays, UK yellow and red no-waiting lines along the kerb, and a badge with its
+  fee, time limit and zone; the old `parking:lane` tags are upgraded with one click.
 * **Junctions and roundabouts**: the main road runs through, lanes that carry on line up, added and
   dropped lanes taper, dashed guide lines carry each lane to where it leads (worked out from the
   exits where no turn arrows are tagged), lanes run between traffic islands, a road dividing round an

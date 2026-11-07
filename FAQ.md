@@ -58,8 +58,32 @@ leaves the tool. Switch the panel to **Minimum speed** to set `minspeed` the sam
 Beside the roundels are signs for the UK limit types, in the tool and for a selected road: the
 national limit on a single or dual carriageway, a motorway, a restricted road and a 20 mph zone
 (`maxspeed:type=GB:nsl_single`, `GB:nsl_dual`, `GB:motorway`, `GB:nsl_restricted`, `GB:zone20`). With a
-road selected and no lane picked, the Lanes section also sets the road's minimum speed.
+road selected, its Speed limit and Minimum speed fields (in iD's Fields section) set the road's, and with lanes
+picked the Lanes section sets theirs.
 
+
+## Where are iD's Speed Limit, Lanes, Sidewalks and Street Parking fields?
+
+With one road selected, Lane Studio's own fields edit those tags, in the same place in iD's Fields section:
+Number of lanes, Centre line, Speed limit (UK roundels and limit types), Minimum speed, Pavement, Cycleway,
+Hard shoulder, Parking and Active traffic management. iD's fields for the same tags are left out, so each tag has
+one field. Select several roads and iD's own fields are back, to set a value on all of them at once. Fields a road
+doesn't usually need (a cycleway on a residential street, a minimum speed off motorways) are under "Add field", or
+added with the + at the kerb.
+
+## What does the i button on a field show?
+
+A short overview of what the field tags and a link to its page on the OpenStreetMap wiki. Lane Studio's text is
+built in, so it shows without a connection; the link opens the wiki in a new tab.
+
+## How do I tag yellow lines, parking bays and pay and display?
+
+Select the road, then use the + at the kerb (or "Add to the roadside"): **No-waiting lines** for double or single
+yellow lines and red routes, **Parking** for bays (on the road, beside it, on the pavement) with what they cost and
+how long you may stay. They are written with the wiki's Street parking tags (`parking:left=no` with
+`parking:left:restriction=no_parking`, a single yellow line as `parking:left:restriction:conditional=no_parking @
+(Mo-Sa 08:00-18:30)`), and everything else about a side's parking (permits, zones, disabled bays, discs, charges)
+is in that side's details under Parking.
 
 ## How do I hide land use without hiding car parks?
 
@@ -75,8 +99,8 @@ overlay with `locatorOverlay` (see [API.md](API.md)).
 
 ## Why does a motorway have a hard shoulder I didn't tag?
 
-Motorways are presumed to have one. Tag `shoulder=no` where there isn't one, or use Active traffic
-management in the Lanes section, which sets it for all lanes running and dynamic hard shoulder.
+Motorways are presumed to have one. Tag `shoulder=no` where there isn't one (the Hard shoulder field), or
+use the Active traffic management field, which sets it for all lanes running and dynamic hard shoulder.
 
 ## Are railways drawn?
 

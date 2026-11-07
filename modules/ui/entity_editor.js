@@ -18,12 +18,16 @@ import { uiSectionRawMembershipEditor } from './sections/raw_membership_editor';
 import { uiSectionRawTagEditor } from './sections/raw_tag_editor';
 import { uiSectionSelectionList } from './sections/selection_list';
 
-// Factories for extra sections that an app built on iD shows after the issues section
+// Factories for extra sections that an app built on iD shows after the issues section, or after the fields
 const _extraSectionFactories = [];
+const _extraSectionFactoriesAfterFields = [];
 
-/** Registers an extra entity editor section; call before the editor first renders */
-export function uiEntityEditorAddSection(factory) {
-    _extraSectionFactories.push(factory);
+/**
+ * Registers an extra entity editor section; call before the editor first renders. It goes after the issues
+ * section, or after the preset fields with `{ afterFields: true }`
+ */
+export function uiEntityEditorAddSection(factory, options) {
+    (options && options.afterFields ? _extraSectionFactoriesAfterFields : _extraSectionFactories).push(factory);
 }
 
 
@@ -105,6 +109,7 @@ export function uiEntityEditor(context) {
                 uiSectionEntityIssues(context),
                 ..._extraSectionFactories.map(factory => factory(context)),
                 uiSectionPresetFields(context).on('change', changeTags).on('revert', revertTags),
+                ..._extraSectionFactoriesAfterFields.map(factory => factory(context)),
                 uiSectionRawTagEditor('raw-tag-editor', context).on('change', changeTags),
                 uiSectionRawMemberEditor(context),
                 uiSectionRawMembershipEditor(context)

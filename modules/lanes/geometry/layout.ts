@@ -4,6 +4,7 @@ import type { osmWay } from '../../osm/way';
 import { laneDriveSide } from '../core/drive_side';
 import { builtHighway, isLaneRoad, sidewalkExpectedHighways } from '../core/roads';
 import { assumedShoulder, shoulderValue } from '../core/roadside';
+import { kerbMarking, parkingUse, parkingValue, type KerbMarking, type ParkingUse } from '../model/parking';
 import {
     parseLanes, laneRefsInWayOrder, parseChange,
     type LaneChange, type LaneModel, type LaneRef
@@ -36,8 +37,21 @@ export interface RoadsideStrip {
 
 export interface ParkingLayout {
     orientation: 'parallel' | 'diagonal' | 'perpendicular';
-    /** `lane` and `half_on_kerb` on the carriageway, `street_side` in a layby, `on_kerb` on the pavement */
-    position: 'lane' | 'street_side' | 'half_on_kerb' | 'on_kerb';
+    /**
+     * `lane`, `half_on_kerb` and `yes` (parking, nothing more said) on the carriageway, `street_side` in a layby,
+     * `shoulder` on the road's shoulder, `on_kerb` on the pavement
+     */
+    position: 'lane' | 'street_side' | 'half_on_kerb' | 'on_kerb' | 'shoulder' | 'yes';
+    /** `back_in`: diagonal bays lean the other way (wiki: Street parking § Special rules on parking direction) */
+    direction?: 'back_in' | 'head_in';
+    /** bay lines are painted, unless `markings=no` */
+    markings: boolean;
+    /** how many bays the strip holds (`capacity`), when tagged */
+    capacity?: number;
+    /** what the bays are kept for: loading, charging, disabled drivers or permit holders */
+    use?: ParkingUse;
+    /** the parking's own `surface` */
+    surface?: string;
 }
 
 export interface LaneLayout {
@@ -57,6 +71,8 @@ export interface LaneLayout {
     shiftEnd: number;
     /** strips outside the carriageway, kerb outwards, per side of the way */
     roadside: { left: RoadsideStrip[]; right: RoadsideStrip[] };
+    /** yellow or red lines along the kerb where parking is restricted, per side of the way */
+    kerbMarkings: { left?: KerbMarking; right?: KerbMarking };
 }
 
 
@@ -157,13 +173,26 @@ function roadsideStrips(tags: Tags, side: 'left' | 'right', shoulderSide: 'left'
         strips.push({ kind: 'cycle_lane', width: 1.5, assumed: true });
     }
 
-    // on-street parking sits between the carriageway (or its cycle lane) and the kerb (wiki: Key:parking)
-    const parking = tags[`parking:${side}`] ?? tags['parking:both'];
-    const tagged = tags[`parking:${side}:orientation`] ?? tags['parking:both:orientation'];
+    // on-street parking sits between the carriageway (or its cycle lane) and the kerb (wiki: Street parking)
+    const parking = parkingValue(tags, side);
+    const tagged = parkingValue(tags, side, 'orientation');
     const orientation = tagged === 'perpendicular' || tagged === 'diagonal' ? tagged : 'parallel';
-    const parkingWidth = orientation === 'perpendicular' ? 5 : orientation === 'diagonal' ? 4.5 : 2.2;
-    if (parking === 'lane' || parking === 'street_side' || parking === 'half_on_kerb') {
-        strips.push({ kind: 'parking', width: parking === 'half_on_kerb' ? parkingWidth / 2 : parkingWidth, assumed: true, parking: { orientation, position: parking } });
+    const taggedWidth = parseWidth(parkingValue(tags, side, 'width'));
+    const parkingWidth = taggedWidth ?? (orientation === 'perpendicular' ? 5 : orientation === 'diagonal' ? 4.5 : 2.2);
+    const direction = parkingValue(tags, side, 'direction');
+    const capacity = parseInt(parkingValue(tags, side, 'capacity') ?? '', 10);
+    const details = (position: ParkingLayout['position']): ParkingLayout => ({
+        orientation, position,
+        direction: direction === 'back_in' || direction === 'head_in' ? direction : undefined,
+        markings: parkingValue(tags, side, 'markings') !== 'no',
+        capacity: capacity > 0 ? capacity : undefined,
+        use: parkingUse(tags, side),
+        surface: parkingValue(tags, side, 'surface')
+    });
+    if (parking === 'lane' || parking === 'street_side' || parking === 'half_on_kerb' || parking === 'shoulder' || parking === 'yes') {
+        // half on the kerb: half the car on the carriageway (the other half stands on the pavement)
+        const width = parking === 'half_on_kerb' && taggedWidth === undefined ? parkingWidth / 2 : parkingWidth;
+        strips.push({ kind: 'parking', width, assumed: taggedWidth === undefined, parking: details(parking) });
     }
 
     if (cycleway === 'track' || cycleway === 'opposite_track') {
@@ -171,7 +200,7 @@ function roadsideStrips(tags: Tags, side: 'left' | 'right', shoulderSide: 'left'
     }
     // parking on the pavement: beyond the kerb, before the walking space
     if (parking === 'on_kerb') {
-        strips.push({ kind: 'parking', width: parkingWidth, assumed: true, parking: { orientation, position: 'on_kerb' } });
+        strips.push({ kind: 'parking', width: parkingWidth, assumed: taggedWidth === undefined, parking: details('on_kerb') });
     }
 
     const sidewalk = sideValue(tags, 'sidewalk', side);
@@ -267,6 +296,7 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
         roadside: {
             left: roadsideStrips(tags, 'left', shoulderSide, runningShoulder),
             right: roadsideStrips(tags, 'right', shoulderSide, runningShoulder)
-        }
+        },
+        kerbMarkings: { left: kerbMarking(tags, 'left'), right: kerbMarking(tags, 'right') }
     };
 }

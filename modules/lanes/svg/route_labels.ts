@@ -19,9 +19,14 @@ const shieldColours: Record<ShieldStyle, { fill: string; text: string; stroke: s
 /** Shields at their placements, several numbers side by side */
 /** A badge on the road naming its active traffic management scheme, or a variable limit */
 export function drawManagedBadges(group: Group, badges: { key: string; point: [number, number]; text: string }[]) {
-    const items = group.selectAll<SVGGElement, typeof badges[number]>('g.managed-badge').data(badges, d => d.key);
+    drawBadges(group, badges, 'managed-badge');
+}
+
+/** Small labels in a rounded box, centred on their points: active traffic management's, and street parking's */
+export function drawBadges(group: Group, badges: { key: string; point: [number, number]; text: string }[], cls: string) {
+    const items = group.selectAll<SVGGElement, typeof badges[number]>(`g.${cls}`).data(badges, d => d.key);
     items.exit().remove();
-    const enter = items.enter().append('g').each(attrChanged('class', 'managed-badge'));
+    const enter = items.enter().append('g').each(attrChanged('class', cls));
     enter.append('rect').attr('rx', 3).attr('y', -9).attr('height', 18);
     enter.append('text').attr('dy', '0.35em');
     const all = enter.merge(items)

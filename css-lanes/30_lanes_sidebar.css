@@ -16,27 +16,6 @@
     padding-left: 6px;
 }
 
-.ideditor.lane-studio .lanes-counts {
-    display: grid;
-    gap: 4px;
-    margin: 8px 0;
-}
-.ideditor.lane-studio .lanes-count-row {
-    display: grid;
-    grid-template-columns: 1fr 32px 32px 32px;
-    align-items: center;
-    gap: 4px;
-}
-.ideditor.lane-studio .lanes-count-row button {
-    height: 28px;
-    font-size: 16px;
-    font-weight: bold;
-}
-.ideditor.lane-studio .lanes-count-value {
-    text-align: center;
-    font-weight: bold;
-}
-
 /* one cell per lane, in the order they lie along the road */
 .ideditor.lane-studio .lanes-strip {
     display: flex;
@@ -485,3 +464,212 @@
     font-size: 12px;
     line-height: 1.4;
 }
+
+
+/* ---------- one sidebar, iD's fields ----------
+   Lane Studio's fields are laid out as iD's (`.form-field`, `.field-label` with its bin, undo and i buttons, and
+   `.form-field-input-wrap`), in iD's Fields section and in Lane Studio's own sections alike. Anything that is not a
+   single input sits in a `.lane-field-body`, which has the border and background of iD's inputs. */
+.ideditor.lane-studio .lane-field-body {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-top: 0;
+    border-radius: 0 0 4px 4px;
+}
+.ideditor.lane-studio .lane-field-body > .lanes-note:last-child { margin-bottom: 0; }
+.ideditor.lane-studio .lane-field-rows {
+    display: flex;
+    flex-flow: row wrap;
+    width: 100%;
+}
+.ideditor.lane-studio .lane-field-rows > .lanes-note,
+.ideditor.lane-studio .lane-field-rows > .lane-parking-details {
+    width: 100%;
+    margin: 0;
+    padding: 6px 10px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-top: 0;
+}
+.ideditor.lane-studio .lane-field-rows > :last-child { border-radius: 0 0 4px 4px; }
+.ideditor.lane-studio .lane-field-rows > ul.rows:not(:last-child) { border-radius: 0; }
+
+/* the number of lanes: each direction on one line, its name, the count, then − and + as iD's number fields */
+.ideditor.lane-studio .form-field ul.rows.lanes-counts li.labeled-input > div.lanes-count-label {
+    flex: 0 0 auto;
+    width: 130px;
+    padding: 5px 10px;
+    color: var(--text-color);
+    background: var(--bg-color-2, transparent);
+    display: flex;
+    align-items: center;
+    line-height: normal;
+}
+.ideditor.lane-studio .form-field ul.rows.lanes-counts li.labeled-input > div.lanes-count-input {
+    flex: 1 1 auto;
+    display: flex;
+    flex-flow: row nowrap;
+    width: auto;
+    min-width: 0;
+}
+.ideditor.lane-studio .form-field ul.rows.lanes-counts .lanes-count-input input {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+    font-weight: bold;
+}
+.ideditor.lane-studio .form-field ul.rows.lanes-counts .lanes-count-input button.form-field-button {
+    flex: 0 0 32px;
+    height: auto;
+    border-radius: 0;
+}
+
+/* choices as a row of buttons in a field, the one tagged now pressed (as iD's radio fields highlight theirs) */
+.ideditor.lane-studio .lane-choice-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.ideditor.lane-studio .lane-choice-buttons button {
+    height: auto;
+    min-height: 28px;
+    padding: 3px 8px;
+    font-size: 12px;
+    color: var(--link-color);
+    background: var(--bg-color-2);
+    border: 1px solid var(--border-color);
+}
+.ideditor.lane-studio .lane-choice-buttons button.lane-choice-icon {
+    padding: 2px 4px;
+    color: var(--text-color);
+    display: inline-flex;
+    align-items: center;
+}
+.ideditor.lane-studio .lane-choice-buttons button.active {
+    color: #fff;
+    background: var(--link-color);
+    border-color: var(--link-color);
+}
+.ideditor.lane-studio .lane-choice-buttons button:disabled { opacity: 0.45; }
+
+/* the centre line's four paintings */
+.ideditor.lane-studio .centre-line-buttons button { padding: 2px 6px; }
+
+/* the hard shoulder picked on the map */
+.ideditor.lane-studio .form-field.lanes-picked .field-label {
+    box-shadow: inset 3px 0 0 #fc6;
+}
+
+/* a check box in a field's body */
+.ideditor.lane-studio .lane-field-body .lane-check { margin: 6px 12px 2px 0; }
+.ideditor.lane-studio .lane-multi-check { display: flex; flex-wrap: wrap; }
+
+/* "Add field" under the selected lanes and in parking's details, as iD's under its fields */
+.ideditor.lane-studio .lane-more-fields { margin: 4px 0 10px; }
+
+/* the selected lanes: a title with the way back to the whole road */
+.ideditor.lane-studio .lane-inspector-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.ideditor.lane-studio .lane-inspector-head h4 { margin: 0; }
+
+/* a side's parking details, folded away under a title that sums them up */
+.ideditor.lane-studio .lane-parking-details summary.hide-toggle {
+    font-size: 12px;
+    line-height: 20px;
+    width: auto;
+}
+.ideditor.lane-studio .lane-parking-details details.disclosure-wrap[open] summary.hide-toggle { margin-bottom: 6px; }
+.ideditor.lane-studio .lane-parking-details .disclosure-content { padding: 2px 0 4px; }
+.ideditor.lane-studio .parking-orientation-icon { display: block; }
+
+/* the times of a restriction: what applies, and when */
+.ideditor.lane-studio .lane-times .rows-table li.labeled-input > div:first-child { width: 60px; }
+
+/* the overview the i button opens */
+.ideditor.lane-studio .lane-field-info .tag-reference-description { margin-bottom: 4px; line-height: 1.4; }
+
+/* the facing of a sign: its bearing and the button turning it round */
+.ideditor.lane-studio .lane-sign-facing input { flex: 1 1 auto; border: 1px solid var(--border-color); border-top: 0; border-radius: 0 0 0 4px; }
+.ideditor.lane-studio .lane-sign-facing .sign-turn { width: auto; padding: 0 10px; border-radius: 0 0 4px 0; }
+
+/* the button opening the roadside menu, under the lanes */
+.ideditor.lane-studio .lanes-roadside-add-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: auto;
+    margin: 2px 0 10px;
+    padding: 4px 10px;
+    color: var(--link-color);
+    background: var(--bg-color-2);
+    border: 1px solid var(--border-color);
+}
+.ideditor.lane-studio .lanes-roadside-add-button .icon { fill: currentColor; }
+
+/* ---------- the roadside menu: what to add to a side of the road, then its tags ---------- */
+.ideditor.lane-studio .lanes-roadside-menu {
+    position: fixed;
+    z-index: 900;
+    width: 300px;
+    max-height: calc(100vh - 16px);
+    display: flex;
+    flex-direction: column;
+    color: var(--text-color);
+    background: var(--bg-color-2);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+.ideditor.lane-studio .lanes-roadside-menu-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 6px 6px 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+.ideditor.lane-studio .lanes-roadside-menu-head h3 { flex: 1 1 auto; margin: 0; font-size: 14px; }
+.ideditor.lane-studio .lanes-roadside-menu-head button { width: 28px; height: 28px; background: none; }
+.ideditor.lane-studio .lanes-roadside-menu-head button .icon { fill: var(--text-color); opacity: 0.6; }
+.ideditor.lane-studio .lanes-roadside-menu-body { padding: 10px 12px 4px; overflow-y: auto; }
+.ideditor.lane-studio .lanes-roadside-menu-items { list-style: none; margin: 0 0 8px; padding: 0; }
+.ideditor.lane-studio .lanes-roadside-menu-item {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 0 4px;
+    padding: 6px 10px;
+    text-align: left;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+.ideditor.lane-studio .lanes-roadside-menu-item:hover,
+.ideditor.lane-studio .lanes-roadside-menu-item:focus { background: var(--active-bg-color, var(--bg-color-3)); }
+.ideditor.lane-studio .lanes-roadside-menu-item-title { display: block; font-weight: bold; color: var(--link-color); }
+.ideditor.lane-studio .lanes-roadside-menu-item-text { display: block; font-size: 12px; color: var(--passive-text-color); }
+.ideditor.lane-studio .lanes-roadside-menu-item.present .lanes-roadside-menu-item-title::after { content: " ✓"; }
+.ideditor.lane-studio .lanes-roadside-menu-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border-color);
+}
+.ideditor.lane-studio .lanes-roadside-menu-foot button { height: auto; padding: 5px 14px; }
+.ideditor.lane-studio .lanes-roadside-menu-apply { color: #fff; background: var(--link-color); font-weight: bold; }
+.ideditor.lane-studio .lanes-roadside-menu-apply:disabled { opacity: 0.5; }
+
+/* a field inside one of iD's (a side's parking details in Parking): its own bin and undo, not the outer field's */
+.ideditor.lane-studio .lane-road-field-wrap .form-field:not(.present) .field-label .remove-icon,
+.ideditor.lane-studio .lane-road-field-wrap .form-field:not(.modified) .field-label .modified-icon {
+    display: none;
+}
+.ideditor.lane-studio .lane-road-field-wrap .lane-parking-details .form-field:last-child { margin-bottom: 4px; }

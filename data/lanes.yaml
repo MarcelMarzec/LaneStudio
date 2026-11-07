@@ -23,6 +23,7 @@ en:
     assumed: Lane count assumed from the road type; nothing is written until you change it.
     no_markings: No lane markings
     counts:
+      title: Number of lanes
       forward: Forward
       backward: Backward
       both_ways: Both ways (centre)
@@ -30,6 +31,7 @@ en:
       add: Add a lane
       remove: Remove the outer lane
     strip_hint: Click a lane here or on the map to edit it.
+    strip_title: Lanes along the road
   direction:
     forward: Forward
     backward: Backward
@@ -42,9 +44,19 @@ en:
     not_allowed: not allowed
     direction: Direction of travel
     turn: Turn arrows
-    change: Lane change allowed
+    change: Lane change and overtaking
     change_left: To the left
     change_right: To the right
+    change_hint: "Next to another lane this is lane change (change:lanes); next to the centre line it is overtaking (overtaking=*), drawn as the double white line."
+    whole_road_tip: Let go of the lanes and edit the whole road
+    beside:
+      lane_left: Change into the lane on the left
+      lane_right: Change into the lane on the right
+      centre_left: Overtake across the centre line, to the left
+      centre_right: Overtake across the centre line, to the right
+      kerb_left: The kerb is on the left
+      kerb_right: The kerb is on the right
+      nothing: no lane to change into
     kind: Lane type
     remove: Remove this lane
     order: Position
@@ -54,6 +66,7 @@ en:
     readonly: "{key} is kept as tagged because its values do not match the lanes. Fix it in the tag editor."
     other_keys: Other lane tags
   tools:
+    title: Tool
     select: Select
     select_tip: Click lanes to edit them
     paint: Paint
@@ -104,6 +117,9 @@ en:
     none: No speed limit tagged
     lanes_none: Same as the road
     road_label: Speed limit
+    section: Speed limits
+    lane_label: Speed limit of the selected lanes
+    lane_min_label: Minimum speed of the selected lanes
     tagged: "Tagged: {value}"
     min_mph: "Minimum {n} mph"
     min_road_label: Minimum speed
@@ -167,6 +183,9 @@ en:
     unknown: not set
     turn: Turn round
     facing_hint: A sign faces the traffic that reads it. direction is the compass bearing it faces.
+    code: Sign code
+    facing_label: Faces
+    facing_placeholder: "A compass bearing: 270, W…"
     names:
       gb_670: Speed limit
       gb_671: National speed limit
@@ -203,6 +222,7 @@ en:
     title: Roundabout
     summary: "This ring has {segments} segments and {approaches} roads joining it."
     turbo: Turbo roundabout (this segment)
+    turbo_label: Turbo roundabout
     turbo_hint: "Sets roundabout=turbo and change:lanes=no on this segment. Tag every ring segment, one at a time."
     untagged: "{n} of {total} ring segments are not tagged as turbo."
     select_next: Select the next one
@@ -226,6 +246,7 @@ en:
     copy_tip: Copies lane counts and lane tags (not turn or destination lanes) onto the next road, as one undo step
   managed:
     title: Active traffic management
+    scheme: Scheme
     hint: Smart motorways and other roads where signs change the limit or open a lane.
     schemes:
       none: None
@@ -268,6 +289,7 @@ en:
     shoulder_yes: There is a hard shoulder
     shoulder_no: No hard shoulder
     shoulder_width: Width (m)
+    side_width: "{side} width (m)"
     shoulder_assumed: Drawn 2.5 m wide until a width is tagged.
     shoulder_motorway: "Motorways are drawn with a hard shoulder until the road says otherwise: tag shoulder=no, or make a lane the running hard shoulder."
     sidewalk: Pavement
@@ -284,6 +306,7 @@ en:
       street_side: Beside the road
       half_on_kerb: Half on the kerb
       on_kerb: On the kerb
+      shoulder: On the shoulder
     separate_found: "A pavement is mapped separately on the {side}."
     use_separate: Set to "mapped separately"
     double_mapped: "The {side} pavement is tagged on the road and also mapped separately; tag it as mapped separately instead."
@@ -296,7 +319,7 @@ en:
     title: Lane tags
     tip: Find lane tags that do not match the number of lanes, unknown turn values and other lane tagging problems
     count_mismatch: "{feature} has {actual} values in {key} for {expected} lanes."
-    count_mismatch_reference: "Every *:lanes tag needs one value per lane, separated by |. Fix the value or the lane count in the Lanes section."
+    count_mismatch_reference: "Every *:lanes tag needs one value per lane, separated by |. Fix the value, or the lane count in the road's Number of lanes field."
     direction_counts_mismatch: "{feature}: lanes:forward, lanes:backward and lanes:both_ways add up to {actual}, but lanes={expected}."
     ambiguous_direction_counts: "{feature} has an odd number of lanes but no lanes:forward and lanes:backward."
     mixed_key_styles: "{feature} has {key} both with and without a direction."
@@ -377,6 +400,9 @@ en:
     joined_lane: Part of the carriageway of {road}.
     not_joined: No road with lanes nearby to join to.
   annotation:
+    lanes: Changed the number of lanes.
+    overtaking: Changed where traffic may overtake.
+    parking: Changed street parking.
     marking: Changed a road marking.
     speed: Changed the speed limit.
     minspeed: Changed the minimum speed.
@@ -460,3 +486,235 @@ en:
     ends:
       dead_end: road ends
       blocked: no way on
+  centre_line:
+    title: Centre line
+    oneway: "A one-way road has no centre line: its lanes all go the same way."
+    click_tip: "The centre line: click a side of it to stop the traffic on that side overtaking across it, or to let it overtake again."
+    values:
+      dashed: "Dashed: both ways may overtake"
+      no_forward: "Solid on the forward side: forward traffic may not overtake"
+      no_backward: "Solid on the backward side: backward traffic may not overtake"
+      no_both: "Double solid: neither way may overtake"
+    notes:
+      dashed: "A dashed white line: traffic either way may cross it to overtake when it is safe."
+      no_forward: "A double white line, solid on the forward side: forward traffic may not cross it (overtaking:forward=no)."
+      no_backward: "A double white line, solid on the backward side: backward traffic may not cross it (overtaking:backward=no)."
+      no_both: "Double solid white lines: neither way may cross them (overtaking=no)."
+  parking:
+    not_tagged: Not tagged
+    details_title: "{side} parking"
+    separate_note: "Parking on this side is mapped on its own: select the parking area to edit it."
+    old_scheme: "This road uses the old street parking tags (parking:lane=*, parking:condition=*), which were replaced in 2022."
+    upgrade: Upgrade to the current tags
+    zone_placeholder: "A zone's letter or number: A, 20…"
+    charge_placeholder: "1.50 GBP/hour"
+    times:
+      what: What
+      when: When
+      placeholder: "Mo-Sa 08:00-18:30"
+    summary:
+      at_times: restricted at times
+      pay: pay
+      free: free
+      zone: "zone {zone}"
+    fields:
+      orientation: How cars park
+      restriction: Restriction
+      restriction_conditional: Restricted at times
+      fee: Pay to park
+      maxstay: Time limit
+      access: Who may park
+      zone: Parking zone
+      reason: Why there is no parking
+      direction: Parked facing
+      markings: Bays marked
+      charge: Charge
+      fee_conditional: Pay at times
+      maxstay_conditional: Time limit at times
+      access_conditional: Who may park, at times
+      private: Kept for
+      disabled: Disabled drivers
+      authentication_disc: Parking disc
+      capacity: Spaces
+      width: Width (m)
+      surface: Surface
+      staggered: Staggered
+      restriction_reason: Why it is restricted
+    restrictions:
+      no_parking: "No parking (UK: no waiting)"
+      no_stopping: No stopping
+      no_standing: No standing
+      loading_only: Loading only
+      charging_only: Electric vehicles charging only
+      none: "None (lifts a restriction)"
+    orientations:
+      parallel: Parallel
+      diagonal: Diagonal
+      perpendicular: Perpendicular
+    directions:
+      back_in: Backed in (rear to the kerb)
+      head_in: Head in (front to the kerb)
+    yes_no:
+      "yes": "Yes"
+      "no": "No"
+    access_values:
+      "yes": Anyone
+      private: Permit holders only
+      customers: Customers
+      delivery: Deliveries
+      designated: Kept for some vehicles
+      "no": Nobody
+    private_values:
+      residents: Residents
+      employees: Employees
+      students: Students
+      permit_holders: Permit holders
+    disabled_values:
+      designated: Kept for disabled drivers
+      "yes": Allowed
+      "no": Not allowed
+    reasons:
+      narrow: The road is narrow
+      cycleway: A cycleway
+      turn_lane: A turn lane
+      bus_lane: A bus lane
+      bus_stop: A bus stop
+      turnaround: A turning area
+      priority_road: A priority road
+      living_street: A living street
+      dual_carriage: A dual carriageway
+      markings: Road markings
+      rails: Tram rails
+      structure: Something built there
+      junction: A junction
+      driveway: A driveway
+      crossing: A crossing
+      fire_lane: A fire lane
+      loading_zone: A loading zone
+      passenger_loading_zone: Passenger pick-up and drop-off
+      street_cleaning: Street cleaning
+    badge:
+      pay: Pay
+      free: Free
+      zone: "Zone {zone}"
+      loading: Loading
+      charging: EV
+      disabled: Disabled
+      permit: Permit
+      disc: Disc
+      times: Times
+  add_menu:
+    open: Add to the roadside
+    title: Add to the roadside
+    plus_tip: "Add a lane, hard shoulder, pavement, cycleway or parking on this side"
+    back: Back to the list
+    side: Side
+    already: Already there; pick it to change it
+    cancel: Cancel
+    add: Add
+    change: Change
+    features:
+      lane:
+        title: Lane
+        text: A traffic, bus or cycle lane beside the kerb
+        hint: The lane goes beside the kerb, for the traffic on this side.
+      shoulder:
+        title: Hard shoulder
+        text: A strip for breakdowns beside the lanes
+        hint: "Written as shoulder=* with its width, if you give one."
+      sidewalk:
+        title: Pavement
+        text: A footway along the road
+        hint: "Mapped separately: the pavement is its own way next to the road (sidewalk=separate)."
+      cycleway:
+        title: Cycleway
+        text: A cycle lane or track
+        hint: "A lane is painted on the road; a track is kept apart from it."
+      parking:
+        title: Parking
+        text: Where cars park, and what it costs
+        hint: "More of its tags (restrictions, permits, charges) can be set afterwards in the side's details, under Parking in the road's fields."
+      no_waiting:
+        title: No-waiting lines
+        text: Yellow or red lines along the kerb
+        hint: "No parking on this side (parking:<side>=no), with the restriction the lines show, drawn as they are painted in the UK."
+    fields:
+      lane_kind: Lane type
+      width: Width (m)
+      sidewalk: Pavement
+      cycleway: Cycleway
+      parking_position: Where cars park
+      orientation: How cars park
+      fee: Pay to park
+      maxstay: Time limit
+      zone: Parking zone
+      lines: Lines
+      times: When
+    lines:
+      double_yellow: "Double yellow: no waiting at any time"
+      single_yellow: "Single yellow: no waiting at the times signed"
+      double_red: "Double red: no stopping at any time"
+      single_red: "Single red: no stopping at the times signed"
+  info_link: "{page} on the OpenStreetMap wiki"
+  info:
+    access: "Who may use the lane (access:lanes): yes, no, designated, destination and so on, one value per lane."
+    camera: "A speed camera or red light camera (highway=speed_camera); the limit it enforces is its maxspeed, and direction is the way it faces."
+    centre_line: "The line between traffic going opposite ways. Dashed where either way may overtake; a double white line is solid on the side of the traffic that may not cross it (overtaking=*, overtaking:forward, overtaking:backward)."
+    change: "Whether traffic may change into the lane beside it (change:lanes: yes, no, not_left, not_right). Beside the centre line this is overtaking (overtaking=*); beside the kerb there is nothing to change into."
+    cycleway: "Cycle lanes and tracks along the road, per side (cycleway:left, cycleway:right): a lane is painted on the road, a track is kept apart from it."
+    destination: "Where a lane goes, as the signs say (destination:lanes); several places are separated by semicolons."
+    destination_ref: "The road numbers on the signs for a lane (destination:ref:lanes), such as M6 or A38."
+    direction: "Which way the lane's traffic goes: forward (along the way's drawing direction), backward, or both ways for a centre turn lane (lanes:forward, lanes:backward, lanes:both_ways)."
+    island_surface: "A traffic island mapped as an area (area:highway=traffic_island). Its surface sets its colour; untagged islands are drawn as concrete."
+    kerb: "The kerb round the island (barrier=kerb with kerb=raised, lowered, flush or rolled)."
+    kind: "What the lane is for: a bus lane is bus:lanes=designated, a cycle lane bicycle:lanes=designated, a variable lane access:lanes=variable, and so on."
+    lane_minspeed: "The selected lanes' own minimum speed (minspeed:lanes). Lanes with none of their own follow the road's."
+    lane_speed: "The selected lanes' own speed limit (maxspeed:lanes, and maxspeed:type:lanes for a UK limit type). Lanes with none of their own follow the road's."
+    lane_strip: "The road's lanes, left to right as the way is drawn, with their turn arrows and colours by lane type. Click a lane to edit it; shift-click to pick more."
+    lanes: "How many traffic lanes the road has: lanes, and on two-way roads lanes:forward, lanes:backward and lanes:both_ways. Parking, hard shoulders and cycle lanes are not counted."
+    lookahead: "The roads this one leads on to, with their lanes and the exits at its end. A turn or destination from an exit is only written to the selected lanes when you click it."
+    managed: "Smart motorways and other roads where signs change the limit or open a lane (active_traffic_management=yes). All lanes running has no hard shoulder (shoulder=no); a dynamic hard shoulder is a lane opened by signs (access:lanes=…|variable)."
+    marking_tool: "Click a road to put a crossing, stop or give way line, traffic signals, traffic calming, a mini-roundabout, a passing place or an emergency bay on it, as a node with that feature's tags."
+    maxheight: "The tallest vehicle the lane takes (maxheight:lanes), in metres or feet and inches."
+    maxspeed: "The road's speed limit (maxspeed). In the UK the national limit, motorway limit, restricted road and 20 zone are signs of their own, written with maxspeed:type."
+    maxweight: "The heaviest vehicle the lane takes (maxweight:lanes), in tonnes."
+    maxwidth: "The widest vehicle the lane takes (maxwidth:lanes), in metres or feet and inches."
+    minspeed: "The lowest speed allowed on the road (minspeed), signed with blue roundels."
+    other_keys: "Lane tags on the road that Lane Studio has no field of its own for, so nothing is hidden: one value per lane, separated by |."
+    paint: "Pick what to paint and its value, then click lanes on the map: each click writes it to that lane as one undo step."
+    parking: "Where cars park on each side (parking:left, parking:right, parking:both): on the road, beside it in bays, half or fully on the pavement, on the shoulder, mapped separately, or no parking."
+    parking_access: "Who may park (parking:<side>:access): anyone, permit holders only (private), customers, deliveries or nobody."
+    parking_capacity: "How many cars the parking holds (capacity). Usually left out on a road, as it can be worked out from the road's length."
+    parking_charge: "What it costs (charge), such as 1.50 GBP/hour."
+    parking_direction: "Which way cars must face in the bays (parking:<side>:direction): back_in for reversed diagonal parking, head_in where signs say so."
+    parking_disabled: "Bays kept for disabled drivers (disabled=designated)."
+    parking_disc: "A parking disc shows when you arrived (authentication:disc=yes)."
+    parking_fee: "Whether you pay to park (fee=yes or no). Pay at times is written as fee:conditional, such as no @ (Su)."
+    parking_markings: "Whether the bays are painted (parking:<side>:markings). Without markings no bay lines are drawn."
+    parking_maxstay: "How long you may park (maxstay), such as 2 hours; at times only, maxstay:conditional."
+    parking_orientation: "How cars stand: parallel to the kerb, diagonal or perpendicular (parking:<side>:orientation)."
+    parking_private: "Who the parking is kept for when only permit holders may park (parking:<side>:private), such as residents."
+    parking_reason: "Why there is no parking, or why it is restricted (parking:<side>:reason, parking:<side>:restriction:reason): a narrow road, a bus stop, a junction…"
+    parking_restriction: "No parking, no stopping or no standing at any time, loading only or charging only (parking:<side>:restriction). With no parking on the side, Lane Studio draws it as UK no-waiting lines: double yellow, or double red for no stopping."
+    parking_staggered: "Cars park on alternate sides of a narrow road, so traffic weaves between them (parking:<side>:staggered=yes)."
+    parking_surface: "The parking's own surface, where it differs from the road's (parking:<side>:surface)."
+    parking_times: "A value that applies at times only, written as value @ (times) in opening hours syntax, such as no_parking @ (Mo-Sa 08:00-18:30). A single yellow line is no waiting at times."
+    parking_width: "How deep the parking is, in metres (parking:<side>:width), where it is not the usual width."
+    parking_zone: "The parking zone's letter or number on permits and signs (parking:<side>:zone)."
+    position: "Moves the lane left or right among the lanes going its way, as its drivers see them, keeping its tags."
+    road_marking: "Painted markings mapped as features of their own (road_marking=*): lines, areas and text, with their stroke, colour and pattern."
+    roundabout: "A roundabout's ring (junction=roundabout): the ring's segments and the roads joining it."
+    shoulder: "A hard shoulder beside the lanes (shoulder=*, or shoulder:left and shoulder:right). Motorways are drawn with one until the road says otherwise."
+    shoulder_width: "How wide the hard shoulder is, in metres (shoulder:<side>:width); drawn 2.5 m wide until tagged."
+    sidewalk: "Pavements along the road, per side (sidewalk:left, sidewalk:right, sidewalk:both): yes, no, or mapped separately as a way of its own."
+    sign: "Which sign this is (traffic_sign=*), such as GB:670[40] for a 40 mph limit. UK signs are drawn as their pictures; several on one post are separated by semicolons."
+    sign_direction: "The compass bearing the sign faces (direction=*), towards the traffic that reads it."
+    sign_tool: "Pick a sign, a message sign or a camera, then click a lane: it is placed beside the road, facing that lane's traffic."
+    sign_value: "The number on the sign, written in its code's brackets or, for a speed limit, as the node's maxspeed."
+    street_parking: "Parking mapped as an area of its own (amenity=parking with parking=street_side, lane, layby, on_kerb or half_on_kerb), joined to the road beside it."
+    surface: "The lane's own surface (surface:lanes), where it differs from the road's."
+    tools: "Select edits lanes; Paint applies one value to many lanes; Width drags lane widths; Markings and Signs place features on the road; Connect links a lane to the lanes it leads to across a junction."
+    turbo: "A turbo roundabout (roundabout=turbo with change:lanes=no) keeps traffic in its lane round the ring. Tag every ring segment."
+    turn: "The arrows painted on the lane (turn:lanes): left, through, right, slight and sharp turns, U-turn and merges, several per lane separated by semicolons."
+    variable_speed: "Signs can lower the speed limit (maxspeed:variable=*); the limit tagged is the highest it can be. The reasons, if known, are listed in the value."
+    width: "The lane's width in metres (width:lanes); drawn with the usual UK widths until tagged."

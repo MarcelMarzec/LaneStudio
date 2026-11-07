@@ -95,6 +95,39 @@ export function overtakingBanned(tags: Tags, direction: LaneDirection): boolean 
     return tags.overtaking === 'no' || tags.overtaking === (direction === 'forward' ? 'backward' : 'forward');
 }
 
+/**
+ * The centre line between the two directions, from who may overtake across it: dashed, a double white line solid on
+ * the side of forward or backward traffic (which may not cross it), or double solid lines (neither may)
+ */
+export type CentreLine = 'dashed' | 'no_forward' | 'no_backward' | 'no_both';
+export const centreLines: readonly CentreLine[] = ['dashed', 'no_forward', 'no_backward', 'no_both'];
+
+export function centreLine(tags: Tags): CentreLine {
+    const forward = overtakingBanned(tags, 'forward');
+    const backward = overtakingBanned(tags, 'backward');
+    return forward && backward ? 'no_both' : forward ? 'no_forward' : backward ? 'no_backward' : 'dashed';
+}
+
+/**
+ * Tags a centre line: `overtaking=yes` or `overtaking=no` when both directions are the same, else
+ * `overtaking:forward=no` or `overtaking:backward=no` for the one that may not overtake (wiki: Key:overtaking)
+ */
+export function withCentreLine(tags: Tags, line: CentreLine): Tags {
+    const next = { ...tags };
+    for (const key of ['overtaking', 'overtaking:forward', 'overtaking:backward', 'overtaking:both_ways']) delete next[key];
+    if (line === 'dashed') next.overtaking = 'yes';
+    else if (line === 'no_both') next.overtaking = 'no';
+    else next[`overtaking:${line === 'no_forward' ? 'forward' : 'backward'}`] = 'no';
+    return next;
+}
+
+/** Lets traffic in one direction overtake across the centre line, or not, keeping the other direction as it is */
+export function withOvertaking(tags: Tags, direction: 'forward' | 'backward', banned: boolean): Tags {
+    const forward = direction === 'forward' ? banned : overtakingBanned(tags, 'forward');
+    const backward = direction === 'backward' ? banned : overtakingBanned(tags, 'backward');
+    return withCentreLine(tags, forward && backward ? 'no_both' : forward ? 'no_forward' : backward ? 'no_backward' : 'dashed');
+}
+
 
 /** How a road marking is painted, from `road_marking`, `stroke`, `stroke:left|right`, `colour`, `width`, `dasharray` and `pattern` */
 export function roadMarkingStyle(tags: Tags): RoadMarkingStyle {

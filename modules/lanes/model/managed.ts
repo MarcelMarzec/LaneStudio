@@ -16,8 +16,16 @@ export type ManagedScheme = typeof managedSchemes[number];
 /** Why a limit changes (wiki: Key:maxspeed:variable) */
 export const variableSpeedReasons = ['peak_traffic', 'weather', 'environment', 'obstruction', 'school_zone', 'border_control'] as const;
 
-/** The roads active traffic management is tagged on */
-export const canBeManaged = (tags: Tags) => ['motorway', 'trunk'].includes(builtHighway(tags) ?? '');
+/** The roads active traffic management can be tagged on: motorways and trunk roads, and their slip roads */
+export const canBeManaged = (tags: Tags) => ['motorway', 'motorway_link', 'trunk', 'trunk_link'].includes(builtHighway(tags) ?? '');
+
+/**
+ * Whether the sidebar shows active traffic management without being asked: on motorways (every smart and controlled
+ * motorway in the UK is one, A-road motorways such as the A1(M) included), and on any road already tagged with a scheme
+ * or a variable limit. Other trunk roads and slip roads can have it added.
+ */
+export const showsManaged = (tags: Tags) => builtHighway(tags) === 'motorway' ||
+    (!!tags.active_traffic_management && tags.active_traffic_management !== 'no') || isVariableSpeed(tags);
 
 export function managedScheme(tags: Tags, runningShoulder: boolean): ManagedScheme {
     const value = tags.active_traffic_management;

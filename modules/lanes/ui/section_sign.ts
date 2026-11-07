@@ -7,11 +7,13 @@ import { laneTools } from '../core/lane_tools';
 import { speedNumber } from '../geometry/signs';
 import { signCode, signNameKey, signsWithValue, turnedRound, ukSignCodes, withSignCode } from '../model/signs';
 import { drawFace } from '../svg/signs';
+import type { InfoTopic } from './field_info';
+import { fieldNote, fieldShell, laneField, tagChrome } from './lane_fields';
 
 type Div = d3.Selection<HTMLDivElement>;
 
 /** Whether a node is a traffic sign, message sign or enforcement camera */
-function signKind(node: osmNode, graph: iD.Graph): 'sign' | 'message' | 'camera' | null {
+export function signKind(node: osmNode, graph: iD.Graph): 'sign' | 'message' | 'camera' | null {
     const tags = node.tags;
     if (tags.highway === 'speed_camera') return 'camera';
     const device = graph.parentRelations(node).some(r =>
@@ -61,17 +63,22 @@ export function uiSectionSign(context: iD.Context) {
         const kind = signKind(n, context.graph());
         const wrap = selection.append('div').attr('class', 'lanes-editor sign-editor');
 
+        const annotation = t('_lanes.annotation.sign');
         if (kind === 'sign' || kind === 'message') {
             const { code, value } = signCode(tags);
             const current = kind === 'message' ? 'message' : code;
-            const row = wrap.append('div').attr('class', 'lane-row');
-            row.append('label').text(t('_lanes.signs.type'));
-            const grid = row.append('div').attr('class', 'lane-buttons sign-grid');
+            const { wrap: body } = fieldShell(wrap, {
+                ...tagChrome(context, n.id, ['traffic_sign'], annotation, 'sign'),
+                id: 'sign-type', label: t('_lanes.signs.type'), wrapClass: 'lane-field-body'
+            });
+            const grid = body.append('div').attr('class', 'lane-buttons sign-grid');
             for (const choice of [...ukSignCodes, 'message'] as string[]) {
                 const name = t(`_lanes.signs.names.${signNameKey(choice)}`);
                 const button = grid.append('button')
+                    .attr('type', 'button')
                     .attr('class', choice === current ? 'active' : null)
                     .attr('aria-pressed', choice === current)
+                    .attr('aria-label', name)
                     .attr('title', choice === 'message' ? name : `${name} (${choice})`)
                     .on('click', () => {
                         if (choice === current) return;
@@ -90,24 +97,32 @@ export function uiSectionSign(context: iD.Context) {
                 }
             }
             if (kind === 'sign' && !(ukSignCodes as readonly string[]).includes(code)) {
-                wrap.append('p').attr('class', 'lanes-note').text(t('_lanes.signs.other', { code: tags.traffic_sign }));
+                fieldNote(body, t('_lanes.signs.other', { code: tags.traffic_sign }));
             }
+
+            // any sign code, as it is tagged (the pictures are UK signs)
+            laneField(context, wrap, {
+                ...tagChrome(context, n.id, ['traffic_sign'], annotation, 'sign'),
+                id: 'sign-code', label: t('_lanes.signs.code'), value: tags.traffic_sign ?? '',
+                suggestions: [...ukSignCodes, 'variable_message'].map(v => ({ value: v })),
+                onChange: v => change(n, { ...tags, traffic_sign: v || undefined } as Tags)
+            });
 
             // the number on the sign: a speed limit is the node's maxspeed, others go in brackets
             if (code === 'GB:670') {
-                valueField(wrap, t('_lanes.signs.limit'), speedNumber(tags.maxspeed) ?? value, v => {
+                valueField(wrap, 'sign-limit', t('_lanes.signs.limit'), speedNumber(tags.maxspeed) ?? value, 'sign_value', v => {
                     const next = withSignCode(tags, code);
                     if (v) next.maxspeed = `${v} mph`;
                     else delete next.maxspeed;
                     change(n, next);
                 });
             } else if (signsWithValue.has(code)) {
-                valueField(wrap, t('_lanes.signs.value'), value, v => change(n, withSignCode(tags, code, v)));
+                valueField(wrap, 'sign-value', t('_lanes.signs.value'), value, 'sign_value', v => change(n, withSignCode(tags, code, v)));
             }
         }
 
         if (kind === 'camera') {
-            valueField(wrap, t('_lanes.signs.camera_limit'), speedNumber(tags.maxspeed) ?? '', v => {
+            valueField(wrap, 'camera-limit', t('_lanes.signs.camera_limit'), speedNumber(tags.maxspeed) ?? '', 'camera', v => {
                 const next = { ...tags };
                 if (v) next.maxspeed = `${v} mph`;
                 else delete next.maxspeed;
@@ -115,25 +130,38 @@ export function uiSectionSign(context: iD.Context) {
             });
         }
 
-        const facing = tags.direction ?? tags['traffic_sign:direction'] ?? tags['camera:direction'];
-        const row = wrap.append('div').attr('class', 'lane-row');
-        row.append('label').text(t('_lanes.signs.facing', { direction: facing ?? t('_lanes.signs.unknown') }));
-        row.append('button').attr('class', 'sign-turn')
-            .attr('disabled', facing ? null : true)
-            .text(t('_lanes.signs.turn'))
-            .on('click', () => change(n, turnedRound(tags)));
-        wrap.append('p').attr('class', 'lanes-note').text(t('_lanes.signs.facing_hint'));
-    }
-
-    function valueField(wrap: Div, label: string, value: string, set: (v: string) => void) {
-        const row = wrap.append('div').attr('class', 'lane-field');
-        row.append('label').text(label);
-        row.append('input').attr('type', 'text').attr('class', 'sign-value')
-            .property('value', value)
+        // the way it faces: a compass bearing, or turned round
+        const facingKey = tags['traffic_sign:direction'] !== undefined && tags.direction === undefined ? 'traffic_sign:direction'
+            : tags['camera:direction'] !== undefined && tags.direction === undefined ? 'camera:direction' : 'direction';
+        const facing = tags[facingKey];
+        const { wrap: facingWrap } = fieldShell(wrap, {
+            ...tagChrome(context, n.id, [facingKey], annotation, 'sign_direction'),
+            id: 'sign-facing', label: t('_lanes.signs.facing_label'), labelFor: 'lane-field-sign-facing', wrapClass: 'form-field-input-text lane-sign-facing'
+        });
+        facingWrap.append('input').attr('type', 'text').attr('id', 'lane-field-sign-facing').attr('class', 'sign-value')
+            .attr('placeholder', t('_lanes.signs.facing_placeholder'))
+            .property('value', facing ?? '')
             .on('change', function(this: HTMLInputElement) {
                 const v = context.cleanTagValue(this.value.trim());
-                if (v !== value) set(v);
+                if (v === (facing ?? '')) return;
+                const next = { ...tags };
+                if (v) next[facingKey] = v;
+                else delete next[facingKey];
+                change(n, next);
             });
+        facingWrap.append('button').attr('type', 'button').attr('class', 'form-field-button sign-turn')
+            .attr('disabled', facing ? null : true)
+            .attr('title', t('_lanes.signs.turn'))
+            .text(t('_lanes.signs.turn'))
+            .on('click', () => change(n, turnedRound(tags)));
+        fieldNote(wrap, t('_lanes.signs.facing_hint'));
+    }
+
+    function valueField(wrap: Div, id: string, label: string, value: string, info: InfoTopic, set: (v: string) => void) {
+        laneField(context, wrap, {
+            info, id, label, value, suggestions: [], present: !!value, onRemove: () => set(''),
+            onChange: v => set(v)
+        });
     }
 
     section.entityIDs = function(val?: string[]) {

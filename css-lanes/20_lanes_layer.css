@@ -465,3 +465,47 @@
     stroke-dasharray: 6, 4;
     stroke-opacity: 1;
 }
+
+
+/* no-waiting lines along the kerb, as painted in the UK: yellow for no waiting, red for no stopping (a red route);
+   a double line is a wide stroke with a dark gap down its middle, so its two lines stay apart at every zoom */
+.ideditor.lane-studio .lanes-layer .kerb-marking { fill: none; stroke-linecap: butt; }
+.ideditor.lane-studio .lanes-layer .kerb-marking.yellow { stroke: #f4c400; }
+.ideditor.lane-studio .lanes-layer .kerb-marking.red { stroke: #d6342c; }
+.ideditor.lane-studio .lanes-layer .kerb-marking.single { stroke-width: 1.8px; }
+.ideditor.lane-studio .lanes-layer .kerb-marking.double { stroke-width: 4.6px; }
+.ideditor.lane-studio .lanes-layer .kerb-marking-gap { fill: none; stroke: rgb(62, 66, 74); stroke-width: 1.4px; }
+
+/* parking kept for some, by colour as parking spaces are: loading yellow, charging green, disabled blue, permits purple */
+.ideditor.lane-studio .lanes-layer .roadside-parking.parking-use-loading  { fill: rgb(150, 125, 30); }
+.ideditor.lane-studio .lanes-layer .roadside-parking.parking-use-charging { fill: rgb(30, 150, 80); }
+.ideditor.lane-studio .lanes-layer .roadside-parking.parking-use-disabled { fill: rgb(40, 90, 190); }
+.ideditor.lane-studio .lanes-layer .roadside-parking.parking-use-permit   { fill: rgb(120, 80, 160); }
+.ideditor.lane-studio .lanes-layer .roadside-parking.parking-shoulder     { fill: rgb(130, 125, 110); }
+
+/* street parking's badge: P, then what it costs, how long you may stay and its zone */
+.ideditor.lane-studio .lanes-layer .parking-badge rect { fill: #1d5bbf; stroke: #fff; stroke-width: 1; }
+.ideditor.lane-studio .lanes-layer .parking-badge text { fill: #fff; font-size: 11px; font-weight: 700; text-anchor: middle; }
+.ideditor.lane-studio .lanes-layer .parking-badge { pointer-events: none; }
+
+/* a road's rounded end hovers and selects the road, as its lanes do */
+.ideditor.lane-studio .lanes-layer .cap-target {
+    fill: transparent;
+    stroke: none;
+    pointer-events: fill;
+    cursor: pointer;
+}
+.ideditor.lane-studio .lanes-layer .cap-target:hover { fill: rgba(255, 255, 255, 0.12); }
+
+/* the centre line of the selected road: click a side to let its traffic overtake, or not */
+.ideditor.lane-studio .lanes-layer .divider-target.centre-line-target:hover { stroke: rgba(255, 255, 255, 0.4); }
+
+/* the + at each kerb of the selected road, opening the roadside menu */
+.ideditor.lane-studio .lanes-roadside-add-layer .roadside-add-button { cursor: pointer; pointer-events: all; }
+.ideditor.lane-studio .lanes-roadside-add-layer .roadside-add-button circle { fill: #fff; stroke: #1d5bbf; stroke-width: 2; }
+.ideditor.lane-studio .lanes-roadside-add-layer .roadside-add-button path { stroke: #1d5bbf; stroke-width: 2.4; stroke-linecap: round; }
+.ideditor.lane-studio .lanes-roadside-add-layer .roadside-add-button:hover circle,
+.ideditor.lane-studio .lanes-roadside-add-layer .roadside-add-button:focus circle { fill: #1d5bbf; }
+.ideditor.lane-studio .lanes-roadside-add-layer .roadside-add-button:hover path,
+.ideditor.lane-studio .lanes-roadside-add-layer .roadside-add-button:focus path { stroke: #fff; }
+.ideditor.lane-studio .lanes-roadside-add-layer .roadside-add-button:focus { outline: none; }

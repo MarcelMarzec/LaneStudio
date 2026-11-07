@@ -26,10 +26,13 @@ import { svgLaneDefs, turnArrowSymbol } from './defs';
 import { drawStreet, drawParking, drawRoadMarkings, joinPaths, pathFor, classChanged, withIdState, attrChanged } from './street';
 import { actionConnectLanes, connectionNode, findConnectivity } from '../actions/connect_lanes';
 import { streetGeometry, carriagewayAreaEdges, isCarriagewayArea, type StreetGeometry } from '../geometry/street';
-import { parkingGeometry } from '../geometry/parking';
+import { parkingGeometry, type ParkingShape } from '../geometry/parking';
 import { roadMarkingGeometry } from '../geometry/road_marking';
-import { isStreetParking, isTrafficIsland, overtakingBanned, surfaceGroup } from '../model/street_features';
-import { metricFrame, pointAlong, pointInPolygon, polylineLength } from '../geometry/frame';
+import { isStreetParking, isTrafficIsland, overtakingBanned, surfaceGroup, withOvertaking } from '../model/street_features';
+import { metricFrame, offsetPolyline, pointAlong, pointInPolygon, polylineLength } from '../geometry/frame';
+import { parkingBadgeParts, parkingUse, parkingValue } from '../model/parking';
+import { openRoadsideMenu } from '../ui/roadside_menu';
+import { actionChangeTags } from '../../actions/change_tags';
 import { edgeStructures, isCovered, ringEdges, type StructureShape } from '../geometry/structures';
 import { managedBadge } from '../model/managed';
 import { signGeometry } from '../geometry/signs';
@@ -40,7 +43,7 @@ import { railFeatures } from '../geometry/rail_features';
 import { parkingSpaceGeometry } from '../geometry/parking_spaces';
 import { drawParkingSpaces } from './parking_spaces';
 import { junctionLabels, placeShields, shieldRefs } from '../geometry/route_labels';
-import { drawJunctionLabels, drawManagedBadges, drawShields } from './route_labels';
+import { drawBadges, drawJunctionLabels, drawManagedBadges, drawShields } from './route_labels';
 import type { AreaShape } from '../geometry/street';
 import type { osmNode } from '../../osm/node';
 import type { NodeId, OsmEntity } from '../../osm';
@@ -72,27 +75,144 @@ function byWay(pieces: RoadPiece[], shapes: (piece: RoadPiece) => Vec2[][]): { k
 const bayLength = { parallel: 6, diagonal: 3, perpendicular: 2.5 };
 
 /**
- * The markings of a parking strip: the edge of the bays next to the traffic and a line between
- * each pair of bays, slanted for diagonal parking
+ * The markings of a parking strip: the edge of the bays next to the traffic and a line between each pair of bays,
+ * slanted for diagonal parking (the other way for back-in parking), as many bays as `capacity` says when it is tagged;
+ * none where the bays are not marked (`markings=no`)
  */
 export function parkingBays(key: string, polygon: Vec2[], parking: ParkingLayout): { key: string; edge: Vec2[]; dividers: Vec2[][] } {
     const [inner, outer] = ringEdges(polygon);
+    if (parking.markings === false) return { key, edge: [], dividers: [] };
     const frame = metricFrame(inner[0]);
     const a = inner.map(frame.toMetres);
     const b = outer.map(frame.toMetres);
     const lengthA = polylineLength(a);
     const lengthB = polylineLength(b);
     const dividers: Vec2[][] = [];
-    const step = bayLength[parking.orientation];
-    // diagonal bays lean back against the traffic beside them, at about 60°
+    const step = parking.capacity ? Math.max(2, lengthA / parking.capacity) : bayLength[parking.orientation];
+    // diagonal bays lean back against the traffic beside them, at about 60° (forwards for back-in parking)
     const width = a.length && b.length ? Math.hypot(a[0][0] - b[0][0], a[0][1] - b[0][1]) : 0;
-    const lean = parking.orientation === 'diagonal' ? width * 0.58 : 0;
+    const lean = parking.orientation === 'diagonal' ? width * 0.58 * (parking.direction === 'back_in' ? -1 : 1) : 0;
     for (let s = step; s < lengthA - step / 2; s += step) {
         const t = lengthA ? (s + lean) / lengthA : 0;
         if (t > 1) break;
+        if (t < 0) continue;
         dividers.push([pointAlong(a, s).point, pointAlong(b, t * lengthB).point].map(frame.toLoc));
     }
     return { key, edge: inner, dividers };
+}
+
+/** A line moved sideways by `metres` (right of its direction positive), in map coordinates */
+function insetLine(line: Vec2[], metres: number): Vec2[] {
+    if (line.length < 2) return [];
+    const frame = metricFrame(line[0]);
+    return offsetPolyline(line.map(frame.toMetres), line.map(() => metres)).map(frame.toLoc);
+}
+
+/** A parking strip's badge on the map: what it costs, how long you may stay, its zone and what it is kept for */
+function parkingBadgeText(get: (key: string) => string | undefined, use: string | undefined): string {
+    const parts = parkingBadgeParts(get);
+    const words = [
+        use ? t(`_lanes.parking.badge.${use}`) : '',
+        parts.fee === 'yes' ? t('_lanes.parking.badge.pay') : parts.fee === 'no' ? t('_lanes.parking.badge.free') : '',
+        parts.maxstay ?? '',
+        parts.zone ? t('_lanes.parking.badge.zone', { zone: parts.zone }) : '',
+        parts.disc ? t('_lanes.parking.badge.disc') : ''
+    ].filter(Boolean);
+    return words.length ? ['P', ...words].join(' · ') : '';
+}
+
+
+/** The edge line round the rounded end of a road that stops with nothing joining it */
+function capEdges(pieces: RoadPiece[], building: (piece: RoadPiece) => boolean) {
+    return pieces.flatMap(piece => (piece.caps ?? []).map((cap, i) => ({
+        key: `${piece.wayID}-${piece.index}-cap-${i}`, line: cap, assumed: piece.layout.assumed, construction: building(piece), shoulder: false
+    })));
+}
+
+
+/** A parking strip's classes: where it is, what it is kept for and its own surface */
+function parkingClass(parking: ParkingLayout | undefined): string {
+    if (!parking) return '';
+    const surface = surfaceGroup(parking.surface);
+    return ` parking-${parking.position}` + (parking.use ? ` parking-use-${parking.use}` : '') + (surface ? ` surface-${surface}` : '');
+}
+
+
+/**
+ * A side's kerb, as drawn: a hard shoulder and parking on the road are inside it, so it runs beyond the last of them
+ * (with a cycle lane in between); `edge` is the lanes' own edge, where a hard shoulder's white line goes
+ */
+function kerbLine(piece: RoadPiece, side: 'left' | 'right') {
+    const edge = piece.lines[side === 'left' ? 0 : piece.lines.length - 1];
+    const strips = piece.roadside.filter(strip => strip.side === side);
+    const onRoad = (strip: typeof strips[number]) => strip.kind === 'shoulder' || strip.kind === 'cycle_lane' ||
+        (strip.kind === 'parking' && strip.parking?.position !== 'on_kerb');
+    let inside = 0;
+    while (inside < strips.length && onRoad(strips[inside])) inside++;
+    const moved = strips.slice(0, inside).some(strip => strip.kind !== 'cycle_lane');
+    return { edge, kerb: moved ? ringEdges(strips[inside - 1].polygon)[1] : edge, shoulder: strips[0]?.kind === 'shoulder' };
+}
+
+/**
+ * No-waiting lines just inside the kerb, as painted in the UK: double or single yellow, red for no stopping. A single
+ * line is one stroke; a double one a wide stroke with a dark gap down its middle, so its lines stay apart at every zoom.
+ */
+function kerbMarkingData(show: boolean, pieces: RoadPiece[], path: (locs: Vec2[], closed: boolean) => string) {
+    return !show ? [] : pieces.flatMap(piece => (['left', 'right'] as const).flatMap(side => {
+        const marking = piece.layout.kerbMarkings[side];
+        if (!marking) return [];
+        const line = insetLine(kerbLine(piece, side).kerb, side === 'left' ? 0.4 : -0.4);
+        const [count, colour] = marking.split('_');
+        const key = `${piece.wayID}-${piece.index}-${side}-${marking}`;
+        return [
+            { key, cls: `kerb-marking ${count} ${colour}`, d: path(line, false) },
+            ...(count === 'double' ? [{ key: `${key}-gap`, cls: 'kerb-marking-gap', d: path(line, false) }] : [])
+        ];
+    }));
+}
+
+
+/** Where a parking strip's badge goes on the screen: the middle of the strip */
+function stripMiddle(polygon: Vec2[], projection: Projection): [number, number] {
+    const [inner, outer] = ringEdges(polygon);
+    const frame = metricFrame(inner[0]);
+    const middle = (line: Vec2[]) => {
+        const metres = line.map(frame.toMetres);
+        return pointAlong(metres, polylineLength(metres) / 2).point;
+    };
+    const a = middle(inner);
+    const b = middle(outer);
+    return projection(frame.toLoc([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2])) as [number, number];
+}
+
+/**
+ * Street parking's badges: one per side of each road (on its longest stretch in view), and one per parking area mapped
+ * on its own, saying what it costs, how long you may stay, its zone and what it is kept for (none when nothing is said)
+ */
+function parkingBadgeData(show: boolean, shown: RoadPiece[], areas: ParkingShape[], tagsOf: (id: string) => Tags, projection: Projection) {
+    if (!show) return [];
+    const longest = new Map<string, { polygon: Vec2[]; wayID: string; side: 'left' | 'right'; use?: string; length: number }>();
+    for (const piece of shown) {
+        for (const strip of piece.roadside) {
+            if (strip.kind !== 'parking' || !strip.parking) continue;
+            const key = `${piece.wayID}-${strip.side}`;
+            if (piece.length > (longest.get(key)?.length ?? 0)) {
+                longest.set(key, { polygon: strip.polygon, wayID: piece.wayID, side: strip.side, use: strip.parking.use, length: piece.length });
+            }
+        }
+    }
+    return [
+        ...[...longest].map(([key, strip]) => ({
+            key, point: stripMiddle(strip.polygon, projection),
+            text: parkingBadgeText(k => parkingValue(tagsOf(strip.wayID), strip.side, k), strip.use)
+        })),
+        ...areas.map(area => {
+            const tags = tagsOf(area.id);
+            const n = area.polygon.length || 1;
+            const centre = area.polygon.reduce((sum, p) => [sum[0] + p[0] / n, sum[1] + p[1] / n] as Vec2, [0, 0] as Vec2);
+            return { key: area.id, point: projection(centre) as [number, number], text: parkingBadgeText(k => tags[k], parkingUse(tags)) };
+        })
+    ].filter(badge => badge.text);
 }
 
 
@@ -242,6 +362,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         _marked = null;
         _layer.selectAll('g.lanes-group > *').remove();
         context.surface().selectAll('g.lanes-brand-logos > *').remove();
+        context.surface().selectAll('g.lanes-roadside-add-layer > *').remove();
         hideIdLabels([]);
         markSurface(false);
     }
@@ -278,12 +399,23 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         return layer as unknown as Selection;
     }
 
+    /**
+     * Where the + buttons go: Lane Studio's own layer group, which iD keeps above its touch targets, so a click on a +
+     * is not taken by an area or line under it
+     */
+    function addLayer(): Selection {
+        const layer = context.surface().select<SVGGElement>('.data-layer.lanes');
+        let g = layer.select<SVGGElement>('g.lanes-roadside-add-layer');
+        if (g.empty()) g = layer.append('g').attr('class', 'lanes-roadside-add-layer');
+        return g as unknown as Selection;
+    }
+
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs', 'managed-edges',
+                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs', 'kerb-markings', 'managed-edges',
                 'paths-over', 'rail-over-road', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols',
-                'shields', 'managed-badges', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
+                'shields', 'managed-badges', 'parking-badges', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
                 'surface-targets', 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
             ])
             .enter()
@@ -424,14 +556,14 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         stripPaths.enter().append('path')
             .merge(stripPaths)
             .each(attrChanged('class', d => `roadside roadside-${d.kind}` + (d.assumed ? ' assumed' : '') + (d.wayID ? coveredTag(d.wayID) : '') +
-                (d.parking ? ` parking-${d.parking.position}` : '') +
+                parkingClass(d.parking) +
                 (d.kind === 'shoulder' && state.shoulder()?.wayID === d.wayID && state.shoulder()?.side === (d as { side?: string }).side ? ' selected' : '') +
                 (d.wayID && isUnderConstruction(tagsOf(d.wayID)) ? ' lanes-construction' : '')))
             .each(attrChanged('d', d => path(d.polygon, true)));
 
         // parking bays: a dashed line along the edge of the bays, and a line between each pair of bays
         const bayData = !markings ? [] : strips.flatMap(strip => {
-            if (!strip.parking) return [];
+            if (!strip.parking?.markings) return [];
             const bays = parkingBays(strip.key, strip.polygon, strip.parking);
             return [
                 { key: `${strip.key}-edge`, cls: 'parking-edge', d: path(bays.edge, false) },
@@ -646,24 +778,19 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* kerbs */
         // (the short roads inside a merged junction keep their kerbs where no side road joins)
+        const kerbPieces = pieces.filter(piece => !inArea.has(piece));
         const kerbData = [
-            ...pieces.filter(piece => !inArea.has(piece)).flatMap(piece => (['left', 'right'] as const).flatMap(side => {
+            ...kerbPieces.flatMap(piece => (['left', 'right'] as const).flatMap(side => {
                 const key = `${pieceKey(piece)}-${side === 'left' ? 'l' : 'r'}`;
-                const edge = piece.lines[side === 'left' ? 0 : piece.lines.length - 1];
-                const strips = piece.roadside.filter(strip => strip.side === side);
-                // a hard shoulder and parking on the road are inside the kerb: it runs beyond the last of them
-                // (with a cycle lane in between), and a hard shoulder gets a solid white line at the lanes' edge
-                const onRoad = (strip: typeof strips[number]) => strip.kind === 'shoulder' || strip.kind === 'cycle_lane' ||
-                    (strip.kind === 'parking' && strip.parking?.position !== 'on_kerb');
-                let inside = 0;
-                while (inside < strips.length && onRoad(strips[inside])) inside++;
-                const moved = strips.slice(0, inside).some(strip => strip.kind !== 'cycle_lane');
-                const kerb = moved ? ringEdges(strips[inside - 1].polygon)[1] : edge;
+                const { edge, kerb, shoulder } = kerbLine(piece, side);
+                // a hard shoulder gets a solid white line at the lanes' edge
                 return [
                     { key, line: kerb, assumed: piece.layout.assumed, construction: building(piece), shoulder: false },
-                    ...(strips[0]?.kind === 'shoulder' ? [{ key: `${key}-edge`, line: edge, assumed: false, construction: false, shoulder: true }] : [])
+                    ...(shoulder ? [{ key: `${key}-edge`, line: edge, assumed: false, construction: false, shoulder: true }] : [])
                 ];
             })),
+            // the rounded end of a road that stops with nothing joining it: the edge line carried round it
+            ...capEdges(shown.filter(piece => !inArea.has(piece)), building),
             // roads and junctions mapped as areas: their outlines, open where traffic drives across
             ...roadAreas.flatMap(area => carriagewayAreaEdges(area.polygon,
                 ways.map(way => way.nodes.map(id => (graph.entity(id) as osmNode).loc as Vec2)),
@@ -685,8 +812,17 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .each(attrChanged('d', d => path(d.line, false)));
 
 
+        /* no-waiting lines along the kerb, as painted in the UK: double or single yellow, red for no stopping */
+        // (a single line is one stroke; a double one is a wide stroke with a dark gap down its middle, so the two lines
+        // stay apart at every zoom)
+        joinPaths(group('kerb-markings'), kerbMarkingData(markings, kerbPieces.filter(piece => !building(piece)), path), d => d.key, d => d.cls, d => d.d);
+
+
         /* active traffic management */
         drawManaged(group, marked, tagsOf, path, projection, markings);
+
+        /* street parking's badges: what it costs, how long you may stay, its zone, what it is kept for */
+        drawBadges(group('parking-badges'), parkingBadgeData(labels, shown, parking, tagsOf, projection), 'parking-badge');
 
 
         /* structures: bridge parapets, tunnel walls, cutting and embankment slopes, fords */
@@ -858,6 +994,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* click targets: lanes and shoulders wherever lanes are drawn, dividers of the selected road from the editing zoom */
         drawTargets(group('targets'), group('divider-targets'), [...pieces.filter(piece => !replaced.has(piece)), ...channelled], markings, selected);
+        // the + at each kerb of the selected road, for the roadside menu
+        drawRoadsideAdd(addLayer(), shown, selected, markings);
         // mini-roundabouts and turning heads select their node
         drawEntityTargets(group('node-targets'), [
             ...street.surfaces.map(surface => ({ key: surface.key, entityID: surface.nodeID, d: path(surface.points, true) })),
@@ -974,8 +1112,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     interface DividerTarget extends Omit<LaneTarget, 'ref' | 'routeFrom' | 'routeTo'> {
         /** boundary index left to right along the way: 0 is the left kerb */
         k: number;
-        /** false for the kerbs and for lines between directions, which only the Width tool uses */
+        /** false for the kerbs, which only the Width tool uses */
         clickable: boolean;
+        /** the centre line between the two directions: a click lets the traffic on the side clicked overtake, or not */
+        centre: boolean;
         direction: LaneDirection;
         /** the lane on the divider's left, as seen by that direction's drivers */
         leftIndex: number;
@@ -1184,6 +1324,20 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .merge(shoulders)
             .each(attrChanged('d', d => d.d));
 
+        // the rounded end of a road: hovering and clicking it hover and select the road, as its lanes do
+        const capTargets = pieces.flatMap(piece => {
+            const entity = graph.hasEntity(piece.wayID) as osmWay | undefined;
+            if (!entity) return [];
+            return (piece.caps ?? []).map((cap, i) => ({ key: `${pieceKey(piece)}-cap-${i}`, properties: { entity }, d: path(cap, true) }));
+        });
+        const caps = target.selectAll<SVGPathElement, typeof capTargets[number]>('path.cap-target')
+            .data(capTargets, d => d.key);
+        caps.exit().remove();
+        caps.enter().append('path')
+            .each(attrChanged('class', 'cap-target'))
+            .merge(caps)
+            .each(attrChanged('d', d => d.d));
+
         const widthTool = tools.tool() === 'width';
         const dividerTargets: DividerTarget[] = !editable ? [] : pieces.filter(piece => selected.has(piece.wayID)).flatMap(piece => {
             const entity = graph.hasEntity(piece.wayID) as osmWay | undefined;
@@ -1194,14 +1348,17 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 const left = lanesHere[k - 1]?.ref;
                 const right = lanesHere[k]?.ref;
                 const clickable = !!left && !!right && left.direction === right.direction && piece.layout.markings;
-                if (!clickable && !widthTool) continue;
+                const centre = !!left && !!right && left.direction !== right.direction && left.direction !== 'both_ways' &&
+                    right.direction !== 'both_ways' && piece.layout.markings;
+                if (!clickable && !centre && !widthTool) continue;
                 const direction = (left ?? right)!.direction;
                 result.push({
                     key: `${pieceKey(piece)}-${k}`,
                     properties: { entity },
                     wayID: piece.wayID,
                     k,
-                    clickable,
+                    clickable: clickable || centre,
+                    centre,
                     direction,
                     // backward lanes run against the way, so their drivers' left is the way's right
                     leftIndex: left && right ? (direction === 'backward' ? right.index : left.index) : -1,
@@ -1217,9 +1374,13 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         dividers.exit().remove();
         dividers.enter().append('path')
             .on('pointerdown.lanes', dragWidth)
-            .on('click.lanes', (_event: MouseEvent, d: DividerTarget) => {
+            .on('click.lanes', (event: MouseEvent, d: DividerTarget) => {
                 if (tools.tool() !== 'select' || !d.clickable) return;
                 const way = context.entity(d.wayID) as osmWay;
+                if (d.centre) {
+                    toggleOvertaking(event, way, d.k);
+                    return;
+                }
                 if (parseLanes(way.tags).keys['change:lanes']?.readonly) return;
                 context.perform(
                     actionChangeLanes(d.wayID, m => setDivider(m, d.direction, d.leftIndex, nextDivider(dividerAt(m, d.direction, d.leftIndex)))),
@@ -1227,8 +1388,87 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 );
             })
             .merge(dividers)
-            .each(attrChanged('class', d => 'divider-target' + (d.clickable ? '' : ' width-only')))
-            .each(attrChanged('d', d => d.d));
+            .each(attrChanged('class', d => 'divider-target' + (d.clickable ? '' : ' width-only') + (d.centre ? ' centre-line-target' : '')))
+            .each(attrChanged('d', d => d.d))
+            .each(function(d) {
+                // the centre line says what a click does
+                const title = d3_select(this).selectAll('title').data(d.centre ? [t('_lanes.centre_line.click_tip')] : []);
+                title.exit().remove();
+                title.enter().append('title').merge(title as any).text(text => text);
+            });
+    }
+
+
+    /**
+     * A click on the centre line of the selected road: the traffic on the side clicked may overtake across it, or no
+     * longer may (`overtaking:forward` or `overtaking:backward`), as one undo step
+     */
+    function toggleOvertaking(event: MouseEvent, way: osmWay, k: number) {
+        const graph = context.graph();
+        const layout = laneLayout(way, graph);
+        const loc = context.projection.invert(context.map().mouse(event));
+        const at = offsetFromWay(way, graph, loc);
+        const shift = layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * (at.total ? at.along / at.total : 0);
+        const lane = at.offset - shift < layout.edges[k] ? layout.lanes[k - 1] : layout.lanes[k];
+        const direction = lane?.ref.direction;
+        if (direction !== 'forward' && direction !== 'backward') return;
+        context.perform(actionChangeTags(way.id, withOvertaking(way.tags, direction, !overtakingBanned(way.tags, direction))),
+            t('_lanes.annotation.overtaking'));
+    }
+
+
+    /**
+     * The + at each kerb of the selected road, just outside its outermost strip, halfway along its longest stretch in
+     * view: it opens the roadside menu for that side. Only with the Select tool, while the road is the one selected.
+     */
+    function drawRoadsideAdd(target: Selection, shownPieces: RoadPiece[], selected: Set<string>, show: boolean) {
+        const graph = context.graph();
+        const ids = [...selected];
+        const editing = show && ids.length === 1 && context.mode()?.id === 'select' && tools.tool() === 'select' && !routing.active() && !speed.active();
+        const longest = editing ? shownPieces.filter(piece => piece.wayID === ids[0]).sort((a, b) => b.length - a.length)[0] : undefined;
+        const way = longest ? graph.hasEntity(longest.wayID) as osmWay | undefined : undefined;
+        const data = !longest || !way ? [] : (['left', 'right'] as const).flatMap(side => {
+            const strips = longest.roadside.filter(strip => strip.side === side);
+            const outer = strips.length ? ringEdges(strips[strips.length - 1].polygon)[1] : longest.boundaries[side === 'left' ? 0 : longest.boundaries.length - 1];
+            if (outer.length < 2) return [];
+            const frame = metricFrame(outer[0]);
+            const metres = outer.map(frame.toMetres);
+            const middle = pointAlong(metres, polylineLength(metres) / 2);
+            const p = projection(frame.toLoc(middle.point));
+            const q = projection(frame.toLoc([middle.point[0] + middle.direction[0], middle.point[1] + middle.direction[1]]));
+            const dx = q[0] - p[0];
+            const dy = q[1] - p[1];
+            const length = Math.hypot(dx, dy) || 1;
+            // outwards on the screen: the left of the way's direction for its left side (the screen's y runs down)
+            const nx = (side === 'left' ? dy : -dy) / length;
+            const ny = (side === 'left' ? -dx : dx) / length;
+            return [{ key: `${way.id}-${side}`, wayID: way.id, side, x: p[0] + nx * 18, y: p[1] + ny * 18 }];
+        });
+        const open = (event: Event, d: typeof data[number]) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const rect = (event.currentTarget as Element).getBoundingClientRect();
+            openRoadsideMenu(context, { wayID: d.wayID, side: d.side, at: [rect.right, rect.top + rect.height / 2] });
+        };
+        const buttons = target.selectAll<SVGGElement, typeof data[number]>('g.roadside-add-button').data(data, d => d.key);
+        buttons.exit().remove();
+        const enter = buttons.enter().append('g')
+            .attr('class', 'roadside-add-button')
+            .attr('role', 'button')
+            .attr('tabindex', 0)
+            .attr('aria-label', t('_lanes.add_menu.plus_tip'))
+            // (iD's map would take the press as panning or as a click on empty map)
+            .on('pointerdown.lanes', (event: PointerEvent) => event.stopPropagation())
+            .on('mousedown.lanes', (event: MouseEvent) => event.stopPropagation())
+            .on('click.lanes', open)
+            .on('keydown.lanes', (event: KeyboardEvent, d) => {
+                if (event.key === 'Enter' || event.key === ' ') open(event, d);
+            });
+        enter.append('title').text(t('_lanes.add_menu.plus_tip'));
+        enter.append('circle').attr('r', 11);
+        enter.append('path').attr('d', 'M-5.5 0H5.5M0 -5.5V5.5');
+        enter.merge(buttons)
+            .each(attrChanged('transform', d => `translate(${d.x.toFixed(1)},${d.y.toFixed(1)})`));
     }
 
 
