@@ -65,7 +65,7 @@ The website is Lane Studio only; iD's own page is still in the repository for de
 * **Checks**: a lane tags rule in iD's Issues pane, with fixes where the answer is certain.
 * **What's new**: after an update, a menu lists what changed since the version you last used.
 
-The full guide (zoom levels, tools, what is drawn and how junctions work) is in [LANES.md](LANES.md).
+The full guide (zoom levels, tools, what is drawn and how junctions work) is in [LANES.md](docs/LANES.md).
 
 Lane Studio draws what the tags say. Tag what is on the ground, not what makes the drawing look right
 ([don't tag for the renderer](https://wiki.openstreetmap.org/wiki/Tagging_for_the_renderer)); if the tags
@@ -89,7 +89,7 @@ Before pushing: `npm run lint`, `npx tsc` and `npm run test:once`.
 `npm run all` packages the editor into `dist-lanes/`: upload its contents (including `.htaccess`) to
 the folder it is served from. The **Deploy LaneStudio to server** workflow in `.github/workflows/`
 builds `mm/lane-studio-main` and uploads the editor and the website over FTP (or either one alone). Logging in from your own domain needs your own
-OpenStreetMap OAuth 2 application. [RELEASING.md](RELEASING.md) has the steps.
+OpenStreetMap OAuth 2 application. [RELEASING.md](docs/RELEASING.md) has the steps.
 
 The pages about Lane Studio (overview, changelog and privacy policy) are a small PHP site in
 `LanesWebsite/`, served at the root of lanestudio.marcelmarzec.com with the editor in `/editor/`. To
@@ -98,13 +98,13 @@ try it locally, run
 
 ## More
 
-* [LANES.md](LANES.md): the user and developer guide
-* [CHANGELOG.md](CHANGELOG.md): what changed in each version
-* [CONTRIBUTING.md](CONTRIBUTING.md): reporting issues and contributing code
-* [ARCHITECTURE.md](ARCHITECTURE.md): how Lane Studio and iD fit together
-* [API.md](API.md): URL parameters, build settings and embedding
-* [FAQ.md](FAQ.md), [PRIVACY.md](PRIVACY.md), [ACCESSIBILITY.md](ACCESSIBILITY.md),
-  [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+* [LANES.md](docs/LANES.md): the user and developer guide
+* [CHANGELOG.md](docs/CHANGELOG.md): what changed in each version
+* [CONTRIBUTING.md](docs/CONTRIBUTING.md): reporting issues and contributing code
+* [ARCHITECTURE.md](docs/ARCHITECTURE.md): how Lane Studio and iD fit together
+* [API.md](docs/API.md): URL parameters, build settings and embedding
+* [FAQ.md](docs/FAQ.md), [PRIVACY.md](docs/PRIVACY.md), [ACCESSIBILITY.md](docs/ACCESSIBILITY.md),
+  [CODE_OF_CONDUCT.md](docs/CODE_OF_CONDUCT.md)
 
 ## Supporting Lane Studio
 

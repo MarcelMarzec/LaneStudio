@@ -13,7 +13,7 @@ export function writeLanesStrings() {
   fs.writeFileSync('dist/locales/lanes/en.min.json', JSON.stringify(strings));
   fs.writeFileSync('dist/locales/lanes/index.min.json', JSON.stringify({ en: { rtl: false, pct: 1 } }));
   // the changelog, for the what's new menu shown after an update
-  fs.copyFileSync('CHANGELOG.md', 'dist/lanes-changelog.md');
+  fs.copyFileSync('docs/CHANGELOG.md', 'dist/lanes-changelog.md');
 }
 
 /** Rewrites the strings whenever `data/lanes.yaml` (or the changelog) changes */
@@ -27,5 +27,5 @@ export function watchLanesStrings() {
     }
   };
   fs.watchFile('data/lanes.yaml', { interval: 500 }, rewrite);
-  fs.watchFile('CHANGELOG.md', { interval: 500 }, rewrite);
+  fs.watchFile('docs/CHANGELOG.md', { interval: 500 }, rewrite);
 }

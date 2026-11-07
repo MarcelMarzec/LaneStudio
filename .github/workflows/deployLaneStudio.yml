@@ -38,7 +38,7 @@ jobs:
       # the changelog page reads includes/changelog.md on the server
       - name: Copy the changelog into the website
         if: env.WEBSITE == 'true'
-        run: cp CHANGELOG.md LanesWebsite/includes/changelog.md
+        run: cp docs/CHANGELOG.md LanesWebsite/includes/changelog.md
 
       # the editor: dist-lanes/, in /editor/
       - name: Set up Node.js

@@ -555,10 +555,10 @@ lanestudio.marcelmarzec.com; the editor is in `/editor/` (register the OAuth red
   page icon and the mark beside the name in the header).
 
 The **Deploy LaneStudio to server** workflow deploys it (choose **website** to deploy it alone). It
-checks the PHP, copies `CHANGELOG.md` into `includes/changelog.md` for the changelog page and uploads
+checks the PHP, copies `docs/CHANGELOG.md` into `includes/changelog.md` for the changelog page and uploads
 the folder to the web root with the `FTP_ROOT_*` account. It keeps its own upload record (`.ftp-deploy-website-state.json`), so it
 never deletes the editor's files. Run locally with `php -S localhost:8000 router.php` in
-`LanesWebsite/`; the changelog page then reads `CHANGELOG.md` from the repository.
+`LanesWebsite/`; the changelog page then reads `docs/CHANGELOG.md` from the repository.
 
 The site's privacy note is [PRIVACY.md](PRIVACY.md). Still worth doing: a wiki page for Lane Studio
 that names its `created_by` value, listed on the wiki's Editors page.
@@ -585,7 +585,7 @@ that names its `created_by` value, listed on the wiki's Editors page.
 | Speed Limit tool | `modules/lanes/core/lane_speed.ts`, `modules/lanes/core/mode_speed.ts`, `modules/lanes/ui/speed_panel.ts`, `modules/lanes/ui/speed_roundels.ts`, `modules/lanes/model/speed_limits.ts` (the speed tags) |
 | Railways | `modules/lanes/geometry/railway.ts` (track), `modules/lanes/geometry/rail_features.ts` (platforms, crossings, signals, equipment), `modules/lanes/svg/railway.ts` |
 | Parking spaces and car parks | `modules/lanes/geometry/parking_spaces.ts`, `modules/lanes/svg/parking_spaces.ts` |
-| What's new menu | `modules/lanes/core/whats_new.ts`, `modules/lanes/ui/whats_new.ts`; the build copies `CHANGELOG.md` to `dist/lanes-changelog.md` |
+| What's new menu | `modules/lanes/core/whats_new.ts`, `modules/lanes/ui/whats_new.ts`; the build copies `docs/CHANGELOG.md` to `dist/lanes-changelog.md` |
 | Site packaging (`npm run site`, the last step of `npm run all`) | `scripts/build_lanes_site.js` |
 | Tests | `test/spec/lanes/` |
 

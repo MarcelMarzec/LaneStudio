@@ -81,7 +81,7 @@ describe('what\'s new', () => {
     });
 
     it('reads the real changelog: the current version first, every section with lines', () => {
-        const versions = parseChangelog(fs.readFileSync('CHANGELOG.md', 'utf8'));
+        const versions = parseChangelog(fs.readFileSync('docs/CHANGELOG.md', 'utf8'));
         expect(versions[0].version).toBe(laneStudioVersion);
         for (const version of versions) expect(version.groups.flatMap(g => g.lines).length, version.version).toBeGreaterThan(0);
     });

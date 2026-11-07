@@ -4,7 +4,7 @@ import { laneStudioRepository } from '../version';
 export const laneStudioLinks = {
     website: 'https://lanestudio.marcelmarzec.com/',
     github: laneStudioRepository,
-    privacy: `${laneStudioRepository}/blob/mm/lane-studio-main/PRIVACY.md`,
+    privacy: `${laneStudioRepository}/blob/mm/lane-studio-main/docs/PRIVACY.md`,
     contact: `${laneStudioRepository}/issues`,
-    changelog: `${laneStudioRepository}/blob/mm/lane-studio-main/CHANGELOG.md`
+    changelog: `${laneStudioRepository}/blob/mm/lane-studio-main/docs/CHANGELOG.md`
 };

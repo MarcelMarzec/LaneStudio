@@ -1,7 +1,7 @@
 # Lane Studio: rules for working in this repository
 
-Lane Studio is a fork of iD. Its code is in `modules/lanes/`; see [LANES.md](LANES.md) and
-[ARCHITECTURE.md](ARCHITECTURE.md). Work on the `mm/lane-studio-main` branch.
+Lane Studio is a fork of iD. Its code is in `modules/lanes/`; see [LANES.md](docs/LANES.md) and
+[ARCHITECTURE.md](docs/ARCHITECTURE.md). Work on the `mm/lane-studio-main` branch.
 
 ## Versions
 
@@ -34,10 +34,10 @@ Do all of this in the commit itself, every time, however small the change (code,
 website, its build or its deploy alike):
 
 1. **Work out the version:** today's date as `YY.MM.DD` (check the date; don't guess it). If
-   `CHANGELOG.md` already has a version with that date, it is `YY.MM.DDr#`: `r2`, or one more than the
+   `docs/CHANGELOG.md` already has a version with that date, it is `YY.MM.DDr#`: `r2`, or one more than the
    highest `r#` that day (`26.10.21r3` after `26.10.21r2`).
 2. **Set it** in `modules/lanes/version.ts`.
-3. **Add its section at the top of [CHANGELOG.md](CHANGELOG.md)**, above the previous version:
+3. **Add its section at the top of [CHANGELOG.md](docs/CHANGELOG.md)**, above the previous version:
 
    ```
    # 26.10.21r2
@@ -70,18 +70,22 @@ the user to run it when they want the site updated.
 accurate, in the same commit.** A feature isn't finished while a document still describes the old
 behaviour, leaves the new one out, or names files, settings or steps that no longer exist.
 
+The documents are in `docs/`. Only [README.md](README.md), this file and [LICENSE.md](LICENSE.md) stay at the
+root, where GitHub and Claude Code look for them; a new document goes in `docs/`, and links between documents are
+relative to where each one is.
+
 Before committing, look at what the change touches and check the documents that cover it:
 
 | Document | Covers | Update it when |
 | --- | --- | --- |
 | [README.md](README.md) | What Lane Studio is and does, getting started, putting it online | A feature users would notice is added or removed, or setup changes |
-| [LANES.md](LANES.md) | The user and developer guide: tools, settings, what is drawn and how, where each part lives, iD's hooks | Anything users see or do changes; a file, folder or iD hook is added, moved or removed |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | How the code fits together: modules, how a frame is drawn, editing, tools, caching | The structure, the drawing steps or a module's job changes |
-| [API.md](API.md) | Starting Lane Studio on a page, files it serves, URL parameters, build settings | `LaneStudio.init`, served files, URL parameters or environment variables change |
-| [FAQ.md](FAQ.md) | Common questions | A change answers, changes or raises a common question |
-| [PRIVACY.md](PRIVACY.md) | What is stored, sent and to whom | Anything new is stored in the browser or sent anywhere (add a line to its changelog) |
-| [ACCESSIBILITY.md](ACCESSIBILITY.md) | Keyboard, colour, touch and translation support of Lane Studio's features | A feature is added or changes how it is used |
-| [CONTRIBUTING.md](CONTRIBUTING.md), [RELEASING.md](RELEASING.md) | How to contribute, commit, version and deploy | The workflow, checks, versioning or deploy changes |
+| [LANES.md](docs/LANES.md) | The user and developer guide: tools, settings, what is drawn and how, where each part lives, iD's hooks | Anything users see or do changes; a file, folder or iD hook is added, moved or removed |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the code fits together: modules, how a frame is drawn, editing, tools, caching | The structure, the drawing steps or a module's job changes |
+| [API.md](docs/API.md) | Starting Lane Studio on a page, files it serves, URL parameters, build settings | `LaneStudio.init`, served files, URL parameters or environment variables change |
+| [FAQ.md](docs/FAQ.md) | Common questions | A change answers, changes or raises a common question |
+| [PRIVACY.md](docs/PRIVACY.md) | What is stored, sent and to whom | Anything new is stored in the browser or sent anywhere (add a line to its changelog) |
+| [ACCESSIBILITY.md](docs/ACCESSIBILITY.md) | Keyboard, colour, touch and translation support of Lane Studio's features | A feature is added or changes how it is used |
+| [CONTRIBUTING.md](docs/CONTRIBUTING.md), [RELEASING.md](docs/RELEASING.md) | How to contribute, commit, version and deploy | The workflow, checks, versioning or deploy changes |
 | This file | The rules for working here | A rule changes |
 | `.github/` (issue templates, `FUNDING.yml`, workflows) | Reporting, sponsoring, building and deploying | What they ask for or do goes out of date |
 | `LanesWebsite/` (`index.php` and the other pages) | The website: what Lane Studio does, how it works | A feature users would notice is added, changed or removed (see Keep the website up to date) |
@@ -123,7 +127,7 @@ The website in `LanesWebsite/` tells people what Lane Studio is and does before 
 adds, changes or removes something users see updates the website in the same commit** where the website no longer
 describes it accurately or leaves out a feature people would look for: the features and How it works on
 `index.php`, the pictures' captions, and any other page describing the editor. Nothing it says may be untrue of the
-editor as it is. (The changelog page reads [CHANGELOG.md](CHANGELOG.md) itself.)
+editor as it is. (The changelog page reads [CHANGELOG.md](docs/CHANGELOG.md) itself.)
 
 ## Checks before pushing
 

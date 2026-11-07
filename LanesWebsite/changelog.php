@@ -16,10 +16,10 @@ $navLinks = [
 ];
 $navCta = ['label' => 'Open editor', 'href' => $site['editor'], 'icon' => 'external'];
 
-// The deploy workflow copies the repository's CHANGELOG.md into includes/;
+// The deploy workflow copies the repository's docs/CHANGELOG.md into includes/;
 // run from a checkout, the page reads it from the repository root instead.
 $markdown = '';
-foreach ([__DIR__ . '/includes/changelog.md', __DIR__ . '/../CHANGELOG.md'] as $source) {
+foreach ([__DIR__ . '/includes/changelog.md', __DIR__ . '/../docs/CHANGELOG.md'] as $source) {
     if (is_readable($source)) {
         $markdown = file_get_contents($source);
         break;

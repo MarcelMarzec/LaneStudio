@@ -43,14 +43,14 @@ section, so a deploy simply ships the version the branch is at.
    git push origin mm/lane-studio-main
    ```
 
-The full rules are in [CLAUDE.md](CLAUDE.md), and `test/spec/lanes/version.ts` checks them.
+The full rules are in [CLAUDE.md](../CLAUDE.md), and `test/spec/lanes/version.ts` checks them.
 
 ### Deploying
 
 1. Actions → **Deploy LaneStudio to server** → Run workflow, choosing what to deploy: **editor and
    website** (the default), **editor** or **website**. The editor is built with `npm run all` (which
    ends by packaging `dist-lanes/`) and uploaded to `/editor/`; the website (`LanesWebsite/`: the
-   overview, changelog and privacy pages) is uploaded to the web root with the current `CHANGELOG.md`.
+   overview, changelog and privacy pages) is uploaded to the web root with the current `docs/CHANGELOG.md`.
    The editor loads its code and styles with a stamp of their contents, so visitors get the new
    version straight away.
 2. Check the live site: the editor's footer shows the version, you can log in, and a small test

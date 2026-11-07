@@ -26,5 +26,5 @@ transifex.auth
 /img
 /dist/lanes-changelog.md
 
-# copied from CHANGELOG.md by the website's deploy workflow
+# copied from docs/CHANGELOG.md by the website's deploy workflow
 /LanesWebsite/includes/changelog.md

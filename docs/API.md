@@ -27,7 +27,7 @@ Lane Studio runs on). `lanes.html` is the reference page; the site build copies 
     `options.locatorOverlayCredit` is the credit to show for it.
   * `options.assetPath`: where the `dist/` folder (icons, data, translations) is served from,
     relative to the page. Default `'dist/'`. The what's new menu reads `lanes-changelog.md` from this
-    folder (a copy of `CHANGELOG.md` made by the build); without it, the menu is not shown.
+    folder (a copy of `docs/CHANGELOG.md` made by the build); without it, the menu is not shown.
 * __`LaneStudio.version`__: Lane Studio's version, as shown in the footer and written to changesets
   (`created_by=LaneStudio <version>`).
 

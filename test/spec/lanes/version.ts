@@ -18,7 +18,7 @@ function parseVersion(version: string) {
 }
 
 describe('Lane Studio version', () => {
-    const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+    const changelog = fs.readFileSync('docs/CHANGELOG.md', 'utf8');
     const headings = [...changelog.matchAll(/^# (.+)$/gm)].map(match => match[1].trim()).slice(1);
     const versions = headings;
 

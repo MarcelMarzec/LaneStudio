@@ -42,7 +42,7 @@ the information recorded for every OpenStreetMap edit, each changeset carries ta
 editor and help quality control: `created_by=LaneStudio <version>`, the page address it was made from
 (`host`), the language of the editor (`locale`), the imagery used (`imagery_used`), how many
 changesets you had made before (`changesets_count`), any warnings you saved with, and your progress
-through iD's walkthrough. See [modules/ui/commit.js](modules/ui/commit.js) for details. The
+through iD's walkthrough. See [modules/ui/commit.js](../modules/ui/commit.js) for details. The
 [OSMF privacy policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy) governs this data in the
 OpenStreetMap database.
 

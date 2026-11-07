@@ -219,7 +219,7 @@ different `loc` coordinate. More generically, `iD.osmEntity#update` returns
 a new entity of the same type and `id` as the original but with specified properties
 such as `nodes`, `tags`, or `members` replaced.
 
-![](docs/img/graph-history.png)
+![](img/graph-history.png)
 
 Entities are related to one another: ways have many nodes and relations have
 many members.
@@ -273,7 +273,7 @@ var difference = iD.coreDifference(a, b);
 difference.created();
 ```
 
-![](docs/img/graph-difference.png)
+![](img/graph-difference.png)
 
 `iD.coreTree` calculates the set of downloaded entities that are visible in the
 current map view. To calculate this quickly during map
@@ -330,7 +330,7 @@ With _modes_, we shift gears from abstract data types and algorithms to the
 parts of the architecture that implement the user interface for iD. Modes are
 manifested in the interface by the three buttons at the top left:
 
-![Mode buttons](docs/img/modes.png)
+![Mode buttons](img/modes.png)
 
 The modality of existing OSM editors runs the gamut from Potlatch 2, which is
 almost entirely modeless, to JOSM, which sports half a dozen modes out of the
@@ -391,7 +391,7 @@ internal state. After being constructed, an operation can be queried as to
 whether or not it should be made available (i.e., show up in the context menu)
 and if so, if it should be enabled.
 
-![Operations menu](docs/img/operations.png)
+![Operations menu](img/operations.png)
 
 We make a distinction between availability and enabled state for the sake of
 learnability: most operations are available so long as an entity of the

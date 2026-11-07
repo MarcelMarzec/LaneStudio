@@ -45,7 +45,8 @@ Lane Studio fits into iD and where each part lives; [ARCHITECTURE.md](ARCHITECTU
 
 * Lane Studio features: `modules/lanes/` (TypeScript), styles in `css-lanes/`, strings in
   `data/lanes.yaml` (read with `t('_lanes.…')`, the i buttons' overviews under `info`), tests in
-  `test/spec/lanes/`. The website: `LanesWebsite/`.
+  `test/spec/lanes/`. The website: `LanesWebsite/`. Documents: `docs/` (README.md, CLAUDE.md and
+  LICENSE.md stay at the root).
 * iD itself: only small hooks that keep iD's behaviour by default (see the hooks table in LANES.md).
   Keeping iD's code close to upstream makes it possible to take in new iD releases and development versions.
 * `dist/` and `dist-lanes/` are built: don't edit or commit them.
@@ -77,12 +78,12 @@ For drawing changes, also look at the result in the browser on real data before 
 1. Branch from `mm/lane-studio-main` with a descriptive name.
 2. Make the change, with tests, and check it in the browser.
 3. Check the documents that cover what you changed (README, LANES, ARCHITECTURE, API, FAQ, PRIVACY,
-   ACCESSIBILITY and the rest; [CLAUDE.md](CLAUDE.md) lists what each covers) and update any that are
+   ACCESSIBILITY and the rest; [CLAUDE.md](../CLAUDE.md) lists what each covers) and update any that are
    no longer accurate, in the same commit. The website in `LanesWebsite/` too, when users would notice the
    change.
 4. Sidebar changes keep it one menu with iD's: inputs built as iD's fields, iD's fields left out where Lane
    Studio edits the same tags, and every field with iD's bin and undo and an i button with an overview and a
-   wiki link ([CLAUDE.md](CLAUDE.md) § One sidebar, in iD's design).
+   wiki link ([CLAUDE.md](../CLAUDE.md) § One sidebar, in iD's design).
 5. Give the commit its version and changelog section, and put the version first in its title (see
    [RELEASING.md](RELEASING.md)).
 6. Commit with a message that says what changed and why.

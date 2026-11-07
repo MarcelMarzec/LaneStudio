@@ -13,7 +13,7 @@ $site = [
     'contact'   => 'https://marcelmarzec.com/contact',
     'github'    => 'https://github.com/MarcelMarzec/LaneStudio',
     'editor'    => 'https://lanestudio.marcelmarzec.com/editor/',
-    'changelog' => 'https://github.com/MarcelMarzec/LaneStudio/blob/mm/lane-studio-main/CHANGELOG.md',
+    'changelog' => 'https://github.com/MarcelMarzec/LaneStudio/blob/mm/lane-studio-main/docs/CHANGELOG.md',
     // Affiliate link: disclosed wherever it appears.
     'host'      => 'https://portal.fyfeweb.com/aff.php?aff=80',
 ];
