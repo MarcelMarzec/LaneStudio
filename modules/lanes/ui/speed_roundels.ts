@@ -2,6 +2,7 @@ import { select as d3_select } from 'd3-selection';
 
 import { t } from '../../core/localizer';
 import { uiTooltip } from '../../ui/tooltip';
+import { compactChoice } from './lane_fields';
 import { mphLimits, nationalTypes, samePick, ukSpeedTypeList, ukSpeedTypes, type SpeedPick, type UkSpeedType } from '../model/speed_limits';
 
 // the speed tag rules live in the model; the sidebar and the tool read them from here too
@@ -126,4 +127,47 @@ export function speedRoundels(parent: Selection, options: SpeedRoundelOptions) {
         drawRoundel(svg, pick, options.minimum);
     }
     return row;
+}
+
+
+/** A pick as a choice's value: `mph:30`, `type:GB:nsl_single` or `none` */
+const pickKey = (pick: SpeedPick) => (pick.kind === 'mph' ? `mph:${pick.mph}` : pick.kind === 'type' ? `type:${pick.type}` : 'none');
+const keyPick = (key: string): SpeedPick => (key.startsWith('mph:') ? { kind: 'mph', mph: Number(key.slice(4)) }
+    : key.startsWith('type:') ? { kind: 'type', type: key.slice(5) as UkSpeedType } : { kind: 'none' });
+
+/**
+ * A speed limit picked in one compact row (as the sidebar's fields have it): the roundel of the limit chosen now and a
+ * dropdown of every roundel and UK limit type. A typed number is that many mph (`25` or `25 mph`), so limits no roundel
+ * shows can be set; `nsl`, `national`, `motorway`, `zone` and the like find the limit types.
+ */
+export function speedChoice(context: iD.Context, parent: Selection, id: string, options: SpeedRoundelOptions) {
+    const picks: SpeedPick[] = [
+        ...mphLimits.map(mph => ({ kind: 'mph', mph } as SpeedPick)),
+        ...(options.types ? ukSpeedTypeList.map(type => ({ kind: 'type', type } as SpeedPick)) : []),
+        ...(options.none ? [{ kind: 'none' } as SpeedPick] : [])
+    ];
+    // a limit tagged that no roundel shows is offered too, so it shows as chosen
+    if (options.current?.kind === 'mph' && !picks.some(p => samePick(p, options.current!))) picks.unshift(options.current);
+    const terms = (pick: SpeedPick): string[] => {
+        if (pick.kind === 'mph') return [String(pick.mph), `${pick.mph}mph`];
+        if (pick.kind === 'none') return ['none', 'no limit'];
+        const short = pick.type.replace('GB:', '');
+        return [pick.type, short, ...(short.startsWith('nsl') ? ['nsl', 'national'] : []), ...(short === 'zone20' ? ['zone', '20 zone'] : [])];
+    };
+    return compactChoice(context, parent, {
+        id,
+        choices: picks.map(pick => ({
+            value: pickKey(pick),
+            label: speedPickLabel(pick, options.minimum, options.noneLabel),
+            terms: terms(pick),
+            icon: (box: Selection) => drawRoundel(box.append('svg').attr('width', 22)
+                .attr('height', pick.kind === 'type' ? 30 : 22) as d3.Selection<SVGSVGElement>, pick, options.minimum)
+        })),
+        current: options.current ? pickKey(options.current) : undefined,
+        custom: text => {
+            const m = text.match(/^(\d{1,3})\s*(mph)?$/i);
+            return m ? `mph:${Number(m[1])}` : undefined;
+        },
+        onPick: key => options.onPick(keyPick(key))
+    });
 }

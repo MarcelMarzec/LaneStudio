@@ -18,7 +18,9 @@ The full rules are in [CLAUDE.md](../CLAUDE.md); `test/spec/lanes/version.ts` ch
 1. **OAuth 2 application** on openstreetmap.org (My Account → OAuth 2 applications): redirect URI
    `https://<domain>/editor/land.html`; confidential **no** (PKCE, no secret); permissions: read and modify user
    preferences, modify the map, read GPS traces, modify notes. Register one on the dev server too to test there.
-2. **GitHub** (Settings → Secrets and variables → Actions): variable `OSM_CLIENT_ID` (public by design); secrets
+2. **GitHub** (Settings → Secrets and variables → Actions): variable `OSM_CLIENT_ID` (public by design), and
+   optionally `LOCATOR_OVERLAY_URL` and `LOCATOR_OVERLAY_CREDIT` (a roads tile layer for zoomed-out views, whose
+   terms allow it); secrets
    `FTP_SERVER`, `FTP_LANES_USERNAME` and `FTP_LANES_PASSWORD` (an account opening in `/editor/`),
    `FTP_ROOT_USERNAME` and `FTP_ROOT_PASSWORD` (one opening at the web root).
 

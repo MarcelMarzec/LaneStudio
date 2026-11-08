@@ -21,7 +21,7 @@ import { isKerbWay, parallelWays } from '../core/roadside';
 import { svgIcon } from '../../svg/icon';
 import { openRoadsideMenu } from './roadside_menu';
 import { isShownOnDemand, onShownChange, selectedLaneRoad, showOnDemand } from './road_sections';
-import { mphLimits, mphOf, roadSpeedPick, speedPickLabel, speedRoundels, ukSpeedTypes, type SpeedPick, type UkSpeedType } from './speed_roundels';
+import { mphLimits, mphOf, roadSpeedPick, speedPickLabel, speedChoice, ukSpeedTypes, type SpeedPick, type UkSpeedType } from './speed_roundels';
 import {
     parseLanes, laneRefsInWayOrder, laneCount, removeLane, moveLane, setLaneValue, laneValue,
     turnValues, parseTurn, toggleTurn, parseChange, formatChange, laneDirections,
@@ -239,7 +239,7 @@ export function uiSectionLanes(context: iD.Context) {
             info: minimum ? 'lane_minspeed' : 'lane_speed',
             present: value === undefined || !!value,
             onRemove: () => write('', '')
-        }, unusual, row => speedRoundels(row, {
+        }, unusual, row => speedChoice(context, row, `lane-${measure}`, {
             current, minimum, types: !minimum, none: true, noneLabel: t('_lanes.speed.lanes_none'),
             onPick: pick => write(pick.kind === 'mph' ? `${pick.mph} mph` : pick.kind === 'type' ? `${ukSpeedTypes[pick.type].mph} mph` : '',
                 pick.kind === 'type' ? pick.type : '')

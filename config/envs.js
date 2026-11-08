@@ -18,6 +18,10 @@ const envs = {
   ENV__ID_NOMINATIM_API_URL: JSON.stringify(process.env.ID_NOMINATIM_API_URL || null),
 
   ENV__ID_SHOW_DONATION_MESSAGE: JSON.stringify(process.env.ID_SHOW_DONATION_MESSAGE || null),
+
+  // Lane Studio: the roads shown over the imagery below zoom 16 (Mapbox serves iD's own overlay only to iD's sites)
+  ENV__ID_LOCATOR_OVERLAY_URL: JSON.stringify(process.env.ID_LOCATOR_OVERLAY_URL || null),
+  ENV__ID_LOCATOR_OVERLAY_CREDIT: JSON.stringify(process.env.ID_LOCATOR_OVERLAY_CREDIT || null),
 };
 
 export default envs;

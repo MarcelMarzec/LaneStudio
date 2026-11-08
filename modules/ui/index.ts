@@ -1,4 +1,4 @@
-export { uiInit, uiInitAddPane } from './init';
+export { uiInit, uiInitAddPane, uiInitHidePane } from './init';
 export { uiAccount } from './account';
 export { uiAttribution } from './attribution';
 export { uiChangesetEditor } from './changeset_editor';

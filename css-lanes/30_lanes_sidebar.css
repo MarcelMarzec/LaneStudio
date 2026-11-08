@@ -334,22 +334,52 @@
 .ideditor.lane-studio .speed-roundel svg { display: block; }
 /* the roundel's tooltip is drawn inside the button: give it back a line height, or wrapped lines overlap */
 .ideditor.lane-studio .speed-roundel .popover { line-height: 1.35; white-space: normal; }
-.ideditor.lane-studio .speed-roundel .roundel-disc { fill: #fff; }
-.ideditor.lane-studio .speed-roundel .roundel-ring { fill: none; stroke: #d4202a; stroke-width: 3; }
-.ideditor.lane-studio .speed-roundel .roundel-number { fill: #111; font-weight: bold; font-family: Arial, Helvetica, sans-serif; }
-.ideditor.lane-studio .speed-roundel .roundel-band { fill: #111; }
-.ideditor.lane-studio .speed-roundel .roundel-edge { fill: none; stroke: #111; stroke-width: 0.8; }
-.ideditor.lane-studio .speed-roundel .roundel-none { fill: none; stroke: var(--passive-text-color); stroke-width: 1.5; stroke-dasharray: 3 2.5; }
-.ideditor.lane-studio .speed-roundel .roundel-plate { fill: #fff; stroke: #111; stroke-width: 0.6; }
-.ideditor.lane-studio .speed-roundel .roundel-plate-motorway { fill: #1d5bbf; stroke: #fff; }
-.ideditor.lane-studio .speed-roundel .roundel-caption { fill: #111; font-weight: bold; font-family: Arial, Helvetica, sans-serif; }
-.ideditor.lane-studio .speed-roundel .roundel-caption-motorway { fill: #fff; }
-.ideditor.lane-studio .speed-roundel .roundel-motorway-symbol { fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; }
-.ideditor.lane-studio .speed-roundel .roundel-lamp { fill: none; stroke: #111; stroke-width: 1.2; stroke-linejoin: round; }
+.ideditor.lane-studio .speed-roundel .roundel-disc,
+.ideditor.lane-studio .lane-compact-icon .roundel-disc,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-disc { fill: #fff; }
+.ideditor.lane-studio .speed-roundel .roundel-ring,
+.ideditor.lane-studio .lane-compact-icon .roundel-ring,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-ring { fill: none; stroke: #d4202a; stroke-width: 3; }
+.ideditor.lane-studio .speed-roundel .roundel-number,
+.ideditor.lane-studio .lane-compact-icon .roundel-number,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-number { fill: #111; font-weight: bold; font-family: Arial, Helvetica, sans-serif; }
+.ideditor.lane-studio .speed-roundel .roundel-band,
+.ideditor.lane-studio .lane-compact-icon .roundel-band,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-band { fill: #111; }
+.ideditor.lane-studio .speed-roundel .roundel-edge,
+.ideditor.lane-studio .lane-compact-icon .roundel-edge,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-edge { fill: none; stroke: #111; stroke-width: 0.8; }
+.ideditor.lane-studio .speed-roundel .roundel-none,
+.ideditor.lane-studio .lane-compact-icon .roundel-none,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-none { fill: none; stroke: var(--passive-text-color); stroke-width: 1.5; stroke-dasharray: 3 2.5; }
+.ideditor.lane-studio .speed-roundel .roundel-plate,
+.ideditor.lane-studio .lane-compact-icon .roundel-plate,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-plate { fill: #fff; stroke: #111; stroke-width: 0.6; }
+.ideditor.lane-studio .speed-roundel .roundel-plate-motorway,
+.ideditor.lane-studio .lane-compact-icon .roundel-plate-motorway,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-plate-motorway { fill: #1d5bbf; stroke: #fff; }
+.ideditor.lane-studio .speed-roundel .roundel-caption,
+.ideditor.lane-studio .lane-compact-icon .roundel-caption,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-caption { fill: #111; font-weight: bold; font-family: Arial, Helvetica, sans-serif; }
+.ideditor.lane-studio .speed-roundel .roundel-caption-motorway,
+.ideditor.lane-studio .lane-compact-icon .roundel-caption-motorway,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-caption-motorway { fill: #fff; }
+.ideditor.lane-studio .speed-roundel .roundel-motorway-symbol,
+.ideditor.lane-studio .lane-compact-icon .roundel-motorway-symbol,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-motorway-symbol { fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; }
+.ideditor.lane-studio .speed-roundel .roundel-lamp,
+.ideditor.lane-studio .lane-compact-icon .roundel-lamp,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-lamp { fill: none; stroke: #111; stroke-width: 1.2; stroke-linejoin: round; }
 .ideditor.lane-studio .speed-roundel.speed-roundel-type { border-radius: 6px; }
-.ideditor.lane-studio .speed-roundel .roundel-min-disc { fill: #1d5bbf; stroke: #fff; stroke-width: 1; }
-.ideditor.lane-studio .speed-roundel .roundel-min-number { fill: #fff; }
-.ideditor.lane-studio .speed-roundel .roundel-none-text { fill: var(--passive-text-color); font-size: 12px; }
+.ideditor.lane-studio .speed-roundel .roundel-min-disc,
+.ideditor.lane-studio .lane-compact-icon .roundel-min-disc,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-min-disc { fill: #1d5bbf; stroke: #fff; stroke-width: 1; }
+.ideditor.lane-studio .speed-roundel .roundel-min-number,
+.ideditor.lane-studio .lane-compact-icon .roundel-min-number,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-min-number { fill: #fff; }
+.ideditor.lane-studio .speed-roundel .roundel-none-text,
+.ideditor.lane-studio .lane-compact-icon .roundel-none-text,
+.ideditor.lane-studio .lane-compact-option-icon .roundel-none-text { fill: var(--passive-text-color); font-size: 12px; }
 .ideditor.lane-studio .lane-limits-head {
     display: flex;
     align-items: center;
@@ -697,3 +727,31 @@
     line-height: 1.5;
     margin-bottom: 6px;
 }
+
+/* a choice in one compact row: the picture of what is chosen, and iD's combobox listing every choice */
+.ideditor.lane-studio .lane-compact-choice {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+.ideditor.lane-studio .lane-compact-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 32px;
+    padding: 0 4px;
+    border-right: 1px solid var(--border-color, #ccc);
+}
+.ideditor.lane-studio .lane-compact-icon.empty { min-width: 0; padding: 0; border: none; }
+.ideditor.lane-studio .lane-compact-icon svg { display: block; max-height: 30px; }
+.ideditor.lane-studio .lane-compact-input { flex: 1 1 auto; min-width: 0; }
+.ideditor.lane-studio .combobox-option .lane-compact-option-icon {
+    display: inline-flex;
+    vertical-align: middle;
+    width: 34px;
+    margin-right: 6px;
+    justify-content: center;
+}
+.ideditor.lane-studio .combobox-option .lane-compact-option-icon svg { max-height: 24px; width: auto; }

@@ -131,9 +131,10 @@ require __DIR__ . '/includes/head.php';
         <div class="feature-icon"><?php icon_sidebar(); ?></div>
         <h3>One sidebar with iD's</h3>
         <p>
-          Number of lanes, centre line, speed limits, pavements, cycleways, hard shoulders and parking
-          sit among iD's own fields, in iD's style. Each has an <strong>i</strong> button with a short
-          overview and a link to the wiki; fields a road rarely needs wait under “Add field”.
+          Number of lanes, centre line, speed limits, structure, pavements, cycleways, hard shoulders and
+          parking sit among iD's own fields, in iD's style. Choices show the value chosen with its sign,
+          and a dropdown of the rest. Each has an <strong>i</strong> button with a short overview and a
+          link to the wiki; fields a road rarely needs wait under “Add field”.
         </p>
       </article>
 

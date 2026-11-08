@@ -9,6 +9,7 @@ const SP = 'Street_parking';
 /** Each topic's wiki page, as written after https://wiki.openstreetmap.org/wiki/ */
 export const fieldInfoPages = {
     access: 'Key:access',
+    advisory: 'Key:maxspeed:advisory',
     camera: 'Tag:highway=speed_camera',
     centre_line: 'Key:overtaking',
     change: 'Key:change',
@@ -63,6 +64,7 @@ export const fieldInfoPages = {
     sign_tool: 'Key:traffic_sign',
     sign_value: 'Key:traffic_sign',
     street_parking: 'Key:parking',
+    structure: 'Key:bridge',
     surface: 'Key:surface',
     tools: 'Lanes',
     turbo: 'Tag:roundabout=turbo',

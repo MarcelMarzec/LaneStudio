@@ -45,6 +45,7 @@ iD needed only small hooks that keep its behaviour by default, so plain iD (`ind
 | `uiSectionPresetFieldsSetFilter()`, leaving out preset fields | `modules/ui/sections/preset_fields.js` | none |
 | A field's `referenceComponent`, its own i button | `modules/ui/field.js` | iD's wiki reference |
 | `uiInitAddPane()`, extra panes | `modules/ui/init.js` | none |
+| `uiInitHidePane()`, leaving out one of iD's panes (Preferences) | `modules/ui/init.js` | all shown |
 | `uiInitSetSidebarHeader()`, a header above the sidebar | `modules/ui/init.js` | none |
 | `uiTopToolbarAddTool()`, extra top bar tools | `modules/ui/top_toolbar.js` | none |
 | `uiVersionSetProduct()`, the footer's version | `modules/ui/version.js` | iD's version |

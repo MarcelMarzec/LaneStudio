@@ -53,6 +53,11 @@ const nominatimApiUrl = ENV__ID_NOMINATIM_API_URL
 // support/donation message on upload success screen
 const showDonationMessage = ENV__ID_SHOW_DONATION_MESSAGE !== 'false';
 
+// a tile URL for roads shown over the imagery when zoomed out (Lane Studio's `locatorOverlay`), and its credit
+// (`typeof`: a build started before these settings existed has no value for them)
+const locatorOverlayUrl = typeof ENV__ID_LOCATOR_OVERLAY_URL === 'undefined' ? null : ENV__ID_LOCATOR_OVERLAY_URL;
+const locatorOverlayCredit = typeof ENV__ID_LOCATOR_OVERLAY_CREDIT === 'undefined' ? null : ENV__ID_LOCATOR_OVERLAY_CREDIT;
+
 export {
   presetsCdnUrl,
   ociCdnUrl,
@@ -61,5 +66,7 @@ export {
   osmApiConnections,
   taginfoApiUrl,
   nominatimApiUrl,
-  showDonationMessage
+  showDonationMessage,
+  locatorOverlayUrl,
+  locatorOverlayCredit
 };

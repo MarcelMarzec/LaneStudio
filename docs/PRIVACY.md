@@ -81,7 +81,7 @@ content delivery network, governed by its
 iD's Name Suggestion Index helps map brand names consistently. It can fetch information and brand
 logos from third-party sites, including Wikidata and Wikimedia Commons, governed by their privacy
 policies such as [https://foundation.wikimedia.org/wiki/Privacy_policy](https://foundation.wikimedia.org/wiki/Privacy_policy).
-You can turn this off in Preferences → Privacy.
+You can turn this off in the Lane Studio pane → Privacy.
 
 ### Contact
 
@@ -91,6 +91,7 @@ law, or want to ask about it, open an issue at
 
 ### Changelog
 
+* _2026-Nov-08_ - The roads overlay shown when zoomed out can also be set when the site is built. The third-party icons setting moved from iD's Preferences pane to the Lane Studio pane.
 * _2026-Nov-08_ - Whether the Map key's sections and each side's cycle lane details are folded away is stored with your settings. The Measure tool measures in your browser and sends nothing anywhere.
 
 * _2026-Nov-07_ - Whether each side's parking details are folded away is stored with your settings. The i button on Lane Studio's fields shows text built into Lane Studio, so nothing is fetched from the OpenStreetMap wiki until you follow its link (iD's own i buttons still look the field up on the wiki).

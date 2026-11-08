@@ -31,9 +31,11 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   values onto lanes; connect lanes across junctions; set the centre line (dashed, or a double white line
   where overtaking is banned) from the sidebar, from a lane beside it, or by clicking it on the map.
 * **One sidebar with iD's**: Lane Studio's road fields (number of lanes, centre line, speed limits,
-  pavements, cycleways, hard shoulders, street parking, active traffic management) sit among iD's own in
-  its Fields section, in place of iD's for the same tags, each with iD's bin and undo buttons and an i
-  button giving a short overview and the wiki page. Fields a road doesn't usually need wait in "Add field".
+  advisory speeds, structure, pavements, cycleways, hard shoulders, street parking, active traffic
+  management) sit among iD's own in its Fields section, in place of iD's for the same tags, each with
+  iD's bin and undo buttons and an i button giving a short overview and the wiki page. Choices show only
+  the value chosen, with its sign, and a dropdown of the rest. Fields a road doesn't usually need wait in
+  "Add field".
 * **Roadside + menu**: a + at each kerb of the selected road (and "Add to the roadside" in the sidebar)
   adds a lane, hard shoulder, pavement, cycleway, parking or no-waiting lines to that side, asking for
   their tags.

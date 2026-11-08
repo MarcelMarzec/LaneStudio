@@ -519,3 +519,93 @@ export function laneChangeIcon(selection: Selection, toLeft: boolean, allowed: b
     }
     return svg;
 }
+
+
+export interface CompactChoice<T extends string> {
+    value: T;
+    label: string;
+    /** draws the choice's picture (a roundel, a centre line) into a small box */
+    icon?: (box: Selection) => void;
+    /** other words that pick it when typed (`30`, `nsl`) */
+    terms?: string[];
+}
+
+/**
+ * A choice made in one compact row, in place of a row of buttons: the picture of what is chosen now, and iD's
+ * combobox showing its name, listing every choice with its picture. Typing completes a choice's name; what is typed is
+ * matched to a choice by its name, value or terms (case aside), else by the one name it starts, else by `custom`
+ * (a typed number becoming a speed). Anything else puts back what was there.
+ */
+export function compactChoice<T extends string>(context: iD.Context, wrap: Selection, options: {
+    id: string;
+    choices: CompactChoice<T>[];
+    /** chosen now; undefined when nothing is (or the selection differs) */
+    current: T | undefined;
+    placeholder?: string;
+    custom?: (text: string) => T | undefined;
+    onPick: (value: T) => void;
+}) {
+    const row = wrap.append('div').attr('class', `lane-compact-choice lane-compact-${options.id}`);
+    const chosen = options.choices.find(c => c.value === options.current);
+    const iconBox = row.append('span').attr('class', 'lane-compact-icon').attr('aria-hidden', 'true');
+    if (chosen?.icon) chosen.icon(iconBox);
+    else iconBox.classed('empty', true);
+
+    const input = row.append('input')
+        .attr('type', 'text')
+        .attr('id', `lane-field-${options.id}`)
+        .attr('class', 'lane-field-input lane-compact-input')
+        .attr('placeholder', options.placeholder ?? fieldPlaceholder(options.choices.map(c => ({ value: c.value, title: c.label }))))
+        .call(utilNoAuto as any);
+    utilGetSetValue(input as any, chosen?.label ?? '');
+
+    const options_ = options.choices.map(c => ({
+        value: c.label,
+        title: c.label,
+        words: [c.label, c.value, ...(c.terms ?? [])].map(word => word.toLowerCase()),
+        display: (label: Selection) => {
+            const box = label.append('span').attr('class', 'lane-compact-option-icon');
+            c.icon?.(box);
+            label.append('span').text(c.label);
+        }
+    }));
+    // typed text finds a choice by its name, tag value or terms (`nsl`, `30`), whole words first
+    const matching = (typed: string) => {
+        const lower = typed.trim().toLowerCase();
+        if (!lower) return options_;
+        const exact = options_.filter(o => o.words.includes(lower));
+        return [...exact, ...options_.filter(o => !exact.includes(o) && o.words.some(word => word.includes(lower)))];
+    };
+    const combobox = (uiCombobox(context, `lane-compact-${options.id}`) as any)
+        .fetcher((typed: string, done: (results: typeof options_) => void) => done(matching(typed)))
+        .caseSensitive(false)
+        .minItems(1);
+    input.call(combobox, row);
+
+    // the typed text's choice: one it names exactly, else a custom value (`25 mph`), else the first one listed
+    const pick = (text: string): T | undefined => {
+        const lower = text.trim().toLowerCase();
+        if (!lower) return undefined;
+        const listed = matching(lower);
+        const exact = listed.find(o => o.words.includes(lower));
+        const custom = exact ? undefined : options.custom?.(text.trim());
+        if (custom) return custom;
+        const found = exact ?? listed[0];
+        return found ? options.choices[options_.indexOf(found)].value : undefined;
+    };
+    let written = options.current;
+    const change = () => {
+        const value = pick(utilGetSetValue(input as any) as string);
+        if (value === undefined) {
+            utilGetSetValue(input as any, chosen?.label ?? '');
+            return;
+        }
+        if (value === written) return;
+        written = value;
+        options.onPick(value);
+    };
+    // the combobox stops the browser's change event on Return, and says so with accept
+    combobox.on('accept', change);
+    input.on('change', change).on('blur', change);
+    return row;
+}

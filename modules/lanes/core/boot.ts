@@ -5,7 +5,8 @@ import { rendererBackgroundSource } from '../../renderer/background_source';
 import { prefs } from '../../core/preferences';
 import { uiEntityEditorAddSection } from '../../ui/entity_editor';
 import { uiSectionPresetFieldsSetFilter } from '../../ui/sections/preset_fields';
-import { uiInitAddPane, uiInitSetSidebarHeader } from '../../ui/init';
+import { uiInitAddPane, uiInitHidePane, uiInitSetSidebarHeader } from '../../ui/init';
+import { locatorOverlayCredit, locatorOverlayUrl } from '../../../config/id.js';
 import { uiPaneMapKey } from '../ui/pane_key';
 import { uiIntroSetChapters } from '../../ui/intro/intro';
 import { uiPaneHelpAddDocs } from '../../ui/panes/help';
@@ -84,6 +85,8 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
 
     // Lane Studio's settings pane, first in the pane bar
     uiInitAddPane(uiPaneLaneStudio);
+    // iD's Preferences pane holds one setting, third-party icons, which is in Lane Studio's pane instead
+    uiInitHidePane('preferences');
     // the Map key, after it
     uiInitAddPane(uiPaneMapKey);
 
@@ -131,15 +134,18 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
         osm.switch({ url: osm.getUrlRoot(), apiUrl: osm.getApiUrlRoot(), redirect_uri: redirect.href });
     }
 
-    // the locator overlay from the page's own source
-    if (options.locatorOverlay) {
+    // the locator overlay from the page's own source, else the build's (ID_LOCATOR_OVERLAY_URL): Mapbox serves iD's own
+    // overlay only to iD's sites, so without one nothing is shown over the imagery below zoom 16
+    const locatorOverlay = options.locatorOverlay ?? locatorOverlayUrl ?? undefined;
+    const locatorCredit = options.locatorOverlayCredit ?? locatorOverlayCredit ?? undefined;
+    if (locatorOverlay) {
         context.background().ensureLoaded().then(() => {
             const background = context.background() as any;
             const iDs = background.overlayLayerSources().find((source: any) => source.isLocatorOverlay());
             if (iDs) background.toggleOverlayLayer(iDs);
             background.toggleOverlayLayer(rendererBackgroundSource({
                 id: 'mapbox_locator_overlay', name: 'Locator Overlay', overlay: true, zoomExtent: [0, 16],
-                template: options.locatorOverlay, terms_text: options.locatorOverlayCredit
+                template: locatorOverlay, terms_text: locatorCredit
             }));
         }).catch(() => { /* without imagery there is nothing to lay it over */ });
     }

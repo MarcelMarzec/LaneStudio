@@ -56,6 +56,15 @@ export function uiInitAddPane(factory) {
     _extraPaneFactories.push(factory);
 }
 
+// iD's own panes an app built on iD leaves out (e.g. Lane Studio moves Preferences' one setting into its own pane); none
+// in iD itself
+var _hiddenPanes = new Set();
+
+/** Leaves out one of iD's own panes, by id (`preferences`…); call before the UI is built */
+export function uiInitHidePane(id) {
+    _hiddenPanes.add(id);
+}
+
 // a header drawn at the top of the sidebar by apps built on iD (e.g. Lane Studio's logo); none in iD itself
 var _sidebarHeader = null;
 
@@ -246,7 +255,7 @@ export function uiInit(context) {
             uiPaneIssues(context),
             uiPanePreferences(context),
             uiPaneHelp(context)
-        ];
+        ].filter(pane => !_hiddenPanes.has(pane.id));
 
         uiPanes.forEach(function(pane) {
             controls

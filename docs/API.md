@@ -58,6 +58,7 @@ Environment variables, or a git-ignored `.env`:
 | `ID_API_CONNECTION` | `live` (default) or `dev`, iD's built-in servers. Lane Studio offers one server, with no switch in the footer |
 | `ID_PRESETS_CDN_URL` | Where to fetch presets (a schema-builder build) |
 | `ENV__ID_OCI_CDN_URL`, `ENV__ID_NSI_CDN_URL`, `ENV__ID_WMF_SITEMATRIX_CDN_URL` | Hosted osm-community-index, name-suggestion-index, wmf-sitematrix |
+| `ID_LOCATOR_OVERLAY_URL`, `ID_LOCATOR_OVERLAY_CREDIT` | The roads overlay below zoom 16 and its credit, used when `options.locatorOverlay` isn't given. The deploy workflow sets them from the `LOCATOR_OVERLAY_URL` and `LOCATOR_OVERLAY_CREDIT` variables |
 | `ID_TAGINFO_API_URL`, `ID_NOMINATIM_API_URL` | Taginfo and Nominatim services |
 
 CSS classes, services, imagery and presets can be customised: [Customising](develop/Customising.md).

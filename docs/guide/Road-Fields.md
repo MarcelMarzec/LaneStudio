@@ -9,10 +9,16 @@ tag). With several roads selected, iD's own fields come back to set a value on a
 | Centre line | `overtaking`, `overtaking:forward`, `overtaking:backward` | Two-way roads, not slip roads |
 | Speed limit | `maxspeed`, `maxspeed:type` | Every road |
 | Minimum speed | `minspeed` | Motorways |
+| Advisory speed | `maxspeed:advisory` | Once tagged |
+| Structure | `bridge`, `tunnel`, `embankment`, `cutting`, `ford`, `covered`, `layer` | Once tagged (in place of iD's Structure) |
 | Pavement, Cycleway, Hard shoulder, Parking | Per side, see [Roadside](Roadside.md) and [Street parking](Street-Parking.md) | Pavements where expected, parking on residential and living streets, shoulders on motorways and trunk roads |
 | Active traffic management | `active_traffic_management`, `maxspeed:variable` | Motorways, or once tagged |
 
 Everything else is in **Add field**.
+
+Centre line, the speeds, Structure and Active traffic management show only the value chosen, with its sign; the
+dropdown lists them all. Type to pick one: its name, a number (`35` for 35 mph) or a short name (`nsl`, `zone`,
+`motorway`, `double`, `tunnel`). Text naming nothing goes back to the value chosen.
 
 ## Centre line
 
@@ -22,7 +28,8 @@ or from the lane beside it.
 
 ## Speed limits
 
-- UK roundels, 10 to 70 mph and none; minimum speeds as blue roundels.
+- UK roundels, 10 to 70 mph and none, or any number typed; minimum speeds as blue roundels; advisory speeds
+  (`maxspeed:advisory`, the plate under a warning sign) 10 to 60 mph.
 - UK limit types (wiki: Key:maxspeed:type), each setting its type and limit:
 
   | Sign | Writes |
@@ -38,6 +45,17 @@ or from the lane beside it.
 - Under the signs: the lower national limit for towing, buses and HGVs.
 - A lane's own limit (`maxspeed:lanes`, `minspeed:lanes`) is set in the Lanes section; lanes without one follow the
   road. `maxspeed:forward` and `maxspeed:backward` are read per direction.
+
+## Structure
+
+| Choice | Writes |
+| --- | --- |
+| Bridge, Viaduct | `bridge=yes`, `bridge=viaduct`; `layer=1` when no layer is tagged |
+| Tunnel, Building passage | `tunnel=yes`, `tunnel=building_passage`; `layer=-1` when none is tagged |
+| Embankment, Cutting, Ford, Covered | `embankment=yes`, `cutting=yes`, `ford=yes`, `covered=yes` |
+| None | Removes them, and the layer the bridge or tunnel set |
+
+The Layer row under it sets `layer` on a bridge or in a tunnel.
 
 ## Active traffic management
 

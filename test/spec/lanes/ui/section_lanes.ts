@@ -8,7 +8,7 @@ import { laneState } from '../../../../modules/lanes/core/lane_state';
 import { fieldPlaceholder } from '../../../../modules/lanes/ui/lane_fields';
 import { laneStudioCrossingSignals } from '../../../../modules/lanes/core/preset_fields';
 import { uiSectionLanes } from '../../../../modules/lanes/ui/section_lanes';
-import { arrangeFields, laneStudioRoadFields } from '../../../../modules/lanes/ui/road_fields';
+import { arrangeFields, laneStudioRoadFields, structureOf, withStructure } from '../../../../modules/lanes/ui/road_fields';
 import { laneStudioFieldFilter } from '../../../../modules/lanes/ui/field_filter';
 import { fieldInfoPages } from '../../../../modules/lanes/ui/field_info';
 import { openRoadsideMenu, closeRoadsideMenu } from '../../../../modules/lanes/ui/roadside_menu';
@@ -108,20 +108,58 @@ describe('Lane Studio sidebar', () => {
         expect(context.entity('w1').tags['bus:lanes:forward']).toBe('|designated');
     });
 
-    it('sets the whole road\'s limit, a UK limit type and its minimum speed from signs', () => {
+    /** Types into a compact choice, as a person does, and leaves it */
+    function choose(id: string, text: string) {
+        selection.select<HTMLInputElement>(`#lane-field-${id}`).property('value', text).dispatch('change');
+    }
+
+    it('sets the whole road\'s limit, a UK limit type and its minimum speed from one compact choice each', () => {
         renderField('lanes_maxspeed');
-        selection.select('.speed-roundel-nsl_dual').dispatch('click');
+        choose('maxspeed', 'National, dual carriageway (70 mph)');
         expect(context.entity('w1').tags).toMatchObject({ maxspeed: '70 mph', 'maxspeed:type': 'GB:nsl_dual' });
 
+        // only the chosen value shows, with its sign
         renderField('lanes_maxspeed');
-        expect(selection.select('.speed-roundel-nsl_dual').classed('active')).toBe(true);
+        expect(selection.select('#lane-field-maxspeed').property('value')).toBe('National, dual carriageway (70 mph)');
+        expect(selection.select('.lane-compact-maxspeed .lane-compact-icon svg').empty()).toBe(false);
         expect(selection.select('.speed-lower').text()).toContain('60 mph');
-        selection.select('.speed-roundel-zone20').dispatch('click');
+        choose('maxspeed', 'zone');
         expect(context.entity('w1').tags).toMatchObject({ maxspeed: '20 mph', 'maxspeed:type': 'GB:zone20' });
+        // typed short forms pick the right value
+        renderField('lanes_maxspeed');
+        choose('maxspeed', 'nsl');
+        expect(context.entity('w1').tags).toMatchObject({ maxspeed: '60 mph', 'maxspeed:type': 'GB:nsl_single' });
+        renderField('lanes_maxspeed');
+        choose('maxspeed', '35');
+        expect(context.entity('w1').tags.maxspeed).toBe('35 mph');
+        expect(context.entity('w1').tags['maxspeed:type']).toBeUndefined();
+        // text naming nothing goes back to the value chosen
+        renderField('lanes_maxspeed');
+        choose('maxspeed', 'banana');
+        expect(context.entity('w1').tags.maxspeed).toBe('35 mph');
+        expect(selection.select('#lane-field-maxspeed').property('value')).toBe('35 mph');
 
         renderField('lanes_minspeed');
-        selection.select('.speed-roundels-min .speed-roundel-40').dispatch('click');
+        choose('minspeed', '40');
         expect(context.entity('w1').tags.minspeed).toBe('40 mph');
+
+        renderField('lanes_advisory');
+        choose('advisory', '25');
+        expect(context.entity('w1').tags['maxspeed:advisory']).toBe('25 mph');
+    });
+
+    it('sets the structure, with the layer a bridge or tunnel goes to, and back', () => {
+        renderField('lanes_structure');
+        choose('structure', 'tun');
+        expect(context.entity('w1').tags).toMatchObject({ tunnel: 'yes', layer: '-1' });
+        renderField('lanes_structure');
+        choose('structure', 'Bridge');
+        expect(context.entity('w1').tags).toMatchObject({ bridge: 'yes', layer: '1' });
+        expect(context.entity('w1').tags.tunnel).toBeUndefined();
+        expect(withStructure({ bridge: 'yes', layer: '2' }, 'none')).toEqual({ layer: '2' });
+        expect(withStructure({ bridge: 'yes', layer: '1' }, 'embankment')).toEqual({ embankment: 'yes' });
+        expect(structureOf({ tunnel: 'building_passage' })).toBe('building_passage');
+        expect(structureOf({ bridge: 'no' })).toBe('none');
     });
 
     it('picks roadside features per side from dropdowns, as one edit each', () => {
@@ -140,11 +178,18 @@ describe('Lane Studio sidebar', () => {
 
     it('tags the centre line, and lets a lane beside it overtake or not', () => {
         renderField('lanes_centre_line');
-        selection.select('.lane-choice-no_both').dispatch('click');
+        choose('centre-line', 'double white');
         expect(context.entity('w1').tags.overtaking).toBe('no');
         renderField('lanes_centre_line');
-        selection.select('.lane-choice-dashed').dispatch('click');
+        choose('centre-line', 'dashed');
         expect(context.entity('w1').tags.overtaking).toBe('yes');
+        // no note says how many lanes were assumed, on a road with none tagged
+        context.perform(iD.actionChangeTags('w1', { highway: 'primary' }));
+        for (const field of ['lanes_counts', 'lanes_centre_line', 'lanes_shoulder']) {
+            renderField(field);
+            expect(selection.selectAll('.lanes-note').size()).toBe(0);
+        }
+        context.undo();
 
         // driving on the right (the road is in Berlin), the outer forward lane has the kerb on its right and a forward
         // lane on its left; the inner one has the centre line on its left
@@ -187,7 +232,13 @@ describe('Lane Studio sidebar', () => {
         arrangeFields(fields, more, 'residential');
         expect(fields).toEqual(['name', 'oneway', 'lanes/counts', 'lanes/centre_line', 'lanes/maxspeed', 'surface', 'access',
             'lanes/sidewalk', 'lanes/parking']);
-        expect(more).toEqual(['lit', 'width', 'lanes/minspeed', 'lanes/shoulder', 'lanes/cycleway']);
+        expect(more).toEqual(['lit', 'width', 'lanes/minspeed', 'lanes/advisory', 'lanes/structure', 'lanes/shoulder', 'lanes/cycleway']);
+        // iD's structure and advisory fields are replaced where they were
+        const bridge = ['name', 'structure', 'maxspeed/advisory'];
+        arrangeFields(bridge, [], 'primary');
+        expect(bridge).toContain('lanes/structure');
+        expect(bridge).toContain('lanes/advisory');
+        expect(bridge).not.toContain('structure');
         const motorway = ['name', 'ref_road_number', 'oneway_yes', 'maxspeed', 'lanes', 'surface'];
         arrangeFields(motorway, ['minspeed'], 'motorway');
         expect(motorway).toEqual(['name', 'ref_road_number', 'oneway_yes', 'lanes/counts', 'lanes/maxspeed', 'lanes/minspeed', 'surface',
@@ -217,11 +268,11 @@ describe('Lane Studio sidebar', () => {
         render(['w1']);
         const speed = () => selection.select('.form-field-lane-lane-maxspeed');
         expect(speed().empty()).toBe(false);
-        speed().select('.speed-roundel-40').dispatch('click');
+        choose('lane-maxspeed', '40 mph');
         expect(context.entity('w1').tags['maxspeed:lanes:forward']).toBe('40 mph|');
         // the road's limit types are offered for lanes too
         render(['w1']);
-        speed().select('.speed-roundel-nsl_single').dispatch('click');
+        choose('lane-maxspeed', 'National, single carriageway (60 mph)');
         expect(context.entity('w1').tags).toMatchObject({ 'maxspeed:lanes:forward': '60 mph|', 'maxspeed:type:lanes:forward': 'GB:nsl_single|' });
         render(['w1']);
         expect(selection.select('.lane-inspector .speed-lower').empty()).toBe(false);

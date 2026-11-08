@@ -48,8 +48,9 @@ Use the + at the kerb: **No-waiting lines** or **Parking** ([Street parking](gui
 Lane Studio pane (`K`) → **Hide land use** (Map Data's filter hides car parks too).
 
 **Why are there no roads when I zoom out?**
-Data loads from zoom 16, and Mapbox refuses iD's Locator Overlay to Lane Studio. A site can set its own overlay
-(`locatorOverlay`, [API](API.md)).
+Data loads from zoom 16, and Mapbox serves iD's Locator Overlay only to iD's own sites. A site sets its own roads
+overlay with `locatorOverlay` or the `ID_LOCATOR_OVERLAY_URL` build setting ([API](API.md#build-settings)); the
+deploy workflow reads it from the `LOCATOR_OVERLAY_URL` variable.
 
 **Why does a motorway have a hard shoulder I didn't tag?**
 Motorways are presumed to have one. Tag `shoulder=no`, or use Active traffic management.

@@ -63,6 +63,10 @@ jobs:
           ID_API_CONNECTION_URL: ${{ vars.OSM_CLIENT_ID && 'https://www.openstreetmap.org' || '' }}
           ID_API_CONNECTION_API_URL: ${{ vars.OSM_CLIENT_ID && 'https://api.openstreetmap.org' || '' }}
           ID_API_CONNECTION_CLIENT_ID: ${{ vars.OSM_CLIENT_ID }}
+          # the roads shown over the imagery below zoom 16: Mapbox serves iD's own locator overlay only to iD's
+          # sites, so set a tile URL ({zoom}, {x}, {y}) you may use, and its credit, in these repository variables
+          ID_LOCATOR_OVERLAY_URL: ${{ vars.LOCATOR_OVERLAY_URL }}
+          ID_LOCATOR_OVERLAY_CREDIT: ${{ vars.LOCATOR_OVERLAY_CREDIT }}
 
       # the FTP_LANES account opens in /editor/
       - name: Deploy the editor via FTP

@@ -8,6 +8,23 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08r6
+##### 2026-Nov-08
+
+#### Editing
+* Centre line, Speed limit, Minimum speed, Structure and Active traffic management show only the value chosen, with
+  its sign, and a dropdown of all the others. Type to pick one: a name, a number (`35` sets 35 mph) or a short name
+  (`nsl`, `zone`, `double`, `tunnel`)
+* New road fields: **Advisory speed** (`maxspeed:advisory`, the plate under a warning sign) and **Structure** (bridge,
+  viaduct, tunnel, building passage, embankment, cutting, ford, covered), which puts a bridge up a layer and a tunnel
+  down one; they replace iD's fields for the same tags
+* The notes under Number of lanes, Centre line and Hard shoulder saying what was assumed are gone
+* iD's Preferences pane is gone: its third-party icons setting is in the Lane Studio pane, under Privacy
+
+#### Website
+* The roads shown when zoomed out below zoom 16 can be set when the site is built (`LOCATOR_OVERLAY_URL`), as Mapbox
+  serves iD's Locator Overlay only to iD's own sites
+
 # 26.11.08r5
 ##### 2026-Nov-08
 

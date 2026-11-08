@@ -29,7 +29,7 @@ en:
       strip: "Lanes along the road shows the lanes left to right. Click one here or on the map to edit it; shift-click to pick more."
       tools: "The lane tools: Paint a value onto lanes, drag lane Widths, place Markings and Signs, and Connect lanes across a junction. Esc returns to Select."
       fields: "Lane Studio's road fields sit among iD's in Fields: the Number of lanes each way, the centre line and more. Every field has an i button with a short overview and a wiki link."
-      speed: "Speed limit picks UK roundels and limit types (national limit, motorway, 20 zone). A lane can have its own limit in the Lanes section."
+      speed: "Speed limit shows the limit chosen with its sign; its dropdown lists UK limits and limit types. Type a number or nsl, zone or motorway. A lane can have its own limit in the Lanes section."
     roadside:
       title: Roadside
       plus: "The + at each kerb adds a lane, hard shoulder, pavement, cycleway, parking or no-waiting lines to that side, asking for their tags."
@@ -41,7 +41,7 @@ en:
       speed: "Speed Limit colours every lane by its limit, with roads missing one in red. Pick a limit and click roads to set it."
       measure: "Measure measures a distance on the imagery and sets it as a road, lane, pavement or cycle lane width."
       key: "The Map key (G) explains every colour, line and symbol on the map."
-      settings: "The Lane Studio pane (K) sets lane opacity, hides iD's lines under lanes, land use and brand logos, and shows what's new."
+      settings: "The Lane Studio pane (K) sets lane opacity, hides iD's lines under lanes, land use and brand logos, holds the privacy setting and shows what's new."
       checks: "The Issues pane checks lane tags as you edit: lane counts, widths, unmarked bus lanes, old values, turns into dead ends."
     start:
       title: Start editing
@@ -69,7 +69,7 @@ en:
         - **Edit them** in the Lanes section: direction, turn arrows, lane change, speed limit, lane type, destination, access, width and any other `*:lanes` tag.
         - **Lane tools**: Paint a value onto lanes, Width (drag lane lines), Markings (crossings, stop and give way, signals, calming), Connect (lane connections across a junction), Signs.
         - **Lines between lanes**: click one to cycle it (dashed, solid, crossable one way); click a side of the centre line to ban or allow overtaking.
-        - **Road fields** in iD's Fields: Number of lanes, Centre line, Speed limit (UK roundels and limit types), Minimum speed, Active traffic management.
+        - **Road fields** in iD's Fields: Number of lanes, Centre line, Speed limit (UK roundels and limit types, or type a number or nsl), Minimum speed, Advisory speed, Structure, Active traffic management.
         - `width` is kerb to kerb: parking and cycle lanes on the road are part of it.
     roadside:
       title: Roadside and parking
@@ -98,7 +98,6 @@ en:
       oneway: "{n} lanes, one way"
       twoway: "{forward} forward, {backward} backward"
       both_ways: "{n} both ways"
-    assumed: Lane count assumed from the road type; nothing is written until you change it.
     old_busway: "This road's bus lanes are tagged the old way (busway:<side>=lane). Upgrade them to lanes of their own (bus:lanes=designated)."
     no_markings: No lane markings
     counts:
@@ -202,6 +201,9 @@ en:
     tagged: "Tagged: {value}"
     min_mph: "Minimum {n} mph"
     min_road_label: Minimum speed
+    advisory_label: Advisory speed limit
+    advisory_mph: "{n} mph advised"
+    advisory_none: No advisory limit
     min_none: No minimum speed
     lane_title: Speed of this lane
     lanes_title: "Speed of these {n} lanes"
@@ -474,6 +476,19 @@ en:
       grass: Grass
       island: Traffic island
       car_park: Car park
+  structure:
+    title: Structure
+    layer: Layer
+    values:
+      none: None
+      bridge: Bridge
+      viaduct: Viaduct
+      tunnel: Tunnel
+      building_passage: Passage through a building
+      embankment: Embankment
+      cutting: Cutting
+      ford: Ford
+      covered: Covered
   labels:
     no_hgv: no HGV
     hgv: HGV lane
@@ -493,8 +508,6 @@ en:
     shoulder_no: No hard shoulder
     shoulder_width: Width (m)
     side_width: "{side} width (m)"
-    shoulder_assumed: Drawn 2.5 m wide until a width is tagged.
-    shoulder_motorway: "Motorways are drawn with a hard shoulder until the road says otherwise: tag shoulder=no, or make a lane the running hard shoulder."
     sidewalk: Pavement
     cycleway: Cycleway
     parking: Parking
@@ -621,6 +634,7 @@ en:
     joined_lane: Part of the carriageway of {road}.
     not_joined: No road with lanes nearby to join to.
   annotation:
+    structure: Changed the road's structure.
     lanes: Changed the number of lanes.
     overtaking: Changed where traffic may overtake.
     parking: Changed street parking.
@@ -881,6 +895,8 @@ en:
       single_red: "Single red: no stopping at the times signed"
   info_link: "{page} on the OpenStreetMap wiki"
   info:
+    advisory: "The speed advised on a plate below a warning sign (maxspeed:advisory), such as on a bend: not a limit. Type a number for any other speed."
+    structure: "What the road is on or in: a bridge or viaduct (bridge=*), a tunnel or a passage through a building (tunnel=*), an embankment, a cutting, a ford or a covered way. A bridge or tunnel also gets a layer."
     access: "Who may use the lane (access:lanes): yes, no, designated, destination and so on, one value per lane."
     camera: "A speed camera or red light camera (highway=speed_camera); the limit it enforces is its maxspeed, and direction is the way it faces."
     centre_line: "The line between traffic going opposite ways. Dashed where either way may overtake; a double white line is solid on the side of the traffic that may not cross it (overtaking=*, overtaking:forward, overtaking:backward)."

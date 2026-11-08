@@ -32,6 +32,7 @@ button (a short overview and a link to the wiki page). Rarely needed fields wait
 | Hide iD's lines and points under lanes | Leaves Lane Studio's drawing alone (still clickable; the selected road keeps its nodes) |
 | Hide land use | Hides `landuse=*` only, keeping car parks |
 | Show brand logos | A shop's or restaurant's logo (Wikidata `brand:wikidata`) in place of iD's marker |
+| Privacy | iD's third-party icons setting (iD's Preferences pane is left out) |
 | About | What's new, and links to the website, privacy policy and contact page |
 
 ## Vertices

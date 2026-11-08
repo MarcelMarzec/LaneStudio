@@ -11,7 +11,7 @@ import { actionChangeLanes } from '../actions/change_lanes';
 import { laneDriveSide } from '../core/drive_side';
 import { laneState } from '../core/lane_state';
 import {
-    assumedShoulder, busValue, cyclewayValue, hasOldCycleways, isSidewalkWay, parallelWays, roadContraflowSide, shoulderValue, sidewalkValue,
+    busValue, cyclewayValue, hasOldCycleways, isSidewalkWay, parallelWays, roadContraflowSide, shoulderValue, sidewalkValue,
     upgradeOldCycleways, withCycleway, withShoulder, withSidewalk
 } from '../core/roadside';
 import { isLaneRoad, laneRoadHighways, sidewalkExpectedHighways } from '../core/roads';
@@ -27,12 +27,12 @@ import {
     type LaneDirection, type LaneModel
 } from '../model';
 import type { InfoTopic } from './field_info';
-import { choiceButtons, fieldNote, fieldReference, sidedRows } from './lane_fields';
+import { compactChoice, fieldNote, fieldReference, sidedRows } from './lane_fields';
 import { parkingSideDetails, roadParkingScope } from './parking_fields';
 import { centreLineIcon } from './section_lanes';
 import { upgradeOldBusway } from '../model/kinds';
 import { cyclewaySideDetails } from './cycleway_fields';
-import { mphOf, roadSpeedPick, speedRoundels, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed } from './speed_roundels';
+import { mphOf, roadSpeedPick, speedChoice, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed } from './speed_roundels';
 
 type Div = d3.Selection<HTMLDivElement>;
 
@@ -119,7 +119,6 @@ function drawCounts(context: iD.Context, wrap: Div, road: osmWay) {
             .attr('title', t('_lanes.section.counts.add'))
             .on('click', () => perform(m => insertLane(m, direction), 'add_lane'));
     }
-    if (model.countSource === 'assumed') fieldNote(wrap, t('_lanes.section.assumed'), 'assumed');
     // bus lanes tagged the old way (busway:<side>=lane): one click makes each a lane of its own, bus:lanes=designated
     const graph = context.graph();
     const oneSide = shoulderSide(road, graph);
@@ -148,15 +147,25 @@ function drawCentreLine(context: iD.Context, wrap: Div, road: osmWay) {
     }
     const current = centreLine(road.tags);
     const tagged = Object.keys(road.tags).some(prefixed('overtaking'));
-    choiceButtons(wrap, centreLines.map(line => ({
-        value: line,
-        label: t(`_lanes.centre_line.values.${line}`),
-        icon: (button: d3.Selection<any>) => centreLineIcon(button, line, model.driveSide)
-    })), tagged ? current : undefined, (line: CentreLine) =>
-        context.perform(actionChangeTags(road.id, withCentreLine(road.tags, line)), t('_lanes.annotation.overtaking')))
-        .classed('centre-line-buttons', true);
-    fieldNote(wrap, t(`_lanes.centre_line.notes.${current}`));
+    compactChoice(context, wrap, {
+        id: 'centre-line',
+        choices: centreLines.map(line => ({
+            value: line,
+            label: t(`_lanes.centre_line.values.${line}`),
+            terms: centreLineTerms[line],
+            icon: (box: d3.Selection<any>) => centreLineIcon(box, line, model.driveSide)
+        })),
+        current: tagged ? current : undefined,
+        onPick: (line: CentreLine) =>
+            context.perform(actionChangeTags(road.id, withCentreLine(road.tags, line)), t('_lanes.annotation.overtaking'))
+    });
 }
+
+// words that pick a centre line when typed
+const centreLineTerms: Record<CentreLine, string[]> = {
+    dashed: ['dashed', 'yes', 'overtaking'], no_forward: ['overtaking:forward=no'], no_backward: ['overtaking:backward=no'],
+    no_both: ['double', 'double white', 'no', 'overtaking=no']
+};
 
 /** A value tagged in mph that no roundel shows (25 mph, 50 km/h), named under the roundels so it is not lost */
 function unusualSpeed(value: string | undefined) {
@@ -167,7 +176,7 @@ function unusualSpeed(value: string | undefined) {
 /** The road's speed limit, as roundels and the UK limit types' signs */
 function drawSpeed(context: iD.Context, wrap: Div, road: osmWay) {
     const pick = roadSpeedPick(road.tags);
-    speedRoundels(wrap, {
+    speedChoice(context, wrap, 'maxspeed', {
         current: pick, types: true, none: true,
         onPick: next => context.perform(actionChangeTags(road.id, withRoadSpeed(road.tags, next)), t('_lanes.annotation.speed'))
     });
@@ -182,13 +191,113 @@ function drawSpeed(context: iD.Context, wrap: Div, road: osmWay) {
 /** The road's minimum speed, as blue roundels */
 function drawMinspeed(context: iD.Context, wrap: Div, road: osmWay) {
     const minimum = mphOf(road.tags.minspeed);
-    speedRoundels(wrap, {
+    speedChoice(context, wrap, 'minspeed', {
         current: !road.tags.minspeed ? { kind: 'none' } : minimum === null ? undefined : { kind: 'mph', mph: minimum },
         minimum: true, none: true, noneLabel: t('_lanes.speed.min_none'),
         onPick: next => context.perform(actionChangeTags(road.id, withRoadMinspeed(road.tags, next)), t('_lanes.annotation.minspeed'))
     });
     const odd = unusualSpeed(road.tags.minspeed);
     if (odd) wrap.append('p').attr('class', 'speed-tagged').text(t('_lanes.speed.tagged', { value: odd }));
+}
+
+/** The road's advisory speed limit (`maxspeed:advisory`): the limit on a plate below a warning sign, not enforced */
+function drawAdvisory(context: iD.Context, wrap: Div, road: osmWay) {
+    const value = road.tags['maxspeed:advisory'];
+    const mph = mphOf(value);
+    const advisories = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+    const shown = mph !== null && !advisories.includes(mph) ? [mph, ...advisories] : advisories;
+    compactChoice(context, wrap, {
+        id: 'advisory',
+        choices: [
+            ...shown.map(n => ({ value: String(n), label: t('_lanes.speed.advisory_mph', { n }), terms: [`${n}`, `${n} mph`], icon: advisoryPlate(n) })),
+            { value: 'none', label: t('_lanes.speed.advisory_none'), terms: ['none', 'no'] }
+        ],
+        current: !value ? 'none' : mph === null ? undefined : String(mph),
+        custom: text => text.match(/^(\d{1,3})\s*(mph)?$/i)?.[1],
+        onPick: next => {
+            const tags = { ...road.tags };
+            if (next === 'none') delete tags['maxspeed:advisory'];
+            else tags['maxspeed:advisory'] = `${next} mph`;
+            context.perform(actionChangeTags(road.id, tags), t('_lanes.annotation.speed'));
+        }
+    });
+    const odd = value && mph === null ? value : undefined;
+    if (odd) wrap.append('p').attr('class', 'speed-tagged').text(t('_lanes.speed.tagged', { value: odd }));
+}
+
+/** An advisory speed plate, as in the UK (TSRGD diagram 513): the number over MPH on a white rectangle */
+const advisoryPlate = (n: number) => (box: d3.Selection<any>) => {
+    const svg = box.append('svg').attr('width', 20).attr('height', 22).attr('viewBox', '0 0 20 22');
+    svg.append('rect').attr('x', 1).attr('y', 1).attr('width', 18).attr('height', 20).attr('rx', 2)
+        .attr('fill', '#fff').attr('stroke', '#111').attr('stroke-width', 1.4);
+    svg.append('text').attr('x', 10).attr('y', 12).attr('text-anchor', 'middle').attr('font-size', 9).attr('font-weight', 700)
+        .attr('fill', '#111').text(n);
+    svg.append('text').attr('x', 10).attr('y', 18.5).attr('text-anchor', 'middle').attr('font-size', 5).attr('fill', '#111').text('MPH');
+};
+
+/** Structures a road can be on or in (wiki: Key:bridge, Key:tunnel…): the tags each writes */
+export const structures = ['none', 'bridge', 'viaduct', 'tunnel', 'building_passage', 'embankment', 'cutting', 'ford', 'covered'] as const;
+export type Structure = typeof structures[number];
+const structureKeys = ['bridge', 'tunnel', 'embankment', 'cutting', 'ford', 'covered'];
+
+/** The structure a road's tags say it is on or in */
+export function structureOf(tags: Tags): Structure {
+    if (tags.bridge === 'viaduct') return 'viaduct';
+    if (tags.bridge && tags.bridge !== 'no') return 'bridge';
+    if (tags.tunnel === 'building_passage') return 'building_passage';
+    if (tags.tunnel && tags.tunnel !== 'no') return 'tunnel';
+    for (const key of ['embankment', 'cutting', 'ford', 'covered'] as const) if (tags[key] && tags[key] !== 'no') return key;
+    return 'none';
+}
+
+/**
+ * Sets a road's structure, removing the others: a bridge or viaduct goes up a layer (`layer=1` when none is tagged),
+ * a tunnel down (`layer=-1`); going back to none removes the layer it set
+ */
+export function withStructure(tags: Tags, structure: Structure): Tags {
+    const before = structureOf(tags);
+    const next = { ...tags };
+    for (const key of structureKeys) delete next[key];
+    if ((before === 'bridge' || before === 'viaduct') && next.layer === '1') delete next.layer;
+    if ((before === 'tunnel' || before === 'building_passage') && next.layer === '-1') delete next.layer;
+    switch (structure) {
+        case 'bridge': next.bridge = 'yes'; break;
+        case 'viaduct': next.bridge = 'viaduct'; break;
+        case 'tunnel': next.tunnel = 'yes'; break;
+        case 'building_passage': next.tunnel = 'building_passage'; break;
+        case 'embankment': next.embankment = 'yes'; break;
+        case 'cutting': next.cutting = 'yes'; break;
+        case 'ford': next.ford = 'yes'; break;
+        case 'covered': next.covered = 'yes'; break;
+    }
+    if ((structure === 'bridge' || structure === 'viaduct') && !next.layer) next.layer = '1';
+    if ((structure === 'tunnel' || structure === 'building_passage') && !next.layer) next.layer = '-1';
+    return next;
+}
+
+/** The road's structure (bridge, tunnel, embankment…) and, on a bridge or in a tunnel, its layer */
+function drawStructure(context: iD.Context, wrap: Div, road: osmWay) {
+    const current = structureOf(road.tags);
+    const retag = (tags: Tags) => context.perform(actionChangeTags(road.id, tags), t('_lanes.annotation.structure'));
+    compactChoice(context, wrap, {
+        id: 'structure',
+        choices: structures.map(value => ({ value, label: t(`_lanes.structure.values.${value}`), terms: [value] })),
+        current,
+        onPick: (value: Structure) => retag(withStructure(road.tags, value))
+    });
+    if (current === 'none') return;
+    sidedRows(context, wrap, [{
+        id: 'structure-layer',
+        label: t('_lanes.structure.layer'),
+        value: road.tags.layer ?? '',
+        suggestions: ['-2', '-1', '1', '2', '3'].map(value => ({ value })),
+        onChange: (value: string) => {
+            const tags = { ...road.tags };
+            if (value) tags.layer = value;
+            else delete tags.layer;
+            retag(tags);
+        }
+    }]);
 }
 
 type SidedFeature = 'shoulder' | 'sidewalk' | 'cycleway' | 'parking';
@@ -227,7 +336,7 @@ function drawSided(feature: SidedFeature) {
             };
         }));
 
-        if (feature === 'shoulder') drawShoulderExtras(context, wrap, road, sides, nameOf, oneSide);
+        if (feature === 'shoulder') drawShoulderExtras(context, wrap, road, sides, nameOf);
         if (feature === 'sidewalk') drawSidewalkExtras(context, wrap, road, sides, nameOf);
         if (feature === 'cycleway') cyclewaySideDetails(context, wrap, road, sides, nameOf);
         if (feature === 'cycleway' && hasOldCycleways(tags)) {
@@ -251,12 +360,10 @@ function drawSided(feature: SidedFeature) {
 }
 
 /** Under the hard shoulders: their widths, and the picked one (clicked on the map) highlighted */
-function drawShoulderExtras(context: iD.Context, wrap: Div, road: osmWay, sides: ParkingSide[], nameOf: (side: ParkingSide) => string,
-    oneSide: ParkingSide | null) {
+function drawShoulderExtras(context: iD.Context, wrap: Div, road: osmWay, sides: ParkingSide[], nameOf: (side: ParkingSide) => string) {
     const graph = context.graph();
     const tags = road.tags;
     const layout = laneLayout(road, graph);
-    const running = layout.lanes.some(l => l.kind === 'variable');
     const withShoulders = sides.filter(side => layout.roadside[side].some(s => s.kind === 'shoulder'));
     const state = laneState(context);
     const picked = state.shoulder()?.wayID === road.id ? state.shoulder()!.side : null;
@@ -277,9 +384,7 @@ function drawShoulderExtras(context: iD.Context, wrap: Div, road: osmWay, sides:
             };
         }));
         rows.classed('lanes-shoulder-widths', true);
-        if (withShoulders.some(side => layout.roadside[side].find(s => s.kind === 'shoulder')?.assumed)) fieldNote(wrap, t('_lanes.roadside.shoulder_assumed'));
     }
-    if (sides.some(side => assumedShoulder(tags, side, oneSide, running))) fieldNote(wrap, t('_lanes.roadside.shoulder_motorway'));
     if (picked) {
         const node = wrap.node()?.closest('.form-field');
         node?.classList.add('lanes-picked');
@@ -329,18 +434,19 @@ function drawManaged(context: iD.Context, wrap: Div, road: osmWay) {
         return setLaneKind(insertLane(m, direction, index), [{ direction, index }], 'variable');
     };
 
-    choiceButtons(wrap, managedSchemes.map(scheme => ({
-        value: scheme,
-        label: t(`_lanes.managed.schemes.${scheme}`),
-        tip: t(`_lanes.managed.scheme_tips.${scheme}`),
-        disabled: scheme === 'dynamic_hard_shoulder' && !model.oneway
-    })), current, scheme => {
-        context.perform((graph: iD.Graph) => {
+    compactChoice(context, wrap, {
+        id: 'managed',
+        // (a dynamic hard shoulder is a lane on one carriageway: two-way roads can't have one)
+        choices: managedSchemes.filter(scheme => scheme !== 'dynamic_hard_shoulder' || model.oneway).map(scheme => ({
+            value: scheme, label: t(`_lanes.managed.schemes.${scheme}`), terms: [scheme.replace(/_/g, ' ')]
+        })),
+        current,
+        onPick: (scheme: ManagedScheme) => context.perform((graph: iD.Graph) => {
             const changed = actionChangeLanes(road.id, lanesFor(scheme))(graph);
             const way = changed.entity(road.id) as osmWay;
             return actionChangeTags(road.id, withManagedScheme(way.tags, scheme))(changed);
-        }, t('_lanes.annotation.managed'));
-    }).classed('lanes-managed-schemes', true);
+        }, t('_lanes.annotation.managed'))
+    });
     fieldNote(wrap, t('_lanes.managed.hint'));
 
     // a variable limit, and why it varies
@@ -375,6 +481,11 @@ export const roadFieldDefs: RoadFieldDef[] = [
         info: 'maxspeed', label: '_lanes.speed.road_label', draw: drawSpeed, wrapClass: 'lane-field-body form-field-speed' },
     { id: 'lanes/minspeed', keys: ['minspeed'], owns: key => key === 'minspeed',
         info: 'minspeed', label: '_lanes.speed.min_road_label', draw: drawMinspeed, wrapClass: 'lane-field-body form-field-speed' },
+    { id: 'lanes/advisory', keys: ['maxspeed:advisory'], owns: key => key === 'maxspeed:advisory',
+        info: 'advisory', label: '_lanes.speed.advisory_label', draw: drawAdvisory, wrapClass: 'lane-field-body form-field-speed' },
+    { id: 'lanes/structure', keys: ['bridge', 'tunnel', 'embankment', 'cutting', 'ford', 'covered', 'layer'],
+        owns: key => [...structureKeys, 'layer'].includes(key), info: 'structure', label: '_lanes.structure.title', draw: drawStructure,
+        wrapClass: 'lane-field-body' },
     { id: 'lanes/shoulder', keys: ['shoulder', 'shoulder:left', 'shoulder:right', 'shoulder:both'], owns: prefixed('shoulder'),
         info: 'shoulder', label: '_lanes.roadside.shoulder', draw: drawSided('shoulder'), wrapClass: 'lane-field-rows' },
     { id: 'lanes/sidewalk', keys: ['sidewalk', 'sidewalk:left', 'sidewalk:right', 'sidewalk:both'], owns: prefixed('sidewalk'),
@@ -446,12 +557,16 @@ function placeFor(id: string, highway: string): 'fields' | 'more' | null {
         case 'lanes/cycleway': return 'more';
         case 'lanes/parking': return ['residential', 'living_street'].includes(highway) ? 'fields' : 'more';
         case 'lanes/managed': return motorway ? 'fields' : canBeManaged({ highway }) ? 'more' : null;
+        case 'lanes/advisory':
+        case 'lanes/structure': return 'more';
     }
     return null;
 }
 
 /** iD's fields Lane Studio's replace on the roads it edits */
 const replacedFields = ['lanes', 'maxspeed', 'minspeed', 'sidewalk', 'cycleway', 'parking/side/parking', 'parking/side/orientation'];
+/** iD's fields replaced where they stand, by Lane Studio's field for the same tags */
+const replacedInPlace: Record<string, string> = { structure: 'lanes/structure', 'maxspeed/advisory': 'lanes/advisory' };
 
 /**
  * Registers Lane Studio's road fields with iD (as field types and fields) and puts them in the presets of the roads
@@ -486,6 +601,8 @@ export function laneStudioRoadFields() {
 /** A road preset's fields with Lane Studio's in place of iD's for the same tags (both lists are changed in place) */
 export function arrangeFields(fields: string[], more: string[], highway: string) {
     const place = (id: string) => placeFor(id, highway);
+    // iD's structure and advisory speed fields give way to Lane Studio's, where they stand
+    for (const list of [fields, more]) list.forEach((id, k) => { if (replacedInPlace[id]) list[k] = replacedInPlace[id]; });
     // the number of lanes, the centre line and the speed limits together, where iD has the first of Lanes or its
     // speed limit, else after oneway (or the name)
     const road = ['lanes/counts', 'lanes/centre_line', 'lanes/maxspeed', 'lanes/minspeed'].filter(id => place(id) === 'fields');

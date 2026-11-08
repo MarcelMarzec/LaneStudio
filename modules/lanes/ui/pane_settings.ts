@@ -4,6 +4,7 @@ import { t, localizer } from '../../core/localizer';
 import { svgIcon } from '../../svg/icon';
 import { uiPane } from '../../ui/pane';
 import { uiSection } from '../../ui/section';
+import { uiSectionPrivacy } from '../../ui/sections/privacy';
 import { uiTooltip } from '../../ui/tooltip';
 import { laneSettings, defaultSurfaceOpacity } from '../core/lane_settings';
 import { laneStudioLinks } from '../core/links';
@@ -210,5 +211,6 @@ export function uiPaneLaneStudio(context: iD.Context) {
         .label(t.append('_lanes.settings.title'))
         .description(t.append('_lanes.settings.description'))
         .iconName('lanes-icon-pane')
-        .sections([uiSectionLaneDisplay(context), uiSectionLaneAbout(context)]);
+        // (with iD's privacy setting, third-party icons, in place of iD's Preferences pane)
+        .sections([uiSectionLaneDisplay(context), uiSectionPrivacy(context), uiSectionLaneAbout(context)]);
 }
