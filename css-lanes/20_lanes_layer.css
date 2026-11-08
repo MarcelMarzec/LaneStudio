@@ -578,3 +578,13 @@
 .ideditor.lane-studio .lanes-roadside-add-layer .roadside-add-button:hover path,
 .ideditor.lane-studio .lanes-roadside-add-layer .roadside-add-button:focus path { stroke: #fff; }
 .ideditor.lane-studio .lanes-roadside-add-layer .roadside-add-button:focus { outline: none; }
+
+/* the Measure tool's line, its ends and the distance */
+.ideditor.lane-studio .lanes-measure { pointer-events: none; }
+.ideditor.lane-studio .lanes-measure-line { fill: none; stroke: #ff922b; stroke-width: 2.5; stroke-dasharray: 6, 4; }
+.ideditor.lane-studio .lanes-measure-end { fill: #ff922b; stroke: #fff; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-measure-label {
+    fill: #fff; font-weight: 700; font-size: 13px;
+    paint-order: stroke; stroke: rgba(0, 0, 0, 0.8); stroke-width: 3px;
+}
+.ideditor.lane-studio .lanes-measuring { cursor: crosshair; }

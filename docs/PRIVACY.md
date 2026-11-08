@@ -22,7 +22,7 @@ typefaces from Google Fonts, so Google receives your IP address when one of them
 Lane Studio does not set tracking cookies and does not collect analytics. It stores some information
 in your browser's local storage so you don't have to re-enter it: your settings (such as lane opacity,
 the map layers shown, whether the what's new menu is shown, whether Lane Studio's sections (Look ahead,
-Roundabout) and each side's parking details are folded away, and whether land use and brand logos are shown), the Lane Studio version you last used
+Roundabout, the Map key's sections) and each side's parking and cycle lane details are folded away, and whether land use and brand logos are shown), the Lane Studio version you last used
 (so the what's new menu shows only what changed since) and edits you have not saved yet, under keys
 starting with `lanes_`, and
 your OpenStreetMap login token, under a key named after the OpenStreetMap server. This stays on your
@@ -90,6 +90,8 @@ law, or want to ask about it, open an issue at
 [https://github.com/MarcelMarzec/LaneStudio/issues](https://github.com/MarcelMarzec/LaneStudio/issues).
 
 ### Changelog
+
+* _2026-Nov-08_ - Whether the Map key's sections and each side's cycle lane details are folded away is stored with your settings. The Measure tool measures in your browser and sends nothing anywhere.
 
 * _2026-Nov-07_ - Whether each side's parking details are folded away is stored with your settings. The i button on Lane Studio's fields shows text built into Lane Studio, so nothing is fetched from the OpenStreetMap wiki until you follow its link (iD's own i buttons still look the field up on the wiki).
 

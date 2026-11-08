@@ -6,6 +6,7 @@ import { prefs } from '../../core/preferences';
 import { uiEntityEditorAddSection } from '../../ui/entity_editor';
 import { uiSectionPresetFieldsSetFilter } from '../../ui/sections/preset_fields';
 import { uiInitAddPane, uiInitSetSidebarHeader } from '../../ui/init';
+import { uiPaneMapKey } from '../ui/pane_key';
 import { uiTopToolbarAddTool } from '../../ui/top_toolbar';
 import { uiVersionSetProduct } from '../../ui/version';
 import { svgVerticesSetImportance } from '../../svg/vertices';
@@ -75,11 +76,13 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
 
     // Lane Studio's settings pane, first in the pane bar
     uiInitAddPane(uiPaneLaneStudio);
+    // the Map key, after it
+    uiInitAddPane(uiPaneMapKey);
 
     // Lane Studio's name and mark, top left above the sidebar
     uiInitSetSidebarHeader(uiLaneStudioLogo);
 
-    // Selection, Routing and Speed Limit, in the top bar before iD's Point, Line and Area
+    // Selection, Routing, Speed Limit and Measure, in the top bar before iD's Point, Line and Area
     uiTopToolbarAddTool(uiToolLaneModes);
 
     // the footer names Lane Studio's version, linking to its repository and changelog

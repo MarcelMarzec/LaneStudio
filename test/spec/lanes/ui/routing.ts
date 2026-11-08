@@ -44,14 +44,14 @@ describe('Lane Studio routing tool', () => {
 
     afterEach(() => laneRouting(context).setActive(false));
 
-    it('puts Selection, Routing and Speed Limit in the top bar, Selection on to begin with', () => {
+    it('puts Selection, Routing, Speed Limit and Measure in the top bar, Selection on to begin with', () => {
         const bar = d3_select(document.createElement('div'));
         uiToolLaneModes(context).render(bar as any);
         const buttons = bar.selectAll<HTMLButtonElement, unknown>('button.lanes-mode-button').nodes();
-        expect(buttons.map(b => b.querySelector('.label')?.textContent)).toEqual(['Selection', 'Routing', 'Speed Limit']);
-        expect(buttons.map(b => b.classList.contains('active'))).toEqual([true, false, false]);
+        expect(buttons.map(b => b.querySelector('.label')?.textContent)).toEqual(['Selection', 'Routing', 'Speed Limit', 'Measure']);
+        expect(buttons.map(b => b.classList.contains('active'))).toEqual([true, false, false, false]);
         laneRouting(context).setActive(true);
-        expect(buttons.map(b => b.classList.contains('active'))).toEqual([false, true, false]);
+        expect(buttons.map(b => b.classList.contains('active'))).toEqual([false, true, false, false]);
         expect(container.classed('lanes-routing')).toBe(true);
     });
 

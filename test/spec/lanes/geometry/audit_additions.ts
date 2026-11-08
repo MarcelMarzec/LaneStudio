@@ -3,7 +3,7 @@ import { signalsKind, streetGeometry, ukControlledCrossing } from '../../../../m
 import { laneSymbols } from '../../../../modules/lanes/geometry/lane_symbols';
 import { roadGeometry } from '../../../../modules/lanes/geometry/road_geometry';
 import { busValue } from '../../../../modules/lanes/core/roadside';
-import { upgradeOldBusway } from '../../../../modules/lanes/ui/road_fields';
+import { upgradeOldBusway } from '../../../../modules/lanes/model/kinds';
 import { withCyclewayDetail } from '../../../../modules/lanes/ui/cycleway_fields';
 import { laneRestrictions } from '../../../../modules/lanes/svg/lanes';
 import { laneKindOf, parseLanes } from '../../../../modules/lanes/model';

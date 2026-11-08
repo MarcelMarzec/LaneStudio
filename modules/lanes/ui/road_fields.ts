@@ -30,6 +30,7 @@ import type { InfoTopic } from './field_info';
 import { choiceButtons, fieldNote, fieldReference, sidedRows } from './lane_fields';
 import { parkingSideDetails, roadParkingScope } from './parking_fields';
 import { centreLineIcon } from './section_lanes';
+import { upgradeOldBusway } from '../model/kinds';
 import { cyclewaySideDetails } from './cycleway_fields';
 import { mphOf, roadSpeedPick, speedRoundels, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed } from './speed_roundels';
 
@@ -137,22 +138,6 @@ function drawCounts(context: iD.Context, wrap: Div, road: osmWay) {
     }
 }
 
-/**
- * Adds a bus lane for each side tagged `busway:<side>=lane` (wiki: Key:busway, deprecated for bus:lanes): a lane on the
- * kerb side of the traffic beside it, `bus:lanes=designated`
- */
-export function upgradeOldBusway(model: LaneModel, sides: ParkingSide[]): LaneModel {
-    let next = model;
-    for (const side of sides) {
-        // the traffic beside a side: on a one-way road the road's, else the side's own (forward on the way's right
-        // where traffic keeps right)
-        const direction: LaneDirection = next.oneway || ((side === 'right') === (next.driveSide === 'right') ? 'forward' : 'backward');
-        // a lane's index counts from the driver's left: the kerb side is the start where traffic keeps left
-        const index = next.driveSide === 'left' ? 0 : next.lanes[direction].length;
-        next = setLaneKind(insertLane(next, direction, index), [{ direction, index }], 'bus');
-    }
-    return next;
-}
 
 /** The centre line, picked from its four paintings (wiki: Key:overtaking) */
 function drawCentreLine(context: iD.Context, wrap: Div, road: osmWay) {

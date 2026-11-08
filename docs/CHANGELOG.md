@@ -8,6 +8,23 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08r3
+##### 2026-Nov-08
+
+#### Editing
+* A Measure tool in the top bar: click two points on the imagery to measure between them, then set the distance
+  as the road's width, a lane's width, or the pavement, cycle lane, hard shoulder or parking width on that side,
+  in one click
+* A Map key pane (shortcut `G`) shows every colour, line, symbol and surface on the map beside what it means
+
+#### Lanes and junctions
+* The Lane tags check finds a `width` narrower than its lanes add up to, bus lanes counted in `lanes:bus` but not
+  marked on a lane (and marks the kerb-side lanes), the old `opposite_*` cycleway and `busway=lane` values (and
+  upgrades them), lanes turning off at a road's dead end, and a merging lane whose road carries on with as many lanes
+
+#### Website
+* The front page describes the Measure tool, the Map key and the new checks
+
 # 26.11.08r2
 ##### 2026-Nov-08
 

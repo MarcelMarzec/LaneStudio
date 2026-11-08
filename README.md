@@ -49,7 +49,9 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   they cross), stop and give way lines, traffic signals, islands, road markings, street parking,
   parking spaces and car parks, traffic signs, message signs, cameras, bridges, tunnels and roads
   under construction; micro-mapped highway areas (`area:highway=*`: road and junction areas, hatching,
-  crossings); and brand logos from Wikidata in place of shop and restaurant markers.
+  crossings, multipolygons too); UK markings (crossing zig-zags and Belisha beacons, BUS LANE, cycle
+  symbols, bus stop boxes, advanced stop lines, tactile paving); and brand logos from Wikidata in place of
+  shop and restaurant markers.
 * **Railways**: track at its gauge (ballast, sleepers, rails and conductor rails) for main lines, the
   Underground, light rail, trams, narrow gauge and more; platforms; level crossings with UK-style
   barriers, light signals and road markings; Network Rail colour-light and shunt signals; buffer
@@ -62,7 +64,11 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   same way, and the UK's national, motorway and restricted road limit types are set with their limit.
 * **Look ahead**: the roads a selected road leads on to, its exits and their destinations, and
   copying lanes to the next road.
-* **Checks**: a lane tags rule in iD's Issues pane, with fixes where the answer is certain.
+* **Measure**: measure a distance on the imagery and set it as a road, lane, pavement, cycle lane, hard
+  shoulder or parking width with one click.
+* **Map key**: a pane explaining every colour, line, symbol and surface on the map.
+* **Checks**: a lane tags rule in iD's Issues pane (lane counts, widths, unmarked bus lanes, old values, turn
+  arrows at dead ends, merges that never end), with fixes where the answer is certain.
 * **What's new**: after an update, a menu lists what changed since the version you last used.
 
 The full guide (zoom levels, tools, what is drawn and how junctions work) is in [LANES.md](docs/LANES.md).

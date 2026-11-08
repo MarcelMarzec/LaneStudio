@@ -673,3 +673,15 @@
     display: none;
 }
 .ideditor.lane-studio .lane-road-field-wrap .lane-parking-details .form-field:last-child { margin-bottom: 4px; }
+
+/* the Map key pane: a swatch drawn with the map's own classes beside what it means */
+.ideditor.lane-studio .lanes-key-list { list-style: none; margin: 0; padding: 0 0 8px; }
+.ideditor.lane-studio .lanes-key-item { display: flex; align-items: center; gap: 10px; padding: 3px 0; }
+.ideditor.lane-studio .lanes-key-swatch { flex: none; border-radius: 3px; overflow: hidden; }
+.ideditor.lane-studio .lanes-key-swatch .lanes-key-ground { fill: rgb(48, 52, 60); }
+.ideditor.lane-studio .lanes-key-label { color: var(--text-color, inherit); }
+
+/* the Measure tool's panel: the distance, and the widths it can be set as */
+.ideditor.lane-studio .lanes-measure-result { font-size: 22px; font-weight: 700; margin: 6px 0; }
+.ideditor.lane-studio .lanes-measure-targets { display: flex; flex-direction: column; gap: 6px; }
+.ideditor.lane-studio .lanes-measure-target { text-align: left; padding: 6px 10px; height: auto; white-space: normal; }

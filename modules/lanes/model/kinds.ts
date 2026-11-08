@@ -1,5 +1,5 @@
-import { laneValue, setLaneValue } from './ops';
-import type { LaneModel, LaneRef } from './types';
+import { insertLane, laneValue, setLaneValue } from './ops';
+import type { LaneDirection, LaneModel, LaneRef } from './types';
 
 /** Lane types and the `*:lanes` key that marks each one `designated`; general traffic sets none */
 export const laneKindKeys: Record<string, string | null> = {
@@ -72,6 +72,24 @@ export function setLaneKind(model: LaneModel, refs: LaneRef[], kind: string): La
             const want = k === kind ? kindValue(k) : '';
             if (current !== want && (want || next.keys[key])) next = setLaneValue(next, ref, key, want);
         }
+    }
+    return next;
+}
+
+
+/**
+ * Adds a bus lane for each side tagged `busway:<side>=lane` (wiki: Key:busway, deprecated for bus:lanes): a lane on the
+ * kerb side of the traffic beside it, `bus:lanes=designated`
+ */
+export function upgradeOldBusway(model: LaneModel, sides: ('left' | 'right')[]): LaneModel {
+    let next = model;
+    for (const side of sides) {
+        // the traffic beside a side: on a one-way road the road's, else the side's own (forward on the way's right
+        // where traffic keeps right)
+        const direction: LaneDirection = next.oneway || ((side === 'right') === (next.driveSide === 'right') ? 'forward' : 'backward');
+        // a lane's index counts from the driver's left: the kerb side is the start where traffic keeps left
+        const index = next.driveSide === 'left' ? 0 : next.lanes[direction].length;
+        next = setLaneKind(insertLane(next, direction, index), [{ direction, index }], 'bus');
     }
     return next;
 }

@@ -45,8 +45,19 @@ that is closed.
 single lane shared by both directions on a track, a driveway, an alley, a drive-through, a fuel station
 lane or an emergency access road (`service=*`), or a service road tagged `narrow=yes` or narrower than 4.5 m.
 
-**Top bar**: Selection (the default: select and edit roads, lanes and other features), Routing and
-Speed Limit, then iD's Point, Line and Area for adding features.
+**Top bar**: Selection (the default: select and edit roads, lanes and other features), Routing, Speed
+Limit and Measure, then iD's Point, Line and Area for adding features.
+
+**Measure** (top bar, or leave with Esc): click two points on the map, such as the kerbs either side of a road on
+the imagery, to measure the distance between them (in metres, along the ground). The sidebar then offers to set it,
+rounded to 0.1 m, as a width of the road nearest the middle of the line: the road's `width` (kerb to kerb), the
+width of the lane under the middle (`width:lanes`), or the pavement, cycle lane, hard shoulder or parking width on
+the side the middle is on. Each is one undo step. A third click starts a new measurement; Esc lets go of the
+measurement, then leaves the tool. (iD's Measurement panel, Ctrl+Shift+M, still measures a selected feature.)
+
+**Map key** (the pane after Lane Studio's, shortcut `G`): every colour, line, symbol and surface Lane Studio draws,
+each beside what it means, in folding sections (lanes, lines, roadside, crossings and road markings, surfaces and
+areas). The swatches are drawn with the map's own styles, so they always match it.
 
 **Routing** (top bar, or leave with Esc): editing is off and the sidebar shows the routes. Hover a lane
 to see every route a vehicle in it can take, up to 450 m and four junctions on, in numbered colours,
@@ -575,7 +586,11 @@ hidden).
 
 **Issues**: the "Lane tags" rule in iD's Issues pane checks lane tags everywhere on the map (value
 counts, lane counts, unknown turn values, deprecated values, `hov=lane`, `destination` on two-way
-roads) and offers a fix where the answer is certain.
+roads, a `width` narrower than its `width:lanes` add up to, bus lanes counted in `lanes:bus` or `lanes:psv` but
+not marked on a lane, the old `opposite_*` cycleway and `busway=lane` values, lanes turning off at a road's dead end,
+and a merging lane whose road carries on with as many lanes) and offers a fix where the answer is certain (marking
+the kerb-side lanes as bus lanes, upgrading the old values). The checks of where a road leads run only where the map
+data at its ends is loaded.
 
 ## Putting it online
 
@@ -658,6 +673,8 @@ that names its `created_by` value, listed on the wiki's Editors page.
 | Version shown in the footer and written to changesets | `modules/lanes/version.ts` |
 | Routing | `modules/lanes/geometry/routing.ts`, `modules/lanes/core/lane_routing.ts`, `modules/lanes/core/mode_routing.ts`, `modules/lanes/ui/routing_panel.ts`, `modules/lanes/svg/routing.ts` |
 | Brand logos | `modules/lanes/core/brand_logos.ts` (looking them up on Wikidata), `modules/lanes/svg/brand_logos.ts` (drawing them) |
+| Measure tool | `modules/lanes/core/mode_measure.ts`, `modules/lanes/ui/measure_panel.ts` |
+| Map key pane | `modules/lanes/ui/pane_key.ts` |
 | Speed Limit tool | `modules/lanes/core/lane_speed.ts`, `modules/lanes/core/mode_speed.ts`, `modules/lanes/ui/speed_panel.ts`, `modules/lanes/ui/speed_roundels.ts`, `modules/lanes/model/speed_limits.ts` (the speed tags) |
 | Railways | `modules/lanes/geometry/railway.ts` (track), `modules/lanes/geometry/rail_features.ts` (platforms, crossings, signals, equipment), `modules/lanes/svg/railway.ts` |
 | Parking spaces and car parks | `modules/lanes/geometry/parking_spaces.ts`, `modules/lanes/svg/parking_spaces.ts` |

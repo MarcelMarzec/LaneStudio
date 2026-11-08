@@ -189,9 +189,18 @@ require __DIR__ . '/includes/head.php';
         <div class="feature-icon"><?php icon_checks(); ?></div>
         <h3>Checks before upload</h3>
         <p>
-          Lane values that don't match the lane count, unknown turn arrows, deprecated values and
-          destinations on two-way roads are flagged while you're still editing, with a fix where the
-          answer is certain.
+          Lane values that don't match the lane count, widths narrower than their lanes, unmarked bus
+          lanes, old values, turn arrows at dead ends and merges that never end are flagged while you're
+          still editing, with a fix where the answer is certain.
+        </p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon"><?php icon_lanes(); ?></div>
+        <h3>Measure and read the map</h3>
+        <p>
+          The Measure tool measures a distance on the imagery and sets it as a road, lane, pavement or
+          cycle lane width in one click. The Map key explains every colour, line and symbol on the map.
         </p>
       </article>
     </div>

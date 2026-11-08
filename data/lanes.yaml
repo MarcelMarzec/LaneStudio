@@ -307,6 +307,95 @@ en:
         green: Green
         red: Red
         blue: Blue
+  measure:
+    title: Measure
+    hint: Click two points on the map, such as the kerbs either side of a road, to measure between them.
+    hint_second: Click the second point.
+    metres: "{m} m"
+    no_road: No road is near the middle of this line. Measure across a road to set one of its widths.
+    set_on: "Set it on {road} as"
+    sides:
+      left: left
+      right: right
+    targets:
+      road: "Road width, kerb to kerb (width={width})"
+      lane: "This lane's width (width:lanes)"
+      sidewalk: "Pavement width, {side} side"
+      cycleway: "Cycle lane width, {side} side"
+      shoulder: "Hard shoulder width, {side} side"
+      parking: "Parking width, {side} side"
+    annotation: Set a measured width.
+    done: Width set
+  key:
+    title: Map key
+    description: What the colours, lines and symbols on the map mean
+    key: G
+    groups:
+      lanes: Lanes
+      lines: Lines
+      roadside: Roadside
+      markings: Crossings and road markings
+      areas: Surfaces and areas
+    entries:
+      general: General traffic lane
+      bus: Bus lane
+      psv: PSV or taxi lane
+      hov: High-occupancy (HOV) lane
+      bicycle: Cycle lane in the lanes
+      pedestrian: Pedestrian lane
+      variable: Variable lane (running hard shoulder)
+      restricted: No access, or hatched area
+      shoulder: Hard shoulder
+      construction: Under construction
+      dashed: Lane line, may be crossed
+      solid: Lane line, may not be crossed
+      unknown: Lane line not tagged (change:lanes)
+      centre_solid: Centre line, one side may not overtake
+      centre_double: Double white line, no overtaking
+      edge: Edge line by a shoulder or cycle lane
+      bus_edge: Bus lane edge (UK)
+      advisory: Advisory cycle lane edge
+      kerb: Kerb, or the carriageway edge
+      kerb_lowered: Lowered kerb
+      kerb_flush: Flush kerb
+      double_yellow: No waiting at any time
+      single_yellow: No waiting at times
+      red: No stopping (red route)
+      connection: Lane connection (type=connectivity)
+      guide: Guide line through a junction
+      sidewalk: Pavement
+      sidewalk_unknown: Pavement not tagged
+      sidewalk_lane: Pedestrian lane on the road
+      cycle_lane: Cycle lane, its cycle symbol
+      cycle_track: Cycle track
+      cycle_buffer: Buffer beside a cycle lane
+      parking: Parking on the road
+      parking_kerb: Parking on the pavement
+      bus_bay: Bus bay
+      footway: Footway or path
+      cycleway: Cycleway
+      zebra: Zebra crossing
+      studs: Studs (UK signal crossing), dots
+      zigzag: Zig-zags at a UK crossing
+      stop: Stop line
+      give_way: Give way line
+      tactile_red: Tactile paving at signals
+      tactile_buff: Tactile paving elsewhere
+      asl: Advanced stop line box
+      belisha: Belisha beacon
+      signals: Traffic signals
+      sharrow: Shared lane (sharrow)
+      table: Speed table
+      hatched: Hatched area
+      asphalt: Asphalt
+      concrete: Concrete
+      paving: Paving stones
+      sett: Setts and cobbles
+      gravel: Gravel
+      unpaved: Unpaved
+      grass: Grass
+      island: Traffic island
+      car_park: Car park
   labels:
     no_hgv: no HGV
     hgv: HGV lane
@@ -374,6 +463,22 @@ en:
     hov_lane_reference: Mark the HOV lanes with hov:lanes=designated|… instead, using the Lanes section.
     destination_twoway: "{feature} has destination on a two-way road."
     destination_twoway_reference: Use destination:forward or destination:backward on two-way roads.
+    width_too_narrow: "{feature} has width={width}, narrower than its lanes' widths add up to ({lanes} m)."
+    width_too_narrow_reference: "width is the carriageway from kerb to kerb, so it is at least the lanes' widths (width:lanes) added up. One of them is wrong."
+    lanes_bus_unmarked: "{feature} has {key}, but {n} of those bus lanes are not marked on a lane."
+    lanes_bus_unmarked_reference: "lanes:bus says how many bus lanes there are; bus:lanes says which lanes they are. Mark them in the Lanes section."
+    fix_lanes_bus_unmarked: Mark the kerb-side lanes as bus lanes
+    old_cycleway: "{feature} uses the old opposite_* cycleway values."
+    old_cycleway_reference: "A contraflow cycle lane is cycleway:<side>=lane with cycleway:<side>:oneway=-1, and oneway:bicycle=no lets cycles ride both ways."
+    fix_old_cycleway: Upgrade to cycleway:<side> and oneway:bicycle
+    old_busway: "{feature} tags its bus lanes the old way (busway=lane)."
+    old_busway_reference: "Bus lanes are lanes of their own, marked with bus:lanes=designated (and counted in lanes)."
+    fix_old_busway: Make them lanes of their own
+    turn_dead_end: "{feature} has lanes turning off at an end no other road joins."
+    turn_dead_end_reference: "turn:lanes describes the turns at the end of the road, where it meets the roads it turns into. Check the arrows, or whether the road is joined to the next one."
+    merge_never_ends: "{feature} has a merging lane, but the road it leads on to has as many lanes."
+    merge_never_ends_reference: "merge_to_left and merge_to_right mark a lane that ends: the road after it has one lane fewer, or carries on merging."
+
   settings:
     title: Lane Studio
     description: Lane Studio settings
@@ -470,6 +575,9 @@ en:
     speed:
       title: Speed Limit
       tooltip: "Colour lanes by their speed limit and set limits by clicking roads. Keys 1 to 7 pick 10 to 70 mph; Esc leaves."
+    measure:
+      title: Measure
+      tooltip: "Measure a distance on the imagery, then set it as a road, lane, pavement, cycle lane, hard shoulder or parking width. Esc leaves."
   brand:
     tooltip: Lane Studio, a lane editor for OpenStreetMap
   speed_tool:

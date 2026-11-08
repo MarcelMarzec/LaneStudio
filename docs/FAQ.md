@@ -125,6 +125,20 @@ project. For missing or cloudy imagery:
 * _Esri World Imagery:_ use the [Imagery Map Feedback tool](https://www.arcgis.com/home/item.html?id=ebdfa4146680410bb952c7d532ea5407).
 
 
+## What do the colours and symbols on the map mean?
+
+Open the Map key pane (shortcut `G`, below the Lane Studio pane on the right): it shows every lane colour, line,
+roadside strip, crossing marking and surface Lane Studio draws, beside what each means.
+
+
+## How do I measure a road's width?
+
+Pick Measure in the top bar and click two points on the imagery, such as the kerbs either side of the road. The
+sidebar shows the distance and sets it, with one click, as the road's `width`, a lane's width, or the pavement,
+cycle lane, hard shoulder or parking width on that side. Remember that `width` is kerb to kerb: parking and cycle
+lanes on the road are part of it.
+
+
 ## Can I change the colours?
 
 The Lane Studio pane (shortcut `K`) sets how see-through lanes are and hides iD's own lines under
