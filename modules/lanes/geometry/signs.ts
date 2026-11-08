@@ -148,6 +148,36 @@ function onRoad(node: osmNode, road: osmWay, graph: coreGraph, direction: 'forwa
     return { anchor: frame.toLoc(anchor), facing: bearingOfVector(scale(travel, -1)) };
 }
 
+/**
+ * The signs at each end of a narrow stretch with priority one way (wiki: Key:priority): traffic with priority meets
+ * "priority over oncoming vehicles" (GB 811) as it enters, the other way "give way to oncoming vehicles" (GB 615)
+ */
+function prioritySigns(way: osmWay, graph: coreGraph): SignShape[] {
+    const ends = [{ node: way.first(), direction: 'forward' as const }, { node: way.last(), direction: 'backward' as const }];
+    return ends.map(({ node, direction }) => {
+        const placed = onRoad(graph.entity(node) as osmNode, way, graph, direction);
+        const code = way.tags.priority === direction ? 'GB:811' : 'GB:615';
+        return { key: `${way.id}-priority-${direction}`, nodeID: way.id, kind: 'sign' as const, anchor: placed.anchor, facing: placed.facing,
+            overhead: false, faces: [{ code }] };
+    });
+}
+
+/** A line across the road a node is on, kerb to kerb and a metre beyond, for a gantry over it */
+function acrossRoad(node: osmNode, graph: coreGraph): Vec2[] | null {
+    const road = graph.parentWays(node).find(isLaneRoad) as osmWay | undefined;
+    if (!road) return null;
+    const i = road.nodes.indexOf(node.id);
+    const frame = metricFrame(node.loc);
+    const points = road.nodes.map(id => frame.toMetres((graph.entity(id) as osmNode).loc));
+    const along = unit(sub(points[Math.min(points.length - 1, i + 1)], points[Math.max(0, i - 1)]));
+    const layout = cachedLayout(road, graph);
+    const total = cumulativeLengths(points);
+    const t = total[total.length - 1] ? total[i] / total[total.length - 1] : 0;
+    const shift = layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * t;
+    const normal = rightNormal(along);
+    return [layout.edges[0] + shift - 1, layout.edges[layout.edges.length - 1] + shift + 1].map(d => frame.toLoc(scale(normal, d)));
+}
+
 /** The camera system a camera belongs to, from its enforcement relations */
 function cameraKind(node: osmNode, graph: coreGraph): CameraKind {
     for (const relation of graph.parentRelations(node)) {
@@ -199,11 +229,17 @@ export function signGeometry(entities: OsmEntity[], graph: coreGraph): SignGeome
             if (way.tags.man_made === 'gantry' && way.nodes.length > 1) {
                 gantries.push({ id: way.id, line: way.nodes.map(id => (graph.entity(id) as osmNode).loc) });
             }
+            if (isLaneRoad(way) && (way.tags.priority === 'forward' || way.tags.priority === 'backward')) signs.push(...prioritySigns(way, graph));
             continue;
         }
         if (entity.type !== 'node') continue;
         const node = entity as osmNode;
         const tags = node.tags;
+        // a toll gantry (wiki: Tag:highway=toll_gantry): a gantry across the road
+        if (tags.highway === 'toll_gantry') {
+            const across = acrossRoad(node, graph);
+            if (across) gantries.push({ id: node.id, line: across });
+        }
         const message = isMessageSign(tags);
         const camera = isCamera(tags) || graph.parentRelations(node).some(r => r.tags.type === 'enforcement' && r.memberById(node.id)?.role === 'device');
         const faces = message ? [] : parseTrafficSign(tags.traffic_sign ?? tags['traffic_sign:forward'] ?? tags['traffic_sign:backward']);

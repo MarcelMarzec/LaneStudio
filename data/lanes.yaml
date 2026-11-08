@@ -493,6 +493,10 @@ en:
       table: Speed table
       hatched: Hatched area
       chevrons: Chevrons (lanes part round them)
+      street_lamp: Street lamp
+      bus_stop: Bus stop (and its shelter)
+      traffic_mirror: Traffic mirror
+      milestone: Milestone
       asphalt: Asphalt
       concrete: Concrete
       paving: Paving stones
@@ -528,6 +532,15 @@ en:
   labels:
     no_hgv: no HGV
     hgv: HGV lane
+    toll: toll
+    cash: cash
+    cards: cards
+    bus: bus
+    open: open
+    closed: closed
+    hgv_limit: "HGV {limit}"
+    advisory: "advised {limit}"
+    no_hgv_overtaking: no HGV overtaking
   roadside:
     title: Roadside
     hint: "Forward is the side beside traffic going along the way's drawing direction, backward the side beside traffic going the other way."

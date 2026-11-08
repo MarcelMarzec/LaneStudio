@@ -78,7 +78,7 @@ export function drawRailSymbols(group: Group, symbols: RailSymbol[], projection:
             const root = d3_select(this);
             const p = projection(d.loc);
             root.each(attrChanged('transform', `translate(${p[0].toFixed(1)},${p[1].toFixed(1)})`));
-            const drawn = JSON.stringify([size, d.kind, d.facing, d.aspects, d.lit, d.plate, d.cross]);
+            const drawn = JSON.stringify([size, d.kind, d.facing, d.aspects, d.lit, d.plate, d.cross, d.distant]);
             const node = this as SVGGElement & { __drawn?: string };
             if (node.__drawn === drawn) return;
             node.__drawn = drawn;
@@ -107,7 +107,7 @@ export function drawRailSymbols(group: Group, symbols: RailSymbol[], projection:
                 root.append('path').attr('class', 'rail-cross').attr('d', arms).attr('stroke-width', (half * 0.26).toFixed(1));
             };
 
-            if (d.plate && d.kind === 'signal') {
+            if (d.plate && (d.kind === 'signal' || d.kind === 'semaphore')) {
                 // a signal's identification plate: black letters on white, under its head
                 const plateH = Math.max(7, size * 0.28);
                 const plateW = Math.max(size * 0.8, d.plate.length * plateH * 0.62);
@@ -128,6 +128,23 @@ export function drawRailSymbols(group: Group, symbols: RailSymbol[], projection:
                         (colour === d.lit && d.lit === 'yellow' && i === aspects.lastIndexOf('yellow'));
                     lamp(0, top - height + r * 1.5 + i * r * 2.4, r, lit ? lampColours[colour] : '#2e2e2e', lit ? 'rail-lamp lit' : 'rail-lamp');
                 });
+            } else if (d.kind === 'semaphore') {
+                // a semaphore arm out to the left of its post, level (danger, or caution for a distant): a stop
+                // signal's red with a white stripe, a distant's yellow with a black chevron and a fishtail end
+                const armW = size * 0.75;
+                const armH = Math.max(3, size * 0.16);
+                root.append('line').attr('class', 'rail-symbol-post').attr('y1', top.toFixed(1)).attr('y2', (top - armH * 2).toFixed(1));
+                const y = top - armH * 2;
+                const tip = d.distant
+                    ? `M0,${y} H${-armW} L${-armW + armH * 0.6},${y + armH / 2} L${-armW},${y + armH} H0 Z`
+                    : `M0,${y} H${-armW} V${y + armH} H0 Z`;
+                root.append('path').attr('class', d.distant ? 'rail-semaphore-arm distant' : 'rail-semaphore-arm').attr('d', tip);
+                const stripeX = -armW * 0.72;
+                root.append('path').attr('class', d.distant ? 'rail-semaphore-mark distant' : 'rail-semaphore-mark')
+                    .attr('d', d.distant ? `M${stripeX - armH * 0.3},${y} L${stripeX + armH * 0.2},${y + armH / 2} L${stripeX - armH * 0.3},${y + armH}`
+                        : `M${stripeX},${y} V${y + armH}`)
+                    .attr('stroke-width', (armH * 0.35).toFixed(1));
+                lamp(armH * 0.6, y + armH * 0.5, armH * 0.35, d.distant ? lampColours.yellow : lampColours.red, 'rail-lamp lit');
             } else if (d.kind === 'shunt-signal') {
                 // a ground signal: a black housing with a red and a white lamp side by side (danger)
                 const width = size * 0.6;

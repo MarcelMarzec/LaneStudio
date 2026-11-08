@@ -8,6 +8,31 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08r11
+##### 2026-Nov-08
+
+#### Lanes and junctions
+* Lane labels show the sign's arrow, street, European road number and country, toll lanes and how they are paid, bus
+  lanes and closures at times (`bus:lanes:conditional`, `lanes:bus:conditional`, `access:lanes:conditional`), and once
+  per direction the lorry limit, advised speed, limits at times and no lorry overtaking
+* Roads are fitted into carriageway areas mapped as multipolygons too
+
+#### Roads and signs
+* Priority signs at each end of a narrow stretch (`priority=forward|backward`): priority over oncoming vehicles
+  (GB 811) one way, give way to oncoming vehicles (GB 615) the other
+* Toll gantries (`highway=toll_gantry`) are drawn across the road
+* Street lamps, bus stop flags and shelters, traffic mirrors and milestones are drawn where they stand, and steps with
+  a ramp (`ramp`, `ramp:bicycle`, `ramp:stroller`, `ramp:wheelchair`) have it drawn up one side
+
+#### Railways
+* Electrified track (`electrified=contact_line`) has its contact wire and masts beside it (or the mapped
+  `power=catenary_mast`)
+* Semaphore signals (`railway:signal:main:form=semaphore`) are drawn as arms, and other countries' colour-light signals
+  red over green
+
+#### Map key
+* Street lamps, bus stops, traffic mirrors and milestones
+
 # 26.11.08r10
 ##### 2026-Nov-08
 

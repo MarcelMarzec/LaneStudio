@@ -37,7 +37,11 @@ crossings (`railway=tram_level_crossing`) get panels and rails.
   side.
 - Signals (`railway=signal`) beside the line (`railway:signal:position`, left by default), facing
   `railway:signal:direction`: colour-light heads with 2–4 aspects (`railway:signal:main:states`, else 3), distant
-  signals yellow, shunt signals as position lights, each over its `ref` plate.
+  signals yellow, shunt signals as position lights, each over its `ref` plate. Semaphores
+  (`railway:signal:main:form=semaphore`) as a red arm, distant ones yellow and fishtailed; other countries'
+  colour-light signals (`DE-ESO:hp` and the like) red over green.
+- Electrified track (`electrified=contact_line`): the contact wire along it and masts beside it every 60 m, or the
+  masts mapped (`power=catenary_mast`).
 - Buffer stops, switches (with point motors), derailers and stop boards at the track; turntables and traversers as
   pits.
 - Stations, stops, subway entrances and railway buildings are left to iD.

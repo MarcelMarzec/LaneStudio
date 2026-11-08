@@ -14,6 +14,18 @@ The **Signs** tool places a sign beside the road facing the clicked lane's traff
 Drawn: UK signs as their pictures beside the road, other codes as a plate with the code; variable message signs on
 their gantry (`man_made=gantry`); an average-speed camera system (`type=enforcement`) along the stretch it covers.
 
+## Priority on a narrow stretch, toll gantries
+
+- `priority=forward|backward` on a road: "priority over oncoming vehicles" (GB 811) where the traffic with priority
+  enters, "give way to oncoming vehicles" (GB 615) at the other end.
+- `highway=toll_gantry` on a road: a gantry across it.
+
+## Street furniture
+
+Drawn upright where they stand: street lamps (`highway=street_lamp`) with their pool of light, bus stop flags
+(`highway=bus_stop`) and their shelter (`shelter=yes`), traffic mirrors (`highway=traffic_mirror`) and milestones
+(`highway=milestone`, with `distance` or `inscription`).
+
 ## Road numbers
 
 Road numbers in shields (UK colours: motorways blue, primary routes green, other A and B roads white) and motorway

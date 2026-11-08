@@ -2102,6 +2102,31 @@ function addLaneParts(ways: osmWay[], graph: coreGraph, partAreas: osmWay[], vis
 
 /* ---------- fitting roads into mapped carriageway areas ---------- */
 
+/** A carriageway area: a closed way, or a multipolygon relation (its largest outer ring) */
+export type CarriagewayArea = osmWay | osmRelation;
+
+/** An area's outline in lon/lat: a way's nodes, or a multipolygon's largest outer ring */
+function areaOutline(area: CarriagewayArea, graph: coreGraph): Vec2[] {
+    if (area.type === 'way') return lineLocs(area, graph);
+    const polygons = (area as unknown as { multipolygon(g: coreGraph): Vec2[][][] }).multipolygon(graph);
+    const outers = polygons.map(p => p[0]).filter(ring => ring?.length > 3);
+    const extentOf = (ring: Vec2[]) => {
+        const xs = ring.map(p => p[0]);
+        const ys = ring.map(p => p[1]);
+        return (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys));
+    };
+    return outers.sort((a, b) => extentOf(b) - extentOf(a))[0] ?? [];
+}
+
+/** What an area's outline depends on, for caches: the area, and its member ways and nodes */
+function areaDeps(area: CarriagewayArea, graph: coreGraph): unknown[] {
+    if (area.type === 'way') return [area, ...area.nodes.map(id => graph.entity(id))];
+    return [area, ...area.members.flatMap(m => {
+        const member = m.type === 'way' ? graph.hasEntity(m.id as WayId) as osmWay | undefined : undefined;
+        return member ? [member, ...member.nodes.map(id => graph.entity(id))] : [];
+    })];
+}
+
 const fitCache = new WeakMap<osmWay, { deps: unknown[]; fit: [number, number][] | undefined }>();
 
 /**
@@ -2109,13 +2134,13 @@ const fitCache = new WeakMap<osmWay, { deps: unknown[]; fit: [number, number][] 
  * that centres the road's lanes in it, sampled along the way. Undefined when no area covers the
  * road, or it already sits in the middle.
  */
-function fitToAreas(way: osmWay, graph: coreGraph, areas: osmWay[]): [number, number][] | undefined {
+function fitToAreas(way: osmWay, graph: coreGraph, areas: CarriagewayArea[]): [number, number][] | undefined {
     if (!areas.length || hasPlacement(way)) return undefined;
     const extent = way.extent(graph);
     const near = areas.filter(area => area.extent(graph).intersects(extent));
     if (!near.length) return undefined;
 
-    const deps: unknown[] = [...way.nodes.map(id => graph.entity(id)), ...near.flatMap(area => [area, ...area.nodes.map(id => graph.entity(id))])];
+    const deps: unknown[] = [...way.nodes.map(id => graph.entity(id)), ...near.flatMap(area => areaDeps(area, graph))];
     const cached = fitCache.get(way);
     if (cached && cached.deps.length === deps.length && cached.deps.every((d, i) => d === deps[i])) return cached.fit;
 
@@ -2123,7 +2148,7 @@ function fitToAreas(way: osmWay, graph: coreGraph, areas: osmWay[]): [number, nu
     const frame = metricFrame((graph.entity(way.first()) as osmNode).loc);
     const points = lineLocs(way, graph).map(frame.toMetres);
     const total = polylineLength(points);
-    const polygons = near.map(area => lineLocs(area, graph).map(frame.toMetres));
+    const polygons = near.map(area => areaOutline(area, graph).map(frame.toMetres)).filter(ring => ring.length > 3);
     const bandWidth = layout.total;
 
     const samples: [number, number][] = [];
@@ -2177,12 +2202,14 @@ function fitToAreas(way: osmWay, graph: coreGraph, areas: osmWay[]): [number, nu
  * length inside, weighted by how much of the road that is). Roads only passing by or across an
  * area's edge, like the main road a side road's area joins, are not its road.
  */
-function areaOwners(ways: osmWay[], graph: coreGraph, areas: osmWay[]): Map<string, osmWay> {
+function areaOwners(ways: osmWay[], graph: coreGraph, areas: CarriagewayArea[]): Map<string, osmWay> {
     const owners = new Map<string, osmWay>();
     for (const area of areas) {
         const extent = area.extent(graph);
-        const frame = metricFrame((graph.entity(area.first()) as osmNode).loc);
-        const polygon = lineLocs(area, graph).map(frame.toMetres);
+        const outline = areaOutline(area, graph);
+        if (outline.length < 4) continue;
+        const frame = metricFrame(outline[0]);
+        const polygon = outline.map(frame.toMetres);
         let best: { way: osmWay; score: number } | null = null;
         for (const way of ways) {
             if (!extent.intersects(way.extent(graph))) continue;
@@ -2773,7 +2800,7 @@ function cutIslands(junctions: Map<string, JunctionArea>, islandRings: Vec2[][])
 }
 
 /** Lane geometry for a set of roads, reusing everything whose inputs have not changed */
-export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas: osmWay[] = [], islands: osmWay[] = [],
+export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas: CarriagewayArea[] = [], islands: osmWay[] = [],
     partAreas: osmWay[] = []): RoadGeometry {
     const pieces: RoadPiece[] = [];
     const junctions = new Map<string, JunctionArea>();

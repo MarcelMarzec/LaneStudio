@@ -107,6 +107,25 @@ export const ukSignDrawings: Record<string, { name: string; draw: Drawing }> = {
             prohibitionBar(g, r);
         }
     },
+    'GB:615': {
+        name: 'Give way to oncoming vehicles',
+        draw: (g, r) => {
+            redRing(g, r);
+            // yours small and red (up), the oncoming traffic's large and black (down)
+            arrow(g.append('g').each(attrChanged('transform', `translate(${-r * 0.28},0)`)), r * 1.0, red, 0);
+            arrow(g.append('g').each(attrChanged('transform', `translate(${r * 0.28},0)`)), r * 1.25, black, 180);
+        }
+    },
+    'GB:811': {
+        name: 'Priority over oncoming vehicles',
+        draw: (g, r) => {
+            g.append('rect').each(attrChanged('x', -r)).each(attrChanged('y', -r)).each(attrChanged('width', r * 2)).each(attrChanged('height', r * 2))
+                .attr('fill', blue).attr('stroke', white).attr('stroke-width', r * 0.08);
+            // yours large and white (up), the oncoming traffic's small and red (down)
+            arrow(g.append('g').each(attrChanged('transform', `translate(${-r * 0.3},0)`)), r * 1.3, white, 0);
+            arrow(g.append('g').each(attrChanged('transform', `translate(${r * 0.32},0)`)), r * 0.95, red, 180);
+        }
+    },
     'GB:616': {
         name: 'No entry',
         draw: (g, r) => {

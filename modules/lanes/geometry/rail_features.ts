@@ -4,7 +4,7 @@ import type { OsmEntity } from '../../osm';
 import type { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
 import { isLaneRoad } from '../core/roads';
-import { add, dot, len, metricFrame, rightNormal, scale, sub, unit, type MetricFrame } from './frame';
+import { add, cumulativeLengths, dot, len, metricFrame, pointAlong, rightNormal, scale, sub, unit, type MetricFrame } from './frame';
 import { railGauge, railKind } from './railway';
 import { cachedLayout } from './road_geometry';
 import { pathWidths } from './street';
@@ -44,7 +44,9 @@ export interface RailSymbol {
     key: string;
     /** the OSM node it draws, for hover and selection */
     id: string;
-    kind: 'signal' | 'shunt-signal' | 'crossing-lights' | 'crossing-saltire' | 'crossing-mwl' | 'whistle-board';
+    kind: 'signal' | 'shunt-signal' | 'semaphore' | 'crossing-lights' | 'crossing-saltire' | 'crossing-mwl' | 'whistle-board';
+    /** a semaphore's arm: a distant signal's (yellow, fishtailed) rather than a stop signal's (red) */
+    distant?: boolean;
     loc: Vec2;
     /** the compass bearing its face looks towards (at the traffic or trains it is for) */
     facing: number;
@@ -109,6 +111,10 @@ const bearing = (d: Vec2) => (Math.atan2(d[0], d[1]) * 180 / Math.PI + 360) % 36
 function aspectsOf(tags: Tags, distant: boolean): RailSymbol['aspects'] {
     const states = (tags[distant ? 'railway:signal:distant:states' : 'railway:signal:main:states'] ?? '').split(';').filter(Boolean).length;
     const count = Math.max(2, Math.min(4, states || (distant ? 2 : 3)));
+    // other countries' colour-light signals (`DE-ESO:hp`, `FR-SNCF:…`): red over green, with yellow below for a
+    // third state; a distant signal yellow over green
+    const code = tags[distant ? 'railway:signal:distant' : 'railway:signal:main'] ?? '';
+    if (code && !/^GB[-:]/.test(code)) return distant ? ['yellow', 'green'] : count >= 3 ? ['red', 'green', 'yellow'] : ['red', 'green'];
     if (distant) return ['green', 'yellow'];
     return count === 4 ? ['yellow', 'green', 'yellow', 'red'] : count === 3 ? ['green', 'yellow', 'red'] : ['green', 'red'];
 }
@@ -366,6 +372,13 @@ function equipmentShapes(node: osmNode, graph: coreGraph, out: RailFeatures) {
             const distant = !main && !!tags['railway:signal:distant'];
             const shunt = !main && !distant && !!(tags['railway:signal:shunting'] ?? tags['railway:signal:minor']);
             if (!overhead) push('signal-post', 'post', [add(c, scale(sideways, gauge / 2 + 0.9)), at], false);
+            // a semaphore (`railway:signal:main:form=semaphore`): its arm at danger, or a distant's at caution
+            const form = tags[distant ? 'railway:signal:distant:form' : 'railway:signal:main:form'];
+            if (form === 'semaphore' && !shunt) {
+                out.symbols.push({ key: `${node.id}-signal`, id: node.id, kind: 'semaphore', loc: frame.toLoc(at), facing: bearing(scale(travel, -1)),
+                    plate: tags.ref ?? tags['railway:signal:main:ref'], distant });
+                return;
+            }
             // its face looks back along the line at the trains coming towards it
             out.symbols.push({
                 key: `${node.id}-signal`, id: node.id, kind: shunt ? 'shunt-signal' : 'signal', loc: frame.toLoc(at),
@@ -376,6 +389,36 @@ function equipmentShapes(node: osmNode, graph: coreGraph, out: RailFeatures) {
             push('stop-board', 'board', box(at, travel, 0.4, 1.2), true);
         }
     }
+}
+
+// how far apart overhead line masts stand, and how far from the track's middle (beside the ballast)
+const mastSpacing = 60;
+
+/**
+ * An electrified track's overhead line (wiki: Key:electrified, `contact_line`): the contact wire along the track, and
+ * masts beside it every 60 m with an arm out over it, unless masts are mapped (`power=catenary_mast`)
+ */
+function overheadLine(track: osmWay, graph: coreGraph, out: RailFeatures, mastsMapped: boolean) {
+    const frame = metricFrame((graph.entity(track.nodes[0]) as osmNode).loc as Vec2);
+    const points = locs(track, graph).map(frame.toMetres);
+    const total = cumulativeLengths(points)[points.length - 1];
+    if (total < 1) return;
+    out.trackside.push({ key: `${track.id}-contact-wire`, id: track.id, part: 'contact-wire', points: points.map(frame.toLoc), closed: false });
+    if (mastsMapped) return;
+    const gauge = railGauge(track.tags, railKind(track.tags)!.kind);
+    for (let s = mastSpacing / 2, k = 0; s < total; s += mastSpacing, k++) {
+        const at = pointAlong(points, s);
+        const n = rightNormal(at.direction);
+        const mast = add(at.point, scale(n, -(gauge / 2 + 2.2)));
+        out.trackside.push({ key: `${track.id}-mast-${k}`, id: track.id, part: 'catenary-mast', points: box(mast, at.direction, 0.7, 0.7).map(frame.toLoc), closed: true });
+        out.trackside.push({ key: `${track.id}-mast-arm-${k}`, id: track.id, part: 'catenary-arm', points: [mast, at.point].map(frame.toLoc), closed: false });
+    }
+}
+
+/** A mapped overhead line mast (`power=catenary_mast`): a square post */
+function catenaryMast(node: osmNode, out: RailFeatures) {
+    const frame = metricFrame(node.loc as Vec2);
+    out.trackside.push({ key: `${node.id}-mast`, id: node.id, part: 'catenary-mast', points: box([0, 0], [1, 0], 0.7, 0.7).map(frame.toLoc), closed: true });
 }
 
 /** A turntable's pit with its bridge across, or a traverser's pit */
@@ -433,7 +476,10 @@ export function railFeatures(entities: OsmEntity[], graph: coreGraph): RailFeatu
         }
         close();
     }
+    const mastsMapped = entities.some(entity => entity.tags.power === 'catenary_mast');
+    for (const track of tracks) if (track.tags.electrified === 'contact_line') overheadLine(track, graph, out, mastsMapped);
     for (const entity of entities) {
+        if (entity.type === 'node' && entity.tags.power === 'catenary_mast') catenaryMast(entity as osmNode, out);
         const railway = entity.tags.railway;
         if (!railway) continue;
         if (entity.type === 'way') {

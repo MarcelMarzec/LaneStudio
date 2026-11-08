@@ -12,7 +12,7 @@ import { laneRouting } from '../core/lane_routing';
 import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind } from '../core/lane_speed';
 import { drawRoutes, laneUnder } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
-import { isLanePartArea, roadGeometry, type LaneSwap, type LineTrim, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
+import { isLanePartArea, roadGeometry, type CarriagewayArea, type LaneSwap, type LineTrim, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
 import type { CycleDetail, LaneInfo, ParkingLayout } from '../geometry/layout';
 import type { SurfaceGroup } from '../model/street_features';
 import { laneSymbols } from '../geometry/lane_symbols';
@@ -21,6 +21,7 @@ import { ukMarkings } from '../core/drive_side';
 import { t } from '../../core/localizer';
 import {
     parseLanes, parseTurn, formatTurn, dividerAt, setDivider, nextDivider, setLaneValue, setLaneKind, parseConnectivity,
+    conditionalSlot, parseLaneConditional,
     type LaneDirection, type LaneModel, type LaneRef
 } from '../model';
 import { laneTools } from '../core/lane_tools';
@@ -149,20 +150,84 @@ const signColours = ['blue', 'green', 'white', 'brown', 'yellow'];
  * and its restrictions, and the colour of the sign the destination is on (`destination:colour`). A destination the whole
  * road has (`destination`, not `destination:lanes`) is shown once per direction, on its middle lane.
  */
-function laneLabel(piece: RoadPiece, lane: LaneInfo, tags: Tags): { text: string; sign: string } {
+export function laneLabel(piece: RoadPiece, lane: LaneInfo, tags: Tags): { text: string; sign: string } {
     const sameWay = piece.layout.lanes.filter(l => l.ref.direction === lane.ref.direction);
     const middle = sameWay[Math.floor((sameWay.length - 1) / 2)] === lane;
     const shownKey = (key: string) => (!lane.inherited?.includes(key) || middle ? lane.values[key] : undefined);
     const symbol = destinationSymbols[(lane.values['destination:symbol:lanes'] || '').split(';')[0]];
+    const arrow = destinationArrows[(lane.values['destination:arrow:lanes'] || '').split(';')[0]];
+    const country = lane.values['destination:country:lanes'];
+    const places = shownKey('destination:lanes') ?? lane.values['destination:street:lanes'];
     const text = [
-        shownKey('destination:ref:lanes'),
-        // (several destinations on one lane: the first two, after the sign's symbol)
-        [symbol, shownKey('destination:lanes')?.split(';').slice(0, 2).join(' / ')].filter(Boolean).join(' '),
+        [shownKey('destination:ref:lanes'), lane.values['destination:int_ref:lanes']].filter(Boolean).join(' '),
+        // (several destinations on one lane: the first two, after the sign's arrow and symbol)
+        [arrow, symbol, places?.split(';').slice(0, 2).join(' / '), country ? `(${country.split(';')[0]})` : ''].filter(Boolean).join(' '),
         lane.values['maxspeed:lanes'],
-        ...laneRestrictions(lane.values)
+        ...laneRestrictions(lane.values),
+        ...lanePayment(lane.values),
+        ...laneConditions(piece, lane, tags),
+        ...(middle ? roadSpeedNotes(tags, lane.ref.direction) : [])
     ].filter(Boolean).join(' · ');
     const colour = (lane.values['destination:colour:lanes'] || tags['destination:colour'] || '').split(';')[0].toLowerCase();
     return { text, sign: signColours.includes(colour) ? colour : '' };
+}
+
+// the arrow a direction sign shows beside a lane's destination (`destination:arrow`)
+const destinationArrows: Record<string, string> = {
+    left: '←', right: '→', through: '↑', slight_left: '↖', slight_right: '↗', sharp_left: '↙', sharp_right: '↘', reverse: '↶'
+};
+
+/** A toll lane and how it is paid (`toll:lanes`, `payment:cash:lanes`, `payment:cards:lanes`) */
+function lanePayment(values: Record<string, string>): string[] {
+    const out: string[] = [];
+    if (values['toll:lanes'] === 'yes') out.push(t('_lanes.labels.toll'));
+    if (values['payment:cash:lanes'] === 'yes') out.push(t('_lanes.labels.cash'));
+    if (values['payment:cards:lanes'] === 'yes') out.push(t('_lanes.labels.cards'));
+    return out;
+}
+
+/**
+ * A lane's values at times (wiki: Conditional restrictions): a bus lane at times (`bus:lanes:conditional`, or the
+ * kerb-side lanes `lanes:bus:conditional` counts), closed at times (`access:lanes:conditional`), a speed limit at times
+ */
+function laneConditions(piece: RoadPiece, lane: LaneInfo, tags: Tags): string[] {
+    const model = piece.layout.model;
+    const out: string[] = [];
+    for (const base of ['bus', 'psv', 'access', 'maxspeed']) {
+        const { key, slot } = conditionalSlot(model, tags, base, lane.ref);
+        const rules = tags[key] ? parseLaneConditional(tags[key]) : null;
+        for (const rule of rules ?? []) {
+            const value = rule.values[slot];
+            if (!value) continue;
+            const word = base === 'maxspeed' ? value : value === 'designated' || value === 'yes' ? (base === 'access' ? t('_lanes.labels.open') : t('_lanes.labels.bus'))
+                : value === 'no' ? t('_lanes.labels.closed') : `${base} ${value}`;
+            out.push(`${word} ${rule.condition}`);
+        }
+    }
+    // bus lanes counted from the kerb at times (`lanes:bus:conditional=1 @ (Mo-Fr 07:00-10:00)`)
+    const counted = tags[model.oneway ? 'lanes:bus:conditional' : `lanes:bus:${lane.ref.direction}:conditional`] ?? tags['lanes:bus:conditional'];
+    if (counted) {
+        const sameWay = model.lanes[lane.ref.direction].length;
+        const fromKerb = model.driveSide === 'left' ? lane.ref.index : sameWay - 1 - lane.ref.index;
+        for (const rule of parseLaneConditional(counted) ?? []) {
+            if (fromKerb < (parseInt(rule.values[0], 10) || 0)) out.push(`${t('_lanes.labels.bus')} ${rule.condition}`);
+        }
+    }
+    return out;
+}
+
+/**
+ * The road's other limits, once per direction: for lorries (`maxspeed:hgv`), advised (`maxspeed:advisory`), at times
+ * (`maxspeed:conditional`), and lorries not overtaking (`overtaking:hgv=no`)
+ */
+function roadSpeedNotes(tags: Tags, direction: LaneDirection): string[] {
+    const own = (key: string) => tags[`${key}:${direction}`] ?? tags[key];
+    return [
+        own('maxspeed:hgv') ? t('_lanes.labels.hgv_limit', { limit: own('maxspeed:hgv') }) : '',
+        own('maxspeed:advisory') ? t('_lanes.labels.advisory', { limit: own('maxspeed:advisory') }) : '',
+        own('maxspeed:conditional') ?? '',
+        tags['overtaking:hgv'] === 'no' ? t('_lanes.labels.no_hgv_overtaking') : ''
+    ].filter(Boolean);
 }
 
 /**
@@ -560,7 +625,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const visible = context.history().intersects(map.extent())
             .filter(entity => !features.isHidden(entity, graph, entity.geometry(graph)));
         const ways = visible.filter(isLaneRoad);
-        const carriagewayAreas = visible.filter(isCarriagewayArea) as osmWay[];
+        // (multipolygon relations too: a road area with holes, such as round a traffic island)
+        const carriagewayAreas = visible.filter(isCarriagewayArea) as CarriagewayArea[];
         const islands = visible.filter(entity => entity.type === 'way' && (entity as osmWay).isClosed() && isTrafficIsland(entity.tags)) as osmWay[];
         const partAreas = visible.filter(entity => entity.type === 'way' && (entity as osmWay).isClosed() && isLanePartArea(entity.tags)) as osmWay[];
         // the geometry is in map coordinates, so it holds while the graph and the features in view are the same (a new
@@ -1133,14 +1199,16 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         for (const p of parking) drawnWays.add(p.id);
         for (const l of roadMarkings.lines) drawnWays.add(l.id);
         for (const a of roadMarkings.areas) drawnWays.add(a.id);
-        const drawnNodes = new Set<string>([...street.markings, ...street.surfaces, ...signData.signs, ...junctionData].map(m => m.nodeID));
+        // street furniture drawn on its own
+        const furniture = street.symbols.flatMap(symbol => (symbol.nodeID ? [symbol.nodeID] : []));
+        const drawnNodes = new Set<string>([...[...street.markings, ...street.surfaces, ...signData.signs, ...junctionData].map(m => m.nodeID), ...furniture]);
         for (const gantry of signData.gantries) drawnWays.add(gantry.id);
         for (const track of tracks) drawnWays.add(track.id);
         for (const space of [...parkingSpaces.spaces, ...parkingSpaces.carParks]) drawnWays.add(space.id);
         for (const shape of [...rail.ground, ...rail.trackside, ...rail.overRoad, ...rail.symbols]) (shape.id.startsWith('n') ? drawnNodes : drawnWays).add(shape.id);
         for (const text of roadMarkings.texts) drawnNodes.add(text.id);
         // the nodes drawn here as what they are (markings, signs, railway equipment…), whose icons iD need not draw too
-        const renderedNodes = new Set<string>([...street.markings, ...street.surfaces, ...signData.signs].map(m => m.nodeID));
+        const renderedNodes = new Set<string>([...[...street.markings, ...street.surfaces, ...signData.signs].map(m => m.nodeID), ...furniture]);
         for (const shape of [...rail.ground, ...rail.trackside, ...rail.overRoad, ...rail.symbols]) if (shape.id.startsWith('n')) renderedNodes.add(shape.id);
         for (const text of roadMarkings.texts) renderedNodes.add(text.id);
         for (const id of drawnWays) {

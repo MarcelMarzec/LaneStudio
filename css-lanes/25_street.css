@@ -89,6 +89,12 @@
 .ideditor.lane-studio .lanes-layer .marking-asl_box { fill: rgba(40, 150, 70, 0.55); stroke: none; }
 .ideditor.lane-studio .lanes-layer .street-symbol.symbol-belisha,
 .ideditor.lane-studio .lanes-layer .street-symbol.symbol-cycle { pointer-events: none; }
+.ideditor.lane-studio .lanes-layer .street-symbol.symbol-street_lamp,
+.ideditor.lane-studio .lanes-layer .street-symbol.symbol-bus_stop,
+.ideditor.lane-studio .lanes-layer .street-symbol.symbol-bus_shelter,
+.ideditor.lane-studio .lanes-layer .street-symbol.symbol-traffic_mirror,
+.ideditor.lane-studio .lanes-layer .street-symbol.symbol-milestone { pointer-events: none; }
+.ideditor.lane-studio .lanes-layer .milestone-text { fill: #f2f2ee; paint-order: stroke; stroke: rgba(0, 0, 0, 0.6); stroke-width: 2px; font-weight: 600; }
 /* traffic calming tagged along a way */
 .ideditor.lane-studio .lanes-layer .calming-way { stroke: rgba(255, 255, 255, 0.6); stroke-width: 1; pointer-events: none; }
 .ideditor.lane-studio .lanes-layer .calming-way-table   { fill: rgba(170, 95, 70, 0.55); }
@@ -627,3 +633,13 @@
 .ideditor.lane-studio .lanes-layer .painted-area-solar_thermal .painted-area-fill { fill: rgb(30, 32, 38); fill-opacity: 0.92; stroke: rgb(150, 156, 166); stroke-width: 1; }
 .ideditor.lane-studio .lanes-layer .solar-cells { fill: none; stroke: rgba(190, 205, 230, 0.55); }
 .ideditor.lane-studio .lanes-key-swatch .lanes-key-solar { fill: rgb(28, 48, 92); stroke: rgba(190, 205, 230, 0.7); stroke-width: 1; }
+/* a ramp up steps (ramp=yes, ramp:bicycle, ramp:stroller, ramp:wheelchair): a smooth strip along one side */
+.ideditor.lane-studio .lanes-layer .street-path-ramp { fill: rgb(196, 200, 206); stroke: rgba(60, 64, 72, 0.8); stroke-width: 0.6; pointer-events: none; }
+/* overhead line: the contact wire along electrified track, its masts and their arms; semaphore signal arms */
+.ideditor.lane-studio .lanes-layer .rail-contact-wire { fill: none; stroke: rgba(40, 40, 40, 0.75); stroke-width: 1; stroke-dasharray: 6 2; pointer-events: none; }
+.ideditor.lane-studio .lanes-layer .rail-catenary-mast { fill: rgb(120, 126, 134); stroke: #1e1e1e; stroke-width: 0.8; }
+.ideditor.lane-studio .lanes-layer .rail-catenary-arm { fill: none; stroke: rgba(70, 74, 80, 0.85); stroke-width: 1.2; pointer-events: none; }
+.ideditor.lane-studio .lanes-layer .rail-semaphore-arm { fill: #d0202e; stroke: #111; stroke-width: 0.8; }
+.ideditor.lane-studio .lanes-layer .rail-semaphore-arm.distant { fill: #f2c200; }
+.ideditor.lane-studio .lanes-layer .rail-semaphore-mark { fill: none; stroke: #fff; }
+.ideditor.lane-studio .lanes-layer .rail-semaphore-mark.distant { stroke: #111; }

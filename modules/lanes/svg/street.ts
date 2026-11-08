@@ -140,6 +140,7 @@ export function drawStreet(
                 (p.surface ? ` surface-${p.surface}` : '') + (p.use ? ` use-${p.use}` : '') + (p.construction ? ' lanes-construction' : '')
         },
         ...(p.footHalf ? [{ key: `${p.id}-foot`, cls: 'street-path-foot-half', d: path(p.footHalf, true), above: p.above }] : []),
+        ...(p.ramp ? [{ key: `${p.id}-ramp`, cls: 'street-path-ramp', d: path(p.ramp, true), above: p.above }] : []),
         ...(p.divider && markings ? [{ key: `${p.id}-divider`, cls: 'street-path-divider', d: path(p.divider, false), above: p.above }] : [])
     ]);
     joinPaths(group('paths'), pathShapes.filter(p => !p.above), d => d.key, d => d.cls, d => d.d);
@@ -185,7 +186,9 @@ export function drawStreet(
 // symbols drawn as a copy of one in the layer's defs
 const symbolHref: Partial<Record<SymbolShape['kind'], string>> = {
     signals: '#lanes-signals', signals_blinker: '#lanes-signals-blinker', signals_lane_control: '#lanes-signals-lane-control',
-    signals_emergency: '#lanes-signals-emergency', belisha: '#lanes-belisha', cycle: '#lanes-cycle', give_way_triangle: '#lanes-giveway'
+    signals_emergency: '#lanes-signals-emergency', belisha: '#lanes-belisha', cycle: '#lanes-cycle', give_way_triangle: '#lanes-giveway',
+    street_lamp: '#lanes-street-lamp', bus_stop: '#lanes-bus-stop', bus_shelter: '#lanes-bus-shelter', traffic_mirror: '#lanes-traffic-mirror',
+    milestone: '#lanes-milestone'
 };
 
 function drawSymbols(group: Group, data: SymbolShape[], projection: Projection) {
@@ -219,6 +222,9 @@ function drawSymbols(group: Group, data: SymbolShape[], projection: Projection) 
     motorway.append('rect').each(attrChanged('class', 'motorway-plate'));
     motorway.append('path').each(attrChanged('class', 'motorway-symbol'));
     enter.filter(d => !['stop_text', 'speed_limit', 'min_speed', 'national_limit', 'motorway_start'].includes(d.kind)).append('use');
+    // a milestone's distance under it
+    enter.filter(d => d.kind === 'milestone').append('text').each(attrChanged('class', 'milestone-text'))
+        .attr('text-anchor', 'middle').attr('dominant-baseline', 'hanging');
 
     const all = enter.merge(symbols)
         .each(attrChanged('transform', d => d.transform));
@@ -248,6 +254,10 @@ function drawSymbols(group: Group, data: SymbolShape[], projection: Projection) 
             return `M${-7 * u} ${9 * u}L${-2.2 * u} ${-4 * u}M${7 * u} ${9 * u}L${2.2 * u} ${-4 * u}M0 ${9 * u}V${5 * u}M0 ${2 * u}V${-1 * u}M${-8 * u} ${-6.5 * u}H${8 * u}`;
         })
         .attr('stroke-width', d => Math.max(1, d.k * 0.07).toFixed(1));
+    all.filter(d => d.kind === 'milestone').select('text')
+        .attr('y', d => (d.k * 0.55).toFixed(1))
+        .attr('font-size', d => Math.max(8, d.k * 0.5).toFixed(1))
+        .text(d => d.text ?? '');
     all.select('use')
         .each(attrChanged('href', d => symbolHref[d.kind] ?? '#lanes-giveway'))
         .each(attrChanged('transform', d => `scale(${(d.k / 20).toFixed(3)})`));

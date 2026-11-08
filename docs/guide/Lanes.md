@@ -73,6 +73,10 @@ A lane's label shows its destinations and road numbers (or the road's `destinati
 `destination:forward|backward`, once per direction), the sign's symbol (`destination:symbol`), its own speed limit,
 and restrictions: no HGV (`hgv:lanes=no`), HGV lane (`designated`), height, width and weight limits
 (`maxheight:lanes`, `maxwidth:lanes`, `maxweight:lanes`). Labels take their sign's colour (`destination:colour`).
+Also: the sign's arrow, street, European road number and country (`destination:arrow|street|int_ref|country:lanes`);
+toll, cash and cards (`toll:lanes`, `payment:cash|cards:lanes`); values at times (`bus|psv|access|maxspeed:lanes:conditional`,
+bus lanes counted from the kerb by `lanes:bus:conditional`); once per direction, the lorry limit (`maxspeed:hgv`),
+advised speed, `maxspeed:conditional` and no lorry overtaking (`overtaking:hgv=no`).
 
 ## Lines between lanes (Highway Code)
 

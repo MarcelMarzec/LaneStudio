@@ -149,6 +149,13 @@ export interface PathShape {
     below?: boolean;
     /** on a bridge or above ground (`layer` > 0): drawn over the roads, where other paths are drawn under them */
     above?: boolean;
+    /** a ramp up one side of steps (wiki: Key:ramp): for cycles, prams or wheelchairs */
+    ramp?: Vec2[];
+}
+
+/** Whether steps have a ramp up them (`ramp=yes`, `ramp:bicycle`, `ramp:stroller`, `ramp:wheelchair`) */
+export function hasStepRamp(tags: Tags): boolean {
+    return ['ramp', 'ramp:bicycle', 'ramp:stroller', 'ramp:wheelchair', 'ramp:luggage'].some(key => tags[key] === 'yes');
 }
 
 /**
@@ -217,7 +224,8 @@ export interface MarkingShape {
 }
 
 export type SymbolKind = 'stop_text' | 'give_way_triangle' | 'signals' | 'signals_blinker' | 'signals_lane_control' | 'signals_emergency'
-    | 'speed_limit' | 'min_speed' | 'national_limit' | 'motorway_start' | 'belisha' | 'cycle';
+    | 'speed_limit' | 'min_speed' | 'national_limit' | 'motorway_start' | 'belisha' | 'cycle'
+    | 'street_lamp' | 'bus_stop' | 'bus_shelter' | 'traffic_mirror' | 'milestone';
 
 export interface SymbolShape {
     key: string;
@@ -229,6 +237,8 @@ export interface SymbolShape {
     size: number;
     /** painted text, for speed limits */
     text?: string;
+    /** the node it draws on its own (street furniture), so iD's marker for it can be left out */
+    nodeID?: string;
 }
 
 /** A barrier mapped as a line (fence, wall, guard rail, hedge…), drawn at its width */
@@ -451,8 +461,14 @@ function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisua
         }
     }
 
+    // a ramp up steps: a strip along their right-hand side, wider for wheelchairs
+    const rampWidth = tags['ramp:wheelchair'] === 'yes' ? Math.min(1, width * 0.4) : Math.min(0.45, width * 0.3);
+    const ramp = kind === 'steps' && hasStepRamp(tags)
+        ? [...offsetPolyline(points, points.map(() => width / 2 - rampWidth)), ...offsetPolyline(points, points.map(() => width / 2)).reverse()].map(frame.toLoc)
+        : undefined;
+
     const shape: PathShape = {
-        id: way.id, kind, assumed: tagged === undefined, markings, marks, construction: isUnderConstruction(way.tags),
+        id: way.id, kind, assumed: tagged === undefined, markings, marks, construction: isUnderConstruction(way.tags), ramp,
         surface: surfaceGroup(tags.surface), use, divider, footHalf,
         below: (!!tags.tunnel && tags.tunnel !== 'no') || Number(tags.layer) < 0,
         above: (!!tags.bridge && tags.bridge !== 'no') || Number(tags.layer) > 0,
@@ -570,6 +586,7 @@ export function hatchStripes(polygon: Vec2[], direction: string | undefined): Ve
 
 /** A mapped area that is a road's carriageway, which roads inside it are fitted to */
 export function isCarriagewayArea(entity: OsmEntity): boolean {
+    if (entity.type === 'relation') return entity.tags.type === 'multipolygon' && areaKind(entity.tags) === 'carriageway';
     return entity.type === 'way' && (entity as osmWay).isClosed() && areaKind(entity.tags) === 'carriageway';
 }
 
@@ -1434,6 +1451,29 @@ export function chevronStripes(polygon: Vec2[], travel: Vec2 | undefined, direct
 }
 
 
+/* ---------- street furniture ---------- */
+
+/**
+ * Things beside the road drawn as symbols where they stand, upright (wiki: Tag:highway=street_lamp, bus_stop,
+ * traffic_mirror, milestone): a lamp with its pool of light, a bus stop flag (and its shelter, `shelter=yes`), a
+ * convex mirror, a milestone with its distance (`distance=*`, else `inscription`)
+ */
+function streetFurniture(node: osmNode, out: StreetGeometry) {
+    const tags = node.tags;
+    const frame = metricFrame(node.loc);
+    const symbol = (kind: SymbolKind, size: number, at: Vec2 = [0, 0], text?: string) =>
+        out.symbols.push({ key: `${node.id}-${kind}`, kind, nodeID: node.id, loc: frame.toLoc(at), ahead: frame.toLoc(add(at, [0, 1])), size, ...(text ? { text } : {}) });
+    if (tags.highway === 'street_lamp') symbol('street_lamp', 3);
+    if (tags.highway === 'traffic_mirror') symbol('traffic_mirror', 2);
+    if (tags.highway === 'milestone') symbol('milestone', 1.6, [0, 0], (tags.distance ?? tags.inscription ?? '').split(/[;\n]/)[0].slice(0, 8));
+    const busStop = tags.highway === 'bus_stop' || (tags.public_transport === 'platform' && tags.bus === 'yes');
+    if (busStop) {
+        if (tags.shelter === 'yes') symbol('bus_shelter', 3.5, [0, -1.8]);
+        symbol('bus_stop', 2.4);
+    }
+}
+
+
 /* ---------- solar panels ---------- */
 
 /** Solar panels (wiki: Tag:generator:source=solar): `power=generator` with `generator:source=solar` */
@@ -1514,6 +1554,7 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?
             if (isLaneRoad(way)) speedLimitSymbols(way, graph, visuals, out);
         } else if (entity.type === 'node' && Object.keys(entity.tags).length) {
             if (isSolarPanel(entity.tags)) out.areas.push(panelOnNode(entity as osmNode));
+            streetFurniture(entity as osmNode, out);
             nodeMarkings(entity as osmNode, graph, out, visuals);
         } else if (entity.type === 'relation') {
             // areas mapped as multipolygons: road and junction areas, pavements, islands… with their holes

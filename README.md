@@ -50,15 +50,17 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   (`road_marking=restriction`), and roundabout entries and exits flare into the ring.
 * **Street features**: pavements, footways and crossings at their width (paths drawn over the roads
   they cross), stop and give way lines, traffic signals, islands, road markings, street parking,
-  parking spaces and car parks, traffic signs, message signs, cameras, bridges, tunnels, roads
-  under construction and solar panels; micro-mapped highway areas (`area:highway=*`: road and junction areas, hatching,
+  parking spaces and car parks, traffic signs, message signs, cameras, priority signs on narrow
+  stretches, toll gantries, street lamps, bus stops and shelters, traffic mirrors, milestones, bridges,
+  tunnels, roads under construction and solar panels; micro-mapped highway areas (`area:highway=*`: road and junction areas, hatching,
   crossings, multipolygons too); UK markings (crossing zig-zags and Belisha beacons, BUS LANE, cycle
   symbols, bus stop boxes, advanced stop lines, tactile paving); and brand logos from Wikidata in place of
   shop and restaurant markers.
 * **Railways**: track at its gauge (ballast, sleepers, rails and conductor rails) for main lines, the
   Underground, light rail, trams, narrow gauge and more; platforms; level crossings with UK-style
-  barriers, light signals and road markings; Network Rail colour-light and shunt signals; buffer
-  stops, switches, turntables and old trackbeds.
+  barriers, light signals and road markings; Network Rail colour-light, shunt and semaphore signals
+  and other countries' light signals; overhead line masts; buffer stops, switches, turntables and old
+  trackbeds.
 * **Routing**: hover a lane to see every route a car, bus, bicycle or lorry can take from it,
   following turn arrows, lane connections and turn restrictions; hover a footway to see where people
   can walk.

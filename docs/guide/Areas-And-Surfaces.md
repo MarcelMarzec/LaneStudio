@@ -10,7 +10,8 @@ lane or road, such as a red bus lane.
 
 Footways, paths, cycleways, steps and pedestrian streets are drawn at their width (`width`, `est_width`), under the
 roads; crossings and paths on bridges (`layer` > 0) over them. Shared foot and cycle paths are striped, segregated
-ones split in two. A free path end is rounded.
+ones split in two. A free path end is rounded. Steps with a ramp (`ramp`, `ramp:bicycle`, `ramp:stroller`,
+`ramp:wheelchair=yes`) have a smooth strip up one side.
 
 ## Mapped road areas (micro-mapping)
 
@@ -31,7 +32,8 @@ ones split in two. A free path end is rounded.
 | Footway with `footway=crossing` | Zebra bars across the way people walk |
 
 A road mapped as a routable area (`area=yes` + `highway=*`) is a plaza or service area: ways inside it draw only
-their lines, arrows and special lanes. Roads are fitted into way areas, not multipolygons.
+their lines, arrows and special lanes. Roads are fitted into way and multipolygon areas alike (a multipolygon by its
+largest outer ring).
 
 ## Structures
 

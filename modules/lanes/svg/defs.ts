@@ -108,6 +108,25 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
     beacon.append('circle').attr('r', 9).attr('fill', '#f5a623').attr('stroke', '#1b1b1b').attr('stroke-width', 2);
     beacon.append('circle').attr('r', 4).attr('fill', 'none').attr('stroke', '#fff').attr('stroke-width', 1.5);
 
+    // street furniture, 20 units across: a lamp and its pool of light, a bus stop flag, a bus shelter, a convex mirror,
+    // a milestone
+    const lamp = defs.append('symbol').attr('id', 'lanes-street-lamp').attr('overflow', 'visible');
+    lamp.append('circle').attr('r', 10).attr('fill', 'rgba(255, 214, 110, 0.22)');
+    lamp.append('circle').attr('r', 3).attr('fill', '#ffe9a8').attr('stroke', '#3a3a3a').attr('stroke-width', 1);
+    const busStop = defs.append('symbol').attr('id', 'lanes-bus-stop').attr('overflow', 'visible');
+    busStop.append('circle').attr('r', 9).attr('fill', '#d6342c').attr('stroke', '#fff').attr('stroke-width', 2);
+    busStop.append('rect').attr('x', -9).attr('y', -2.6).attr('width', 18).attr('height', 5.2).attr('fill', '#fff');
+    busStop.append('text').attr('text-anchor', 'middle').attr('dominant-baseline', 'central').attr('font-size', 4.6)
+        .attr('font-weight', 700).attr('fill', '#d6342c').text('BUS');
+    const shelter = defs.append('symbol').attr('id', 'lanes-bus-shelter').attr('overflow', 'visible');
+    shelter.append('rect').attr('x', -10).attr('y', -4).attr('width', 20).attr('height', 8).attr('rx', 1)
+        .attr('fill', 'rgba(160, 200, 230, 0.55)').attr('stroke', '#e8eef4').attr('stroke-width', 1.2);
+    const mirror = defs.append('symbol').attr('id', 'lanes-traffic-mirror').attr('overflow', 'visible');
+    mirror.append('circle').attr('r', 9).attr('fill', '#b9c4cf').attr('stroke', '#f08a24').attr('stroke-width', 3);
+    mirror.append('path').attr('d', 'M-4 -3A5 5 0 0 1 3 -5').attr('fill', 'none').attr('stroke', '#fff').attr('stroke-width', 1.5);
+    const milestone = defs.append('symbol').attr('id', 'lanes-milestone').attr('overflow', 'visible');
+    milestone.append('path').attr('d', 'M-7 10V-4Q-7 -10 0 -10Q7 -10 7 -4V10Z').attr('fill', '#cfcfc8').attr('stroke', '#55554f').attr('stroke-width', 1.4);
+
     // fills for painted areas (road_marking with pattern=*), one per colour: patterns take their
     // colours from where they are defined, not from the shape that uses them
     for (const [colourName, colour] of Object.entries(markingColourValues)) {
