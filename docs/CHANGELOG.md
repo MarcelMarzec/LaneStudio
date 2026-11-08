@@ -8,6 +8,19 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08r10
+##### 2026-Nov-08
+
+#### Editing
+* New road fields in Add field: **Speed limit for lorries** (`maxspeed:hgv`, in place of iD's), **Speed limit at
+  times** (`maxspeed:conditional`), **Priority on a narrow stretch** (`priority=forward|backward`) and **Motorroad**
+  (`motorroad=yes`), each with its i button
+* The centre line field sets whether lorries may overtake (`overtaking:hgv`)
+
+#### Routing tool
+* Cycles ride a one-way road against it where allowed (`oneway:bicycle=no`, a contraflow cycle lane), and buses
+  where `oneway:bus=no` or `oneway:psv=no`; cycles keep off motorroads (`motorroad=yes`)
+
 # 26.11.08r9
 ##### 2026-Nov-08
 

@@ -273,3 +273,20 @@ describe('routing into a lane that leads on', () => {
         expect(east!.moves.some(m => m.toWayID === 'w90002')).toBe(true);
     });
 });
+
+describe('one-way exceptions and motorroads', () => {
+    it('lets a cycle or bus ride a one-way road against it where excepted, and keeps cycles off motorroads', () => {
+        // the road east runs one way towards the junction
+        const against = crossroads({ lanes: '1' }, [], { oneway: '-1', lanes: '1' });
+        expect(firstRoads(against, 0, 'car')).not.toContain('w2');
+        expect(firstRoads(against, 0, 'bicycle')).not.toContain('w2');
+        const cycles = crossroads({ lanes: '1' }, [], { oneway: '-1', lanes: '1', 'oneway:bicycle': 'no' });
+        expect(firstRoads(cycles, 0, 'bicycle')).toContain('w2');
+        expect(firstRoads(cycles, 0, 'car')).not.toContain('w2');
+        const buses = crossroads({ lanes: '1' }, [], { oneway: '-1', lanes: '1', 'oneway:bus': 'no' });
+        expect(firstRoads(buses, 0, 'bus')).toContain('w2');
+        const motorroad = crossroads({ lanes: '1' }, [], { motorroad: 'yes' });
+        expect(firstRoads(motorroad, 0, 'bicycle')).not.toContain('w2');
+        expect(firstRoads(motorroad, 0, 'car')).toContain('w2');
+    });
+});

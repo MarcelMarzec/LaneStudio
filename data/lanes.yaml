@@ -206,6 +206,10 @@ en:
     min_mph: "Minimum {n} mph"
     min_road_label: Minimum speed
     advisory_label: Advisory speed limit
+    hgv_label: Speed limit for lorries
+    hgv_none: Same as the road
+    conditional_label: Speed limit at times
+    conditional_placeholder: "value @ (condition), e.g. 20 mph @ (Mo-Fr 08:00-09:30)"
     advisory_mph: "{n} mph advised"
     advisory_none: No advisory limit
     min_none: No minimum speed
@@ -499,6 +503,15 @@ en:
       island: Traffic island
       car_park: Car park
       solar: Solar panels
+  priority:
+    title: Priority on a narrow stretch
+    none: Neither way
+    forward: Traffic going along the way (forward)
+    backward: Traffic going against the way (backward)
+  motorroad:
+    title: Motorroad
+    "yes": "Yes: motor vehicles only"
+    "no": "No"
   structure:
     title: Structure
     layer: Layer
@@ -667,6 +680,8 @@ en:
     not_joined: No road with lanes nearby to join to.
   annotation:
     structure: Changed the road's structure.
+    priority: Changed which way has priority.
+    motorroad: Changed whether the road is a motorroad.
     lanes: Changed the number of lanes.
     overtaking: Changed where traffic may overtake.
     parking: Changed street parking.
@@ -759,6 +774,11 @@ en:
   centre_line:
     title: Centre line
     oneway: "A one-way road has no centre line: its lanes all go the same way."
+    hgv: Lorries overtaking
+    hgv_same: As other traffic
+    hgv_values:
+      "no": Lorries may not overtake
+      "yes": Lorries may overtake
     click_tip: "The centre line: click a side of it to stop the traffic on that side overtaking across it, or to let it overtake again."
     values:
       dashed: "Dashed: both ways may overtake"
@@ -931,11 +951,15 @@ en:
     structure: "What the road is on or in: a bridge or viaduct (bridge=*), a tunnel or a passage through a building (tunnel=*), an embankment, a cutting, a ford or a covered way. A bridge or tunnel also gets a layer."
     access: "Who may use the lane (access:lanes): yes, no, designated, destination and so on, one value per lane."
     camera: "A speed camera or red light camera (highway=speed_camera); the limit it enforces is its maxspeed, and direction is the way it faces."
-    centre_line: "The line between traffic going opposite ways. Dashed where either way may overtake; a double white line is solid on the side of the traffic that may not cross it (overtaking=*, overtaking:forward, overtaking:backward)."
+    centre_line: "The line between traffic going opposite ways. Dashed where either way may overtake; a double white line is solid on the side of the traffic that may not cross it (overtaking=*, overtaking:forward, overtaking:backward). Lorries overtaking sets overtaking:hgv where lorries may not overtake but others may."
     change: "Whether traffic may change into the lane beside it (change:lanes: yes, no, not_left, not_right). Beside the centre line this is overtaking (overtaking=*); beside the kerb there is nothing to change into."
     cycleway: "Cycle lanes and tracks along the road, per side (cycleway:left, cycleway:right): a lane is painted on the road, inside the kerb, a track is kept apart from it. Their width is cycleway:<side>:width. A contraflow lane is cycleway:<side>=lane with cycleway:<side>:oneway=-1 and oneway:bicycle=no, not the old opposite_lane. Each side's details (the line beside it, direction, width, buffer, separation, colour) fold away under the field."
     destination: "Where a lane goes, as the signs say (destination:lanes); several places are separated by semicolons. Lanes with none take the road's destination:forward or destination:backward (destination on a one-way road)."
     destination_ref: "The road numbers on the signs for a lane (destination:ref:lanes), such as M6 or A38."
+    maxspeed_hgv: "The speed limit for lorries (maxspeed:hgv), where signs set one lower than the road's."
+    maxspeed_conditional: "Speed limits at times or in conditions (maxspeed:conditional), as value @ (condition): 20 mph @ (Mo-Fr 08:00-09:30), 50 mph @ (wet). Several are separated by semicolons."
+    priority: "On a stretch too narrow for traffic both ways, which way has priority (priority=forward or backward), as the signs at each end say: the other way gives way."
+    motorroad: "A road for motor vehicles only (motorroad=yes), with no cycles, walkers or slow vehicles, such as a road signed with the car symbol. Cycle routes keep off it."
     destination_street: "The street a lane leads to, as the signs name it (destination:street:lanes)."
     destination_int_ref: "The European road numbers on the signs for a lane (destination:int_ref:lanes), such as E15."
     destination_arrow: "Which way the arrow on the sign for a lane points (destination:arrow:lanes): left, right, through and the like."

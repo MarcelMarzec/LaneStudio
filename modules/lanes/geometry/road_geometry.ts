@@ -2090,6 +2090,16 @@ function partsFromAreas(way: osmWay, graph: coreGraph, areas: osmWay[]): LanePar
 }
 
 
+/** Each road's painted areas to part round, added to its drawing shifts */
+function addLaneParts(ways: osmWay[], graph: coreGraph, partAreas: osmWay[], visuals: Map<string, WayVisual>) {
+    if (!partAreas.length) return;
+    for (const way of ways) {
+        const parts = partsFromAreas(way, graph, partAreas);
+        if (parts) visuals.set(way.id, { ...(visuals.get(way.id) ?? noVisual), parts });
+    }
+}
+
+
 /* ---------- fitting roads into mapped carriageway areas ---------- */
 
 const fitCache = new WeakMap<osmWay, { deps: unknown[]; fit: [number, number][] | undefined }>();
@@ -2793,12 +2803,7 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         if (fit) visuals.set(way.id, { ...noVisual, fit });
     }
     // lanes parting round painted areas between them
-    if (partAreas.length) {
-        for (const way of ways) {
-            const parts = partsFromAreas(way, graph, partAreas);
-            if (parts) visuals.set(way.id, { ...(visuals.get(way.id) ?? noVisual), parts });
-        }
-    }
+    addLaneParts(ways, graph, partAreas, visuals);
     const areaRoadIDs = new Set([...owners.values()].map(way => way.id));
 
     // 1. which nodes join roads, and the drawing-only shifts and tapers that line their lanes up

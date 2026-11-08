@@ -27,7 +27,7 @@ import {
     type LaneDirection, type LaneModel
 } from '../model';
 import type { InfoTopic } from './field_info';
-import { compactChoice, fieldNote, fieldReference, sidedRows } from './lane_fields';
+import { compactChoice, fieldNote, fieldReference, laneInput, sidedRows } from './lane_fields';
 import { parkingSideDetails, roadParkingScope } from './parking_fields';
 import { centreLineIcon } from './section_lanes';
 import { upgradeOldBusway } from '../model/kinds';
@@ -158,6 +158,69 @@ function drawCentreLine(context: iD.Context, wrap: Div, road: osmWay) {
         current: tagged ? current : undefined,
         onPick: (line: CentreLine) =>
             context.perform(actionChangeTags(road.id, withCentreLine(road.tags, line)), t('_lanes.annotation.overtaking'))
+    });
+    // lorries may be banned from overtaking where others may (wiki: Key:overtaking:hgv)
+    sidedRows(context, wrap, [{
+        id: 'overtaking-hgv', label: t('_lanes.centre_line.hgv'), value: road.tags['overtaking:hgv'] ?? '', strict: true,
+        emptyTitle: t('_lanes.centre_line.hgv_same'), placeholder: t('_lanes.centre_line.hgv_same'),
+        suggestions: ['no', 'yes'].map(value => ({ value, title: t(`_lanes.centre_line.hgv_values.${value}`) })),
+        onChange: value => context.perform(actionChangeTags(road.id, withTag(road.tags, 'overtaking:hgv', value)), t('_lanes.annotation.overtaking'))
+    }]);
+}
+
+/** Tags with `key` set to `value`, or removed when it is empty */
+function withTag(tags: Tags, key: string, value: string): Tags {
+    const next = { ...tags };
+    if (value) next[key] = value;
+    else delete next[key];
+    return next;
+}
+
+/** The limit for lorries (`maxspeed:hgv`), lower than the road's on some roads, as roundels */
+function drawHgvSpeed(context: iD.Context, wrap: Div, road: osmWay) {
+    const value = road.tags['maxspeed:hgv'];
+    const mph = mphOf(value);
+    speedChoice(context, wrap, 'maxspeed-hgv', {
+        current: !value ? { kind: 'none' } : mph === null ? undefined : { kind: 'mph', mph },
+        none: true, noneLabel: t('_lanes.speed.hgv_none'),
+        onPick: next => context.perform(actionChangeTags(road.id,
+            withTag(road.tags, 'maxspeed:hgv', next.kind === 'mph' ? `${next.mph} mph` : '')), t('_lanes.annotation.speed'))
+    });
+    const odd = unusualSpeed(value);
+    if (odd) wrap.append('p').attr('class', 'speed-tagged').text(t('_lanes.speed.tagged', { value: odd }));
+}
+
+/** Speed limits at times or in conditions (`maxspeed:conditional`), as `value @ (condition)` */
+function drawConditionalSpeed(context: iD.Context, wrap: Div, road: osmWay) {
+    laneInput(context, wrap, {
+        id: 'maxspeed-conditional', value: road.tags['maxspeed:conditional'] ?? '',
+        placeholder: t('_lanes.speed.conditional_placeholder'),
+        suggestions: ['20 mph @ (Mo-Fr 08:00-09:30,14:30-16:00)', '50 mph @ (wet)', '40 mph @ (hgv)'].map(value => ({ value })),
+        onChange: value => context.perform(actionChangeTags(road.id, withTag(road.tags, 'maxspeed:conditional', value.trim())),
+            t('_lanes.annotation.speed'))
+    });
+}
+
+/** Which way has priority on a narrow stretch (`priority=forward|backward`, the signs at each end) */
+function drawPriority(context: iD.Context, wrap: Div, road: osmWay) {
+    compactChoice(context, wrap, {
+        id: 'priority',
+        choices: ['none', 'forward', 'backward'].map(value => ({ value, label: t(`_lanes.priority.${value}`),
+            terms: value === 'none' ? ['no'] : [value] })),
+        current: road.tags.priority === 'forward' || road.tags.priority === 'backward' ? road.tags.priority : road.tags.priority ? undefined : 'none',
+        onPick: value => context.perform(actionChangeTags(road.id, withTag(road.tags, 'priority', value === 'none' ? '' : value)),
+            t('_lanes.annotation.priority'))
+    });
+}
+
+/** A motorroad (`motorroad=yes`): a road for motor vehicles only, with no cycles or walkers */
+function drawMotorroad(context: iD.Context, wrap: Div, road: osmWay) {
+    compactChoice(context, wrap, {
+        id: 'motorroad',
+        choices: ['yes', 'no'].map(value => ({ value, label: t(`_lanes.motorroad.${value}`), terms: [value] })),
+        current: road.tags.motorroad === 'yes' ? 'yes' : !road.tags.motorroad || road.tags.motorroad === 'no' ? 'no' : undefined,
+        onPick: value => context.perform(actionChangeTags(road.id, withTag(road.tags, 'motorroad', value === 'yes' ? 'yes' : '')),
+            t('_lanes.annotation.motorroad'))
     });
 }
 
@@ -483,6 +546,14 @@ export const roadFieldDefs: RoadFieldDef[] = [
         info: 'minspeed', label: '_lanes.speed.min_road_label', draw: drawMinspeed, wrapClass: 'lane-field-body form-field-speed' },
     { id: 'lanes/advisory', keys: ['maxspeed:advisory'], owns: key => key === 'maxspeed:advisory',
         info: 'advisory', label: '_lanes.speed.advisory_label', draw: drawAdvisory, wrapClass: 'lane-field-body form-field-speed' },
+    { id: 'lanes/maxspeed_hgv', keys: ['maxspeed:hgv'], owns: key => key === 'maxspeed:hgv',
+        info: 'maxspeed_hgv', label: '_lanes.speed.hgv_label', draw: drawHgvSpeed, wrapClass: 'lane-field-body form-field-speed' },
+    { id: 'lanes/maxspeed_conditional', keys: ['maxspeed:conditional'], owns: key => key === 'maxspeed:conditional',
+        info: 'maxspeed_conditional', label: '_lanes.speed.conditional_label', draw: drawConditionalSpeed, wrapClass: 'lane-field-body' },
+    { id: 'lanes/priority', keys: ['priority'], owns: key => key === 'priority',
+        info: 'priority', label: '_lanes.priority.title', draw: drawPriority, wrapClass: 'lane-field-body' },
+    { id: 'lanes/motorroad', keys: ['motorroad'], owns: key => key === 'motorroad',
+        info: 'motorroad', label: '_lanes.motorroad.title', draw: drawMotorroad, wrapClass: 'lane-field-body' },
     { id: 'lanes/structure', keys: ['bridge', 'tunnel', 'embankment', 'cutting', 'ford', 'covered', 'layer'],
         owns: key => [...structureKeys, 'layer'].includes(key), info: 'structure', label: '_lanes.structure.title', draw: drawStructure,
         wrapClass: 'lane-field-body' },
@@ -558,7 +629,11 @@ function placeFor(id: string, highway: string): 'fields' | 'more' | null {
         case 'lanes/parking': return ['residential', 'living_street'].includes(highway) ? 'fields' : 'more';
         case 'lanes/managed': return motorway ? 'fields' : canBeManaged({ highway }) ? 'more' : null;
         case 'lanes/advisory':
-        case 'lanes/structure': return 'more';
+        case 'lanes/structure':
+        case 'lanes/maxspeed_hgv':
+        case 'lanes/maxspeed_conditional':
+        case 'lanes/priority': return 'more';
+        case 'lanes/motorroad': return ['trunk', 'primary', 'secondary'].includes(highway) ? 'more' : null;
     }
     return null;
 }
@@ -566,7 +641,7 @@ function placeFor(id: string, highway: string): 'fields' | 'more' | null {
 /** iD's fields Lane Studio's replace on the roads it edits */
 const replacedFields = ['lanes', 'maxspeed', 'minspeed', 'sidewalk', 'cycleway', 'parking/side/parking', 'parking/side/orientation'];
 /** iD's fields replaced where they stand, by Lane Studio's field for the same tags */
-const replacedInPlace: Record<string, string> = { structure: 'lanes/structure', 'maxspeed/advisory': 'lanes/advisory' };
+const replacedInPlace: Record<string, string> = { structure: 'lanes/structure', 'maxspeed/advisory': 'lanes/advisory', 'maxspeed/hgv': 'lanes/maxspeed_hgv' };
 
 /**
  * Registers Lane Studio's road fields with iD (as field types and fields) and puts them in the presets of the roads

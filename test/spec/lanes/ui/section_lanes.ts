@@ -232,7 +232,8 @@ describe('Lane Studio sidebar', () => {
         arrangeFields(fields, more, 'residential');
         expect(fields).toEqual(['name', 'oneway', 'lanes/counts', 'lanes/centre_line', 'lanes/maxspeed', 'surface', 'access',
             'lanes/sidewalk', 'lanes/parking']);
-        expect(more).toEqual(['lit', 'width', 'lanes/minspeed', 'lanes/advisory', 'lanes/structure', 'lanes/shoulder', 'lanes/cycleway']);
+        expect(more).toEqual(['lit', 'width', 'lanes/minspeed', 'lanes/advisory', 'lanes/maxspeed_hgv', 'lanes/maxspeed_conditional',
+            'lanes/priority', 'lanes/structure', 'lanes/shoulder', 'lanes/cycleway']);
         // iD's structure and advisory fields are replaced where they were
         const bridge = ['name', 'structure', 'maxspeed/advisory'];
         arrangeFields(bridge, [], 'primary');

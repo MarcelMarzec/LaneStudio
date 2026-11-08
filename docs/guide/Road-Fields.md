@@ -10,6 +10,10 @@ tag). With several roads selected, iD's own fields come back to set a value on a
 | Speed limit | `maxspeed`, `maxspeed:type` | Every road |
 | Minimum speed | `minspeed` | Motorways |
 | Advisory speed | `maxspeed:advisory` | Once tagged |
+| Speed limit for lorries | `maxspeed:hgv` | Once tagged (in place of iD's) |
+| Speed limit at times | `maxspeed:conditional`, as `20 mph @ (Mo-Fr 08:00-09:30)` | Once tagged |
+| Priority on a narrow stretch | `priority=forward\|backward` (the way that has priority; the other gives way) | Once tagged |
+| Motorroad | `motorroad=yes` (motor vehicles only) | Trunk, primary and secondary roads, once tagged |
 | Structure | `bridge`, `tunnel`, `embankment`, `cutting`, `ford`, `covered`, `layer` | Once tagged (in place of iD's Structure) |
 | Pavement, Cycleway, Hard shoulder, Parking | Per side, see [Roadside](Roadside.md) and [Street parking](Street-Parking.md) | Pavements where expected, parking on residential and living streets, shoulders on motorways and trunk roads |
 | Active traffic management | `active_traffic_management`, `maxspeed:variable` | Motorways, or once tagged |
@@ -24,7 +28,7 @@ dropdown lists them all. Type to pick one: its name, a number (`35` for 35 mph) 
 
 Dashed (`overtaking=yes`), double white line solid on the forward or backward side (`overtaking:forward=no`,
 `overtaking:backward=no`), or double solid (`overtaking=no`). Also set by clicking a side of the line on the map,
-or from the lane beside it.
+or from the lane beside it. **Lorries overtaking** sets `overtaking:hgv=no|yes` where lorries differ.
 
 ## Speed limits
 

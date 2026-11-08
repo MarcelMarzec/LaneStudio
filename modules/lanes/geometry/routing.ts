@@ -123,6 +123,8 @@ const closedValues = new Set(['no', 'private', 'military', 'agricultural', 'fore
 /** Whether a road is open to the vehicle: its access tags, most specific first, and roads it may not use */
 function roadOpen(tags: Tags, profile: Profile): boolean {
     if (profile.banned.has(tags.highway ?? '')) return false;
+    // a motorroad (wiki: Key:motorroad) is for motor vehicles only
+    if (tags.motorroad === 'yes' && profile === routingProfiles.bicycle) return false;
     for (const key of profile.access) {
         const value = tags[key];
         if (value) return !closedValues.has(value);
@@ -228,6 +230,21 @@ function turnWord(angle: number): TurnWord {
 
 /** The way an arm heads overall, from the node to a point 30 m out (its first metres may curve, round a roundabout) */
 const heading = (arm: Arm): Vec2 => unit(pointAlong(arm.line, Math.min(30, polylineLength(arm.line))).point);
+
+/**
+ * Whether the vehicle may ride a one-way road against its direction (wiki: Key:oneway:bicycle, Key:oneway:bus): a
+ * cycle with `oneway:bicycle=no`, an opposite cycle lane or track (`cycleway=opposite*`, a side's `oneway=-1|no`); a bus
+ * with `oneway:bus=no` or `oneway:psv=no`
+ */
+export function onewayExcepted(tags: Tags, profileID: RoutingProfile): boolean {
+    if (profileID === 'bicycle') {
+        if (tags['oneway:bicycle'] === 'no' || /^opposite/.test(tags.cycleway ?? '')) return true;
+        return ['left', 'right', 'both'].some(side => ['-1', 'no'].includes(tags[`cycleway:${side}:oneway`] ?? '') &&
+            !!tags[`cycleway:${side}`] && tags[`cycleway:${side}`] !== 'no');
+    }
+    if (profileID === 'bus') return tags['oneway:bus'] === 'no' || tags['oneway:psv'] === 'no';
+    return false;
+}
 
 /** Lanes of a way travelling one way along it: `forward` along its drawing direction */
 const lanesOf = (way: osmWay, graph: coreGraph, direction: LaneDirection) => cachedLayout(way, graph).model.lanes[direction];
@@ -487,6 +504,48 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
         if (routes.length < limit.routes) routes.push({ runs: [...s.runs, run], moves: s.moves, length: s.length, end });
     };
 
+    // against a one-way road the vehicle may use both ways (`oneway:bicycle=no`, a contraflow cycle lane, `oneway:bus=no`):
+    // no lanes to keep to there, so it may go into any road on, or come out of it into any. Returns the ways on taken.
+    const againstOneways = (s: State, run: LaneRun, j: Junction, i: number, byExit: Map<number, unknown>, length: number): number => {
+        const upWay = j.arms[i].way;
+        let went = 0;
+        const contraflowing = !lanesOf(upWay, graph, s.enter.direction).length;
+        for (const [k, down] of j.arms.entries()) {
+            if (k === i || byExit.has(k)) continue;
+            const downDirection = junctionRules.armLaneDirection(down, false);
+            const downLanes = lanesOf(down.way, graph, downDirection).length;
+            const against = !downLanes && onewayExcepted(down.way.tags, profileID);
+            if (!against && !(contraflowing && downLanes)) continue;
+            const path = [...s.runs.map(r => r.wayID as string), s.way.id].filter((id, n, all) => id !== all[n - 1]);
+            const restriction = restrictionAt(graph, upWay, j.node.id, down.way, profileID) ?? viaWayRestriction(graph, path, down.way, profileID);
+            if (restriction || !roadOpen(down.way.tags, profile)) {
+                blockMove(j, upWay, down, restriction ?? 'road closed to this vehicle');
+                continue;
+            }
+            const entry = against ? 0 : Array.from({ length: downLanes }, (_, m) => m)
+                .find(m => !laneClosed(down.layout, { direction: downDirection, index: m }, down.way.tags, profile));
+            if (entry === undefined) continue;
+            const nextStep = down.alongWay ? 1 : -1;
+            const key = `${down.way.id}:${down.nodeIndex}:${nextStep}`;
+            if (s.visited.has(key)) continue;
+            const moveInfo: RouteMove = {
+                nodeID: j.node.id, turn: turnWord(junctionRules.signedAngle(scale(j.arms[i].direction, -1), down.direction)), toWayID: down.way.id
+            };
+            const moves = [...s.moves, moveInfo];
+            const roads = moves.map(m => `${m.nodeID}>${m.toWayID}`).join(',');
+            if (explored.has(`${roads}:${entry}`)) continue;
+            explored.add(`${roads}:${entry}`);
+            went++;
+            explore({
+                way: down.way, from: down.nodeIndex, step: nextStep,
+                enter: { direction: downDirection, index: entry }, strict: false,
+                runs: [...s.runs, run], moves, length: length + 3, visited: new Set([...s.visited, key]),
+                ringExits: 0, ringArrows: undefined, feeders: s.feeders
+            });
+        }
+        return went;
+    };
+
     const explore = (s: State) => {
         if (routes.length >= limit.routes) return;
         const stop = s.runs.length === 0 ? to : nextStop(graph, s.way, s.from, s.step);
@@ -599,6 +658,7 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
                 });
             }
         }
+        went += againstOneways(s, run, j, i, byExit, length);
         if (!went) finish(here, run, byExit.size ? 'blocked' : 'dead_end');
     };
 

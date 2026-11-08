@@ -12,6 +12,9 @@ Routing, Speed Limit and Measure are in the top bar. Each turns editing off whil
   through short links, and leave a roundabout only by the exits the entry lane's arrows point to. On a stretch too
   short to change lanes, a route enters a lane that leads on, not one whose only way on is banned (a right turn lane
   whose turn is a banned U-turn).
+- Cycles may ride a one-way road against it with `oneway:bicycle=no` or a contraflow cycle lane
+  (`cycleway=opposite*`, `cycleway:<side>:oneway=-1`), buses with `oneway:bus=no` or `oneway:psv=no`; drawn along
+  the road's line. Cycles keep off `motorroad=yes`.
 - Hover a footway or pavement to see the streets reachable on foot and the crossings used.
 
 ## Speed Limit
