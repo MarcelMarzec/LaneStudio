@@ -709,6 +709,7 @@
 .ideditor.lane-studio .lanes-key-item { display: flex; align-items: center; gap: 10px; padding: 3px 0; }
 .ideditor.lane-studio .lanes-key-swatch { flex: none; border-radius: 3px; overflow: hidden; }
 .ideditor.lane-studio .lanes-key-swatch .lanes-key-ground { fill: rgb(48, 52, 60); }
+.ideditor.lane-studio .lanes-key-swatch .lanes-key-chevrons { fill: none; stroke: rgba(255, 255, 255, 0.9); stroke-width: 2.4; stroke-linejoin: miter; }
 .ideditor.lane-studio .lanes-key-label { color: var(--text-color, inherit); }
 
 /* the Measure tool's panel: the distance, and the widths it can be set as */

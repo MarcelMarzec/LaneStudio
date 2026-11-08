@@ -12,7 +12,7 @@ import { laneRouting } from '../core/lane_routing';
 import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind } from '../core/lane_speed';
 import { drawRoutes, laneUnder } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
-import { roadGeometry, type LaneSwap, type LineTrim, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
+import { isLanePartArea, roadGeometry, type LaneSwap, type LineTrim, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
 import type { CycleDetail, LaneInfo, ParkingLayout } from '../geometry/layout';
 import type { SurfaceGroup } from '../model/street_features';
 import { laneSymbols } from '../geometry/lane_symbols';
@@ -562,11 +562,12 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const ways = visible.filter(isLaneRoad);
         const carriagewayAreas = visible.filter(isCarriagewayArea) as osmWay[];
         const islands = visible.filter(entity => entity.type === 'way' && (entity as osmWay).isClosed() && isTrafficIsland(entity.tags)) as osmWay[];
+        const partAreas = visible.filter(entity => entity.type === 'way' && (entity as osmWay).isClosed() && isLanePartArea(entity.tags)) as osmWay[];
         // the geometry is in map coordinates, so it holds while the graph and the features in view are the same (a new
         // selection, tool or mode redraws without working it out again)
         const visibleIDs = visible.map(entity => entity.id).join(',');
         if (!_geometry || _geometry.graph !== graph || _geometry.ids !== visibleIDs) {
-            const roads = roadGeometry(ways, graph, carriagewayAreas, islands);
+            const roads = roadGeometry(ways, graph, carriagewayAreas, islands, partAreas);
             _geometry = { graph, ids: visibleIDs, roads, street: streetGeometry(visible, graph, roads.visuals) };
         }
         const { pieces, innerPieces, channelled, junctions, connections, heads, areaRoads, swaps } = _geometry.roads;

@@ -5,7 +5,8 @@ import type { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
 import { isLaneRoad } from '../core/roads';
 import { roadMarkingStyle, type RoadMarkingStyle, type StrokeStyle } from '../model/street_features';
-import { metricFrame, sub, unit, offsetPolyline } from './frame';
+import { metricFrame, sub, unit, offsetPolyline, dot, len } from './frame';
+import { chevronStripes, hatchStripes } from './street';
 
 /*
  * Painted road markings mapped as their own features (`road_marking=*`): lines painted with
@@ -26,6 +27,8 @@ export interface MarkingArea {
     id: string;
     polygon: Vec2[];
     style: RoadMarkingStyle;
+    /** hatching or chevrons as bars, turned to the road (clipped to the polygon when drawn) */
+    stripes?: Vec2[][];
 }
 
 export interface MarkingText {
@@ -44,7 +47,7 @@ export interface RoadMarkings {
     texts: MarkingText[];
 }
 
-const areaMarkings = new Set(['restriction', 'hatched', 'coloured', 'crossing', 'parking', 'bus_stop', 'box_junction']);
+const areaMarkings = new Set(['restriction', 'hatched', 'coloured', 'crossing', 'parking', 'bus_stop', 'box_junction', 'gore_chevron']);
 
 /** A closed `road_marking` way is an area when tagged so, or when it fills a space */
 function isAreaMarking(way: osmWay): boolean {
@@ -104,9 +107,49 @@ function nodeText(node: osmNode, graph: coreGraph): MarkingText | null {
     };
 }
 
+/**
+ * The direction traffic runs past an area, in metres in the frame of its first point: along the nearest road within
+ * 25 m of its middle (against a `oneway=-1` road), or undefined with none near
+ */
+function travelPast(polygon: Vec2[], roads: osmWay[], graph: coreGraph): Vec2 | undefined {
+    const frame = metricFrame(polygon[0]);
+    const points = polygon.map(frame.toMetres);
+    const middle: Vec2 = [points.reduce((t, p) => t + p[0], 0) / points.length, points.reduce((t, p) => t + p[1], 0) / points.length];
+    let best: { d: number; direction: Vec2 } | undefined;
+    for (const road of roads) {
+        const line = road.nodes.map(id => frame.toMetres((graph.entity(id) as osmNode).loc));
+        for (let i = 0; i < line.length - 1; i++) {
+            const e = sub(line[i + 1], line[i]);
+            const l = len(e);
+            if (l < 0.01) continue;
+            const t = Math.max(0, Math.min(1, dot(sub(middle, line[i]), e) / (l * l)));
+            const d = len(sub(middle, [line[i][0] + e[0] * t, line[i][1] + e[1] * t]));
+            if (d < 25 && (!best || d < best.d)) best = { d, direction: road.tags.oneway === '-1' ? unit([-e[0], -e[1]]) : unit(e) };
+        }
+    }
+    return best?.direction;
+}
+
+const stripeCache = new WeakMap<osmWay, { key: string; stripes: Vec2[][] | undefined }>();
+
+/** An area's hatching or chevrons as bars turned to the road beside it (other patterns are filled) */
+function areaStripes(way: osmWay, area: MarkingArea, roads: osmWay[], graph: coreGraph): Vec2[][] | undefined {
+    const pattern = area.style.pattern;
+    const chevrons = pattern === 'chevron' || way.tags.road_marking === 'gore_chevron';
+    if (!chevrons && pattern !== 'hatch' && pattern !== 'stripes' && pattern !== 'diagonal') return undefined;
+    const travel = chevrons ? travelPast(area.polygon, roads, graph) : undefined;
+    const key = `${area.polygon.map(p => p.join(',')).join(';')}|${travel?.map(v => v.toFixed(2))}|${way.tags.direction}|${chevrons}`;
+    const cached = stripeCache.get(way);
+    if (cached?.key === key) return cached.stripes;
+    const stripes = chevrons ? chevronStripes(area.polygon, travel, way.tags.direction) : hatchStripes(area.polygon, way.tags.direction);
+    stripeCache.set(way, { key, stripes });
+    return stripes;
+}
+
 /** Road markings among `entities` */
 export function roadMarkingGeometry(entities: OsmEntity[], graph: coreGraph): RoadMarkings {
     const out: RoadMarkings = { lines: [], areas: [], texts: [] };
+    let roads: osmWay[] | undefined;
     for (const entity of entities) {
         if (!entity.tags.road_marking) continue;
         if (entity.type === 'way') {
@@ -114,7 +157,11 @@ export function roadMarkingGeometry(entities: OsmEntity[], graph: coreGraph): Ro
             if (way.nodes.length < 2) continue;
             const { lines, area } = wayMarkings(way, graph);
             out.lines.push(...lines);
-            if (area) out.areas.push(area);
+            if (area) {
+                roads ??= entities.filter(e => e.type === 'way' && isLaneRoad(e)) as osmWay[];
+                const stripes = areaStripes(way, area, roads, graph);
+                out.areas.push(stripes ? { ...area, stripes } : area);
+            }
         } else if (entity.type === 'node') {
             const text = nodeText(entity as osmNode, graph);
             if (text) out.texts.push(text);

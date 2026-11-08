@@ -12,7 +12,7 @@ type Div = d3.Selection<HTMLDivElement>;
  */
 interface KeyEntry {
     id: string;
-    swatch: { fill?: string; line?: string; double?: [string, string]; use?: string; text?: string; zigzag?: boolean };
+    swatch: { fill?: string; line?: string; double?: [string, string]; use?: string; text?: string; zigzag?: boolean; chevrons?: boolean };
 }
 
 /** The map key's groups, each a section of the pane, in the order a road is looked at: lanes, lines, roadside, crossings, areas */
@@ -84,7 +84,8 @@ export const mapKeyGroups: { id: string; entries: KeyEntry[] }[] = [
             { id: 'signals', swatch: { use: '#lanes-signals' } },
             { id: 'sharrow', swatch: { fill: 'lane lane-general', use: '#lanes-sharrow' } },
             { id: 'table', swatch: { fill: 'marking marking-calming table' } },
-            { id: 'hatched', swatch: { fill: 'lane lane-restricted' } }
+            { id: 'hatched', swatch: { fill: 'lane lane-restricted' } },
+            { id: 'chevrons', swatch: { fill: 'lane lane-general', chevrons: true } }
         ]
     },
     {
@@ -114,6 +115,7 @@ function drawSwatch(selection: d3.Selection<SVGSVGElement>, entry: KeyEntry) {
         selection.append('path').attr('class', s.double[1]).attr('d', 'M2 11H42');
     }
     if (s.zigzag) selection.append('path').attr('class', 'marking marking-zigzag').attr('d', 'M2 11L8 7L14 11L20 7L26 11L32 7L38 11L42 8.5');
+    if (s.chevrons) selection.append('path').attr('class', 'lanes-key-chevrons').attr('d', 'M6 4L14 11L6 18M18 4L26 11L18 18M30 4L38 11L30 18');
     if (s.use) selection.append('use').attr('href', s.use).attr('transform', 'translate(22,9) rotate(90) scale(0.7)');
 }
 

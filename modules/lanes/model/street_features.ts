@@ -49,7 +49,8 @@ export const roadMarkingValues = [
 ] as const;
 
 export const strokeValues = ['solid', 'dashed', 'dotted', 'double_solid', 'double_dashed', 'solid_dashed', 'dashed_solid'] as const;
-export const patternValues = ['crosshatch', 'hatch', 'chevron', 'dots', 'solid', 'zigzag'] as const;
+/** `pattern=*` values of a painted area (wiki: Key:road_marking; `hatch` is read as `stripes`) */
+export const patternValues = ['stripes', 'chevron', 'crosshatch', 'x', 'zigzag', 'chessboard', 'dots', 'solid'] as const;
 export const markingColours = ['white', 'yellow', 'red', 'blue', 'green', 'orange'] as const;
 export type MarkingColour = typeof markingColours[number];
 
@@ -162,7 +163,7 @@ export function roadMarkingStyle(tags: Tags): RoadMarkingStyle {
         colour: markingColour(tags),
         width,
         dash: dash.length >= 2 ? dash : undefined,
-        pattern: tags.pattern ?? (kind === 'restriction' || kind === 'hatched' ? 'hatch' : undefined)
+        pattern: tags.pattern ?? (kind === 'gore_chevron' ? 'chevron' : kind === 'restriction' || kind === 'hatched' ? 'hatch' : undefined)
     };
 }
 

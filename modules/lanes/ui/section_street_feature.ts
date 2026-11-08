@@ -104,7 +104,7 @@ export function uiSectionStreetFeature(context: iD.Context) {
                 } else {
                     field(wrap, e, 'stroke', t('_lanes.street_feature.stroke'), strokeValues);
                 }
-                field(wrap, e, 'pattern', t('_lanes.street_feature.pattern'), patternValues);
+                field(wrap, e, 'pattern', t('_lanes.street_feature.pattern'), patternValues, v => t(`_lanes.street_feature.patterns.${v}`));
                 field(wrap, e, 'width', t('_lanes.street_feature.width'), ['0.1', '0.15', '0.2', '0.3', '0.5']);
                 field(wrap, e, 'dasharray', t('_lanes.street_feature.dasharray'), ['1,1', '2,4', '3,6', '4,2', '6,3']);
             } else {

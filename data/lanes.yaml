@@ -239,6 +239,9 @@ en:
     key_not_updated: "{key} was not updated for the new lane count."
   fields:
     crossing_signals: Traffic signals
+    painted_area:
+      name: Painted area (hatching, chevrons)
+      terms: hatched area, hatching, chevrons, gore, ghost island, road marking, restriction
   markings:
     types:
       none: Nothing
@@ -467,6 +470,7 @@ en:
       sharrow: Shared lane (sharrow)
       table: Speed table
       hatched: Hatched area
+      chevrons: Chevrons (lanes part round them)
       asphalt: Asphalt
       concrete: Concrete
       paving: Paving stones
@@ -618,6 +622,15 @@ en:
     stroke_right: Right line
     colour: Colour
     pattern: Pattern
+    patterns:
+      stripes: Diagonal stripes
+      chevron: Chevrons
+      crosshatch: Crosshatch
+      x: Crosses
+      zigzag: Zig-zags
+      chessboard: Chessboard
+      dots: Dots
+      solid: Filled
     width: Line width (m)
     dasharray: Dashes and gaps (m)
     inscription: Painted text
@@ -942,7 +955,7 @@ en:
     parking_width: "How deep the parking is, in metres (parking:<side>:width), where it is not the usual width."
     parking_zone: "The parking zone's letter or number on permits and signs (parking:<side>:zone)."
     position: "Moves the lane left or right among the lanes going its way, as its drivers see them, keeping its tags."
-    road_marking: "Painted markings mapped as features of their own (road_marking=*): lines, areas and text, with their stroke, colour and pattern."
+    road_marking: "Painted markings mapped as features of their own (road_marking=*): lines, areas and text, with their stroke, colour and pattern. Hatching or chevrons between lanes are an area, road_marking=restriction with pattern=stripes or chevron; the lanes part round it."
     roundabout: "A roundabout's ring (junction=roundabout): the ring's segments and the roads joining it."
     shoulder: "A hard shoulder beside the lanes (shoulder=*, or shoulder:left and shoulder:right). Motorways are drawn with one until the road says otherwise."
     shoulder_width: "How wide the hard shoulder is, in metres (shoulder:<side>:width); drawn 2.5 m wide until tagged."

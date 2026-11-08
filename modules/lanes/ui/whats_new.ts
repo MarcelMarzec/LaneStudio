@@ -16,12 +16,17 @@ export async function loadChangelog(context: iD.Context): Promise<ChangelogVersi
     return parseChangelog(await response.text());
 }
 
-/** A changelog line, with `code` in backticks shown as code */
-function appendLine(parent: Selection, line: string) {
+/** A changelog line, with `code` in backticks shown as code and **bold** as bold */
+export function appendLine(parent: Selection, line: string) {
     line.split('`').forEach((part, i) => {
         if (!part) return;
-        if (i % 2) parent.append('code').text(part);
-        else parent.append('span').text(part);
+        if (i % 2) {
+            parent.append('code').text(part);
+            return;
+        }
+        part.split('**').forEach((text, j) => {
+            if (text) parent.append(j % 2 ? 'strong' : 'span').text(text);
+        });
     });
 }
 

@@ -320,13 +320,29 @@ export function drawRoadMarkings(group: Group, data: RoadMarkings, projection: P
         .each(attrChanged('d', d => path(d.polygon, true)))
         .attr('stroke', d => markingColourValues[d.style.colour])
         .attr('stroke-width', d => px(d.style.width))
+        .attr('stroke-dasharray', d => d.style.lines[0] === 'solid' ? null : (d.style.dash ?? defaultDash[d.style.lines[0]] ?? []).map(px).join(',') || null)
         .attr('fill', d => {
+            if (d.stripes) return 'none';
             const pattern = d.style.pattern;
             if (!pattern || pattern === 'solid' || pattern === 'filled') return markingColourValues[d.style.colour];
             const known = ['crosshatch', 'hatch', 'chevron', 'dots', 'zigzag'];
             return `url(#lanes-pattern-${known.includes(pattern) ? pattern : 'hatch'}-${d.style.colour})`;
         })
         .attr('fill-opacity', d => (!d.style.pattern || d.style.pattern === 'solid' || d.style.pattern === 'filled' ? 0.45 : 1));
+
+    // hatching and chevrons: bars turned to the road, clipped to the area
+    const striped = data.areas.filter(d => d.stripes);
+    const stripes = group.selectAll<SVGGElement, typeof data.areas[number]>('g.road-marking-stripes')
+        .data(striped, d => d.key);
+    stripes.exit().remove();
+    const stripesEnter = stripes.enter().append('g').attr('class', 'road-marking-stripes');
+    stripesEnter.append('clipPath').attr('id', d => `lanes-clip-marking-${d.key}`).append('path');
+    stripesEnter.append('path').attr('class', 'road-marking-stripe').attr('clip-path', d => `url(#lanes-clip-marking-${d.key})`);
+    const allStripes = stripesEnter.merge(stripes);
+    allStripes.select('clipPath').select('path').each(attrChanged('d', d => path(d.polygon, true)));
+    allStripes.select('.road-marking-stripe')
+        .each(attrChanged('d', d => d.stripes!.map(bar => path(bar, true)).join('')))
+        .attr('fill', d => markingColourValues[d.style.colour]);
 
     const lines = group.selectAll<SVGPathElement, typeof data.lines[number]>('path.road-marking-line')
         .data(data.lines, d => d.key);

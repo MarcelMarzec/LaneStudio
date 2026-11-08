@@ -539,7 +539,7 @@ const cardinals: Record<string, number> = {
  * Hatching's white bars across an area (`area:highway=emergency`): 0.3 m wide every 1.5 m, running the way
  * `direction=*` gives (degrees or a compass point), else at 45° to the area's length (clipped to the area when drawn)
  */
-function hatchStripes(polygon: Vec2[], direction: string | undefined): Vec2[][] {
+export function hatchStripes(polygon: Vec2[], direction: string | undefined): Vec2[][] {
     const frame = metricFrame(polygon[0]);
     const points = polygon.map(frame.toMetres);
     const shape = longAxis(points);
@@ -1378,6 +1378,55 @@ function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, W
             }
         });
     }
+}
+
+
+/**
+ * Chevrons painted in an area (`pattern=chevron`, as between a motorway and a slip road leaving it): bars 0.6 m wide
+ * every 5 m, each a V whose point is on the middle of the area and points `travel` (the traffic's direction, in metres
+ * in the frame of the polygon's first point), its arms sweeping back at 45° (clipped to the area when drawn). Without
+ * a direction they point along the area's length.
+ */
+export function chevronStripes(polygon: Vec2[], travel: Vec2 | undefined, direction?: string): Vec2[][] {
+    const frame = metricFrame(polygon[0]);
+    const points = polygon.map(frame.toMetres);
+    const shape = longAxis(points);
+    const tagged = direction === undefined ? NaN : cardinals[direction.toUpperCase()] ?? parseFloat(direction);
+    const along: Vec2 = Number.isFinite(tagged) ? [Math.sin(tagged * Math.PI / 180), Math.cos(tagged * Math.PI / 180)] : travel ?? shape.axis;
+    const across = rightNormal(along);
+    const reach = shape.reach + 1;
+    const ring = len(sub(points[0], points[points.length - 1])) < 1e-6 ? points : [...points, points[0]];
+    // the middle of the area straight across it, `t` metres along from its centre
+    const middleAt = (t: number): Vec2 | null => {
+        const origin = add(shape.centre, scale(along, t));
+        let low = Infinity;
+        let high = -Infinity;
+        for (let i = 0; i < ring.length - 1; i++) {
+            const a = ring[i];
+            const e = sub(ring[i + 1], a);
+            const denom = across[0] * e[1] - across[1] * e[0];
+            if (Math.abs(denom) < 1e-9) continue;
+            const d = sub(a, origin);
+            const u = (d[0] * e[1] - d[1] * e[0]) / denom;
+            const v = (d[0] * across[1] - d[1] * across[0]) / denom;
+            if (v < 0 || v > 1) continue;
+            low = Math.min(low, u);
+            high = Math.max(high, u);
+        }
+        return high > low ? add(origin, scale(across, (low + high) / 2)) : null;
+    };
+    const bars: Vec2[][] = [];
+    const thick = 0.6 * Math.SQRT2;
+    for (let t = -reach; t < reach; t += 5) {
+        const apex = middleAt(t);
+        if (!apex) continue;
+        for (const side of [-1, 1]) {
+            const arm = unit(add(scale(along, -1), scale(across, side)));
+            const end = add(apex, scale(arm, reach * 2));
+            bars.push([apex, end, sub(end, scale(along, thick)), sub(apex, scale(along, thick))].map(frame.toLoc));
+        }
+    }
+    return bars;
 }
 
 

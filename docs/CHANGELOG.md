@@ -8,6 +8,24 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08r7
+##### 2026-Nov-08
+
+#### Lanes and junctions
+* Lanes part round a hatched area or chevrons mapped between them (`road_marking=restriction` with `pattern=stripes`
+  or `chevron`), as wide as the area is drawn, and join again past it; a motorway and a slip road leaving it move
+  apart round the chevrons between them, the hard shoulder giving way
+* Hatching is drawn as stripes turned to the area, and chevrons point the way traffic runs on the road beside them;
+  an area's outline is drawn solid or broken (`stroke=solid|dashed`)
+
+#### Editing
+* **Painted area (hatching, chevrons)** in Add Area maps these markings; its pattern list has the wiki's values
+  (stripes, chevron, crosshatch, x, zigzag, chessboard, dots, solid), each named
+* The what's new menu shows bold text as bold
+
+#### Map key
+* Chevrons
+
 # 26.11.08r6
 ##### 2026-Nov-08
 

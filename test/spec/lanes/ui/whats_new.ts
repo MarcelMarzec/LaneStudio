@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import { prefs } from '../../../../modules/core/preferences';
 import { parseChangelog, versionOrder, versionsSince, whatsNewSince, setWhatsNewEnabled } from '../../../../modules/lanes/core/whats_new';
 import { laneStudioVersion } from '../../../../modules/lanes/version';
+import { appendLine } from '../../../../modules/lanes/ui/whats_new';
+import { select as d3_select } from 'd3-selection';
 
 const sample = `# Lane Studio changelog
 
@@ -78,6 +80,14 @@ describe('what\'s new', () => {
         setWhatsNewEnabled(false);
         expect(whatsNewSince()).toBeNull();
         expect(prefs('lanes-lastVersion')).toBe(laneStudioVersion);
+    });
+
+    it('shows a line\'s `code` as code and **bold** as bold', () => {
+        const li = d3_select(document.createElement('li'));
+        appendLine(li as any, 'New **Advisory speed** (`maxspeed:advisory`) field');
+        expect(li.select('strong').text()).toBe('Advisory speed');
+        expect(li.select('code').text()).toBe('maxspeed:advisory');
+        expect(li.text()).toBe('New Advisory speed (maxspeed:advisory) field');
     });
 
     it('reads the real changelog: the current version first, every section with lines', () => {

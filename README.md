@@ -46,7 +46,8 @@ The website is Lane Studio only; iD's own page is still in the repository for de
 * **Junctions and roundabouts**: the main road runs through, lanes that carry on line up, added and
   dropped lanes taper, dashed guide lines carry each lane to where it leads (worked out from the
   exits where no turn arrows are tagged), lanes run between traffic islands, a road dividing round an
-  island widens into its two halves, and roundabout entries and exits flare into the ring.
+  island widens into its two halves, lanes part round hatched areas and chevrons mapped between them
+  (`road_marking=restriction`), and roundabout entries and exits flare into the ring.
 * **Street features**: pavements, footways and crossings at their width (paths drawn over the roads
   they cross), stop and give way lines, traffic signals, islands, road markings, street parking,
   parking spaces and car parks, traffic signs, message signs, cameras, bridges, tunnels and roads

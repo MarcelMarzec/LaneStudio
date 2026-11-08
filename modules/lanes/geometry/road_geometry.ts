@@ -149,6 +149,53 @@ export interface WayVisual {
      */
     gapStart?: number;
     gapEnd?: number;
+    /** painted areas the lanes part round (hatching or chevrons between lanes, or between two roads) */
+    parts?: LanePart[];
+}
+
+/**
+ * A painted area the lanes may not drive on, lying between lanes or beside the road (wiki: Key:road_marking,
+ * `road_marking=restriction`; `area:highway=prohibited`). Lanes either side of it move apart, so none runs over it.
+ */
+export interface LanePart {
+    /**
+     * the lane boundary it lies on: one between lanes (the lanes part round it), 0 beyond the left kerb or the lane
+     * count beyond the right (the road moves away from it, as where a slip road leaves past chevrons)
+     */
+    edge: number;
+    /** (distance along the way, the area's left side, its right side), offsets from the way's line (right positive) */
+    samples: [number, number, number][];
+}
+
+/** A closed way the lanes part round: hatching or chevrons painted on the road */
+export function isLanePartArea(tags: Record<string, string>): boolean {
+    return tags.road_marking === 'restriction' || tags.road_marking === 'hatched' || tags.road_marking === 'gore_chevron' ||
+        tags['area:highway'] === 'prohibited';
+}
+
+// how far past a painted area's end its lanes come back together, in metres
+const partFade = 8;
+
+/** A painted area's sides at distance `s` along the way, or null where it is not beside the lanes */
+function partSidesAt(part: LanePart, s: number): [number, number] | null {
+    const samples = part.samples;
+    const first = samples[0];
+    const last = samples[samples.length - 1];
+    const fade = (sample: [number, number, number], d: number): [number, number] | null => {
+        if (d >= partFade) return null;
+        const middle = (sample[1] + sample[2]) / 2;
+        const k = 1 - d / partFade;
+        return [middle + (sample[1] - middle) * k, middle + (sample[2] - middle) * k];
+    };
+    if (s <= first[0]) return fade(first, first[0] - s);
+    if (s >= last[0]) return fade(last, s - last[0]);
+    const i = samples.findIndex(p => p[0] >= s);
+    const [s0, l0, r0] = samples[i - 1];
+    const [s1, l1, r1] = samples[i];
+    // the area is not there between samples far apart (it lies beside another part of the road)
+    if (s1 - s0 > 6) return null;
+    const t = s1 > s0 ? (s - s0) / (s1 - s0) : 0;
+    return [l0 + (l1 - l0) * t, r0 + (r1 - r0) * t];
 }
 
 // how far along a road a ghost island opens, in metres
@@ -262,6 +309,15 @@ function ringMiddle(way: osmWay, graph: coreGraph): Vec2 {
  * edges, its placement shift, the drawing-only shift and any tapering outer lane.
  */
 export function edgesAt(layout: LaneLayout, visual: WayVisual, s: number, total: number): number[] {
+    return edgesAndGapsAt(layout, visual, s, total).edges;
+}
+
+/**
+ * `edgesAt`, and the gaps the lanes leave round painted areas between them: the lane left of boundary `edge`
+ * ends at `left`, the lane right of it starts at `right` (offsets from the way line)
+ */
+export function edgesAndGapsAt(layout: LaneLayout, visual: WayVisual, s: number, total: number):
+    { edges: number[]; gaps: { edge: number; left: number; right: number }[]; room: { left?: number; right?: number } } {
     const t = total > 0 ? s / total : 0;
     const shift = layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * t + visualShift(visual, s, total);
     const edges = layout.edges.slice();
@@ -288,7 +344,33 @@ export function edgesAt(layout: LaneLayout, visual: WayVisual, s: number, total:
         for (let e = 0; e < c; e++) edges[e] -= gap / 2;
         for (let e = c + 1; e <= n; e++) edges[e] += gap / 2;
     }
-    return edges.map(e => e + shift);
+    // painted areas: the lanes either side part round one between them; a road moves away from one beside it
+    const gaps: { edge: number; left: number; right: number }[] = [];
+    // the room beside a kerb before a painted area there, which the roadside (a hard shoulder) squeezes into
+    const room: { left?: number; right?: number } = {};
+    for (const part of visual.parts ?? []) {
+        const sides = partSidesAt(part, s);
+        if (!sides) continue;
+        const [left, right] = sides.map(v => v - shift);
+        const k = part.edge;
+        if (k <= 0) {
+            const push = Math.max(0, right - edges[0]);
+            for (let e = 0; e <= n; e++) edges[e] += push;
+            room.left = Math.min(room.left ?? Infinity, edges[0] - right);
+        } else if (k >= n) {
+            const push = Math.max(0, edges[n] - left);
+            for (let e = 0; e <= n; e++) edges[e] -= push;
+            room.right = Math.min(room.right ?? Infinity, left - edges[n]);
+        } else {
+            const pushLeft = Math.max(0, edges[k] - left);
+            const pushRight = Math.max(0, right - edges[k]);
+            if (pushLeft < 0.01 && pushRight < 0.01) continue;
+            for (let e = 0; e < k; e++) edges[e] -= pushLeft;
+            for (let e = k + 1; e <= n; e++) edges[e] += pushRight;
+            gaps.push({ edge: k, left: edges[k] - pushLeft + shift, right: edges[k] + pushRight + shift });
+        }
+    }
+    return { edges: edges.map(e => e + shift), gaps, room };
 }
 
 
@@ -1444,7 +1526,8 @@ function visualSignature(ways: osmWay[], visuals: Map<string, WayVisual>): strin
     return ways.map(w => {
         const v = visuals.get(w.id);
         return v ? `${w.id}:${v.start.toFixed(2)}:${v.end.toFixed(2)}:${v.taperStart.map(t => t.lane)}:${v.taperEnd.map(t => t.lane)}` +
-            `:${v.fit ? v.fit.map(p => `${p[0].toFixed(0)}/${p[1].toFixed(2)}`).join(',') : ''}:${v.gapStart ?? ''}:${v.gapEnd ?? ''}` : '';
+            `:${v.fit ? v.fit.map(p => `${p[0].toFixed(0)}/${p[1].toFixed(2)}`).join(',') : ''}:${v.gapStart ?? ''}:${v.gapEnd ?? ''}` +
+            `:${v.parts ? v.parts.map(p => `${p.edge}/${p.samples.map(q => q.map(x => x.toFixed(1)).join('/')).join(',')}`).join(';') : ''}` : '';
     }).join('|');
 }
 
@@ -1905,6 +1988,94 @@ function turningHeadAt(node: osmNode, graph: coreGraph, visuals: Map<string, Way
 }
 
 
+/* ---------- lanes parting round painted areas ---------- */
+
+const partCache = new WeakMap<osmWay, { deps: unknown[]; parts: LanePart[] | undefined }>();
+
+/**
+ * The painted areas (`isLanePartArea`) a road's lanes part round, sampled along the way: an area between its lanes
+ * (a hatched box), or one beside it reaching well past its kerb (chevrons between a motorway and a slip road leaving
+ * it). Not an area painted across the whole road (a box junction) or sitting at the kerb (a keep-clear marking).
+ */
+function partsFromAreas(way: osmWay, graph: coreGraph, areas: osmWay[]): LanePart[] | undefined {
+    if (!areas.length || hasPlacement(way)) return undefined;
+    const extent = way.extent(graph).padByMeters(15);
+    const near = areas.filter(area => area.extent(graph).intersects(extent));
+    if (!near.length) return undefined;
+
+    const deps: unknown[] = [...way.nodes.map(id => graph.entity(id)), ...near.flatMap(area => [area, ...area.nodes.map(id => graph.entity(id))])];
+    const cached = partCache.get(way);
+    if (cached && cached.deps.length === deps.length && cached.deps.every((d, i) => d === deps[i])) return cached.parts;
+
+    const layout = cachedLayout(way, graph);
+    const n = layout.lanes.length;
+    const frame = metricFrame((graph.entity(way.first()) as osmNode).loc);
+    const points = lineLocs(way, graph).map(frame.toMetres);
+    const total = polylineLength(points);
+    const placed = (s: number) => {
+        const shift = layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * (total > 0 ? s / total : 0);
+        return [layout.edges[0] + shift, layout.edges[n] + shift];
+    };
+    const parts: LanePart[] = [];
+    const step = Math.max(1, Math.min(2, total / 200));
+    for (const area of near) {
+        if (!area.isClosed() || area.nodes.length < 4) continue;
+        const polygon = lineLocs(area, graph).map(frame.toMetres);
+        const samples: [number, number, number][] = [];
+        for (let s = 0; s <= total; s += step) {
+            const at = pointAlong(points, s);
+            const normal = rightNormal(at.direction);
+            // where the line straight across the road here crosses the area's outline
+            let left = Infinity;
+            let right = -Infinity;
+            for (let i = 0; i < polygon.length - 1; i++) {
+                const a = polygon[i];
+                const e = sub(polygon[i + 1], a);
+                const denom = normal[0] * e[1] - normal[1] * e[0];
+                if (Math.abs(denom) < 1e-9) continue;
+                const d = sub(a, at.point);
+                const t = (d[0] * e[1] - d[1] * e[0]) / denom;
+                const u = (d[0] * normal[1] - d[1] * normal[0]) / denom;
+                if (u < 0 || u > 1) continue;
+                left = Math.min(left, t);
+                right = Math.max(right, t);
+            }
+            if (right - left < 0.05) continue;
+            const [kerbLeft, kerbRight] = placed(s);
+            // only where it is beside the lanes: overlapping them, or within a few metres of a kerb
+            if (right < kerbLeft - 3 || left > kerbRight + 3) continue;
+            samples.push([s, left, right]);
+        }
+        if (samples.length < 2 || samples[samples.length - 1][0] - samples[0][0] < 3) continue;
+
+        // which boundary it lies on, where it is widest
+        const widest = samples.reduce((best, p) => (p[2] - p[1] > best[2] - best[1] ? p : best));
+        const [kerbLeft, kerbRight] = placed(widest[0]);
+        const middle = (widest[1] + widest[2]) / 2;
+        // across the whole road: painted on the lanes (a box junction), not between them
+        if (widest[1] <= kerbLeft + 0.5 && widest[2] >= kerbRight - 0.5) continue;
+        let edge: number;
+        if (middle <= kerbLeft) edge = 0;
+        else if (middle >= kerbRight) edge = n;
+        else {
+            const shift = kerbLeft - layout.edges[0];
+            edge = 1;
+            for (let e = 1; e < n; e++) if (Math.abs(layout.edges[e] + shift - middle) < Math.abs(layout.edges[edge] + shift - middle)) edge = e;
+            // inside one lane, clear of the line between lanes (a keep-clear marking): painted on the lane
+            const line = layout.edges[edge] + shift;
+            if (n < 2 || widest[1] > line + 0.5 || widest[2] < line - 0.5) continue;
+        }
+        // beside the road, it must reach well past the kerb (between two roads), not lie along it
+        if (edge === 0 && widest[1] > kerbLeft - 1.5) continue;
+        if (edge === n && widest[2] < kerbRight + 1.5) continue;
+        parts.push({ edge, samples });
+    }
+    const result = parts.length ? parts : undefined;
+    partCache.set(way, { deps, parts: result });
+    return result;
+}
+
+
 /* ---------- fitting roads into mapped carriageway areas ---------- */
 
 const fitCache = new WeakMap<osmWay, { deps: unknown[]; fit: [number, number][] | undefined }>();
@@ -2166,13 +2337,21 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
         const startAt = cumulative[a] + trimStart;
         // vertices where tapers end, so the taper is drawn as a straight slope
         const breaks = [
+            ...(visual.parts ?? []).flatMap(part => [part.samples[0][0] - partFade, ...part.samples.map(q => q[0]),
+                part.samples[part.samples.length - 1][0] + partFade].map(at => at - startAt)),
             ...visual.taperStart.map(t => t.length - startAt),
             ...visual.taperEnd.map(t => total - t.length - startAt),
             ...(visual.gapStart || visual.gapEnd ? [Math.min(gapLength, total * 0.45) - startAt, total - Math.min(gapLength, total * 0.45) - startAt] : [])
         ];
         const sliced = withVerticesAt(slicePolyline(line, trimStart, length - trimEnd), breaks);
         const local = cumulativeLengths(sliced);
-        const rows = local.map(s => edgesAt(layout, visual, startAt + s, total));
+        const placed = local.map(s => edgesAndGapsAt(layout, visual, startAt + s, total));
+        // a boundary's line runs along the left of a gap round a painted area (the area's outline is painted too)
+        const rows = placed.map(({ edges, gaps }) => edges.map((e, k) => gaps.find(g => g.edge === k)?.left ?? e));
+        const anyGap = placed.some(row => row.gaps.length);
+        const laneSide = (i: number, side: 'left' | 'right') => placed.map(({ edges, gaps }) => side === 'left'
+            ? gaps.find(g => g.edge === i)?.right ?? edges[i]
+            : gaps.find(g => g.edge === i + 1)?.left ?? edges[i + 1]);
         // an untrimmed end that carries straight on into another road is cut on the bisector of the bend
         const partnerIn = trimStart < 0.01 ? partnerAt(a, true) : undefined;
         const partnerOut = trimEnd < 0.01 ? partnerAt(b, false) : undefined;
@@ -2187,8 +2366,14 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
         const ghost = centre > 0 && gaps.some(g => g > 0.05)
             ? ring(offset(rows.map((r, i) => r[centre] - gaps[i] / 2)), offset(rows.map((r, i) => r[centre] + gaps[i] / 2)))
             : undefined;
-        const lanes = layout.lanes.map((_, i) => ring(boundaries[i], boundaries[i + 1]));
-        const centres = layout.lanes.map((_, i) => offset(rows.map(r => (r[i] + r[i + 1]) / 2)));
+        const lanes = layout.lanes.map((_, i) => anyGap ? ring(offset(laneSide(i, 'left')), offset(laneSide(i, 'right')))
+            : ring(boundaries[i], boundaries[i + 1]));
+        const centres = layout.lanes.map((_, i) => {
+            if (!anyGap) return offset(rows.map(r => (r[i] + r[i + 1]) / 2));
+            const left = laneSide(i, 'left');
+            const right = laneSide(i, 'right');
+            return offset(left.map((l, j) => (l + right[j]) / 2));
+        });
         const dividerSides = layout.edges.map((_, k): [Vec2[], Vec2[]] =>
             k === 0 || k === layout.edges.length - 1 ? [[], []] : [offset(column(k, -0.12)), offset(column(k, 0.12))]);
 
@@ -2302,8 +2487,14 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             const fromStart = markStart?.roadside ? markFor(k, markStart) : 0;
             const fromEnd = markEnd?.roadside ? markFor(k, markEnd) : 0;
             let cursor = column(k);
+            // strips squeeze into the room left before a painted area beside the kerb
+            const stripsWidth = layout.roadside[side].reduce((sum, strip) => sum + strip.width, 0);
+            const squeeze = placed.map(row => {
+                const room = row.room[side];
+                return room === undefined || stripsWidth <= 0 ? 1 : Math.max(0, Math.min(1, room / stripsWidth));
+            });
             for (const strip of layout.roadside[side]) {
-                const outer = cursor.map(c => c + sign * strip.width);
+                const outer = cursor.map((c, j) => c + sign * strip.width * squeeze[j]);
                 const inner = clip(offset(cursor), fromStart, fromEnd);
                 const outside = clip(offset(outer), fromStart, fromEnd);
                 if (inner.length > 1 && outside.length > 1) {
@@ -2558,7 +2749,8 @@ function cutIslands(junctions: Map<string, JunctionArea>, islandRings: Vec2[][])
 }
 
 /** Lane geometry for a set of roads, reusing everything whose inputs have not changed */
-export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas: osmWay[] = [], islands: osmWay[] = []): RoadGeometry {
+export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas: osmWay[] = [], islands: osmWay[] = [],
+    partAreas: osmWay[] = []): RoadGeometry {
     const pieces: RoadPiece[] = [];
     const junctions = new Map<string, JunctionArea>();
     const connections = new Map<string, JunctionConnection[]>();
@@ -2585,6 +2777,13 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         const own = carriagewayAreas.filter(area => owners.get(area.id) === way);
         const fit = own.length ? fitToAreas(way, graph, own) : undefined;
         if (fit) visuals.set(way.id, { ...noVisual, fit });
+    }
+    // lanes parting round painted areas between them
+    if (partAreas.length) {
+        for (const way of ways) {
+            const parts = partsFromAreas(way, graph, partAreas);
+            if (parts) visuals.set(way.id, { ...(visuals.get(way.id) ?? noVisual), parts });
+        }
     }
     const areaRoadIDs = new Set([...owners.values()].map(way => way.id));
 

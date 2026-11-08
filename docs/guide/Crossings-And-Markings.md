@@ -70,3 +70,21 @@ hatched for rumble strips and the rest.
 
 Lines, areas and text drawn from `stroke` (or `stroke:left|right`), `pattern`, `width`, `dasharray`, `colour` and
 `inscription`, edited in their own sidebar section. Box junctions are areas with `road_marking=box_junction`.
+
+### Hatched areas and chevrons
+
+Map the painted area as its own area (Add Area → **Painted area**), drawn round its outline at whatever width it has:
+
+| Marking | Tags |
+| --- | --- |
+| Hatched area between lanes (ghost island) | `road_marking=restriction`, `pattern=stripes`, `stroke=solid` (or `dashed` for a broken edge line) |
+| Chevrons (between a motorway and a slip road) | `road_marking=restriction`, `pattern=chevron`, `stroke=solid` |
+| Lane lines beside it | `change:lanes` on the road ([Lanes](Lanes.md)), or `road_marking=lane_divider` + `stroke=*` as a way |
+
+`area:highway=prohibited` and `road_marking=hatched|gore_chevron` are read too (the wiki prefers the tags above).
+
+- Stripes run at 45° to the area; chevrons point the way traffic runs on the nearest road (`direction=*` overrides).
+- **Lanes fit round it**: lanes either side of an area between them part as wide as it is mapped, and join again
+  past it; a road moves away from an area beside it that reaches towards another road (chevrons at a slip road), its
+  hard shoulder giving way. Drawing only: tags are not changed. Areas painted across the whole road (box junctions)
+  or inside one lane (keep-clear markings) are left on the lanes.

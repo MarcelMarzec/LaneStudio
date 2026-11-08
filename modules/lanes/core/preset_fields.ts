@@ -1,9 +1,31 @@
 import { actionChangeTags } from '../../actions/change_tags';
-import { t } from '../../core/localizer';
+import { localizer, t } from '../../core/localizer';
 import { presetManager } from '../../presets';
 
 /** Lane Studio's own field: whether a crossing has traffic signals (`crossing:signals`), which iD has no field for */
 export const crossingSignalsField = 'lanes/crossing_signals';
+
+/** Lane Studio's preset for hatching or chevrons painted on the road (wiki: Key:road_marking), which iD has none for */
+export const paintedAreaPreset = 'lanes/road_marking/restriction';
+
+/**
+ * Adds the Painted area preset (`road_marking=restriction`), named in iD's tagging strings so Add Area's search finds
+ * it like iD's own; its pattern, outline (`stroke`) and colour are set in Lane Studio's Painted marking section
+ */
+function addPaintedAreaPreset() {
+    presetManager.merge({
+        presets: {
+            [paintedAreaPreset]: { tags: { road_marking: 'restriction' }, geometry: ['area'], icon: 'maki-triangle-stroked', fields: [] }
+        }
+    } as any);
+    localizer.mergeStrings('tagging', 'en', {
+        presets: {
+            presets: {
+                [paintedAreaPreset]: { name: t('_lanes.fields.painted_area.name'), terms: t('_lanes.fields.painted_area.terms') }
+            }
+        }
+    });
+}
 
 /**
  * Adds the fields Lane Studio's drawing reads to iD's presets, so everything about a road feature is set in its
@@ -13,7 +35,8 @@ export const crossingSignalsField = 'lanes/crossing_signals';
  * - a passing place or emergency bay: Direction Affected, the side it is on (forward, backward or both)
  */
 export function laneStudioPresetFields() {
-    presetManager.ensureLoaded().then(() => {
+    Promise.all([presetManager.ensureLoaded(), localizer.ensureLoaded()]).then(() => {
+        addPaintedAreaPreset();
         presetManager.merge({ fields: { [crossingSignalsField]: { key: 'crossing:signals', type: 'check', label: 'Traffic signals' } } });
         const signals = presetManager.field(crossingSignalsField);
         if (signals) {
