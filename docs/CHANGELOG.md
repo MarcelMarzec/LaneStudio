@@ -8,6 +8,14 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08r12
+##### 2026-Nov-08
+
+#### Lanes and junctions
+* A road beside chevrons or hatching that stands off from them is pulled in to meet their edge (up to 4 m), easing
+  back past their ends, so a slip road mapped down the middle of its carriageway no longer leaves a gap beside the
+  chevrons (M5 at junction 14)
+
 # 26.11.08r11
 ##### 2026-Nov-08
 

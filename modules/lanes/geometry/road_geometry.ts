@@ -176,16 +176,28 @@ export function isLanePartArea(tags: Record<string, string>): boolean {
 // how far past a painted area's end its lanes come back together, in metres
 const partFade = 8;
 
-/** A painted area's sides at distance `s` along the way, or null where it is not beside the lanes */
-function partSidesAt(part: LanePart, s: number): [number, number] | null {
+// a road standing off from a painted area beside it is pulled in to meet it by up to this much, less as the gap
+// grows to `partReach` (beyond that the area is not its own)
+const partPull = 4;
+const partReach = 6;
+// past a painted area's ends, a road pulled in to meet it eases back over this many metres
+const pullFade = 30;
+
+/**
+ * A painted area's sides at distance `s` along the way, and how much of it is there (1 along it, falling to 0 over
+ * `partFade` past its ends), or null where it is not beside the lanes
+ */
+function partSidesAt(part: LanePart, s: number, fadeLength = partFade, shrink = true): [number, number, number] | null {
     const samples = part.samples;
     const first = samples[0];
     const last = samples[samples.length - 1];
-    const fade = (sample: [number, number, number], d: number): [number, number] | null => {
-        if (d >= partFade) return null;
+    const fade = (sample: [number, number, number], d: number): [number, number, number] | null => {
+        if (d >= fadeLength) return null;
         const middle = (sample[1] + sample[2]) / 2;
-        const k = 1 - d / partFade;
-        return [middle + (sample[1] - middle) * k, middle + (sample[2] - middle) * k];
+        const k = 1 - d / fadeLength;
+        // (smoothly, so a road pulled in eases out rather than bending)
+        if (!shrink) return [sample[1], sample[2], k * k * (3 - 2 * k)];
+        return [middle + (sample[1] - middle) * k, middle + (sample[2] - middle) * k, k];
     };
     if (s <= first[0]) return fade(first, first[0] - s);
     if (s >= last[0]) return fade(last, s - last[0]);
@@ -195,7 +207,14 @@ function partSidesAt(part: LanePart, s: number): [number, number] | null {
     // the area is not there between samples far apart (it lies beside another part of the road)
     if (s1 - s0 > 6) return null;
     const t = s1 > s0 ? (s - s0) / (s1 - s0) : 0;
-    return [l0 + (l1 - l0) * t, r0 + (r1 - r0) * t];
+    return [l0 + (l1 - l0) * t, r0 + (r1 - r0) * t, 1];
+}
+
+/** How far a road is moved towards a painted area beside it that stands `gap` metres off its kerb */
+function pullTowards(gap: number): number {
+    if (gap <= 0) return 0;
+    if (gap <= partPull) return gap;
+    return Math.max(0, partPull * (partReach - gap) / (partReach - partPull));
 }
 
 // how far along a road a ghost island opens, in metres
@@ -361,18 +380,23 @@ export function edgesAndGapsAt(layout: LaneLayout, visual: WayVisual, s: number,
     // the room beside a kerb before a painted area there, which the roadside (a hard shoulder) squeezes into
     const room: { left?: number; right?: number } = {};
     for (const part of visual.parts ?? []) {
-        const sides = partSidesAt(part, s);
-        if (!sides) continue;
-        const [left, right] = sides.map(v => v - shift);
         const k = part.edge;
+        // beside the road, the area's edge held past its ends, for a road pulled in to meet it
+        const sides = k <= 0 || k >= n ? partSidesAt(part, s, pullFade, false) : partSidesAt(part, s);
+        if (!sides) continue;
+        const [left, right] = [sides[0] - shift, sides[1] - shift];
         if (k <= 0) {
-            const push = Math.max(0, right - edges[0]);
-            for (let e = 0; e <= n; e++) edges[e] += push;
-            room.left = Math.min(room.left ?? Infinity, edges[0] - right);
+            // away from an area over the lanes, or in to meet one standing off (its edge is the road's edge)
+            const over = (right - edges[0]) * sides[2];
+            const move = over > 0 ? over : -pullTowards(-over / sides[2]) * sides[2];
+            for (let e = 0; e <= n; e++) edges[e] += move;
+            // (past its ends the roadside comes back as the road eases out)
+            room.left = Math.min(room.left ?? Infinity, Math.max(0, edges[0] - right) + (1 - sides[2]) * 10);
         } else if (k >= n) {
-            const push = Math.max(0, edges[n] - left);
-            for (let e = 0; e <= n; e++) edges[e] -= push;
-            room.right = Math.min(room.right ?? Infinity, left - edges[n]);
+            const over = (edges[n] - left) * sides[2];
+            const move = over > 0 ? over : -pullTowards(-over / sides[2]) * sides[2];
+            for (let e = 0; e <= n; e++) edges[e] -= move;
+            room.right = Math.min(room.right ?? Infinity, Math.max(0, left - edges[n]) + (1 - sides[2]) * 10);
         } else {
             const pushLeft = Math.max(0, edges[k] - left);
             const pushRight = Math.max(0, right - edges[k]);
@@ -2057,7 +2081,7 @@ function partsFromAreas(way: osmWay, graph: coreGraph, areas: osmWay[]): LanePar
             if (right - left < 0.05) continue;
             const [kerbLeft, kerbRight] = placed(s);
             // only where it is beside the lanes: overlapping them, or within a few metres of a kerb
-            if (right < kerbLeft - 3 || left > kerbRight + 3) continue;
+            if (right < kerbLeft - partReach || left > kerbRight + partReach) continue;
             samples.push([s, left, right]);
         }
         if (samples.length < 2 || samples[samples.length - 1][0] - samples[0][0] < 3) continue;
@@ -2388,8 +2412,13 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
         const startAt = cumulative[a] + trimStart;
         // vertices where tapers end, so the taper is drawn as a straight slope
         const breaks = [
-            ...(visual.parts ?? []).flatMap(part => [part.samples[0][0] - partFade, ...part.samples.map(q => q[0]),
-                part.samples[part.samples.length - 1][0] + partFade].map(at => at - startAt)),
+            ...(visual.parts ?? []).flatMap(part => {
+                // vertices along the area, and every 3 m where the lanes ease back past its ends
+                const [a, b] = [part.samples[0][0], part.samples[part.samples.length - 1][0]];
+                const ease = Array.from({ length: Math.ceil(pullFade / 3) }, (_, i) => (i + 1) * 3);
+                return [a - partFade, ...ease.map(d => a - d), ...part.samples.map(q => q[0]), ...ease.map(d => b + d), b + partFade]
+                    .map(at => at - startAt);
+            }),
             ...visual.taperStart.map(t => t.length - startAt),
             ...visual.taperEnd.map(t => total - t.length - startAt),
             ...(visual.gapStart || visual.gapEnd ? [Math.min(gapLength, total * 0.45) - startAt, total - Math.min(gapLength, total * 0.45) - startAt] : [])

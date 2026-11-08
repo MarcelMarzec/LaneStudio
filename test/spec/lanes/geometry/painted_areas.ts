@@ -64,6 +64,23 @@ describe('lanes parting round painted areas', () => {
         expect(middle.room.left).toBeCloseTo(0, 1);
     });
 
+    it('pulls a road in to meet chevrons standing off its kerb, less as the gap grows, not at all far off', () => {
+        const tags = { highway: 'motorway_link', oneway: 'yes', lanes: '1' };
+        const kerb = -scene(tags, box(60, 61), hatched).layout.edges[0];
+        const chevrons = { road_marking: 'restriction', pattern: 'chevron' };
+        const moved = (gap: number) => {
+            const { layout, visual } = scene(tags, box(kerb + gap, kerb + gap + 8), chevrons);
+            if (!visual?.parts) return null;
+            const middle = edgesAndGapsAt(layout, visual, 200, 400);
+            return { by: layout.edges[0] - middle.edges[0], room: middle.room.left };
+        };
+        // the area is north, on the road's left: the road moves left (north) to meet it, its shoulder squeezed out
+        expect(moved(2)!.by).toBeCloseTo(2, 1);
+        expect(moved(2)!.room).toBeCloseTo(0, 1);
+        expect(moved(5)!.by).toBeCloseTo(2, 1);
+        expect(moved(7)).toBeNull();
+    });
+
     it('leaves a box junction across the road and a keep-clear marking at the kerb painted on the lanes', () => {
         const tags = { highway: 'primary', oneway: 'yes', lanes: '2' };
         expect(scene(tags, box(-6, 6), { road_marking: 'restriction', pattern: 'crosshatch', colour: 'yellow' }).visual?.parts).toBeUndefined();

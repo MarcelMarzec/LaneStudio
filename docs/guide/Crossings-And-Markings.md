@@ -85,6 +85,7 @@ Map the painted area as its own area (Add Area → **Painted area**), drawn roun
 
 - Stripes run at 45° to the area; chevrons point the way traffic runs on the nearest road (`direction=*` overrides).
 - **Lanes fit round it**: lanes either side of an area between them part as wide as it is mapped, and join again
-  past it; a road moves away from an area beside it that reaches towards another road (chevrons at a slip road), its
-  hard shoulder giving way. Drawing only: tags are not changed. Areas painted across the whole road (box junctions)
+  past it. A road beside an area that reaches towards another road (chevrons at a slip road) meets its edge: moved
+  away where it would run over it, pulled in (up to 4 m, easing back over 30 m past its ends) where it stands off,
+  its hard shoulder giving way. Drawing only: tags are not changed. Areas painted across the whole road (box junctions)
   or inside one lane (keep-clear markings) are left on the lanes.
