@@ -480,6 +480,7 @@ en:
       grass: Grass
       island: Traffic island
       car_park: Car park
+      solar: Solar panels
   structure:
     title: Structure
     layer: Layer

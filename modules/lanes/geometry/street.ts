@@ -158,10 +158,11 @@ export interface PathShape {
  * hatching (`emergency`, `prohibited`), a bus or taxi area (`bus`, `bus_stop`, `taxi_stop`), a hard shoulder
  * (`shoulder`), or a crossing (a zebra, or a cycle crossing)
  */
-export type AreaKind = 'island' | 'pavement' | 'cycleway' | 'carriageway' | 'other' | 'hatched' | 'bus' | 'shoulder' | 'crossing' | 'cycle_crossing';
+export type AreaKind = 'island' | 'pavement' | 'cycleway' | 'carriageway' | 'other' | 'hatched' | 'bus' | 'shoulder' | 'crossing' | 'cycle_crossing'
+    | 'solar' | 'solar_thermal';
 
-/** The kinds of area painted over the road, above its lanes, rather than lying under them */
-export const paintedAreaKinds = new Set<AreaKind>(['hatched', 'bus', 'shoulder', 'crossing', 'cycle_crossing']);
+/** The kinds of area painted over the road, above its lanes, rather than lying under them (and solar panels, on top) */
+export const paintedAreaKinds = new Set<AreaKind>(['hatched', 'bus', 'shoulder', 'crossing', 'cycle_crossing', 'solar', 'solar_thermal']);
 
 export interface AreaShape {
     id: string;
@@ -173,6 +174,8 @@ export interface AreaShape {
     stripes?: Vec2[][];
     /** a multipolygon's other rings, drawn in the same shape (inner rings leave holes) */
     rings?: Vec2[][];
+    /** solar panels: the direction their rows run, in radians anticlockwise from east (the grid of modules follows it) */
+    rows?: number;
 }
 
 /**
@@ -470,6 +473,7 @@ function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisua
 function areaKind(tags: Tags): AreaKind | null {
     const value = tags['area:highway'];
     if (isTrafficIsland(tags)) return 'island';
+    if (isSolarPanel(tags)) return tags['generator:method'] === 'thermal' ? 'solar_thermal' : 'solar';
     if (value) {
         if (value === 'footway' && tags.footway === 'crossing') return 'crossing';
         if (value === 'cycleway' && tags.cycleway === 'crossing') return 'cycle_crossing';
@@ -1430,6 +1434,55 @@ export function chevronStripes(polygon: Vec2[], travel: Vec2 | undefined, direct
 }
 
 
+/* ---------- solar panels ---------- */
+
+/** Solar panels (wiki: Tag:generator:source=solar): `power=generator` with `generator:source=solar` */
+export function isSolarPanel(tags: Tags): boolean {
+    return tags.power === 'generator' && tags['generator:source'] === 'solar';
+}
+
+/** The compass bearing panels face (`generator:orientation`, else `direction`), in degrees, or NaN */
+function panelFacing(tags: Tags): number {
+    const value = tags['generator:orientation'] ?? tags.direction;
+    if (value === undefined) return NaN;
+    return cardinals[value.toUpperCase()] ?? parseFloat(value);
+}
+
+/**
+ * The direction rows of panels run, in radians anticlockwise from east: across the way they face, else along the
+ * area's length
+ */
+function panelRows(polygon: Vec2[], tags: Tags): number {
+    const facing = panelFacing(tags);
+    if (Number.isFinite(facing)) {
+        const a = facing * Math.PI / 180;
+        const row = rightNormal([Math.sin(a), Math.cos(a)]);
+        return Math.atan2(row[1], row[0]);
+    }
+    const frame = metricFrame(polygon[0]);
+    const { axis } = longAxis(polygon.map(frame.toMetres));
+    return Math.atan2(axis[1], axis[0]);
+}
+
+/**
+ * A solar panel mapped as a node: a rectangle of its modules (`generator:solar:modules`, 2 m² each, two deep), else
+ * 4 by 2 m, its rows across the way it faces
+ */
+function panelOnNode(node: osmNode): AreaShape {
+    const modules = parseInt(node.tags['generator:solar:modules'] ?? '', 10);
+    const area = Number.isFinite(modules) && modules > 0 ? Math.min(modules, 400) * 2 : 8;
+    const depth = Math.min(4, Math.sqrt(area / 2));
+    const length = area / depth;
+    const frame = metricFrame(node.loc);
+    const facing = panelFacing(node.tags);
+    const along: Vec2 = Number.isFinite(facing) ? rightNormal([Math.sin(facing * Math.PI / 180), Math.cos(facing * Math.PI / 180)]) : [1, 0];
+    const across = rightNormal(along);
+    const corner = (u: number, v: number) => frame.toLoc(add(scale(along, u * length / 2), scale(across, v * depth / 2)));
+    const polygon = [corner(-1, -1), corner(1, -1), corner(1, 1), corner(-1, 1), corner(-1, -1)];
+    return { id: node.id, kind: node.tags['generator:method'] === 'thermal' ? 'solar_thermal' : 'solar', polygon, rows: Math.atan2(along[1], along[0]) };
+}
+
+
 /** Footways, areas, kerbs and road markings among `entities` (usually everything in view) */
 export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?: Map<string, WayVisual>): StreetGeometry {
     const out: StreetGeometry = { paths: [], areas: [], kerbs: [], surfaces: [], markings: [], symbols: [], barriers: [] };
@@ -1448,7 +1501,8 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?
                         id: way.id, kind, polygon, surface: kind === 'island' ? islandSurface(tags) : surfaceGroup(tags.surface),
                         ...(kind === 'crossing' && (tags.crossing === 'zebra' || tags['crossing:markings'] === 'zebra' || !tags['crossing:markings'] ||
                             tags['crossing:markings'] === 'yes') && tags['crossing:markings'] !== 'no' ? { stripes: zebraStripes(polygon) } : {}),
-                        ...(kind === 'hatched' ? { stripes: hatchStripes(polygon, tags.direction) } : {})
+                        ...(kind === 'hatched' ? { stripes: hatchStripes(polygon, tags.direction) } : {}),
+                        ...(kind === 'solar' || kind === 'solar_thermal' ? { rows: panelRows(polygon, tags) } : {})
                     });
                 }
             }
@@ -1459,6 +1513,7 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?
             }
             if (isLaneRoad(way)) speedLimitSymbols(way, graph, visuals, out);
         } else if (entity.type === 'node' && Object.keys(entity.tags).length) {
+            if (isSolarPanel(entity.tags)) out.areas.push(panelOnNode(entity as osmNode));
             nodeMarkings(entity as osmNode, graph, out, visuals);
         } else if (entity.type === 'relation') {
             // areas mapped as multipolygons: road and junction areas, pavements, islands… with their holes
@@ -1466,7 +1521,8 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?
             const rings = kind ? multipolygonRings(entity, graph) : undefined;
             if (kind && rings) {
                 out.areas.push({ id: entity.id, kind, polygon: rings.outer, rings: rings.rings,
-                    surface: kind === 'island' ? islandSurface(entity.tags) : surfaceGroup(entity.tags.surface) });
+                    surface: kind === 'island' ? islandSurface(entity.tags) : surfaceGroup(entity.tags.surface),
+                    ...(kind === 'solar' || kind === 'solar_thermal' ? { rows: panelRows(rings.outer, entity.tags) } : {}) });
             }
         }
     }

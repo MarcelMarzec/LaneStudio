@@ -1,3 +1,5 @@
+import { select as d3_select } from 'd3-selection';
+
 import type { Projection } from '../../geo/raw_mercator';
 import type { Vec2 } from '../../geo/vector';
 import { paintedAreaKinds, type AreaShape, type StreetGeometry, type SymbolShape } from '../geometry/street';
@@ -123,7 +125,7 @@ export function drawStreet(
         d => `street-area street-area-${d.kind} ${d.id}` + (areaRoads.has(d.id) ? ` ${areaRoads.get(d.id)}` : '') +
             (d.surface ? ` surface-${d.surface}` : ''), areaPath);
 
-    drawPaintedAreas(group('area-markings'), street.areas.filter(a => paintedAreaKinds.has(a.kind)), path);
+    drawPaintedAreas(group('area-markings'), street.areas.filter(a => paintedAreaKinds.has(a.kind)), path, projection);
 
     joinPaths(group('islands'), street.areas.filter(a => a.kind === 'island'), d => d.id,
         d => `street-area street-area-island ${d.id} surface-${d.surface ?? 'concrete'}`, areaPath);
@@ -257,18 +259,38 @@ function drawSymbols(group: Group, data: SymbolShape[], projection: Projection) 
  * edged with a white line, a zebra crossing's white bars clipped to the crossing's outline, and a cycle crossing's
  * dashed edges
  */
-function drawPaintedAreas(group: Group, areas: AreaShape[], path: ReturnType<typeof pathFor>) {
+function drawPaintedAreas(group: Group, areas: AreaShape[], path: ReturnType<typeof pathFor>, projection: Projection) {
     const items = group.selectAll<SVGGElement, AreaShape>('g.painted-area').data(areas, d => d.id);
     items.exit().remove();
     const enter = items.enter().append('g');
     enter.append('clipPath').attr('id', d => `lanes-clip-${d.id}`).append('path');
+    // solar panels: a grid of modules as a pattern turned to the panels' rows
+    enter.filter(d => d.rows !== undefined).append('pattern').attr('id', d => `lanes-solar-${d.id}`)
+        .attr('patternUnits', 'userSpaceOnUse').append('path').attr('class', 'solar-cells');
     enter.append('path').attr('class', 'painted-area-fill');
     enter.append('path').attr('class', 'painted-area-stripes').attr('clip-path', d => `url(#lanes-clip-${d.id})`);
     const all = enter.merge(items)
         .each(attrChanged('class', function(d) { return withIdState(this, `painted-area painted-area-${d.kind} ${d.id}`); }));
     all.select('clipPath').select('path').each(attrChanged('d', d => path(d.polygon, true)));
-    all.select('.painted-area-fill').each(attrChanged('d', d => path(d.polygon, true)));
-    all.select('.painted-area-stripes').each(attrChanged('d', d => (d.stripes ?? []).map(bar => path(bar, true)).join('')));
+    const areaPath = (d: AreaShape) => path(d.polygon, true) + (d.rings ?? []).map(ring => path(ring, true)).join('');
+    all.select('.painted-area-fill').each(attrChanged('d', areaPath));
+    all.select('.painted-area-stripes')
+        .each(attrChanged('d', d => d.rows !== undefined ? areaPath(d) : (d.stripes ?? []).map(bar => path(bar, true)).join('')))
+        .style('fill', d => d.rows !== undefined ? `url(#lanes-solar-${d.id})` : null);
+    all.filter(d => d.rows !== undefined).select('pattern').each(function(d) {
+        // modules about 1.1 m along a row and 2 m across it; too small to see when zoomed out
+        const a = projection(d.polygon[0]);
+        const b = projection([d.polygon[0][0], d.polygon[0][1] + 1 / 111320]);
+        const px = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        const w = 1.1 * px;
+        const h = 2 * px;
+        const cells = w >= 3;
+        const pattern = d3_select(this);
+        pattern.attr('width', w.toFixed(2)).attr('height', h.toFixed(2))
+            .attr('patternTransform', `rotate(${(-(d.rows ?? 0) * 180 / Math.PI).toFixed(1)})`);
+        pattern.select('path').attr('d', cells ? `M0 0H${w.toFixed(2)}M0 0V${h.toFixed(2)}` : '')
+            .attr('stroke-width', Math.max(0.6, 0.06 * px).toFixed(2));
+    });
 }
 
 

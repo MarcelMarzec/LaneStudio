@@ -99,7 +99,8 @@ export const mapKeyGroups: { id: string; entries: KeyEntry[] }[] = [
             { id: 'unpaved', swatch: { fill: 'street-area surface-unpaved' } },
             { id: 'grass', swatch: { fill: 'street-area surface-grass' } },
             { id: 'island', swatch: { fill: 'street-area street-area-island surface-concrete' } },
-            { id: 'car_park', swatch: { fill: 'car-park' } }
+            { id: 'car_park', swatch: { fill: 'car-park' } },
+            { id: 'solar', swatch: { fill: 'lanes-key-solar' } }
         ]
     }
 ];

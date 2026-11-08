@@ -53,6 +53,17 @@ faded, with yellow and black stripes and orange kerbs, without arrows or lane li
 - `highway=escape`: one lane of gravel (a runaway lorry ramp).
 - `highway=emergency_bay` as a way: a one-lane orange road.
 
+## Solar panels
+
+Panels (wiki: Tag:generator:source=solar) are drawn dark blue with a grid of modules, on fields and roofs alike:
+
+| Mapped | Tags | Drawn |
+| --- | --- | --- |
+| A row of panels, or a roof's panels, as an area | `power=generator`, `generator:source=solar`, `generator:method=photovoltaic` | Modules about 1.1 by 2 m, in rows across the way they face (`generator:orientation` or `direction`), else along the area |
+| Panels as a node | the same | A rectangle of `generator:solar:modules` modules (2 m² each), else 4 by 2 m |
+| Solar water heating | `generator:method=thermal` | Dark grey |
+| The whole solar farm | `power=plant`, `plant:source=solar` | iD's outline |
+
 ## Brand logos
 
 A feature tagged `brand:wikidata=*` shows its brand's logo (Wikidata P8972 or P154, from Wikimedia Commons) on a white

@@ -8,6 +8,17 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08r8
+##### 2026-Nov-08
+
+#### Roads and signs
+* Solar panels (`power=generator`, `generator:source=solar`) are drawn dark blue with a grid of modules in rows across
+  the way they face (`generator:orientation` or `direction`), as areas or, mapped as a node, as big as their
+  `generator:solar:modules`; solar water heating (`generator:method=thermal`) is dark grey
+
+#### Map key
+* Solar panels
+
 # 26.11.08r7
 ##### 2026-Nov-08
 
