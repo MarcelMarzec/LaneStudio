@@ -3,7 +3,8 @@ import type { NodeId } from '../../osm';
 import type { osmWay } from '../../osm/way';
 import { laneDriveSide } from '../core/drive_side';
 import { builtHighway, isLaneRoad, sidewalkExpectedHighways } from '../core/roads';
-import { assumedShoulder, shoulderValue } from '../core/roadside';
+import { assumedShoulder, contraflowSide, cyclewayValue, cyclewayWidth, shoulderValue, type Side } from '../core/roadside';
+import { laneKindFromValues, type LaneKindValue } from '../model/kinds';
 import { kerbMarking, parkingUse, parkingValue, type KerbMarking, type ParkingUse } from '../model/parking';
 import {
     parseLanes, laneRefsInWayOrder, parseChange,
@@ -11,7 +12,7 @@ import {
 } from '../model';
 
 /** What a lane is for, which decides its colour and pattern */
-export type LaneKind = 'general' | 'bus' | 'psv' | 'taxi' | 'hov' | 'bicycle' | 'pedestrian' | 'variable' | 'restricted';
+export type LaneKind = LaneKindValue;
 
 export interface LaneInfo {
     ref: LaneRef;
@@ -21,9 +22,11 @@ export interface LaneInfo {
     turn: string;
     change?: LaneChange;
     values: Record<string, string>;
+    /** lane keys whose value this lane takes from the road's plain key, having none of its own */
+    inherited?: string[];
 }
 
-export type RoadsideKind = 'shoulder' | 'sidewalk' | 'sidewalk_unknown' | 'cycle_lane' | 'cycle_track' | 'parking';
+export type RoadsideKind = 'shoulder' | 'sidewalk' | 'sidewalk_unknown' | 'sidewalk_lane' | 'cycle_lane' | 'cycle_track' | 'parking';
 
 export interface RoadsideStrip {
     kind: RoadsideKind;
@@ -88,22 +91,6 @@ export function parseWidth(value: string | undefined): number | undefined {
 }
 
 
-function laneKind(values: Record<string, string>): LaneKind {
-    const v = (key: string) => values[key] ?? '';
-    const reserved = (key: string) => v(key) === 'designated';
-    if (reserved('bus:lanes')) return 'bus';
-    if (reserved('psv:lanes')) return 'psv';
-    if (reserved('taxi:lanes')) return 'taxi';
-    if (reserved('hov:lanes')) return 'hov';
-    if (reserved('bicycle:lanes')) return 'bicycle';
-    if (reserved('foot:lanes')) return 'pedestrian';
-    if (v('access:lanes') === 'variable') return 'variable';
-    if (['no', 'private'].includes(v('access:lanes')) || ['no', 'private'].includes(v('motor_vehicle:lanes')) ||
-        ['no', 'private'].includes(v('vehicle:lanes'))) return 'restricted';
-    return 'general';
-}
-
-
 /**
  * Lane widths in metres for lanes with no width tagged, from UK practice: 3.65 m lanes on motorways and
  * dual carriageways and a 7.3 m single carriageway (DMRB CD 127), narrowing on local roads to a 5.5 m
@@ -159,7 +146,7 @@ function sideValue(tags: Tags, key: string, side: 'left' | 'right'): string | un
     return plain;
 }
 
-function roadsideStrips(tags: Tags, side: 'left' | 'right', shoulderSide: 'left' | 'right' | null, runningShoulder: boolean): RoadsideStrip[] {
+function roadsideStrips(tags: Tags, side: Side, shoulderSide: Side | null, runningShoulder: boolean, contraflow: Side | null): RoadsideStrip[] {
     const strips: RoadsideStrip[] = [];
 
     // a hard shoulder runs right beside the carriageway (wiki: Key:shoulder)
@@ -168,9 +155,12 @@ function roadsideStrips(tags: Tags, side: 'left' | 'right', shoulderSide: 'left'
         strips.push({ kind: 'shoulder', width: width ?? 2.5, assumed: width === undefined });
     }
 
-    const cycleway = sideValue(tags, 'cycleway', side);
+    // a cycle lane is painted on the carriageway (wiki: Key:cycleway); `opposite_lane` is an old way of tagging a
+    // contraflow lane on a one-way road, on the side its cycles keep to
+    const cycleway = cyclewayValue(tags, side, contraflow);
+    const cycleWidth = cyclewayWidth(tags, side);
     if (cycleway === 'lane' || cycleway === 'opposite_lane') {
-        strips.push({ kind: 'cycle_lane', width: 1.5, assumed: true });
+        strips.push({ kind: 'cycle_lane', width: cycleWidth ?? 1.5, assumed: cycleWidth === undefined });
     }
 
     // on-street parking sits between the carriageway (or its cycle lane) and the kerb (wiki: Street parking)
@@ -196,7 +186,7 @@ function roadsideStrips(tags: Tags, side: 'left' | 'right', shoulderSide: 'left'
     }
 
     if (cycleway === 'track' || cycleway === 'opposite_track') {
-        strips.push({ kind: 'cycle_track', width: 2, assumed: true });
+        strips.push({ kind: 'cycle_track', width: cycleWidth ?? 2, assumed: cycleWidth === undefined });
     }
     // parking on the pavement: beyond the kerb, before the walking space
     if (parking === 'on_kerb') {
@@ -211,6 +201,41 @@ function roadsideStrips(tags: Tags, side: 'left' | 'right', shoulderSide: 'left'
         strips.push({ kind: 'sidewalk_unknown', width: 1.5, assumed: true });
     }
     return strips;
+}
+
+
+/** Lane keys whose blank slots take the road's plain key, and the plain key (wiki: Lanes, Key:turn, Key:destination) */
+const roadDefaults: [string, string][] = [['turn:lanes', 'turn'], ['destination:lanes', 'destination'], ['destination:ref:lanes', 'destination:ref']];
+
+/**
+ * Fills a lane's blank slots from the road (a blank value takes the plain key's, wiki: Lanes): `turn:forward` or `turn`
+ * for every lane, `destination:forward` (or plain `destination` on a one-way road, where the wiki puts it) for its
+ * direction. Only the drawing's copy of the values is filled, never the tags. Returns the keys it filled.
+ */
+function fillFromRoad(values: Record<string, string>, tags: Tags, direction: LaneRef['direction'], oneway: boolean): string[] {
+    const filled: string[] = [];
+    for (const [laneKey, plain] of roadDefaults) {
+        if (values[laneKey]) continue;
+        const value = tags[`${plain}:${direction}`] ?? (oneway || plain === 'turn' ? tags[plain] : undefined);
+        if (!value) continue;
+        values[laneKey] = value;
+        filled.push(laneKey);
+    }
+    return filled;
+}
+
+/** The narrowest lane a tagged `width` is shared out into once the strips on the road are taken off */
+const minimumLaneWidth = 2;
+
+/**
+ * Whether a roadside strip is on the carriageway, inside the kerbs `width` is measured between: a cycle lane, a
+ * pedestrian lane, and parking on the road (half of it, for half on the kerb). A hard shoulder has its own
+ * `shoulder:width`, and bays beside the road, a cycle track and parking on the pavement are beyond the kerb.
+ */
+export function stripOnCarriageway(strip: RoadsideStrip): boolean {
+    if (strip.kind === 'cycle_lane' || strip.kind === 'sidewalk_lane') return true;
+    if (strip.kind !== 'parking' || !strip.parking) return false;
+    return ['lane', 'yes', 'half_on_kerb'].includes(strip.parking.position);
 }
 
 
@@ -232,28 +257,47 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
     const refs = laneRefsInWayOrder(model);
     const count = refs.length;
 
-    const fallback = parseWidth(tags.width);
-    const perLane = fallback !== undefined ? fallback / count : defaultLaneWidth(way);
+    // a plain shoulder=yes on a one-way road is on the side traffic keeps to (the left in the UK)
+    const driveSide = laneDriveSide(way, graph);
+    const shoulderSide: Side | null = model.oneway === 'forward' ? driveSide : model.oneway === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
+    const contraflow = contraflowSide(model.oneway, driveSide);
+
+    const kinds = refs.map(ref => laneKindFromValues(model.lanes[ref.direction][ref.index].values, builtHighway(tags)));
+    const runningShoulder = kinds.includes('variable');
+    const roadside = {
+        left: roadsideStrips(tags, 'left', shoulderSide, runningShoulder, contraflow),
+        right: roadsideStrips(tags, 'right', shoulderSide, runningShoulder, contraflow)
+    };
+
+    // `width` is the carriageway from kerb to kerb, cycle lanes and parking on the road included (wiki: Key:width), so
+    // what is left for the lanes is the width less those; lanes with no `width:lanes` share what the others leave
+    const kerbToKerb = parseWidth(tags.width) ?? parseWidth(tags['width:carriageway']) ?? parseWidth(tags.est_width);
+    const taggedWidths = refs.map(ref => parseWidth(model.lanes[ref.direction][ref.index].values['width:lanes']));
+    let perLane = defaultLaneWidth(way);
+    if (kerbToKerb !== undefined) {
+        const onRoad = [...roadside.left, ...roadside.right].reduce((sum, strip) => sum + (stripOnCarriageway(strip) ? strip.width : 0), 0);
+        const untagged = taggedWidths.filter(w => w === undefined).length;
+        const left = kerbToKerb - onRoad - taggedWidths.reduce<number>((sum, w) => sum + (w ?? 0), 0);
+        // (a width too narrow for its lanes and strips is shared out as tagged, as it was before strips were counted)
+        perLane = untagged && left / untagged >= minimumLaneWidth ? left / untagged : kerbToKerb / count;
+    }
     let assumed = model.countSource !== 'tagged';
 
-    const lanes: LaneInfo[] = refs.map(ref => {
+    const lanes: LaneInfo[] = refs.map((ref, i) => {
         const values = model.lanes[ref.direction][ref.index].values;
-        const tagged = parseWidth(values['width:lanes']);
-        if (tagged === undefined && fallback === undefined) assumed = true;
+        const inherited = fillFromRoad(values, tags, ref.direction, !!model.oneway);
+        const tagged = taggedWidths[i];
+        if (tagged === undefined && kerbToKerb === undefined) assumed = true;
         return {
             ref,
             width: tagged ?? perLane,
-            kind: laneKind(values),
+            kind: kinds[i],
             turn: values['turn:lanes'] ?? '',
             change: parseChange(values['change:lanes'] ?? ''),
-            values
+            values,
+            ...(inherited.length ? { inherited } : {})
         };
     });
-
-    // a plain shoulder=yes on a one-way road is on the side traffic keeps to (the left in the UK)
-    const driveSide = laneDriveSide(way, graph);
-    const runningShoulder = lanes.some(lane => lane.kind === 'variable');
-    const shoulderSide = model.oneway === 'forward' ? driveSide : model.oneway === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
 
     const total = lanes.reduce((sum, l) => sum + l.width, 0);
     const edges = [-total / 2];
@@ -293,10 +337,7 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
         edges,
         shiftStart,
         shiftEnd,
-        roadside: {
-            left: roadsideStrips(tags, 'left', shoulderSide, runningShoulder),
-            right: roadsideStrips(tags, 'right', shoulderSide, runningShoulder)
-        },
+        roadside,
         kerbMarkings: { left: kerbMarking(tags, 'left'), right: kerbMarking(tags, 'right') }
     };
 }

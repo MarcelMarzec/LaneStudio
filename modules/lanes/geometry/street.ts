@@ -12,7 +12,8 @@ import { parseWidth, type LaneLayout } from './layout';
 import { roadMaxspeed, speedTypeOf } from '../model/speed_limits';
 import { cachedLayout, edgesAt, visualShift, miniRoundaboutRadius, type WayVisual } from './road_geometry';
 import { isFord } from './structures';
-import { isTrafficIsland, islandSurface, surfaceGroup, type SurfaceGroup } from '../model/street_features';
+import { isTrafficIsland, islandSurface, markingColour, surfaceGroup, type MarkingColour, type SurfaceGroup } from '../model/street_features';
+import { ukMarkings } from '../core/drive_side';
 
 /*
  * Everything on and beside the road that is not a lane: footways and paths at their real width,
@@ -29,7 +30,7 @@ export const pathWidths: Record<string, number> = {
 export type PathKind = 'sidewalk' | 'crossing' | 'footway' | 'path' | 'cycleway' | 'steps' | 'pedestrian' | 'bridleway';
 /** How a crossing is painted (wiki: Key:crossing:markings) */
 export type CrossingMarkings = 'zebra' | 'zebra_double' | 'zebra_paired' | 'zebra_bicolour' | 'lines' | 'lines_paired' | 'ladder'
-    | 'ladder_skewed' | 'ladder_paired' | 'dashes' | 'dots' | 'surface' | 'pictograms' | 'none';
+    | 'ladder_skewed' | 'ladder_paired' | 'dashes' | 'dots' | 'surface' | 'pictograms' | 'tiger' | 'none';
 
 /** One painted mark of a crossing: a bar or patch (closed), or a line, and how it is drawn */
 export interface CrossingMark {
@@ -43,15 +44,20 @@ export interface CrossingMark {
  * The marks of a crossing, laid out in its own terms: `t` along the way people walk (0 to `length`), `u` across it
  * (±`width`/2). Bars of a zebra run with the traffic, half a metre wide every metre; lines run along the edges.
  */
-export function crossingMarks(markings: CrossingMarkings, length: number, width: number): { points: [number, number][]; closed: boolean; cls: string }[] {
+export function crossingMarks(markings: CrossingMarkings, length: number, width: number, colour?: MarkingColour): { points: [number, number][]; closed: boolean; cls: string }[] {
     const out: { points: [number, number][]; closed: boolean; cls: string }[] = [];
+    const painted = colour ? ` colour-${colour}` : '';
     const h = width / 2;
     const bar = (t: number, w: number, u0 = -h, u1 = h, cls = 'marking marking-zebra_bar') =>
         out.push({ points: [[t, u0], [t + w, u0], [t + w, u1], [t, u1]], closed: true, cls });
     const line = (u: number, cls = 'marking marking-crossing_line') => out.push({ points: [[0, u], [length, u]], closed: false, cls });
     const bars = (u0 = -h, u1 = h, step = 1, w = 0.5) => {
         let k = 0;
-        for (let t = 0.25; t + w <= length; t += step, k++) bar(t, w, u0, u1, 'marking marking-zebra_bar' + (markings === 'zebra_bicolour' && k % 2 ? ' alt' : ''));
+        for (let t = 0.25; t + w <= length; t += step, k++) {
+            // a bicolour zebra's other colour is `crossing:markings:colour` (red where it is not tagged)
+            const cls = markings === 'zebra_bicolour' ? (k % 2 ? ' alt' + painted : '') : painted;
+            bar(t, w, u0, u1, 'marking marking-zebra_bar' + cls);
+        }
     };
     switch (markings) {
         case 'zebra':
@@ -99,6 +105,13 @@ export function crossingMarks(markings: CrossingMarkings, length: number, width:
         case 'dots':
             line(-h, 'marking marking-crossing_line dots');
             line(h, 'marking marking-crossing_line dots');
+            break;
+        case 'tiger':
+            // a zebra for people walking, and beside it a cycle crossing edged with large squares (the UK's
+            // "elephant's footprints")
+            bars(-h, h * 0.15);
+            line(h, 'marking marking-crossing_line elephant');
+            line(h * 0.15 + 0.1, 'marking marking-crossing_line elephant');
             break;
         case 'surface':
             out.push({ points: [[0, -h], [length, -h], [length, h], [0, h]], closed: true, cls: 'marking marking-crossing_surface' });
@@ -239,23 +252,52 @@ const circle = (centre: Vec2, r: number, steps = 32): Vec2[] => Array.from({ len
 
 /* ---------- crossings ---------- */
 
-/** How a crossing is painted, from `crossing:markings` or the older `crossing=*` values */
-export function crossingMarkings(tags: Tags): CrossingMarkings {
+// the names of signal-controlled crossings in the UK (wiki: Key:crossing_ref): marked with two rows of studs
+const ukSignalCrossings = new Set(['pelican', 'puffin', 'toucan', 'pegasus', 'equestrian']);
+
+const knownMarkings: Record<string, CrossingMarkings> = {
+    no: 'none', zebra: 'zebra', 'zebra:double': 'zebra_double', 'zebra:paired': 'zebra_paired', 'zebra:bicolour': 'zebra_bicolour',
+    lines: 'lines', 'lines:paired': 'lines_paired', ladder: 'ladder', 'ladder:skewed': 'ladder_skewed',
+    'ladder:paired': 'ladder_paired', dashes: 'dashes', dots: 'dots', surface: 'surface', pictograms: 'pictograms'
+};
+
+/** Whether a crossing has traffic signals, by its tags (`crossing=traffic_signals`, `crossing:signals`, or a UK name) */
+export function isSignalCrossing(tags: Tags): boolean {
+    return tags.crossing === 'traffic_signals' || tags['crossing:signals'] === 'yes' || ukSignalCrossings.has(tags.crossing_ref ?? '');
+}
+
+/**
+ * How a crossing is painted, from `crossing:markings` (several marks at once with `;`, as `zebra;dots`, wiki:
+ * Key:crossing:markings) or the older `crossing=*` values. With nothing tagged, a crossing with signals is painted
+ * with lines, or in the UK (`uk`) with two rows of studs, as pelican, puffin, toucan and pegasus crossings are; a tiger
+ * crossing (`crossing_ref=tiger`) is a zebra with a cycle crossing beside it.
+ */
+export function crossingMarkingList(tags: Tags, uk = false): CrossingMarkings[] {
     const markings = tags['crossing:markings'];
     if (markings) {
-        const known: Record<string, CrossingMarkings> = {
-            no: 'none', zebra: 'zebra', 'zebra:double': 'zebra_double', 'zebra:paired': 'zebra_paired', 'zebra:bicolour': 'zebra_bicolour',
-            lines: 'lines', 'lines:paired': 'lines_paired', ladder: 'ladder', 'ladder:skewed': 'ladder_skewed',
-            'ladder:paired': 'ladder_paired', dashes: 'dashes', dots: 'dots', surface: 'surface', pictograms: 'pictograms'
-        };
-        return known[markings] ?? 'zebra';   // yes, and anything else painted
+        const list = markings.split(';').map(v => v.trim()).filter(Boolean)
+            .map(v => knownMarkings[v] ?? 'zebra');   // yes, and anything else painted
+        if (tags.crossing_ref === 'tiger' && list[0] === 'zebra') list[0] = 'tiger';
+        return list.includes('none') ? ['none'] : [...new Set(list)];
     }
     const crossing = tags.crossing;
-    if (crossing === 'zebra' || crossing === 'marked' || tags.crossing_ref === 'zebra') return 'zebra';
-    if (crossing === 'unmarked' || crossing === 'no' || crossing === 'informal') return 'none';
-    if (crossing === 'traffic_signals') return 'lines';
-    if (crossing === 'uncontrolled') return 'zebra';
-    return 'none';
+    if (tags.crossing_ref === 'tiger') return ['tiger'];
+    if (crossing === 'zebra' || crossing === 'marked' || tags.crossing_ref === 'zebra') return ['zebra'];
+    if (crossing === 'unmarked' || crossing === 'no' || crossing === 'informal') return ['none'];
+    if (isSignalCrossing(tags)) return [uk ? 'dots' : 'lines'];
+    if (crossing === 'uncontrolled') return ['zebra'];
+    return ['none'];
+}
+
+/** The main way a crossing is painted (the first of `crossingMarkingList`) */
+export function crossingMarkings(tags: Tags, uk = false): CrossingMarkings {
+    return crossingMarkingList(tags, uk)[0];
+}
+
+/** The colour of a crossing's marks, from `crossing:markings:colour` (the second colour of a bicolour zebra), if not white */
+export function crossingMarkingColour(tags: Tags): MarkingColour | undefined {
+    const colour = markingColour({ colour: tags['crossing:markings:colour'] });
+    return tags['crossing:markings:colour'] && colour !== 'white' ? colour : undefined;
 }
 
 const isCrossingPath = (tags: Tags) =>
@@ -357,14 +399,15 @@ function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisua
     const marks: CrossingMark[] = [];
     let markings: CrossingMarkings | undefined;
     if (kind === 'crossing') {
-        markings = crossingMarkings(tags);
+        const list = crossingMarkingList(tags, ukMarkings(frame.toLoc(points[0])));
+        markings = list[0];
         const length = polylineLength(points);
         // laid out along the path (t) and across it (u)
         const place = ([t, u]: [number, number]) => {
             const at = pointAlong(points, Math.max(0, Math.min(length, t)));
             return frame.toLoc(add(at.point, scale(rightNormal(at.direction), u)));
         };
-        for (const mark of crossingMarks(markings, length, width)) {
+        for (const mark of list.flatMap(m => crossingMarks(m, length, width, crossingMarkingColour(tags)))) {
             // a line along the path follows its bends
             const points2 = !mark.closed && mark.points.length === 2
                 ? Array.from({ length: Math.max(2, Math.ceil(length)) + 1 }, (_, k) => place([length * k / Math.max(2, Math.ceil(length)), mark.points[0][1]]))
@@ -698,10 +741,11 @@ function approachRange(cs: CrossSection, direction: 'forward' | 'backward'): [nu
 }
 
 /**
- * Which way traffic approaches a stop line or sign at a node: the `direction` tag, the road's
- * oneway direction, or (for a sign near one end of a two-way road) towards that end.
+ * Which way traffic approaches a stop line or sign at a node: the `direction` tag, the road's oneway direction, or
+ * (with neither) towards the nearest junction along the road, as data users assume (wiki: Tag:highway=stop,
+ * Tag:highway=give_way); a road with no junction on it faces towards its nearer end.
  */
-function approachDirections(tags: Tags, cs: CrossSection): ('forward' | 'backward')[] {
+function approachDirections(tags: Tags, cs: CrossSection, graph: coreGraph): ('forward' | 'backward')[] {
     const tagged = tags.direction ?? tags['traffic_signals:direction'] ?? tags['highway:direction'];
     if (tagged === 'forward' || tagged === 'backward') return [tagged];
     if (tagged === 'both' || tagged === 'all') return ['forward', 'backward'];
@@ -709,10 +753,37 @@ function approachDirections(tags: Tags, cs: CrossSection): ('forward' | 'backwar
     if (oneway) return [oneway];
     // signals for a crossing stop the traffic both ways
     if (tags.highway === 'traffic_signals' && tags.crossing && tags.crossing !== 'no') return ['forward', 'backward'];
+    const nearest = nearestJunction(cs.way, cs.nodeIndex, graph);
+    if (nearest) return [nearest];
     const n = cs.way.nodes.length;
     if (cs.nodeIndex === n - 1) return ['forward'];
     if (cs.nodeIndex === 0) return ['backward'];
     return cs.nodeIndex >= (n - 1) / 2 ? ['forward'] : ['backward'];
+}
+
+/**
+ * Which way along a road its nearest junction is from node `index` (`forward` towards the way's end), measured along
+ * the road: a node another road or path with lanes shares (not the node itself). `undefined` when there is none.
+ */
+export function nearestJunction(way: osmWay, index: number, graph: coreGraph): 'forward' | 'backward' | undefined {
+    const nodes = way.nodes.map(id => graph.entity(id) as osmNode);
+    const frame = metricFrame(nodes[index].loc);
+    const points = nodes.map(n => frame.toMetres(n.loc));
+    const isJunction = (k: number) => graph.parentWays(nodes[k]).some(w => w.id !== way.id && isLaneRoad(w));
+    let ahead = 0;
+    let aheadAt = Infinity;
+    for (let k = index + 1; k < nodes.length; k++) {
+        ahead += Math.hypot(points[k][0] - points[k - 1][0], points[k][1] - points[k - 1][1]);
+        if (isJunction(k)) { aheadAt = ahead; break; }
+    }
+    let behind = 0;
+    let behindAt = Infinity;
+    for (let k = index - 1; k >= 0; k--) {
+        behind += Math.hypot(points[k][0] - points[k + 1][0], points[k][1] - points[k + 1][1]);
+        if (isJunction(k)) { behindAt = behind; break; }
+    }
+    if (aheadAt === Infinity && behindAt === Infinity) return undefined;
+    return aheadAt <= behindAt ? 'forward' : 'backward';
 }
 
 
@@ -748,11 +819,13 @@ function crossingNodeMarkings(node: osmNode, cs: CrossSection, out: StreetGeomet
     const tags = node.tags;
     const left = cs.edges[0];
     const right = cs.edges[cs.edges.length - 1];
-    const markings = crossingMarkings(tags);
-    const half = 1.5;
+    const list = crossingMarkingList(tags, ukMarkings(node.loc));
+    const markings = list[0];
+    // (a tiger crossing has room for cycles beside the people walking)
+    const half = markings === 'tiger' ? 2.5 : 1.5;
     out.markings.push({ key: `${node.id}-crossing`, kind: 'crossing', nodeID: node.id, closed: true, variant: markings, points: band(cs, -half, half, left, right) });
     // walking across the road (t, from one kerb) within the crossing's width along the road (u)
-    crossingMarks(markings, right - left, half * 2).forEach((mark, k) => {
+    list.flatMap(m => crossingMarks(m, right - left, half * 2, crossingMarkingColour(tags))).forEach((mark, k) => {
         const kind = (/marking-(\w+)/.exec(mark.cls)?.[1] ?? 'zebra_bar') as MarkingKind;
         const variant = mark.cls.split(' ').slice(2).join(' ') || undefined;
         out.markings.push({
@@ -877,7 +950,7 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
         const kind: MarkingKind = highway === 'stop' ? 'stop_line' : highway === 'give_way' ? 'give_way_line' : 'signal_line';
         // at a junction node, the line stands back by half the width of the widest other road
         const back = atJunction ? junctionClearance(node, road, graph) : 0;
-        for (const direction of approachDirections(tags, cs)) {
+        for (const direction of approachDirections(tags, cs, graph)) {
             const range = approachRange(cs, direction);
             if (!range) continue;
             // the line faces traffic coming towards the node

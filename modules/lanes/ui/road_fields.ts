@@ -11,7 +11,8 @@ import { actionChangeLanes } from '../actions/change_lanes';
 import { laneDriveSide } from '../core/drive_side';
 import { laneState } from '../core/lane_state';
 import {
-    assumedShoulder, cyclewayValue, isSidewalkWay, parallelWays, shoulderValue, sidewalkValue, withCycleway, withShoulder, withSidewalk
+    assumedShoulder, cyclewayValue, hasOldCycleways, isSidewalkWay, parallelWays, roadContraflowSide, shoulderValue, sidewalkValue,
+    upgradeOldCycleways, withCycleway, withShoulder, withSidewalk
 } from '../core/roadside';
 import { isLaneRoad, laneRoadHighways, sidewalkExpectedHighways } from '../core/roads';
 import { laneLayout } from '../geometry/layout';
@@ -179,14 +180,15 @@ function drawSided(feature: SidedFeature) {
         const graph = context.graph();
         const tags = road.tags;
         const oneSide = shoulderSide(road, graph);
+        const contraflow = roadContraflowSide(road, graph);
         const { sides, nameOf } = sidesOf(road, graph);
         const retag = (next: Tags) => context.perform(actionChangeTags(road.id, next), t('_lanes.annotation.roadside'));
         const values: Record<SidedFeature, { values: string[]; read: (side: ParkingSide) => string | undefined; write: (side: ParkingSide, value: string | undefined) => Tags }> = {
             shoulder: { values: ['yes', 'no'], read: side => shoulderValue(tags, side, oneSide),
                 write: (side, v) => withShoulder(tags, side, v as 'yes' | 'no' | undefined, oneSide) },
             sidewalk: { values: ['yes', 'no', 'separate'], read: side => sidewalkValue(tags, side), write: (side, v) => withSidewalk(tags, side, v) },
-            cycleway: { values: ['lane', 'track', 'shared_lane', 'separate', 'no'], read: side => cyclewayValue(tags, side),
-                write: (side, v) => withCycleway(tags, side, v) },
+            cycleway: { values: ['lane', 'track', 'shared_lane', 'share_busway', 'separate', 'no'], read: side => cyclewayValue(tags, side, contraflow),
+                write: (side, v) => withCycleway(tags, side, v, contraflow) },
             parking: { values: [...parkingPositions], read: side => parkingValue(tags, side),
                 write: (side, v) => (feature === 'parking' && !v ? withParkingValue(tags, side, '', undefined) : withParkingValue(tags, side, '', v)) }
         };
@@ -208,6 +210,11 @@ function drawSided(feature: SidedFeature) {
 
         if (feature === 'shoulder') drawShoulderExtras(context, wrap, road, sides, nameOf, oneSide);
         if (feature === 'sidewalk') drawSidewalkExtras(context, wrap, road, sides, nameOf);
+        if (feature === 'cycleway' && hasOldCycleways(tags)) {
+            const note = fieldNote(wrap, t('_lanes.roadside.old_cycleway'), 'lanes-suggestion');
+            note.append('button').attr('type', 'button').text(t('_lanes.parking.upgrade'))
+                .on('click', () => retag(upgradeOldCycleways(tags, contraflow)));
+        }
         if (feature === 'parking') {
             for (const side of sides) {
                 const hasDetails = Object.keys(tags).some(key => isParkingKey(key, side) && key !== `parking:${side}` && key !== 'parking:both');

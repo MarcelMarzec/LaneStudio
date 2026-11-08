@@ -44,12 +44,23 @@ export interface LaneSpeed {
 export const colouredLimits = [10, 20, 30, 40, 50, 60, 70];
 
 /**
+ * A road's limit for traffic going one way: `maxspeed:forward` or `maxspeed:backward` where the limit differs by direction
+ * (wiki: Key:maxspeed), else the road's own; with no direction, the road's own or else either direction's
+ */
+export function roadSpeedFor(tags: Tags, measure: SpeedMeasure, direction?: 'forward' | 'backward' | 'both_ways'): string | undefined {
+    const own = measure === 'maxspeed' ? roadMaxspeed(tags) : tags.minspeed;
+    if (direction === 'forward' || direction === 'backward') return tags[`${measure}:${direction}`] ?? own;
+    return own ?? tags[`${measure}:forward`] ?? tags[`${measure}:backward`];
+}
+
+/**
  * How a lane is coloured: its own limit (`maxspeed:lanes`) if it has one, else its road's (`maxspeed`, or the limit
- * its `maxspeed:type` sets), in mph; a road with no limit is missing one. For minimum speeds, the lane's
+ * its `maxspeed:type` sets, or its direction's `maxspeed:forward` or `maxspeed:backward`), in mph; a road with no limit is missing one. For minimum speeds, the lane's
  * `minspeed:lanes` or its road's `minspeed`.
  */
-export function speedClassOf(laneValue: string | undefined, road: osmWay, measure: SpeedMeasure = 'maxspeed'): SpeedClass {
-    const value = laneValue || (measure === 'maxspeed' ? roadMaxspeed(road.tags) : road.tags.minspeed);
+export function speedClassOf(laneValue: string | undefined, road: osmWay, measure: SpeedMeasure = 'maxspeed',
+    direction?: 'forward' | 'backward' | 'both_ways'): SpeedClass {
+    const value = laneValue || roadSpeedFor(road.tags, measure, direction);
     if (!value) return 'missing';
     const mph = mphOf(value);
     return mph !== null && colouredLimits.includes(mph) ? mph : 'other';

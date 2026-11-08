@@ -6,6 +6,8 @@ import type { Vec2 } from '../../geo/vector';
 import { metricFrame, pointAlong, polylineLength } from '../geometry/frame';
 import { offsetFromWay } from '../geometry/measure';
 import { builtHighway } from './roads';
+import { laneDriveSide } from './drive_side';
+import { laneOneway } from '../model/parse';
 
 export type Side = 'left' | 'right';
 
@@ -149,16 +151,93 @@ export function withSidewalk(tags: Tags, side: Side, value: string | undefined):
     return next;
 }
 
-/** One side's cycleway value, from `cycleway:<side>`, `cycleway:both` or plain `cycleway` */
-export function cyclewayValue(tags: Tags, side: Side): string | undefined {
-    return tags[`cycleway:${side}`] ?? tags['cycleway:both'] ?? tags.cycleway;
+/** The old values for a cycle lane or track against the flow of a one-way road (wiki: Key:cycleway, deprecated) */
+export const oldContraflowCycleways = ['opposite_lane', 'opposite_track', 'opposite', 'opposite_share_busway'];
+
+/**
+ * The side of a one-way road its contraflow cycles keep to: the side traffic going the other way would use (the way's
+ * left where traffic drives on the right and the road is one-way along the way). `null` on a two-way road.
+ */
+export function contraflowSide(oneway: 'forward' | 'backward' | false, driveSide: Side): Side | null {
+    if (!oneway) return null;
+    return (driveSide === 'right') === (oneway === 'forward') ? 'left' : 'right';
+}
+
+/**
+ * One side's cycleway value, from `cycleway:<side>`, `cycleway:both` or plain `cycleway`. A plain `opposite_*` value on
+ * a one-way road is one contraflow lane or track, on `contraflow`'s side only.
+ */
+export function cyclewayValue(tags: Tags, side: Side, contraflow: Side | null = null): string | undefined {
+    const specific = tags[`cycleway:${side}`] ?? tags['cycleway:both'];
+    if (specific) return specific;
+    const plain = tags.cycleway;
+    if (plain && contraflow && oldContraflowCycleways.includes(plain)) return side === contraflow ? plain : undefined;
+    return plain;
+}
+
+/** A side's cycle lane or track width, from `cycleway:<side>:width`, `cycleway:both:width` or `cycleway:width` */
+export function cyclewayWidth(tags: Tags, side: Side): number | undefined {
+    const value = tags[`cycleway:${side}:width`] ?? tags['cycleway:both:width'] ?? tags['cycleway:width'];
+    const m = value?.trim().match(/^(\d+(?:\.\d+)?)\s*(?:m)?$/);
+    return m ? parseFloat(m[1]) : undefined;
+}
+
+/** The side of a one-way road its contraflow cycles keep to, or `null` on a two-way road */
+export function roadContraflowSide(road: osmWay, graph: coreGraph): Side | null {
+    return contraflowSide(laneOneway(road.tags), laneDriveSide(road, graph));
+}
+
+/** Whether a road still uses the old `opposite_*` cycleway values */
+export function hasOldCycleways(tags: Tags): boolean {
+    return ['cycleway', 'cycleway:both', 'cycleway:left', 'cycleway:right'].some(key => oldContraflowCycleways.includes(tags[key] ?? ''));
+}
+
+/**
+ * Rewrites the old `opposite_*` cycleway values in the current scheme: a contraflow lane or track becomes
+ * `cycleway:<side>=lane|track` with `cycleway:<side>:oneway=-1`, `opposite_share_busway` `share_busway`, and every one
+ * of them (`opposite` alone, with no lane) says cycles may ride both ways, `oneway:bicycle=no`
+ */
+export function upgradeOldCycleways(tags: Tags, contraflow: Side | null): Tags {
+    const next = { ...tags };
+    const current = (key: string) => oldContraflowCycleways.includes(tags[key] ?? '');
+    const renamed: Record<string, string | undefined> = {
+        opposite_lane: 'lane', opposite_track: 'track', opposite_share_busway: 'share_busway', opposite: undefined
+    };
+    let changed = false;
+    const sides: Side[] = [];
+    for (const side of ['left', 'right'] as const) {
+        const value = cyclewayValue(tags, side, contraflow);
+        if (value && oldContraflowCycleways.includes(value)) {
+            sides.push(side);
+            const to = renamed[value];
+            if (to) {
+                next[`cycleway:${side}`] = to;
+                next[`cycleway:${side}:oneway`] = '-1';
+            } else {
+                next[`cycleway:${side}`] = 'no';
+            }
+            changed = true;
+        }
+    }
+    if (!changed) return tags;
+    // the old values the sides were read from go; what the other side had stays on that side
+    for (const key of ['cycleway', 'cycleway:both']) {
+        if (!tags[key]) continue;
+        const value = tags[key]!;
+        delete next[key];
+        if (!current(key)) {
+            for (const side of ['left', 'right'] as const) if (!sides.includes(side) && !tags[`cycleway:${side}`]) next[`cycleway:${side}`] = value;
+        }
+    }
+    if (tags.oneway && tags.oneway !== 'no') next['oneway:bicycle'] = 'no';
+    return next;
 }
 
 /** Sets one side's cycleway, writing both sides in the side-specific scheme */
-export function withCycleway(tags: Tags, side: Side, value: string | undefined): Tags {
+export function withCycleway(tags: Tags, side: Side, value: string | undefined, contraflow: Side | null = null): Tags {
     const values: Record<Side, string | undefined> = {
-        left: cyclewayValue(tags, 'left'),
-        right: cyclewayValue(tags, 'right')
+        left: cyclewayValue(tags, 'left', contraflow),
+        right: cyclewayValue(tags, 'right', contraflow)
     };
     values[side] = value;
     const next = { ...tags };

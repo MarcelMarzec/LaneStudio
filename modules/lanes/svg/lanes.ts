@@ -125,7 +125,7 @@ function parkingBadgeText(get: (key: string) => string | undefined, use: string 
 /** The edge line round the rounded end of a road that stops with nothing joining it */
 function capEdges(pieces: RoadPiece[], building: (piece: RoadPiece) => boolean) {
     return pieces.flatMap(piece => (piece.caps ?? []).map((cap, i) => ({
-        key: `${piece.wayID}-${piece.index}-cap-${i}`, line: cap, assumed: piece.layout.assumed, construction: building(piece), shoulder: false
+        key: `${piece.wayID}-${piece.index}-cap-${i}`, line: cap, assumed: piece.layout.assumed, construction: building(piece), edgeClass: ''
     })));
 }
 
@@ -139,18 +139,27 @@ function parkingClass(parking: ParkingLayout | undefined): string {
 
 
 /**
- * A side's kerb, as drawn: a hard shoulder and parking on the road are inside it, so it runs beyond the last of them
- * (with a cycle lane in between); `edge` is the lanes' own edge, where a hard shoulder's white line goes
+ * A side's kerb, as drawn: a hard shoulder, a cycle lane and parking on the road are inside it, so it runs beyond the
+ * last of them; `edge` is the lanes' own edge, where the white line beside a hard shoulder or a cycle lane goes
+ * (`edgeKind` says which)
  */
 function kerbLine(piece: RoadPiece, side: 'left' | 'right') {
     const edge = piece.lines[side === 'left' ? 0 : piece.lines.length - 1];
     const strips = piece.roadside.filter(strip => strip.side === side);
     const onRoad = (strip: typeof strips[number]) => strip.kind === 'shoulder' || strip.kind === 'cycle_lane' ||
-        (strip.kind === 'parking' && strip.parking?.position !== 'on_kerb');
+        strip.kind === 'sidewalk_lane' || (strip.kind === 'parking' && strip.parking?.position !== 'on_kerb');
     let inside = 0;
     while (inside < strips.length && onRoad(strips[inside])) inside++;
-    const moved = strips.slice(0, inside).some(strip => strip.kind !== 'cycle_lane');
-    return { edge, kerb: moved ? ringEdges(strips[inside - 1].polygon)[1] : edge, shoulder: strips[0]?.kind === 'shoulder' };
+    const first = strips[0]?.kind;
+    const edgeKind = inside && (first === 'shoulder' || first === 'cycle_lane' || first === 'sidewalk_lane') ? first : null;
+    return { edge, kerb: inside ? ringEdges(strips[inside - 1].polygon)[1] : edge, edgeKind };
+}
+
+/** The class of the white line at the lanes' edge beside a hard shoulder, a cycle lane or a pedestrian lane */
+function edgeLineClass(kind: 'shoulder' | 'cycle_lane' | 'sidewalk_lane'): string {
+    if (kind === 'shoulder') return 'shoulder-edge';
+    if (kind === 'sidewalk_lane') return 'shoulder-edge sidewalk-lane-edge';
+    return 'shoulder-edge cycle-lane-edge';
 }
 
 /**
@@ -684,7 +693,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const road = speed.active() ? graph.hasEntity(piece.wayID) as osmWay | undefined : undefined;
             if (!road) return '';
             const measure = speed.measure();
-            const cls = speedClassOf(lane.values[`${measure}:lanes`], road, measure);
+            const cls = speedClassOf(lane.values[`${measure}:lanes`], road, measure, lane.ref.direction);
             if (measure === 'minspeed' && cls === 'missing') return '';
             // a limit set by its type (national, motorway, 20 zone, restricted road) is patterned over its colour
             const kind = measure === 'maxspeed' && cls !== 'missing' ? speedTypeKind(lane.values['maxspeed:lanes'], road, lane.values['maxspeed:type:lanes']) : null;
@@ -782,11 +791,12 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const kerbData = [
             ...kerbPieces.flatMap(piece => (['left', 'right'] as const).flatMap(side => {
                 const key = `${pieceKey(piece)}-${side === 'left' ? 'l' : 'r'}`;
-                const { edge, kerb, shoulder } = kerbLine(piece, side);
-                // a hard shoulder gets a solid white line at the lanes' edge
+                const { edge, kerb, edgeKind } = kerbLine(piece, side);
+                // a hard shoulder or a cycle lane gets a white line at the lanes' edge
                 return [
-                    { key, line: kerb, assumed: piece.layout.assumed, construction: building(piece), shoulder: false },
-                    ...(shoulder ? [{ key: `${key}-edge`, line: edge, assumed: false, construction: false, shoulder: true }] : [])
+                    { key, line: kerb, assumed: piece.layout.assumed, construction: building(piece), edgeClass: '' },
+                    ...(edgeKind ? [{ key: `${key}-edge`, line: edge, assumed: false, construction: false,
+                        edgeClass: edgeLineClass(edgeKind) }] : [])
                 ];
             })),
             // the rounded end of a road that stops with nothing joining it: the edge line carried round it
@@ -807,7 +817,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         kerbs.exit().remove();
         kerbs.enter().append('path')
             .merge(kerbs)
-            .each(attrChanged('class', d => ('shoulder' in d && d.shoulder ? 'shoulder-edge' : 'kerb') + (d.assumed ? ' assumed' : '') +
+            .each(attrChanged('class', d => ('edgeClass' in d && d.edgeClass ? d.edgeClass : 'kerb') + (d.assumed ? ' assumed' : '') +
                 ('construction' in d && d.construction ? ' construction' : '')))
             .each(attrChanged('d', d => path(d.line, false)));
 
@@ -897,9 +907,15 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         /* labels: destination and speed */
         const labelData = !labels ? [] : shown.flatMap(piece => piece.labels.map(mark => {
             const lane = piece.layout.lanes[mark.lane];
+            // a destination the whole road has (`destination`, not `destination:lanes`) is shown once per direction, on
+            // the middle lane
+            const sameWay = piece.layout.lanes.filter(l => l.ref.direction === lane.ref.direction);
+            const middle = sameWay[Math.floor((sameWay.length - 1) / 2)] === lane;
+            const shownKey = (key: string) => (!lane.inherited?.includes(key) || middle ? lane.values[key] : undefined);
             const text = [
-                lane.values['destination:ref:lanes'],
-                lane.values['destination:lanes']?.split(';')[0],
+                shownKey('destination:ref:lanes'),
+                // (several destinations on one lane: the first two)
+                shownKey('destination:lanes')?.split(';').slice(0, 2).join(' / '),
                 lane.values['maxspeed:lanes']
             ].filter(Boolean).join(' · ');
             const { p, pxPerMetre, angle } = screenMark(mark);

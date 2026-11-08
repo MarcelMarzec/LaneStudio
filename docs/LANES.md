@@ -59,7 +59,8 @@ change lanes on (a lane connected to several lanes of the next road carries on f
 footway or pavement to see the streets reachable on foot and the crossings used.
 
 **Speed Limit** (top bar, or leave with Esc): every lane is coloured by its limit (its own
-`maxspeed:lanes`, else its road's `maxspeed`, or the limit its `maxspeed:type` sets), in mph: 10 to
+`maxspeed:lanes`, else its direction's `maxspeed:forward` or `maxspeed:backward`, else its road's `maxspeed`, or the
+limit its `maxspeed:type` sets), in mph: 10 to
 70 mph in their own colours, other limits grey, and roads with no limit red with a dashed edge
 (footways and pedestrian ways are not coloured). A limit set by its UK type rather than a number
 alone has a pattern over its colour: diagonal black bands for the national limit, blue stripes for a
@@ -201,6 +202,11 @@ is tagged), and pavement, cycleway and parking per side (`sidewalk:<side>`, `cyc
 `parking:<side>`): one field each, with a Forward and a Backward dropdown as in iD's cycle lane field.
 Forward is the side beside traffic going along the way's drawing direction (the way's left where traffic
 drives on the left, its right elsewhere), backward the other; the tags stay `:left` and `:right`.
+Cycle lanes and tracks are drawn at `cycleway:<side>:width` (1.5 m and 2 m until tagged), and a painted cycle lane
+is on the road, inside the kerb, with a white line between it and the lanes. The old contraflow values
+(`cycleway=opposite_lane`, `opposite_track`, `opposite`) on a one-way road are one lane on the side its cycles keep
+to, and the Cycleway field offers to **Upgrade** them to `cycleway:<side>=lane` with `cycleway:<side>:oneway=-1` and
+`oneway:bicycle=no`.
 Clicking a hard shoulder on the map selects its road and marks the Hard shoulder field. Lane Studio also
 looks at what is mapped next to the road:
 
@@ -242,7 +248,8 @@ undo step), the **Type** dropdown
 (`traffic_calming=*`) and **Direction Affected** on every kind of traffic calming, and **Direction Affected**
 on a passing place. Whatever Lane Studio draws on a node follows its direction (`direction=forward|backward|both`,
 or `traffic_signals:direction`): stop, give way and signal lines, a crossing's signals, traffic calming and a
-passing place's bay.
+passing place's bay. A stop or give way sign on a two-way road with no direction faces the nearest junction along
+the road (measured in metres, as data users read it).
 
 **Islands, road markings and street parking** (sidebar section when one is selected):
 
@@ -299,6 +306,23 @@ a single yellow line where it is banned at times only (`restriction:conditional=
 `no_parking` lifted at times with `none @ …`), and double or single red for no stopping (a red route,
 `no_stopping`).
 
+**Widths**: `width` (or `width:carriageway`, or `est_width`) is the carriageway from kerb to kerb (wiki: Key:width),
+so cycle lanes and parking on the road are inside it: the lanes share what is left once those are taken off, and
+lanes without a `width:lanes` of their own share what the tagged ones leave. A hard shoulder (`shoulder:width`),
+bays beside the road and parking on the pavement are outside it.
+
+**Lane types**: `designated` in `bus:lanes`, `psv:lanes`, `taxi:lanes`, `hov:lanes`, `bicycle:lanes` or `foot:lanes`
+makes a lane that type. A lane closed to general traffic (`access:lanes`, `motor_vehicle:lanes` or `vehicle:lanes`
+`=no`) but open to buses, PSVs, taxis, HOVs or cycles (`yes` or `designated`) is kept for them too (wiki: Lanes:
+`designated` alone doesn't keep other traffic out); closed to all of them, it is drawn as no access.
+`cycleway:lanes=lane` is a cycle lane, and every lane of a busway (`highway=busway`) is a bus lane. Making such a
+lane general traffic again opens its access too.
+
+**Lanes with a blank value** take the road's plain key, as the wiki says: plain `turn`, `turn:forward` or
+`turn:backward` gives the arrows of every lane without a `turn:lanes` value of its own (and routing follows them),
+and `destination` (one-way roads), `destination:forward`, `destination:backward` and `destination:ref` label the
+lanes, shown once per direction on its middle lane. A lane's own destinations show the first two.
+
 **What is drawn**: lanes by type (bus, PSV, taxi, HOV, bicycle, pedestrian, no access), kerbs,
 lane lines, turn arrows, labels; junctions; pavements and cycle and parking strips from road tags,
 with unknown sides hatched (parking bays by orientation, leaning the other way for back-in parking,
@@ -308,7 +332,11 @@ saying P with the fee, time limit, zone and what it is kept for); footways, path
 width; crossings, on a node or as a way, painted by `crossing:markings` (wiki: Key:crossing:markings): a
 zebra, a double zebra (two side by side), paired bars, a bicolour zebra (red and white), lines, paired lines,
 a ladder (lines and bars), a skewed or paired ladder, dashes, dots, a coloured surface or pictograms (an
-unmarked or untagged crossing leaves the road showing, with a faint dashed outline); `area:highway=*` areas, pedestrian areas and traffic islands; mapped kerbs
+unmarked or untagged crossing leaves the road showing, with a faint dashed outline; several values at once, as
+`zebra;dots`, are all painted, `crossing:markings:colour` colours the marks (a bicolour zebra's second colour), a
+crossing with signals and no markings tagged has two rows of studs in the UK (pelican, puffin, toucan and pegasus
+crossings, by `crossing_ref` too) and lines elsewhere, and a tiger crossing (`crossing_ref=tiger`) is a zebra with a
+cycle crossing beside it, edged with large squares); `area:highway=*` areas, pedestrian areas and traffic islands; mapped kerbs
 styled by kerb height; crossings, stop and give way lines, signals, traffic calming and mini-roundabouts on
 road nodes (a stop, give way or signals' line on a pedestrian
 crossing, or up to 10 m past one, stands just before the crossing, and signals tagged as their

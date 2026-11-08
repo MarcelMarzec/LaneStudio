@@ -303,10 +303,12 @@ en:
       lane: Lane on the road
       track: Track
       shared_lane: Shared lane
+      share_busway: Shared bus lane
       street_side: Beside the road
       half_on_kerb: Half on the kerb
       on_kerb: On the kerb
       shoulder: On the shoulder
+    old_cycleway: "This road uses the old opposite_* cycleway values. Upgrade them to cycleway:<side>=lane|track with cycleway:<side>:oneway=-1 and oneway:bicycle=no."
     separate_found: "A pavement is mapped separately on the {side}."
     use_separate: Set to "mapped separately"
     double_mapped: "The {side} pavement is tagged on the road and also mapped separately; tag it as mapped separately instead."
@@ -661,13 +663,13 @@ en:
     camera: "A speed camera or red light camera (highway=speed_camera); the limit it enforces is its maxspeed, and direction is the way it faces."
     centre_line: "The line between traffic going opposite ways. Dashed where either way may overtake; a double white line is solid on the side of the traffic that may not cross it (overtaking=*, overtaking:forward, overtaking:backward)."
     change: "Whether traffic may change into the lane beside it (change:lanes: yes, no, not_left, not_right). Beside the centre line this is overtaking (overtaking=*); beside the kerb there is nothing to change into."
-    cycleway: "Cycle lanes and tracks along the road, per side (cycleway:left, cycleway:right): a lane is painted on the road, a track is kept apart from it."
-    destination: "Where a lane goes, as the signs say (destination:lanes); several places are separated by semicolons."
+    cycleway: "Cycle lanes and tracks along the road, per side (cycleway:left, cycleway:right): a lane is painted on the road, inside the kerb, a track is kept apart from it. Their width is cycleway:<side>:width. A contraflow lane is cycleway:<side>=lane with cycleway:<side>:oneway=-1 and oneway:bicycle=no, not the old opposite_lane."
+    destination: "Where a lane goes, as the signs say (destination:lanes); several places are separated by semicolons. Lanes with none take the road's destination:forward or destination:backward (destination on a one-way road)."
     destination_ref: "The road numbers on the signs for a lane (destination:ref:lanes), such as M6 or A38."
     direction: "Which way the lane's traffic goes: forward (along the way's drawing direction), backward, or both ways for a centre turn lane (lanes:forward, lanes:backward, lanes:both_ways)."
     island_surface: "A traffic island mapped as an area (area:highway=traffic_island). Its surface sets its colour; untagged islands are drawn as concrete."
     kerb: "The kerb round the island (barrier=kerb with kerb=raised, lowered, flush or rolled)."
-    kind: "What the lane is for: a bus lane is bus:lanes=designated, a cycle lane bicycle:lanes=designated, a variable lane access:lanes=variable, and so on."
+    kind: "What the lane is for: a bus lane is bus:lanes=designated, a cycle lane bicycle:lanes=designated, a variable lane access:lanes=variable, and so on. A lane closed to other traffic (access:lanes=no) and open to buses (bus:lanes=yes) is a bus lane too."
     lane_minspeed: "The selected lanes' own minimum speed (minspeed:lanes). Lanes with none of their own follow the road's."
     lane_speed: "The selected lanes' own speed limit (maxspeed:lanes, and maxspeed:type:lanes for a UK limit type). Lanes with none of their own follow the road's."
     lane_strip: "The road's lanes, left to right as the way is drawn, with their turn arrows and colours by lane type. Click a lane to edit it; shift-click to pick more."

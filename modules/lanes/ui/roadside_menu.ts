@@ -7,7 +7,7 @@ import type { osmWay } from '../../osm/way';
 import { svgIcon } from '../../svg/icon';
 import { actionChangeLanes } from '../actions/change_lanes';
 import { laneDriveSide } from '../core/drive_side';
-import { cyclewayValue, shoulderValue, sidewalkValue, withCycleway, withShoulder, withSidewalk } from '../core/roadside';
+import { cyclewayValue, roadContraflowSide, shoulderValue, sidewalkValue, withCycleway, withShoulder, withSidewalk } from '../core/roadside';
 import { insertLane, laneKindKeys, parseLanes, setLaneKind } from '../model';
 import {
     kerbMarking, parkedPositions, parkingMaxstays, parkingOrientations, parkingValue, withParkingValue, type KerbMarking, type ParkingSide
@@ -62,7 +62,7 @@ export function roadsideHas(road: osmWay, graph: iD.Graph, side: ParkingSide, fe
         case 'lane': return false;
         case 'shoulder': return shoulderValue(tags, side, shoulderSideOf(road, graph)) === 'yes';
         case 'sidewalk': return ['yes', 'separate'].includes(sidewalkValue(tags, side) ?? '');
-        case 'cycleway': return !['', 'no', 'none'].includes(cyclewayValue(tags, side) ?? '');
+        case 'cycleway': return !['', 'no', 'none'].includes(cyclewayValue(tags, side, roadContraflowSide(road, graph)) ?? '');
         case 'parking': return [...parkedPositions, 'separate'].includes(parkingValue(tags, side) ?? '');
         case 'no_waiting': return !!kerbMarking(tags, side);
     }
@@ -111,7 +111,7 @@ function withFeature(road: osmWay, graph: iD.Graph, side: ParkingSide, feature: 
             if (draft.value === 'yes' && draft.width !== undefined) set(`sidewalk:${side}:width`, draft.width);
             break;
         case 'cycleway':
-            tags = withCycleway(tags, side, draft.value ?? 'lane');
+            tags = withCycleway(tags, side, draft.value ?? 'lane', roadContraflowSide(road, graph));
             break;
         case 'parking': {
             const write = (key: string, value: string | undefined) => { tags = withParkingValue(tags, side, key, value || undefined); };

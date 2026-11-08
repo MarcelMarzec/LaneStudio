@@ -8,6 +8,36 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08
+##### 2026-Nov-08
+
+#### Lanes and junctions
+* A road's `width` is kerb to kerb, as the wiki says: cycle lanes and parking on the road are inside it, so roads
+  with parking or a cycle lane are no longer drawn too wide. Lanes without a `width:lanes` share what the tagged
+  ones leave, and `width:carriageway` and `est_width` are read too
+* A lane closed to other traffic but open to buses, PSVs, taxis or cycles (`access:lanes=no` with `bus:lanes=yes`)
+  is drawn as a bus, PSV, taxi or cycle lane instead of a lane with no access; `cycleway:lanes=lane` is a cycle lane,
+  and the lanes of a busway are bus lanes
+* Lanes with no turn arrows of their own take the road's plain `turn`, `turn:forward` or `turn:backward`, on the map
+  and in routing
+* Lanes are labelled with the road's `destination` (on a one-way road), `destination:forward`,
+  `destination:backward` and `destination:ref` when they have none of their own, and with up to two destinations
+
+#### Roads and signs
+* Cycle lanes and tracks are drawn at their tagged width (`cycleway:<side>:width`), and a painted cycle lane is
+  inside the kerb with a white line beside the lanes
+* The old `cycleway=opposite_lane` on a one-way road is one contraflow lane on the side its cycles keep to, not
+  one on each side; the Cycleway field offers to upgrade it to `cycleway:<side>=lane` + `cycleway:<side>:oneway=-1`
+  + `oneway:bicycle=no`. Shared bus lane (`share_busway`) can be picked
+* Crossings with signals and no markings tagged have two rows of studs in the UK, as pelican, puffin, toucan and
+  pegasus crossings do; a tiger crossing (`crossing_ref=tiger`) is a zebra with a cycle crossing beside it;
+  `crossing:markings` with several values (`zebra;dots`) paints them all, and `crossing:markings:colour` colours
+  the marks
+* A stop or give way sign with no `direction` on a two-way road faces the nearest junction along the road, not
+  the end with more nodes before it
+* The Speed Limit tool colours each direction by `maxspeed:forward` and `maxspeed:backward` (and the minimum
+  speeds' too), so roads with a limit for each direction are no longer shown as having none
+
 # 26.11.07r3
 ##### 2026-Nov-07
 

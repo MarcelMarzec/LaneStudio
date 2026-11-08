@@ -17,12 +17,36 @@ export const laneKindKeys: Record<string, string | null> = {
 /** The value a lane type writes in its key: `designated`, or `variable` for a variable-access lane */
 const kindValue = (kind: string) => (kind === 'variable' ? 'variable' : 'designated');
 
-/** A lane's type, read from the same keys `setLaneKind` writes */
-export function laneKindOf(model: LaneModel, ref: LaneRef): string {
-    for (const [kind, key] of Object.entries(laneKindKeys)) {
-        if (key && laneValue(model, ref, key) === kindValue(kind)) return kind;
+/** What a lane is for, as drawn: a lane type, or `restricted` for a lane closed to traffic with no type of its own */
+export type LaneKindValue = 'general' | 'bus' | 'psv' | 'taxi' | 'hov' | 'bicycle' | 'pedestrian' | 'variable' | 'restricted';
+
+const closed = (value: string | undefined) => value === 'no' || value === 'private';
+const open = (value: string | undefined) => value === 'yes' || value === 'designated' || value === 'permissive';
+// the lane types a lane can be kept for, in the order they are looked for
+const reservedKinds = ['bus', 'psv', 'taxi', 'hov', 'bicycle', 'pedestrian'] as const;
+
+/**
+ * A lane's type from its `*:lanes` values (wiki: Lanes). `designated` marks a lane kept for a type of traffic; a lane
+ * closed to general traffic (`access`, `motor_vehicle` or `vehicle:lanes=no`) that is open to buses, PSVs, taxis, HOVs
+ * or cycles (`yes` or `designated`) is kept for them too, and `cycleway:lanes=lane` is a cycle lane. A closed lane
+ * open to none of them is `restricted`. On a busway (`highway=busway`) a lane with no type is a bus lane.
+ */
+export function laneKindFromValues(values: Record<string, string>, highway?: string): LaneKindValue {
+    const v = (key: string) => values[key] || undefined;
+    for (const kind of reservedKinds) if (v(laneKindKeys[kind]!) === 'designated') return kind;
+    if (v('cycleway:lanes') === 'lane') return 'bicycle';
+    if (v('access:lanes') === 'variable') return 'variable';
+    if (closed(v('access:lanes')) || closed(v('motor_vehicle:lanes')) || closed(v('vehicle:lanes'))) {
+        for (const kind of reservedKinds) if (kind !== 'pedestrian' && open(v(laneKindKeys[kind]!))) return kind;
+        return 'restricted';
     }
-    return 'general';
+    return highway === 'busway' ? 'bus' : 'general';
+}
+
+/** A lane's type, as the lane type field shows it (a restricted lane is general traffic with its access closed) */
+export function laneKindOf(model: LaneModel, ref: LaneRef): string {
+    const kind = laneKindFromValues(model.lanes[ref.direction][ref.index]?.values ?? {});
+    return kind === 'restricted' ? 'general' : kind;
 }
 
 /**
@@ -32,6 +56,13 @@ export function laneKindOf(model: LaneModel, ref: LaneRef): string {
 export function setLaneKind(model: LaneModel, refs: LaneRef[], kind: string): LaneModel {
     let next = model;
     for (const ref of refs) {
+        // a lane kept for a type of traffic by closing it to the rest opens again when it becomes general traffic
+        if (kind === 'general' && laneKindOf(next, ref) !== 'general') {
+            for (const key of ['access:lanes', 'motor_vehicle:lanes', 'vehicle:lanes', 'cycleway:lanes']) {
+                const current = laneValue(next, ref, key);
+                if (next.keys[key] && !next.keys[key].readonly && (closed(current) || current === 'lane')) next = setLaneValue(next, ref, key, '');
+            }
+        }
         for (const [k, key] of Object.entries(laneKindKeys)) {
             if (!key || next.keys[key]?.readonly) continue;
             const current = laneValue(next, ref, key);
