@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { describeMove, restrictionAt, vehicleRoutes, viaWayRestriction, walkable, walkingRoutes } from '../../../../modules/lanes/geometry/routing';
 
 // near Skegness (left-hand traffic); 1 m ≈ 1/111320° of latitude
@@ -246,5 +247,29 @@ describe('walking', () => {
         const metresEast = (path.points[1][0] - 0.30) / mx;
         expect(metresEast).toBeGreaterThan(295);
         expect(metresEast).toBeLessThan(305);
+    });
+});
+
+
+describe('routing into a lane that leads on', () => {
+    it('turns right out of Park Road into the A17\'s through lane, not the right turn lane back into Park Road', () => {
+        // Park Road at the A17 (Long Sutton): the eastbound right turn lane, 15 m long, only turns back into Park Road,
+        // which a no_u_turn restriction bans for traffic from Park Road
+        const data = JSON.parse(fs.readFileSync('test/spec/lanes/fixtures/park_road_a17.json', 'utf8')) as {
+            nodes: Record<string, { loc: [number, number]; tags: Tags }>;
+            ways: Record<string, { nodes: string[]; tags: Tags }>;
+            relations: Record<string, { tags: Tags; members: { id: string; type: string; role: string }[] }>;
+        };
+        const graph = new iD.coreGraph([
+            ...Object.entries(data.nodes).map(([id, n]) => new iD.osmNode({ id: id as `n${number}`, loc: n.loc, tags: n.tags })),
+            ...Object.entries(data.ways).map(([id, w]) => new iD.osmWay({ id: id as `w${number}`, nodes: w.nodes as `n${number}`[], tags: w.tags })),
+            ...Object.entries(data.relations).map(([id, r]) => new iD.osmRelation({ id: id as `r${number}`, tags: r.tags, members: r.members as never }))
+        ]);
+        const { routes } = vehicleRoutes(graph, 'w1573910289', { direction: 'forward', index: 0 }, 0, 1);
+        const east = routes.find(r => r.moves.some(m => m.toWayID === 'w1051882211'));
+        expect(east).toBeDefined();
+        // the run along the A17 is in its left (through) lane eastbound, and carries on beyond it
+        expect(east!.runs.find(run => run.wayID === 'w1051882211')!.enter).toEqual({ direction: 'backward', index: 0 });
+        expect(east!.moves.some(m => m.toWayID === 'w90002')).toBe(true);
     });
 });

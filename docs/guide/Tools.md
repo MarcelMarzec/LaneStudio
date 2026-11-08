@@ -9,7 +9,9 @@ Routing, Speed Limit and Measure are in the top bar. Each turns editing off whil
   to let go.
 - **Car, Bus, Bicycle, Lorry**: each keeps to the lanes, access tags, height and weight limits and roads open to it.
 - Routes follow turn arrows, lane connections and turn restrictions (via nodes and via ways), keep to their lane
-  through short links, and leave a roundabout only by the exits the entry lane's arrows point to.
+  through short links, and leave a roundabout only by the exits the entry lane's arrows point to. On a stretch too
+  short to change lanes, a route enters a lane that leads on, not one whose only way on is banned (a right turn lane
+  whose turn is a banned U-turn).
 - Hover a footway or pavement to see the streets reachable on foot and the crossings used.
 
 ## Speed Limit

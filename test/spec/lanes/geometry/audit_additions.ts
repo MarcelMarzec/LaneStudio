@@ -192,9 +192,10 @@ describe('lane labels', () => {
     it('names a lane\'s restrictions', () => {
         // (the words come from the strings file, not loaded here: their keys show)
         const words = laneRestrictions({ 'hgv:lanes': 'no', 'maxheight:lanes': '4.2', 'maxweight:lanes': '7.5' });
-        expect(words[0]).toContain('no_hgv');
+        // (the strings may or may not be loaded, depending on the tests run before)
+        expect(words[0]).toMatch(/no_hgv|no HGV/);
         expect(words.slice(1)).toEqual(['↕ 4.2', '7.5 t']);
-        expect(laneRestrictions({ 'hgv:lanes': 'designated' })[0]).toContain('labels.hgv');
+        expect(laneRestrictions({ 'hgv:lanes': 'designated' })[0]).toMatch(/labels\.hgv|HGV lane/);
         expect(laneRestrictions({})).toEqual([]);
     });
 });

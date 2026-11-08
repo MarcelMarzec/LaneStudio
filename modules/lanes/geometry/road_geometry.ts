@@ -557,13 +557,16 @@ function throughPair(arms: Arm[]): [number, number] | null {
             const tb = b.way.tags;
             if (!ring && deviation > 35 * Math.PI / 180) continue;
             if (ring && deviation > 80 * Math.PI / 180) continue;
-            // a fork (a dual carriageway splitting, a slip road peeling off at a shallow angle): nothing
-            // runs straight through, so every arm stops where it meets its neighbours
-            // (a minor road joining at a shallow angle does not make a fork: it stops at the main road's kerb)
+            // a fork (a dual carriageway splitting): nothing runs straight through, so every arm stops where it meets
+            // its neighbours (a minor road joining at a shallow angle does not make a fork: it stops at the main road's
+            // kerb; nor does a slip road, `*_link`, peeling off a road that carries on: the main road runs through, and
+            // the slip road leaves its side)
             const rank = (w: osmWay) => highwayRank[w.tags.highway ?? ''] ?? 0;
-            const peer = (c: Arm) => (c.way.tags.name && (c.way.tags.name === ta.name || c.way.tags.name === tb.name)) ||
+            const isLink = (w: osmWay) => /_link$/.test(w.tags.highway ?? '');
+            const peer = (c: Arm) => !(isLink(c.way) && !isLink(a.way) && !isLink(b.way)) && (
+                (c.way.tags.name && (c.way.tags.name === ta.name || c.way.tags.name === tb.name)) ||
                 (c.way.tags.ref && (c.way.tags.ref === ta.ref || c.way.tags.ref === tb.ref)) ||
-                rank(c.way) >= Math.min(rank(a.way), rank(b.way));
+                rank(c.way) >= Math.min(rank(a.way), rank(b.way)));
             if (!ring && arms.some((c, k) => k !== i && k !== j && !isRing(c.way) && peer(c) &&
                 (angleBetween(c.direction, a.direction) < 40 || angleBetween(c.direction, b.direction) < 40))) continue;
             const score = (ring ? 100 : 0) +
@@ -1074,12 +1077,15 @@ function alignBranches(node: osmNode, graph: coreGraph, visuals: Map<string, Way
             const visual = visuals.get(side.way.id) ?? noVisual;
             if ((side.nodeIndex === 0 ? visual.start : visual.end) !== 0) continue;
             let fromLanes = lanes.targets.flatMap((set, index) => (set.has(exit.j) ? [index] : []));
+            // beside a hard shoulder, the slip road's lane opens up over the shoulder, outside the outer lane
+            let besideShoulder = 0;
             if (!fromLanes.length) {
                 // no lane is marked for it: a one-lane slip road peels off the outer lane on its side
                 // (a wider road leaving has no lane to line up with, and keeps to its way)
                 const upCount = up.layout.model.lanes[lanes.upDirection].length;
                 if (!upCount || side.layout.model.lanes[armLaneDirection(side, false)].length !== 1) continue;
                 fromLanes = [exit.angle > 0 ? 0 : upCount - 1];
+                besideShoulder = shoulderOutside(up, lanes.upDirection, exit.angle > 0, fromLanes[0], side, armLaneDirection(side, false));
             }
             const sideDirection = armLaneDirection(side, false);
             const pairs = zipLanes(fromLanes, side.layout.model.lanes[sideDirection].length, exit.angle > 0)
@@ -1090,10 +1096,10 @@ function alignBranches(node: osmNode, graph: coreGraph, visuals: Map<string, Way
                 return u === null || d === null ? [] : [u - d];
             });
             if (!differences.length) continue;
-            const mean = differences.reduce((x, y) => x + y, 0) / differences.length;
+            const mean = differences.reduce((x, y) => x + y, 0) / differences.length + besideShoulder;
             const delta = sideDirection === 'backward' ? -mean : mean;
             // a slip road leaves from the outer lane, which on a wide road is more than a lane from its centre
-            if (Math.abs(delta) < 0.05 || Math.abs(delta) > branchShiftLimit(up)) continue;
+            if (Math.abs(delta) < 0.05 || Math.abs(delta) > branchShiftLimit(up) + Math.abs(besideShoulder)) continue;
             const next = { ...visual };
             if (side.nodeIndex === 0) next.start = delta;
             else next.end = delta;
@@ -1121,6 +1127,22 @@ function controlledEnd(arm: Arm, graph: coreGraph): boolean {
 /** Whether a road has lanes both ways (not a one-way road, nor only centre lanes) */
 const isTwoWay = (layout: LaneLayout) =>
     layout.lanes.some(l => l.ref.direction === 'forward') && layout.lanes.some(l => l.ref.direction === 'backward');
+
+/**
+ * How far outside a main road's outer lane a one-lane slip road's centre sits, as a travel offset to add (negative to
+ * the left): where the main road has a hard shoulder on that side, the slip lane opens up over the shoulder, beside
+ * the outer lane (half each lane's width out); 0 where it has none, and the slip road peels off the outer lane
+ */
+function shoulderOutside(main: Arm, mainDirection: LaneDirection, onLeft: boolean, outerLane: number, slip: Arm, slipDirection: LaneDirection): number {
+    // the main road's side the slip road is on, in its way's terms (travel left is the way's left going forward)
+    const waySide = onLeft === (mainDirection === 'forward') ? 'left' : 'right';
+    if (!main.layout.roadside[waySide].some(strip => strip.kind === 'shoulder')) return 0;
+    const outer = main.layout.lanes.find(l => l.ref.direction === mainDirection && l.ref.index === outerLane);
+    const slipLane = slip.layout.lanes.find(l => l.ref.direction === slipDirection);
+    if (!outer || !slipLane) return 0;
+    const out = outer.width / 2 + slipLane.width / 2;
+    return onLeft ? -out : out;
+}
 
 /** The most a slip road is shifted to meet a road: as far as that road's outer edge */
 const branchShiftLimit = (arm: Arm) => Math.max(maxJoinShift, (arm.right - arm.left) / 2 + 0.5);
@@ -1168,6 +1190,8 @@ function alignMerges(node: osmNode, graph: coreGraph, visuals: Map<string, WayVi
             // into; a wider road joining has no lanes to meet, and keeps to its way
             if (!onSide.length && sideLanes.length !== 1) return;
             const targets = onSide.length ? onSide : [fromLeft ? 0 : downCount - 1];
+            // merging beside a hard shoulder, a one-lane slip road runs in over the shoulder, outside the outer lane
+            const besideShoulder = onSide.length ? 0 : shoulderOutside(down, downDirection, fromLeft, targets[0], side, sideDirection);
             const n = sideLanes.length;
             const pairs = sideLanes.map((_, from) => ({
                 from,
@@ -1179,9 +1203,9 @@ function alignMerges(node: osmNode, graph: coreGraph, visuals: Map<string, WayVi
                 return u === null || d === null ? [] : [d - u];
             });
             if (!differences.length) return;
-            const mean = differences.reduce((x, y) => x + y, 0) / differences.length;
+            const mean = differences.reduce((x, y) => x + y, 0) / differences.length + besideShoulder;
             const delta = sideDirection === 'backward' ? -mean : mean;
-            if (Math.abs(delta) < 0.05 || Math.abs(delta) > branchShiftLimit(down)) return;
+            if (Math.abs(delta) < 0.05 || Math.abs(delta) > branchShiftLimit(down) + Math.abs(besideShoulder)) return;
             const next = { ...visual };
             if (side.nodeIndex === 0) next.start = delta;
             else next.end = delta;
@@ -1435,7 +1459,11 @@ export function splitAt(arms: Arm[]): { stem: Arm; branches: [Arm, Arm] } | null
     for (const stem of arms) {
         const branches = arms.filter(arm => arm !== stem) as [Arm, Arm];
         const ahead = scale(stem.direction, -1);
-        if (branches.some(arm => angleBetween(arm.direction, ahead) > 50)) continue;
+        // two branches that meet again at their other ends go round a small island, however sharply they part: no
+        // side road leaves there (as the service road round the island at Southmead, Bristol, w656697004 and w656697006)
+        const ends = (arm: Arm) => [arm.way.first(), arm.way.last()].sort().join();
+        const loop = ends(branches[0]) === ends(branches[1]);
+        if (branches.some(arm => angleBetween(arm.direction, ahead) > (loop ? 80 : 50))) continue;
         if (stem.layout.model.oneway || !branches.some(arm => arm.layout.model.oneway)) return null;
         return { stem, branches };
     }
@@ -1466,7 +1494,11 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
         const frame = metricFrame(node.loc);
         const s = arms.indexOf(split.stem);
         const [a, b] = [arms[(s + 1) % 3], arms[(s + 2) % 3]];
-        const apart = Math.min(maxClearance, Math.max(edgeMeeting(a, a.left, b, b.right) ?? 0, edgeMeeting(b, b.right, a, a.left) ?? 0));
+        let apart = Math.min(maxClearance, Math.max(edgeMeeting(a, a.left, b, b.right) ?? 0, edgeMeeting(b, b.right, a, a.left) ?? 0));
+        // round an island too small for the branches to clear each other (a pair of bollards), they would be trimmed
+        // away: they start nearly at the node instead, side by side
+        const ends = (arm: Arm) => [arm.way.first(), arm.way.last()].sort().join();
+        if (ends(a) === ends(b)) apart = Math.min(apart, Math.min(polylineLength(a.line), polylineLength(b.line)) * 0.2);
         const corners = arms.flatMap(arm => {
             const t = Math.min(arm === split.stem ? 0 : apart, polylineLength(arm.line));
             trims.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), t);
@@ -1699,7 +1731,11 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
             }
             if (mark && (cut.left || cut.right)) {
                 const [wayLeft, wayRight] = arm.alongWay ? [cut.left, cut.right] : [cut.right, cut.left];
-                marks.set(key, { ...mark, left: Math.max(mark.left, wayLeft), right: Math.max(mark.right, wayRight) });
+                // where a slip road leaves or joins (a mouth-only box beside a road that isn't a ring), the main road's
+                // hard shoulder and other strips stop with its kerb at the mouth, and start again past it: the slip
+                // road's lane takes their place there
+                marks.set(key, { ...mark, left: Math.max(mark.left, wayLeft), right: Math.max(mark.right, wayRight),
+                    roadside: mark.roadside || (mouthOnly && !isRing(arm.way)) });
             }
             // a mouth-only box keeps to the main road's edge on its side roads' side
             if (mouthOnly) {

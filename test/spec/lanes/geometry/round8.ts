@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { metricFrame } from '../../../../modules/lanes/geometry/frame';
 import { laneLayout } from '../../../../modules/lanes/geometry/layout';
 import { roadGeometry } from '../../../../modules/lanes/geometry/road_geometry';
@@ -86,9 +87,42 @@ describe('slip roads', () => {
         const { visuals } = roadGeometry(waysOf(graph), graph);
         const outer = laneLayout(graph.entity('w1'), graph).edges[0];
         const lane = laneLayout(graph.entity('w1'), graph).lanes[0].width;
+        // a motorway has a hard shoulder: the slip road's lane opens up over it, beside the outer (left) lane
+        const slip = laneLayout(graph.entity('w3'), graph).lanes[0].width;
+        expect(visuals.get('w3')?.start).toBeCloseTo(outer - slip / 2, 1);
+        expect(lane).toBeGreaterThan(3);
+    });
+
+    it('starts a slip road from the outer lane where there is no hard shoulder', () => {
+        const graph = graphOf([
+            node('n1', -300, 0), node('n2', 0, 0), node('n3', 300, 0), node('n4', 100, 12), node('n5', 200, 40),
+            way('w1', ['n1', 'n2'], { highway: 'motorway', oneway: 'yes', lanes: '3', shoulder: 'no' }),
+            way('w2', ['n2', 'n3'], { highway: 'motorway', oneway: 'yes', lanes: '3', shoulder: 'no' }),
+            way('w3', ['n2', 'n4', 'n5'], { highway: 'motorway_link', oneway: 'yes', lanes: '1' })
+        ]);
+        const { visuals } = roadGeometry(waysOf(graph), graph);
+        const outer = laneLayout(graph.entity('w1'), graph).edges[0];
+        const lane = laneLayout(graph.entity('w1'), graph).lanes[0].width;
         // the slip road's centre starts on the outer (left) lane's centre, more than a lane from the middle
         expect(visuals.get('w3')?.start).toBeCloseTo(outer + lane / 2, 1);
         expect(Math.abs(visuals.get('w3')!.start)).toBeGreaterThan(3.5);
+    });
+
+    it('runs a motorway with a slip road peeling off straight through, its hard shoulder stopping at the mouth', () => {
+        // the M5 at junction 14's exit (n225587): the slip road shares the motorway's ref, but doesn't make a fork
+        const data = JSON.parse(fs.readFileSync('test/spec/lanes/fixtures/m5_diverge.json', 'utf8')) as {
+            nodes: Record<string, { loc: [number, number]; tags: Tags }>; ways: Record<string, { nodes: string[]; tags: Tags }>;
+        };
+        const entities = [
+            ...Object.entries(data.nodes).map(([id, n]) => new iD.osmNode({ id: id as `n${number}`, loc: n.loc, tags: n.tags })),
+            ...Object.entries(data.ways).map(([id, w]) => new iD.osmWay({ id: id as `w${number}`, nodes: w.nodes as `n${number}`[], tags: w.tags }))
+        ];
+        const graph = new iD.coreGraph(entities);
+        const { visuals, pieces } = roadGeometry(waysOf(graph), graph);
+        // the slip road is lined up over the hard shoulder, outside the left lane
+        expect(visuals.get('w23658069')?.start).toBeLessThan(-6);
+        // the motorway runs on with its hard shoulder either side of the junction
+        expect(pieces.filter(p => p.wayID === 'w315021126').every(p => p.roadside.some(s => s.kind === 'shoulder'))).toBe(true);
     });
 
     it('ends a joining slip road on the lane it becomes', () => {
@@ -360,5 +394,25 @@ describe('limits in the sidebar', () => {
         expect(state.shoulder()).toEqual({ wayID: 'w1', side: 'left' });
         state.select('w1', [{ direction: 'forward', index: 0 }]);
         expect(state.shoulder()).toBeNull();
+    });
+});
+
+describe('a road dividing round a small island', () => {
+    it('draws both halves round the island, with no U-turn guide round it', () => {
+        // a service road in Bristol (w656697004, w656697006) divides round a pair of bollards and meets again 11 m on
+        const data = JSON.parse(fs.readFileSync('test/spec/lanes/fixtures/bristol_island_loop.json', 'utf8')) as {
+            nodes: Record<string, [number, number]>; ways: Record<string, { nodes: string[]; tags: Tags }>;
+        };
+        const graph = new iD.coreGraph([
+            ...Object.entries(data.nodes).map(([id, loc]) => new iD.osmNode({ id: id as `n${number}`, loc })),
+            ...Object.entries(data.ways).map(([id, w]) => new iD.osmWay({ id: id as `w${number}`, nodes: w.nodes as `n${number}`[], tags: w.tags }))
+        ]);
+        const { pieces, connections } = roadGeometry(waysOf(graph), graph) as unknown as {
+            pieces: { wayID: string; length: number }[]; connections: { nodeID: string }[];
+        };
+        for (const id of ['w656697004', 'w656697006']) {
+            expect(pieces.filter(p => p.wayID === id).reduce((sum, p) => sum + p.length, 0)).toBeGreaterThan(5);
+        }
+        expect(connections.filter(c => c.nodeID === 'n1532527651' || c.nodeID === 'n3699890600').length).toBe(0);
     });
 });

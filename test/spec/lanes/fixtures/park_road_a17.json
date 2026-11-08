@@ -1,0 +1,217 @@
+{
+ "nodes": {
+  "n330091667": {
+   "loc": [
+    0.0177356,
+    52.8102091
+   ],
+   "tags": {}
+  },
+  "n14335804279": {
+   "loc": [
+    0.0176046,
+    52.8103029
+   ],
+   "tags": {}
+  },
+  "n14335804280": {
+   "loc": [
+    0.0175189,
+    52.8104029
+   ],
+   "tags": {
+    "direction": "forward",
+    "highway": "give_way"
+   }
+  },
+  "n14335804281": {
+   "loc": [
+    0.0175087,
+    52.8104561
+   ],
+   "tags": {}
+  },
+  "n293157679": {
+   "loc": [
+    0.0177643,
+    52.8101502
+   ],
+   "tags": {}
+  },
+  "n474778314": {
+   "loc": [
+    0.017722,
+    52.8104716
+   ],
+   "tags": {}
+  },
+  "n14335804282": {
+   "loc": [
+    0.0177477,
+    52.8103293
+   ],
+   "tags": {}
+  },
+  "n12828928407": {
+   "loc": [
+    0.017083,
+    52.8104323
+   ],
+   "tags": {}
+  },
+  "n12828928406": {
+   "loc": [
+    0.0165828,
+    52.8104129
+   ],
+   "tags": {}
+  },
+  "n232725": {
+   "loc": [
+    0.0161563,
+    52.8104064
+   ],
+   "tags": {}
+  },
+  "n90001": {
+   "loc": [
+    0.019,
+    52.8105
+   ],
+   "tags": {}
+  }
+ },
+ "ways": {
+  "w1573910289": {
+   "tags": {
+    "highway": "tertiary",
+    "maxspeed": "30 mph",
+    "name": "Park Road",
+    "lanes": "1",
+    "oneway": "yes"
+   },
+   "nodes": [
+    "n330091667",
+    "n14335804279",
+    "n14335804280",
+    "n14335804281"
+   ]
+  },
+  "w1573910288": {
+   "tags": {
+    "highway": "tertiary",
+    "maxspeed": "30 mph",
+    "name": "Park Road"
+   },
+   "nodes": [
+    "n330091667",
+    "n293157679"
+   ]
+  },
+  "w1573910290": {
+   "tags": {
+    "highway": "tertiary",
+    "maxspeed": "30 mph",
+    "name": "Park Road",
+    "oneway": "yes"
+   },
+   "nodes": [
+    "n474778314",
+    "n14335804282",
+    "n330091667"
+   ]
+  },
+  "w1051882211": {
+   "tags": {
+    "highway": "trunk",
+    "lanes": "3",
+    "lanes:backward": "2",
+    "lanes:forward": "1",
+    "maxspeed": "60 mph",
+    "ref": "A17",
+    "turn:lanes:backward": "through|right"
+   },
+   "nodes": [
+    "n474778314",
+    "n14335804281"
+   ]
+  },
+  "w1573910291": {
+   "tags": {
+    "highway": "trunk",
+    "lanes": "3",
+    "lanes:backward": "2",
+    "lanes:forward": "1",
+    "maxspeed": "60 mph",
+    "ref": "A17",
+    "turn:lanes:backward": "through|right"
+   },
+   "nodes": [
+    "n14335804281",
+    "n12828928407",
+    "n12828928406",
+    "n232725"
+   ]
+  },
+  "w90002": {
+   "tags": {
+    "highway": "trunk",
+    "lanes": "2",
+    "ref": "A17",
+    "maxspeed": "60 mph"
+   },
+   "nodes": [
+    "n90001",
+    "n474778314"
+   ]
+  }
+ },
+ "relations": {
+  "r21844845": {
+   "tags": {
+    "restriction": "no_right_turn",
+    "type": "restriction"
+   },
+   "members": [
+    {
+     "id": "w1573910290",
+     "type": "way",
+     "role": "from"
+    },
+    {
+     "id": "n330091667",
+     "type": "node",
+     "role": "via"
+    },
+    {
+     "id": "w1573910289",
+     "type": "way",
+     "role": "to"
+    }
+   ]
+  },
+  "r21844846": {
+   "tags": {
+    "restriction": "no_u_turn",
+    "type": "restriction"
+   },
+   "members": [
+    {
+     "id": "w1573910289",
+     "type": "way",
+     "role": "from"
+    },
+    {
+     "id": "w1051882211",
+     "type": "way",
+     "role": "via"
+    },
+    {
+     "id": "w1573910290",
+     "type": "way",
+     "role": "to"
+    }
+   ]
+  }
+ }
+}

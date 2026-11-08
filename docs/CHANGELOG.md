@@ -8,6 +8,20 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08r5
+##### 2026-Nov-08
+
+#### Lanes and junctions
+* A motorway runs straight through a junction where a slip road leaves or joins it, even when the slip road has the
+  motorway's ref: its hard shoulder stops at the slip road's mouth and starts again past it, and a one-lane slip road
+  runs over the hard shoulder beside the outer lane instead of over lane 1 (M5 at junction 14)
+* A road dividing round a pair of bollards into two one-way halves that meet again is drawn as both halves side by
+  side, with no semicircle of guide lines round the island (Southmead, Bristol)
+
+#### Routing tool
+* Turning onto a road whose next stretch is too short to change lanes on, a route enters a lane that leads on, not a
+  right turn lane whose only turn is banned (Park Road onto the A17, Long Sutton)
+
 # 26.11.08r4
 ##### 2026-Nov-08
 

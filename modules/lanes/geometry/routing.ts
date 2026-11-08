@@ -373,6 +373,33 @@ function isJunctionNode(graph: coreGraph, nodeID: string): boolean {
     return graph.parentWays(nodeOf(graph, nodeID)).filter(isLaneRoad).length > 1;
 }
 
+/**
+ * The lanes to enter a road by: `entries`, less those that lead on to nothing allowed at the next junction when the
+ * road there is too short to change lanes on (every move from the lane is banned by a restriction for a route that
+ * came along `path`), and in their place the nearest open lane that does lead on. Lanes are kept as they are where
+ * the road is long enough to change lanes, or no lane leads on.
+ */
+function lanesThatLeadOn(graph: coreGraph, way: osmWay, from: number, step: number, direction: LaneDirection, entries: number[],
+    openLanes: number[], path: string[], profileID: RoutingProfile): number[] {
+    const far = nextStop(graph, way, from, step);
+    if (far === from || runLength(graph, way, from, far) >= laneChangeRoom) return entries;
+    const farID = way.nodes[far];
+    if (!isJunctionNode(graph, farID)) return entries;
+    const j = junctionOf(graph, farID);
+    const arriving = j.arms.findIndex(a => a.way.id === way.id && a.nodeIndex === far && a.alongWay === step < 0);
+    if (arriving < 0 || junctionRules.armLaneDirection(j.arms[arriving], true) !== direction) return entries;
+    const byLane = lanesOn(j, arriving, graph, profileID);
+    const leadsOn = (lane: number) => [...(byLane[lane]?.keys() ?? [])].some(k => {
+        const to = j.arms[k].way;
+        return !restrictionAt(graph, way, farID, to, profileID) && !viaWayRestriction(graph, path, to, profileID);
+    });
+    const good = entries.filter(leadsOn);
+    if (good.length) return good;
+    const distance = (lane: number) => Math.min(...entries.map(e => Math.abs(lane - e)));
+    const others = openLanes.filter(leadsOn).sort((a, b) => distance(a) - distance(b));
+    return others.length ? [others[0]] : entries;
+}
+
 /** From node index `from`, along the way in `step`, to the next node where roads meet or the way ends */
 function nextStop(graph: coreGraph, way: osmWay, from: number, step: number): number {
     let k = from + step;
@@ -532,7 +559,11 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
             const openLanes = Array.from({ length: count }, (_, m) => m)
                 .filter(m => !laneClosed(down.layout, { direction: downDirection, index: m }, down.way.tags, profile));
             const nearest = (toLane: number) => openLanes.reduce<number | undefined>((a, m) => (a === undefined || Math.abs(m - toLane) < Math.abs(a - toLane) ? m : a), undefined);
-            const entries = [...new Set(laneMoves.map(m => nearest(m.toLane)))].filter((m): m is number => m !== undefined);
+            let entries = [...new Set(laneMoves.map(m => nearest(m.toLane)))].filter((m): m is number => m !== undefined);
+            // on a stretch too short to change lanes on, a lane whose every way on is banned (a right turn lane whose
+            // turn is a banned U-turn back where the route came from) is no way in: the nearest lane that leads on is
+            entries = lanesThatLeadOn(graph, down.way, down.nodeIndex, down.alongWay ? 1 : -1, downDirection, entries, openLanes,
+                [...path, down.way.id], profileID);
             if (!entries.length) {
                 blockMove(j, upWay, down, laneClosed(down.layout, { direction: downDirection, index: move.toLane }, down.way.tags, profile) ?? 'closed');
                 continue;

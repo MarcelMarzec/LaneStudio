@@ -12,13 +12,16 @@ Junctions are drawing only: nothing here writes tags.
   road starts where the lane leading into it ends.
 - **Short links** (40 m or less, no arrows of their own, as between the halves of a dual carriageway) take the
   arrows of the road leading in, less the turns already taken.
-- **Slip roads** joining at a shallow angle end on the lane they become, unless they give way, stop or have signals
-  within 30 m of the end.
+- **Slip roads** joining or leaving at a shallow angle line up with the lane they become, unless they give way, stop
+  or have signals within 30 m of the end. Beside a hard shoulder, a one-lane slip road runs over the shoulder, outside
+  the outer lane, and the main road runs straight through with its shoulder stopping at the slip road's mouth and
+  starting again past it. A slip road (`*_link`) never makes a fork, even with the main road's ref.
 - **Centre turn lanes**: a two-way road joining one with centre turn lanes parts its directions over 40 m round a
   hatched ghost island; a centre lane changing direction gets a diagonal white line.
 - **Junctions closer than 25 m** are one junction: one box, the short link drawn as guide lines, or as whole lanes
   between traffic islands (`area:highway=traffic_island`) where there are any.
-- **A two-way road dividing round an island** into one-way branches is no junction: the space between is road.
+- **A two-way road dividing round an island** into one-way branches is no junction: the space between is road. Two
+  branches that meet again (round a pair of bollards) are drawn side by side all the way, however sharply they part.
 - **Junction boxes** are a shade lighter than the road, with curved kerbs from road to road. Where no traffic crosses
   the main road (roundabouts, slip roads) the box is only the widening mouth. At a bend, both halves meet on the
   bisector.
