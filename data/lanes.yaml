@@ -189,6 +189,10 @@ en:
     reverse: U-turn
     merge_to_left: Merge left
     merge_to_right: Merge right
+    slide_left: Shift a lane left
+    slide_right: Shift a lane right
+    next_left: Left at the junction after next
+    next_right: Right at the junction after next
     none: No arrow
   speed:
     mph: "{n} mph"
@@ -230,6 +234,20 @@ en:
     maxheight: Height limit (m, or feet and inches)
     maxweight: Weight limit (t)
     surface: Surface
+    destination_street: Destination street
+    destination_int_ref: Destination European road number
+    destination_arrow: Destination sign arrow
+    destination_country: Destination country
+    destination_symbol: Destination symbol
+    width_start: Width at the start (m)
+    width_end: Width at the end (m)
+    toll: Toll
+    payment_cash: Pays in cash
+    payment_cards: Pays by card
+    access_conditional: Access at times
+    maxspeed_conditional: Speed limit at times
+    more_turns: More turn arrows
+    conditional_placeholder: "value @ (condition), e.g. no @ (Mo-Fr 07:00-10:00)"
   issue:
     count_mismatch: "{key} has {actual} values for {expected} lanes."
     direction_counts_mismatch: "Forward, backward and centre lanes add up to {actual}, but lanes is {expected}."
@@ -551,7 +569,7 @@ en:
     zero_lanes_reference: Roads without lane markings are tagged lane_markings=no, not lanes=0.
     fix_zero_lanes: Use lane_markings=no
     unknown_turn: "{feature} has an unknown turn value \"{value}\"."
-    unknown_turn_reference: "Turn values are left, slight_left, sharp_left, through, right, slight_right, sharp_right, reverse, merge_to_left, merge_to_right and none."
+    unknown_turn_reference: "Turn values are left, slight_left, sharp_left, through, right, slight_right, sharp_right, reverse, merge_to_left, merge_to_right, slide_left, slide_right, next_left, next_right and none."
     fix_unknown_turn: "Change \"{value}\" to \"{replacement}\""
     deprecated_change: "{feature} uses the deprecated lane change value \"{value}\"."
     fix_deprecated_change: "Change \"{value}\" to \"{replacement}\""
@@ -918,6 +936,15 @@ en:
     cycleway: "Cycle lanes and tracks along the road, per side (cycleway:left, cycleway:right): a lane is painted on the road, inside the kerb, a track is kept apart from it. Their width is cycleway:<side>:width. A contraflow lane is cycleway:<side>=lane with cycleway:<side>:oneway=-1 and oneway:bicycle=no, not the old opposite_lane. Each side's details (the line beside it, direction, width, buffer, separation, colour) fold away under the field."
     destination: "Where a lane goes, as the signs say (destination:lanes); several places are separated by semicolons. Lanes with none take the road's destination:forward or destination:backward (destination on a one-way road)."
     destination_ref: "The road numbers on the signs for a lane (destination:ref:lanes), such as M6 or A38."
+    destination_street: "The street a lane leads to, as the signs name it (destination:street:lanes)."
+    destination_int_ref: "The European road numbers on the signs for a lane (destination:int_ref:lanes), such as E15."
+    destination_arrow: "Which way the arrow on the sign for a lane points (destination:arrow:lanes): left, right, through and the like."
+    destination_country: "The country a lane leads to, as the sign's country code shows (destination:country:lanes), such as F or NL."
+    destination_symbol: "Symbols on the sign for a lane (destination:symbol:lanes): airport, hospital, motorway, centre and the like."
+    width_start_end: "A lane that widens or narrows along the road: its width where the way starts (width:lanes:start) and where it ends (width:lanes:end). The lane is drawn changing evenly between them."
+    toll: "Whether a lane is tolled (toll:lanes=yes|no), as at a toll plaza."
+    payment: "How a lane's toll is paid (payment:cash:lanes, payment:cards:lanes = yes or no per lane)."
+    conditional: "A lane's value at certain times or for certain vehicles, as value @ (condition) (wiki: Conditional restrictions), such as no @ (Mo-Fr 07:00-10:00) or 50 mph @ (wet). Several are separated by semicolons. Written into the road's access:lanes:conditional or maxspeed:lanes:conditional, one list per condition."
     direction: "Which way the lane's traffic goes: forward (along the way's drawing direction), backward, or both ways for a centre turn lane (lanes:forward, lanes:backward, lanes:both_ways)."
     island_surface: "A traffic island mapped as an area (area:highway=traffic_island). Its surface sets its colour; untagged islands are drawn as concrete."
     kerb: "The kerb round the island (barrier=kerb with kerb=raised, lowered, flush or rolled)."

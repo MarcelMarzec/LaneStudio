@@ -28,5 +28,5 @@ features) works as in iD.
 Questions: [FAQ](FAQ.md). Developers: [Architecture](ARCHITECTURE.md), [Running locally](develop/Running-Locally.md),
 [Code map](develop/Code-Map.md), [API](API.md), [Releasing](RELEASING.md). What changed: [Changelog](CHANGELOG.md).
 
-Not built yet: turbo roundabouts with one way per lane (drawn, not specially handled), editing `:conditional` lane
-tags (kept and shown), translations of Lane Studio's own strings, and browser tests against the dev server.
+Not built yet: turbo roundabouts with one way per lane (drawn, not specially handled), `:conditional` lane tags
+other than access and speed limits (kept and shown), translations of Lane Studio's own strings, and browser tests against the dev server.

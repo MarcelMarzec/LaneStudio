@@ -41,7 +41,7 @@ function fixSlots(tags: Tags, base: string, fix: (slot: string) => string): Tags
 }
 
 /** Turn values that point off the road (a lane with only these, at a road's dead end, turns into nothing) */
-const turning = (value: string) => !['through', 'none', 'merge_to_left', 'merge_to_right'].includes(value);
+const turning = (value: string) => !['through', 'none', 'merge_to_left', 'merge_to_right', 'slide_left', 'slide_right'].includes(value);
 
 /** The lane roads other than `way` that end at a node, and which of their directions leaves it */
 function roadsEndingAt(way: osmWay, nodeID: string, graph: coreGraph): { way: osmWay; leaving: LaneDirection }[] {

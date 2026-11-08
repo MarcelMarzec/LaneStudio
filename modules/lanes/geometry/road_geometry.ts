@@ -323,6 +323,18 @@ export function edgesAndGapsAt(layout: LaneLayout, visual: WayVisual, s: number,
     const edges = layout.edges.slice();
     const n = layout.lanes.length;
 
+    // lanes widening or narrowing evenly from one end of the way to the other, about the carriageway's middle
+    if (layout.widthsAlong) {
+        const { start, end } = layout.widthsAlong;
+        const deltas = layout.lanes.map((lane, i) => start[i] + (end[i] - start[i]) * t - lane.width);
+        const grown = deltas.reduce((sum, d) => sum + d, 0);
+        let before = 0;
+        for (let e = 0; e <= n; e++) {
+            edges[e] += before - grown / 2;
+            if (e < n) before += deltas[e];
+        }
+    }
+
     // each tapering lane loses (1 - f) of its width, its moving side and every edge beyond it coming in
     const factors = new Map<number, { f: number; side: 'left' | 'right' }>();
     const taper = (spec: Taper, f: number) => {
@@ -1002,7 +1014,9 @@ interface Junction {
 
 const idealAngle: Record<string, number> = {
     through: 0, slight_left: 40, left: 90, sharp_left: 135, slight_right: -40, right: -90, sharp_right: -135,
-    merge_to_left: 0, merge_to_right: 0, reverse: 180
+    merge_to_left: 0, merge_to_right: 0, reverse: 180,
+    // a lane shifting over, or turning at the junction after next, goes straight on here
+    slide_left: 0, slide_right: 0, next_left: 0, next_right: 0
 };
 
 function signedAngle(from: Vec2, to: Vec2): number {

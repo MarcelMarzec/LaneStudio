@@ -13,9 +13,15 @@ export const fieldInfoPages = {
     camera: 'Tag:highway=speed_camera',
     centre_line: 'Key:overtaking',
     change: 'Key:change',
+    conditional: 'Conditional_restrictions',
     cycleway: 'Key:cycleway',
     destination: 'Key:destination',
+    destination_arrow: 'Key:destination:arrow',
+    destination_country: 'Key:destination:country',
+    destination_int_ref: 'Key:destination:int_ref',
     destination_ref: 'Key:destination:ref',
+    destination_street: 'Key:destination:street',
+    destination_symbol: 'Key:destination:symbol',
     direction: 'Key:lanes',
     island_surface: 'Tag:area:highway=traffic_island',
     kerb: 'Key:kerb',
@@ -53,6 +59,7 @@ export const fieldInfoPages = {
     parking_times: 'Conditional_restrictions',
     parking_width: `${SP}#Other_physical_attributes`,
     parking_zone: `${SP}#Residential_parking_permits,_parking_zones`,
+    payment: 'Key:payment:*',
     position: 'Lanes',
     road_marking: 'Key:road_marking',
     roundabout: 'Tag:junction=roundabout',
@@ -66,11 +73,13 @@ export const fieldInfoPages = {
     street_parking: 'Key:parking',
     structure: 'Key:bridge',
     surface: 'Key:surface',
+    toll: 'Key:toll',
     tools: 'Lanes',
     turbo: 'Tag:roundabout=turbo',
     turn: 'Key:turn',
     variable_speed: 'Key:maxspeed:variable',
-    width: 'Key:width'
+    width: 'Key:width',
+    width_start_end: 'Key:width:lanes'
 } as const;
 
 export type InfoTopic = keyof typeof fieldInfoPages;

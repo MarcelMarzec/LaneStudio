@@ -5,10 +5,11 @@ export { parseLanes, laneOneway, type ParseLanesOptions } from './parse';
 export { serialiseLanes } from './serialise';
 export { insertLane, removeLane, moveLane, setLaneValue, laneValue } from './ops';
 export {
-    turnValues, parseTurn, formatTurn, toggleTurn,
+    turnValues, rareTurnValues, parseTurn, formatTurn, toggleTurn,
     parseChange, formatChange, dividerAt, setDivider, nextDivider,
     type TurnValue, type LaneChange, type Divider
 } from './values';
 export { laneKindKeys, laneKindOf, setLaneKind } from './kinds';
+export { parseLaneConditional, formatLaneConditional, laneConditions, conditionalSlot, withLaneConditions, type LaneRule } from './conditional_lanes';
 export * from './markings';
 export * from './connectivity';

@@ -6,8 +6,14 @@
 - `[` and `]` step left and right; Delete removes the selected lanes (never the road).
 - The selected lanes' fields: direction, turn arrows, lane change and overtaking, speed limit, lane type,
   destination (motorways, trunk and primary roads), access, width, position (move left or right), and every other
-  `*:lanes` tag on the road. Minimum speed, destination road number, width, height and weight limits and surface are
-  in **Add field** until tagged. **Whole road** lets go of the lanes.
+  `*:lanes` tag on the road. **Whole road** lets go of the lanes.
+- In **Add field** until tagged: minimum speed; the sign's road number, street, European road number, arrow,
+  country and symbol (`destination:ref|street|int_ref|arrow|country|symbol:lanes`); width limit, height, weight,
+  surface; width at the way's start and end (`width:lanes:start|end`, drawn widening or narrowing evenly); toll and
+  payment (`toll:lanes`, `payment:cash:lanes`, `payment:cards:lanes`); more turn arrows.
+- **Access at times** and **Speed limit at times**: the lane's `:conditional` values as `value @ (condition)`
+  (`no @ (Mo-Fr 07:00-10:00)`), several separated by semicolons; written into `access:lanes:conditional` or
+  `maxspeed:lanes:conditional`, one list per condition.
 - Click a line between two lanes to cycle it: dashed, solid, crossable one way, the other way (`change:lanes`).
 - **Lane change and overtaking** knows what is beside a lane: another lane (`change:lanes`), the centre line
   (overtaking, `overtaking:forward|backward`) or the kerb (nothing to change into).
@@ -49,6 +55,8 @@ Making such a lane general traffic again opens its access too.
 - Arrows from `turn:lanes`. A lane with a blank value takes the road's plain key, as the wiki says: `turn`,
   `turn:forward` or `turn:backward` (routing follows them too).
 - `merge_to_left` and `merge_to_right` mark the lane that ends; `slight_*` are not merges.
+- Rare values (under **More turn arrows**): `slide_left|right` (a lane shifting over: straight on, stepping
+  sideways) and `next_left|right` (turn at the junction after next: straight on at this one).
 - One-way roads have small direction arrows on their lanes (iD's arrows on the way are hidden).
 
 ## Widths

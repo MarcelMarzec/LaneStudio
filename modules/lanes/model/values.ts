@@ -4,8 +4,11 @@ import type { LaneDirection, LaneModel } from './types';
 /** `turn` values from the wiki (Key:turn), in the order the turn picker shows them */
 export const turnValues = [
     'sharp_left', 'left', 'slight_left', 'through', 'slight_right', 'right', 'sharp_right',
-    'reverse', 'merge_to_left', 'merge_to_right', 'none'
+    'reverse', 'merge_to_left', 'merge_to_right', 'slide_left', 'slide_right', 'next_left', 'next_right', 'none'
 ] as const;
+
+/** Turn values hardly ever painted (wiki: Key:turn, rarely used tags): offered once asked for */
+export const rareTurnValues: readonly string[] = ['slide_left', 'slide_right', 'next_left', 'next_right'];
 
 export type TurnValue = typeof turnValues[number];
 

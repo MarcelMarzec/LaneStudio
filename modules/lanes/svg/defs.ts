@@ -21,7 +21,11 @@ const arrowShapes: Record<string, ArrowShape> = {
     slight_left: { stem: `${stem}M0 1L-4.2 -4.2`, head: 'M-1.9 -6.5L-7.8 -7.8L-6.5 -1.9Z' },
     sharp_left: { stem: `${stem}M0 1V-3L-4.5 1.5`, head: 'M-2.4 3.6L-8 5L-6.6 -0.6Z' },
     reverse: { stem: `${stem}M0 1V-4Q0 -8 -3.5 -8Q-7 -8 -7 -4V1.5`, head: 'M-10 1.5L-7 7L-4 1.5Z' },
-    merge_to_left: { stem: `${stem}M0 1V-1L-6 -7V-8.5`, head: 'M-9 -8.5L-6 -13L-3 -8.5Z' }
+    merge_to_left: { stem: `${stem}M0 1V-1L-6 -7V-8.5`, head: 'M-9 -8.5L-6 -13L-3 -8.5Z' },
+    // a lane shifting sideways: straight on, stepping one lane over
+    slide_left: { stem: `${stem}M0 1V0L-5 -5V-6`, head: 'M-8.2 -6L-5 -11.5L-1.8 -6Z' },
+    // left at the junction after next: straight past a side road (the stub), then left
+    next_left: { stem: `${stem}M0 3H3M0 1V-3Q0 -8 -4.5 -8`, head: 'M-4.5 -11.2L-9.5 -8L-4.5 -4.8Z' }
 };
 
 /**

@@ -24,7 +24,8 @@ import { isShownOnDemand, onShownChange, selectedLaneRoad, showOnDemand } from '
 import { mphLimits, mphOf, roadSpeedPick, speedPickLabel, speedChoice, ukSpeedTypes, type SpeedPick, type UkSpeedType } from './speed_roundels';
 import {
     parseLanes, laneRefsInWayOrder, laneCount, removeLane, moveLane, setLaneValue, laneValue,
-    turnValues, parseTurn, toggleTurn, parseChange, formatChange, laneDirections,
+    turnValues, parseTurn, toggleTurn, parseChange, formatChange, laneDirections, rareTurnValues,
+    conditionalSlot, laneConditions, parseLaneConditional, withLaneConditions,
     laneKindKeys, laneKindOf, setLaneKind,
     type LaneModel, type LaneRef
 } from '../model';
@@ -43,11 +44,28 @@ const textFields: { id: string; key: string; info: InfoTopic; shown: (road: osmW
     { id: 'maxwidth', key: 'maxwidth:lanes', info: 'maxwidth', shown: () => false },
     { id: 'maxheight', key: 'maxheight:lanes', info: 'maxheight', shown: () => false },
     { id: 'maxweight', key: 'maxweight:lanes', info: 'maxweight', shown: () => false },
-    { id: 'surface', key: 'surface:lanes', info: 'surface', shown: () => false }
+    { id: 'surface', key: 'surface:lanes', info: 'surface', shown: () => false },
+    { id: 'destination_street', key: 'destination:street:lanes', info: 'destination_street', shown: () => false },
+    { id: 'destination_int_ref', key: 'destination:int_ref:lanes', info: 'destination_int_ref', shown: () => false },
+    { id: 'destination_arrow', key: 'destination:arrow:lanes', info: 'destination_arrow', shown: () => false },
+    { id: 'destination_country', key: 'destination:country:lanes', info: 'destination_country', shown: () => false },
+    { id: 'destination_symbol', key: 'destination:symbol:lanes', info: 'destination_symbol', shown: () => false },
+    { id: 'width_start', key: 'width:lanes:start', info: 'width_start_end', shown: () => false },
+    { id: 'width_end', key: 'width:lanes:end', info: 'width_start_end', shown: () => false },
+    { id: 'toll', key: 'toll:lanes', info: 'toll', shown: road => road.tags.toll === 'yes' },
+    { id: 'payment_cash', key: 'payment:cash:lanes', info: 'payment', shown: () => false },
+    { id: 'payment_cards', key: 'payment:cards:lanes', info: 'payment', shown: () => false }
+];
+
+/** `:conditional` lane values, set lane by lane in conditional syntax (`no @ (Mo-Fr 07:00-10:00)`) */
+const conditionalFields: { id: string; base: string; info: InfoTopic }[] = [
+    { id: 'access_conditional', base: 'access', info: 'conditional' },
+    { id: 'maxspeed_conditional', base: 'maxspeed', info: 'conditional' }
 ];
 
 const handledKeys = new Set([
     'turn:lanes', 'change:lanes', 'maxspeed:lanes', 'minspeed:lanes', 'maxspeed:type:lanes', ...textFields.map(f => f.key),
+    ...conditionalFields.map(f => `${f.base}:lanes:conditional`),
     ...Object.values(laneKindKeys).filter((k): k is string => !!k)
 ]);
 
@@ -299,7 +317,10 @@ export function uiSectionLanes(context: iD.Context) {
                 const current = shared('turn:lanes');
                 const active = current === undefined ? [] : parseTurn(current);
                 const grid = body.append('div').attr('class', 'lane-buttons turn-grid');
-                for (const value of turnValues.filter(v => v !== 'none')) {
+                // the rarely painted arrows once asked for, or on a lane with one
+                const rare = isShownOnDemand(wayID, 'lane-rare-turns') || active.some(value => rareTurnValues.includes(value));
+                if (!rare) more.push({ id: 'lane-rare-turns', title: t('_lanes.field.more_turns'), show: () => showOnDemand(wayID, 'lane-rare-turns') });
+                for (const value of turnValues.filter(v => v !== 'none' && (rare || !rareTurnValues.includes(v)))) {
                     const name = t(`_lanes.turn.${value}`);
                     const button = grid.append('button')
                         .attr('type', 'button')
@@ -365,6 +386,35 @@ export function uiSectionLanes(context: iD.Context) {
             } else {
                 more.push({ id: `lane-${field.id}`, title: t(`_lanes.field.${field.id}`), show: () => showOnDemand(wayID, `lane-${field.id}`) });
             }
+        }
+        // conditional values: the selected lanes' own conditions, in conditional syntax
+        for (const field of conditionalFields) {
+            const slots = refs.map(ref => conditionalSlot(model, road.tags, field.base, ref));
+            const rules = slots.map(({ key }) => (road.tags[key] ? parseLaneConditional(road.tags[key]) : []));
+            const texts = slots.map(({ slot }, i) => (rules[i] ? laneConditions(rules[i]!, slot) : undefined));
+            const present = texts.some(Boolean) || rules.some(r => r === null);
+            if (!present && !isShownOnDemand(wayID, `lane-${field.id}`)) {
+                more.push({ id: `lane-${field.id}`, title: t(`_lanes.field.${field.id}`), show: () => showOnDemand(wayID, `lane-${field.id}`) });
+                continue;
+            }
+            const unreadable = rules.some(r => r === null || r.some(rule => rule.values.length !== slots[0].count));
+            const apply = (text: string) => {
+                const next = withLaneConditions(model, road.tags, field.base, refs, text);
+                if (next) context.perform(actionChangeTags(road.id, next), t('_lanes.annotation.value'));
+            };
+            laneField(context, inspector, {
+                info: field.info,
+                present,
+                onRemove: unreadable ? undefined : () => apply(''),
+                id: field.id,
+                label: t(`_lanes.field.${field.id}`),
+                value: texts.every(v => v === texts[0]) ? texts[0] ?? '' : undefined,
+                placeholder: t('_lanes.field.conditional_placeholder'),
+                suggestions: [],
+                disabled: unreadable,
+                disabledReason: t('_lanes.inspector.readonly', { key: slots[0].key }),
+                onChange: apply
+            });
         }
         // speed limits the lanes can't have edited here are still shown, as text
         for (const key of ['maxspeed:lanes', 'minspeed:lanes']) {

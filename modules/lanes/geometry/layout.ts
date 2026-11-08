@@ -95,6 +95,8 @@ export interface LaneLayout {
     roadside: { left: RoadsideStrip[]; right: RoadsideStrip[] };
     /** yellow or red lines along the kerb where parking is restricted, per side of the way */
     kerbMarkings: { left?: KerbMarking; right?: KerbMarking };
+    /** lanes widening or narrowing along the way (`width:lanes:start`, `width:lanes:end`): each lane's width at each end */
+    widthsAlong?: { start: number[]; end: number[] };
 }
 
 
@@ -364,6 +366,11 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
         };
     });
 
+    // lanes changing width along the way, from `width:lanes:start` to `width:lanes:end` (else their width)
+    const startWidths = lanes.map(lane => parseWidth(lane.values['width:lanes:start']) ?? lane.width);
+    const endWidths = lanes.map(lane => parseWidth(lane.values['width:lanes:end']) ?? lane.width);
+    const changing = lanes.some((lane, i) => Math.abs(startWidths[i] - lane.width) > 0.01 || Math.abs(endWidths[i] - lane.width) > 0.01);
+
     const total = lanes.reduce((sum, l) => sum + l.width, 0);
     const edges = [-total / 2];
     for (const lane of lanes) edges.push(edges[edges.length - 1] + lane.width);
@@ -403,6 +410,7 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
         shiftStart,
         shiftEnd,
         roadside,
-        kerbMarkings: { left: kerbMarking(tags, 'left'), right: kerbMarking(tags, 'right') }
+        kerbMarkings: { left: kerbMarking(tags, 'left'), right: kerbMarking(tags, 'right') },
+        ...(changing ? { widthsAlong: { start: startWidths, end: endWidths } } : {})
     };
 }

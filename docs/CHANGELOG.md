@@ -8,6 +8,22 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08r9
+##### 2026-Nov-08
+
+#### Lanes and junctions
+* A lane can be set to widen or narrow along the road (`width:lanes:start`, `width:lanes:end`), and is drawn
+  changing evenly from one end to the other
+* Turn arrows for a lane shifting over (`slide_left`, `slide_right`) and for a turn at the junction after next
+  (`next_left`, `next_right`), offered under **More turn arrows** in Add field; routes go straight on with them
+
+#### Editing
+* **Access at times** and **Speed limit at times** set a lane's `access:lanes:conditional` and
+  `maxspeed:lanes:conditional` as `value @ (condition)`, keeping the other lanes' conditions
+* New lane fields in Add field: the sign's street, European road number, arrow, country and symbol
+  (`destination:street|int_ref|arrow|country|symbol:lanes`), toll and payment by cash or card (`toll:lanes`,
+  `payment:cash:lanes`, `payment:cards:lanes`) and the width at each end, each with its i button
+
 # 26.11.08r8
 ##### 2026-Nov-08
 
