@@ -41,6 +41,15 @@ const chapterFlow = [
 ];
 
 
+// An app built on iD can replace the walkthrough's chapters (Lane Studio has its own); by default, iD's.
+// Each chapter is `{ id, create: (context, reveal) => chapter }`, in the order they are shown.
+let _customChapters = null;
+
+export function uiIntroSetChapters(chapters) {
+  _customChapters = chapters;
+}
+
+
 export function uiIntro(context) {
   const INTRO_IMAGERY = 'Bing';
   let _introGraph = {};
@@ -122,16 +131,19 @@ export function uiIntro(context) {
     let storedProgress = prefs('walkthrough_progress') || '';
     let progress = storedProgress.split(';').filter(Boolean);
 
-    let chapters = chapterFlow.map((chapter, i) => {
-      let s = chapterUi[chapter](context, curtain.reveal)
+    const flow = _customChapters ? _customChapters.map(c => c.id) : chapterFlow;
+    const ui = _customChapters ? Object.fromEntries(_customChapters.map(c => [c.id, c.create])) : chapterUi;
+
+    let chapters = flow.map((chapter, i) => {
+      let s = ui[chapter](context, curtain.reveal)
         .on('done', () => {
 
           buttons
             .filter(d => d.title === s.title)
             .classed('finished', true);
 
-          if (i < chapterFlow.length - 1) {
-            const next = chapterFlow[i + 1];
+          if (i < flow.length - 1) {
+            const next = flow[i + 1];
             context.container().select(`button.chapter-${next}`)
               .classed('next', true);
           }
@@ -149,7 +161,7 @@ export function uiIntro(context) {
       prefs('walkthrough_progress', utilArrayUniq(progress).join(';'));
 
       // Store if walkthrough is completed..
-      let incomplete = utilArrayDifference(chapterFlow, progress);
+      let incomplete = utilArrayDifference(flow, progress);
       if (!incomplete.length) {
         prefs('walkthrough_completed', 'yes');
       }
@@ -190,7 +202,7 @@ export function uiIntro(context) {
       .data(chapters)
       .enter()
       .append('button')
-      .attr('class', (d, i) => `chapter chapter-${chapterFlow[i]}`)
+      .attr('class', (d, i) => `chapter chapter-${flow[i]}`)
       .on('click', enterChapter);
 
     buttons

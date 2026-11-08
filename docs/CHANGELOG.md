@@ -8,6 +8,27 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08r4
+##### 2026-Nov-08
+
+#### Editing
+* The walkthrough (Help → Start the walkthrough, or from the welcome screen) is Lane Studio's own: what it adds to
+  iD, in five short chapters (Welcome, Lanes, Roadside, Tools, Start editing), on the practice data with lanes drawn
+* The Help pane starts with Lane Studio's pages: Lane Studio, lanes and road fields, roadside and parking, tools, and
+  what is drawn
+
+#### Website
+* The front page and the README mention the walkthrough and help pages
+
+#### Behind the scenes
+* The documents and the GitHub wiki are rewritten short and split into pages: the guide has a page per area in
+  `docs/guide/` (getting started, lanes, road fields, roadside, street parking, junctions, crossings and markings,
+  areas and surfaces, signs, railways, tools, checks) and developers have theirs in `docs/develop/`; the wiki's
+  sidebar nests them under Guide and Developers
+* Two iD hooks, keeping iD's behaviour by default: `uiIntroSetChapters` (the walkthrough's chapters) and
+  `uiPaneHelpAddDocs` (help pages before iD's)
+* CLAUDE.md asks every change to keep the wiki, walkthrough and help short and up to date
+
 # 26.11.08r3
 ##### 2026-Nov-08
 

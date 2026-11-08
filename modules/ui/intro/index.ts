@@ -1,1 +1,1 @@
-export { uiIntro } from './intro';
+export { uiIntro, uiIntroSetChapters } from './intro';

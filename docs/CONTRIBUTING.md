@@ -1,104 +1,52 @@
 # Contributing to Lane Studio
 
-Thanks for helping. Lane Studio is a lane and road editor for OpenStreetMap built on iD; this
-repository holds both, with Lane Studio's code in `modules/lanes/`.
-
-Everyone involved is subject to the [Code of Conduct](CODE_OF_CONDUCT.md).
-
+Everyone involved follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Reporting issues
 
-Open an issue at https://github.com/MarcelMarzec/LaneStudio/issues. The most useful reports have:
+Open an issue at https://github.com/MarcelMarzec/LaneStudio/issues with:
 
-* **Where**: the map URL from the address bar (it holds the location, `#map=zoom/lat/lon`), or the
-  OSM ids of the roads or nodes involved (`w123`, `n456`).
-* **What you expected and what you saw**: a screenshot, ideally with your expected result drawn on it.
-* **The data**: for drawing, routing or junction problems, an export of the area (openstreetmap.org →
-  Export → Manual area covering the junction → `.osm` file). Lane Studio's drawing is worked out from
-  the tags, so the exact data is what reproduces it.
-* **Version** (bottom right of the map) and browser.
+- **Where**: the map URL (`#map=zoom/lat/lon`) or the OSM ids (`w123`, `n456`);
+- **What you expected and what you saw**: a screenshot, ideally marked up;
+- **The data**, for drawing or routing problems: openstreetmap.org → Export → the junction → `.osm` file;
+- **Version** (bottom right) and browser.
 
-Not Lane Studio's to fix, so please report them where they belong:
-
-* presets, fields and tagging suggestions: [id-tagging-schema](https://github.com/openstreetmap/id-tagging-schema/issues)
-* background imagery: [editor-layer-index](https://github.com/osmlab/editor-layer-index/issues)
-* iD's own editing (not lanes or road drawing): [iD](https://github.com/openstreetmap/iD/issues),
-  after checking it happens in plain iD too
-
+Elsewhere: presets and fields → [id-tagging-schema](https://github.com/openstreetmap/id-tagging-schema/issues); imagery →
+[editor-layer-index](https://github.com/osmlab/editor-layer-index/issues); iD's own editing (happens in plain iD too) →
+[iD](https://github.com/openstreetmap/iD/issues).
 
 ## Contributing code
 
-Open an issue first for anything bigger than a fix, so we can agree the approach.
+Open an issue first for anything bigger than a fix. Set up with [Running locally](develop/Running-Locally.md); find
+your way with the [Code map](develop/Code-Map.md) and [Architecture](ARCHITECTURE.md).
 
-### Setting up
+| Change | Goes in |
+| --- | --- |
+| Lane Studio features | `modules/lanes/` (TypeScript), styles `css-lanes/`, strings `data/lanes.yaml`, tests `test/spec/lanes/` |
+| Documents | `docs/` (the wiki is copied from it); README, CLAUDE and LICENSE stay at the root |
+| Website | `LanesWebsite/` |
+| iD | Only small hooks that keep iD's behaviour by default |
 
-```sh
-npm clean-install
-npm run all                         # needs network: it downloads data the build bundles
-ID_API_CONNECTION=dev npm start     # edits go to the OSM dev server, not the live map
-```
+Never edit or commit `dist/` or `dist-lanes/`.
 
-Open http://127.0.0.1:8080/lanes.html. `npm start` rebuilds on save. [LANES.md](LANES.md) explains how
-Lane Studio fits into iD and where each part lives; [ARCHITECTURE.md](ARCHITECTURE.md) goes deeper.
+**Style**: modern TypeScript, 4-space indents; `npm run lint` with no warnings; match the file you're in; comments say
+why and name the wiki pages for the tags read; geometry in metres (`metricFrame`).
 
-### Where changes go
+**Tests**: every fix comes with a test that fails without it. Look at drawing changes in the browser, before and
+after.
 
-* Lane Studio features: `modules/lanes/` (TypeScript), styles in `css-lanes/`, strings in
-  `data/lanes.yaml` (read with `t('_lanes.…')`, the i buttons' overviews under `info`), tests in
-  `test/spec/lanes/`. The website: `LanesWebsite/`. Documents: `docs/` (README.md, CLAUDE.md and
-  LICENSE.md stay at the root). The GitHub wiki is copied from `docs/` on every push
-  (`scripts/build_wiki.js`, the **Sync docs to the wiki** workflow), so edit the documents, not the wiki.
-* iD itself: only small hooks that keep iD's behaviour by default (see the hooks table in LANES.md).
-  Keeping iD's code close to upstream makes it possible to take in new iD releases and development versions.
-* `dist/` and `dist-lanes/` are built: don't edit or commit them.
+## Submitting
 
-### Code style
+1. Branch from `mm/lane-studio-main`.
+2. Make the change with tests, and check it in the browser (light and dark themes for the sidebar).
+3. Update every document, the walkthrough, the help pages and the website that no longer describe it accurately
+   ([CLAUDE.md](../CLAUDE.md) lists what each covers). Keep them short.
+4. Keep the sidebar one menu with iD's ([CLAUDE.md](../CLAUDE.md) § One sidebar).
+5. Give the commit its version and changelog section ([Releasing](RELEASING.md)).
+6. Open a pull request against `mm/lane-studio-main`.
 
-* Modern TypeScript for new Lane Studio code, 4-space indents, no tabs, in HTML and CSS too.
-* `npm run lint` must pass with no warnings (`npm run lint:fix` fixes some).
-* Match the file you are in: some older iD files use 2-space indents or ES5; don't reformat code you
-  aren't changing.
-* Comments say why, in plain words; name OSM wiki pages for the tags a piece of code reads.
-* Geometry works in metres in a local frame (`metricFrame`), never in degrees.
+## Translations and licence
 
-### Tests
-
-Every fix comes with a test that fails without it. Geometry and routing tests build small graphs in
-code or load a fixture extracted from real OSM data (`test/spec/lanes/fixtures/`).
-
-```sh
-npm run lint
-npx tsc
-npm run test:once                   # or npx vitest run test/spec/lanes for Lane Studio's tests only
-```
-
-For drawing changes, also look at the result in the browser on real data before and after.
-
-### Submitting changes
-
-1. Branch from `mm/lane-studio-main` with a descriptive name.
-2. Make the change, with tests, and check it in the browser.
-3. Check the documents that cover what you changed (README, LANES, ARCHITECTURE, API, FAQ, PRIVACY,
-   ACCESSIBILITY and the rest; [CLAUDE.md](../CLAUDE.md) lists what each covers) and update any that are
-   no longer accurate, in the same commit. The website in `LanesWebsite/` too, when users would notice the
-   change.
-4. Sidebar changes keep it one menu with iD's: inputs built as iD's fields, iD's fields left out where Lane
-   Studio edits the same tags, and every field with iD's bin and undo and an i button with an overview and a
-   wiki link ([CLAUDE.md](../CLAUDE.md) § One sidebar, in iD's design).
-5. Give the commit its version and changelog section, and put the version first in its title (see
-   [RELEASING.md](RELEASING.md)).
-6. Commit with a message that says what changed and why.
-7. Open a pull request against `mm/lane-studio-main`.
-
-
-## Translations
-
-Lane Studio's own strings are English only for now (`data/lanes.yaml`). iD's strings come from iD's
-translations on [Transifex](https://app.transifex.com/openstreetmap/id-editor/), so the rest of the
-editor follows your browser's language.
-
-
-## Licensing
-
-Lane Studio is available under the [ISC License](https://opensource.org/licenses/ISC), like iD. By
-contributing, you contribute ISC-licensed code.
+Lane Studio's own strings are English only for now; iD's come from
+[Transifex](https://app.transifex.com/openstreetmap/id-editor/). Contributions are under the
+[ISC License](https://opensource.org/licenses/ISC), like iD.

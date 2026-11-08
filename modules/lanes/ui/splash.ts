@@ -1,6 +1,7 @@
 import { t } from '../../core/localizer';
 import { prefs } from '../../core/preferences';
 import { services } from '../../services';
+import { uiIntro } from '../../ui/intro/intro';
 import { uiModal } from '../../ui/modal';
 import { uiSectionPrivacy } from '../../ui/sections/privacy';
 import { laneStudioVersion } from '../version';
@@ -57,8 +58,14 @@ export function laneStudioSplash(context: iD.Context) {
 
         (uiSectionPrivacy(context) as any).render(section);
 
-        body.append('div').attr('class', 'modal-actions')
-            .append('button').attr('class', 'start-editing lanes-welcome-start')
+        const actions = body.append('div').attr('class', 'modal-actions');
+        actions.append('button').attr('class', 'walkthrough lanes-welcome-walkthrough')
+            .text(t('_lanes.welcome.walkthrough'))
+            .on('click', () => {
+                modal.close();
+                context.container().call(uiIntro(context) as any);
+            });
+        actions.append('button').attr('class', 'start-editing lanes-welcome-start')
             .text(t('_lanes.welcome.start'))
             .on('click', () => modal.close());
     });

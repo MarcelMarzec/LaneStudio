@@ -14,6 +14,84 @@ en:
     rules: "Map what is on the ground: use your own survey, the aerial imagery offered here and street-level photos you are allowed to use. Never copy from Google or other maps. Change one road at a time and check it before saving. Don't tag for the renderer: tag what is there, not what makes Lane Studio draw it the way you would like. If a road looks wrong but its tags match what is there, report it rather than changing the tags."
     wiki: "Read more on the wiki:"
     start: Start mapping
+    walkthrough: Take the walkthrough
+  intro:
+    welcome:
+      title: Welcome
+      welcome: "Welcome to Lane Studio! This walkthrough shows what Lane Studio adds to the iD editor: roads drawn lane by lane, lane editing, the roadside and the tools."
+      drawn: "Every road is drawn lane by lane at its real width, from its tags: lanes, turn arrows, lane lines, pavements, cycle lanes, parking and crossings. Drag the map to move it and scroll to zoom; lanes appear from zoom 17."
+      practice: "This is practice data in Three Rivers, Michigan. Nothing you do here is saved, so try anything."
+      chapters: "Next, select a road and edit its lanes. **Click {next} to go on.**"
+    lanes:
+      title: Lanes
+      select: "Main Street runs down the middle of the map, drawn lane by lane. **Click Main Street to select it.**"
+      section: "The Lanes section is new: the road's lanes, the lane tools and the selected lanes' fields. It sits above iD's fields."
+      strip: "Lanes along the road shows the lanes left to right. Click one here or on the map to edit it; shift-click to pick more."
+      tools: "The lane tools: Paint a value onto lanes, drag lane Widths, place Markings and Signs, and Connect lanes across a junction. Esc returns to Select."
+      fields: "Lane Studio's road fields sit among iD's in Fields: the Number of lanes each way, the centre line and more. Every field has an i button with a short overview and a wiki link."
+      speed: "Speed limit picks UK roundels and limit types (national limit, motorway, 20 zone). A lane can have its own limit in the Lanes section."
+    roadside:
+      title: Roadside
+      plus: "The + at each kerb adds a lane, hard shoulder, pavement, cycleway, parking or no-waiting lines to that side, asking for their tags."
+      fields: "Pavement, Cycleway, Hard shoulder and Parking have a dropdown for each side, Forward and Backward. Cycle lanes and parking have more details folded under them."
+      drawn: "What you tag is drawn at once: pavements, cycle lanes with their symbols, parking bays, yellow lines, bus lanes. Open the Map key (G) to see what every colour means."
+    tools:
+      title: Tools
+      routing: "Routing shows every route a car, bus, bicycle or lorry can take from the lane under the pointer, following turn arrows, lane connections and turn restrictions."
+      speed: "Speed Limit colours every lane by its limit, with roads missing one in red. Pick a limit and click roads to set it."
+      measure: "Measure measures a distance on the imagery and sets it as a road, lane, pavement or cycle lane width."
+      key: "The Map key (G) explains every colour, line and symbol on the map."
+      settings: "The Lane Studio pane (K) sets lane opacity, hides iD's lines under lanes, land use and brand logos, and shows what's new."
+      checks: "The Issues pane checks lane tags as you edit: lane counts, widths, unmarked bus lanes, old values, turns into dead ends."
+    start:
+      title: Start editing
+      help: "Help (H) has Lane Studio's pages first, then iD's. The full guide is on the wiki."
+      save: "Save uploads your edits to OpenStreetMap as a changeset tagged created_by=LaneStudio, as in iD."
+      rules: "Map what is on the ground, from survey or imagery you may use. Don't change correct tags to make the drawing look right: if the tags are right and the drawing is wrong, report it."
+      start: Start mapping!
+  help:
+    lane_studio:
+      title: Lane Studio
+      text: |
+        Lane Studio is a road and lane editor for OpenStreetMap, built on iD. Everything iD does works as usual; Lane Studio adds:
+
+        - **Roads drawn lane by lane** at their real width over the imagery (from zoom 17; editing from zoom 18).
+        - The **Lanes** section in the sidebar, and road fields among iD's (number of lanes, centre line, speed limits, pavements, cycleways, hard shoulders, parking).
+        - **Tools** in the top bar: Routing, Speed Limit and Measure.
+        - The **Lane Studio** pane (`K`) for settings and the **Map key** pane (`G`).
+        - **Checks** of lane tags in the Issues pane.
+
+        Tag what is on the ground, not what makes the drawing look right. The walkthrough (below) shows it all in a few minutes; the full guide is on the [wiki](https://github.com/MarcelMarzec/LaneStudio/wiki).
+    lanes:
+      title: Lanes and road fields
+      text: |
+        - **Select lanes**: click a lane on the map or in *Lanes along the road*; shift-click adds lanes. `[` and `]` step left and right; Delete removes the selected lanes.
+        - **Edit them** in the Lanes section: direction, turn arrows, lane change, speed limit, lane type, destination, access, width and any other `*:lanes` tag.
+        - **Lane tools**: Paint a value onto lanes, Width (drag lane lines), Markings (crossings, stop and give way, signals, calming), Connect (lane connections across a junction), Signs.
+        - **Lines between lanes**: click one to cycle it (dashed, solid, crossable one way); click a side of the centre line to ban or allow overtaking.
+        - **Road fields** in iD's Fields: Number of lanes, Centre line, Speed limit (UK roundels and limit types), Minimum speed, Active traffic management.
+        - `width` is kerb to kerb: parking and cycle lanes on the road are part of it.
+    roadside:
+      title: Roadside and parking
+      text: |
+        - The **+** at each kerb of the selected road (or *Add to the roadside*) adds a lane, hard shoulder, pavement, cycleway, parking or no-waiting lines to that side.
+        - **Pavement**, **Cycleway**, **Hard shoulder** and **Parking** have a Forward and a Backward dropdown. Forward is the side beside traffic going along the way.
+        - A side's **cycle lane** details (line, direction, width, buffer, separation, colour) and **parking** details (how cars park, restrictions, fees, time limits, zones) fold under their fields.
+        - Old tags (`parking:lane`, `cycleway=opposite_lane`, `busway=lane`) have an **Upgrade** button.
+    tools:
+      title: Tools
+      text: |
+        - **Routing**: hover a lane to see every route from it for a car, bus, bicycle or lorry; click to pin. Hover a footway for routes on foot.
+        - **Speed Limit**: lanes coloured by their limit, roads without one in red. Pick a limit (`1` to `7`), click a road to set it, shift-click a lane.
+        - **Measure**: click two points on the imagery, then set the distance as a road, lane, pavement, cycle lane, hard shoulder or parking width.
+        - **Map key** (`G`): what every colour, line and symbol means.
+        - Esc leaves a tool.
+    drawing:
+      title: What is drawn
+      text: |
+        Lane Studio draws, from the tags: lanes by type, lane lines and turn arrows; junctions with the lanes lined up and guide lines; pavements, cycle lanes, hard shoulders, parking bays and UK yellow lines; crossings with UK zig-zags, beacons and tactile paving; stop and give way lines, signals, traffic calming, mini-roundabouts and turning heads; signs, cameras and road numbers; mapped road areas and surfaces; bridges, tunnels and roads being built; railways with level crossings and signals.
+
+        Where tags are missing the drawing is a guess (fainter lines, hatched pavements). The **Map key** (`G`) explains it, and the wiki's guide has every tag Lane Studio reads.
   section:
     title: Lanes
     summary:

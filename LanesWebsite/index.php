@@ -200,7 +200,8 @@ require __DIR__ . '/includes/head.php';
         <h3>Measure and read the map</h3>
         <p>
           The Measure tool measures a distance on the imagery and sets it as a road, lane, pavement or
-          cycle lane width in one click. The Map key explains every colour, line and symbol on the map.
+          cycle lane width in one click. The Map key explains every colour, line and symbol on the map, and
+          the walkthrough and Help pages show what Lane Studio adds to iD.
         </p>
       </article>
     </div>

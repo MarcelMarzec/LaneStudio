@@ -7,6 +7,10 @@ import { uiEntityEditorAddSection } from '../../ui/entity_editor';
 import { uiSectionPresetFieldsSetFilter } from '../../ui/sections/preset_fields';
 import { uiInitAddPane, uiInitSetSidebarHeader } from '../../ui/init';
 import { uiPaneMapKey } from '../ui/pane_key';
+import { uiIntroSetChapters } from '../../ui/intro/intro';
+import { uiPaneHelpAddDocs } from '../../ui/panes/help';
+import { lanesIntroChapters } from '../ui/intro';
+import { laneStudioHelpDocs } from '../ui/help';
 import { uiTopToolbarAddTool } from '../../ui/top_toolbar';
 import { uiVersionSetProduct } from '../../ui/version';
 import { svgVerticesSetImportance } from '../../svg/vertices';
@@ -73,6 +77,10 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
     uiEntityEditorAddSection(uiSectionLookAhead, { afterFields: true });
     uiSectionPresetFieldsSetFilter(laneStudioFieldFilter);
     laneStudioRoadFields();
+
+    // the walkthrough shows Lane Studio (in place of iD's chapters), and the Help pane starts with Lane Studio's pages
+    uiIntroSetChapters(lanesIntroChapters);
+    uiPaneHelpAddDocs(laneStudioHelpDocs);
 
     // Lane Studio's settings pane, first in the pane bar
     uiInitAddPane(uiPaneLaneStudio);

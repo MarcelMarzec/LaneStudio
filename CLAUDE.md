@@ -1,7 +1,8 @@
 # Lane Studio: rules for working in this repository
 
-Lane Studio is a fork of iD. Its code is in `modules/lanes/`; see [LANES.md](docs/LANES.md) and
-[ARCHITECTURE.md](docs/ARCHITECTURE.md). Work on the `mm/lane-studio-main` branch.
+Lane Studio is a fork of iD. Its code is in `modules/lanes/`; see the guide ([LANES.md](docs/LANES.md) and its pages in
+`docs/guide/`), [ARCHITECTURE.md](docs/ARCHITECTURE.md) and the [code map](docs/develop/Code-Map.md). Work on the
+`mm/lane-studio-main` branch.
 
 ## Versions
 
@@ -70,18 +71,23 @@ the user to run it when they want the site updated.
 accurate, in the same commit.** A feature isn't finished while a document still describes the old
 behaviour, leaves the new one out, or names files, settings or steps that no longer exist.
 
-The documents are in `docs/`. Only [README.md](README.md), this file and [LICENSE.md](LICENSE.md) stay at the
-root, where GitHub and Claude Code look for them; a new document goes in `docs/`, and links between documents are
-relative to where each one is. The GitHub wiki is a copy of `docs/`, rebuilt on every push by the **Sync docs
-to the wiki** workflow (`scripts/build_wiki.js`): edit the documents here, never on the wiki.
+The documents are in `docs/`: main pages at its top, the user guide's pages in `docs/guide/` and developer pages in
+`docs/develop/` (sub pages under the Guide and Developers pages on the wiki). Only [README.md](README.md), this file
+and [LICENSE.md](LICENSE.md) stay at the root, where GitHub and Claude Code look for them; links between documents are
+relative to where each one is, and page file names are unique across the folders. The GitHub wiki is a copy of
+`docs/`, rebuilt on every push by the **Sync docs to the wiki** workflow (`scripts/build_wiki.js`): edit the documents
+here, never on the wiki.
 
 Before committing, look at what the change touches and check the documents that cover it:
 
 | Document | Covers | Update it when |
 | --- | --- | --- |
 | [README.md](README.md) | What Lane Studio is and does, getting started, putting it online | A feature users would notice is added or removed, or setup changes |
-| [LANES.md](docs/LANES.md) | The user and developer guide: tools, settings, what is drawn and how, where each part lives, iD's hooks | Anything users see or do changes; a file, folder or iD hook is added, moved or removed |
+| [LANES.md](docs/LANES.md) | The guide's front page: what Lane Studio is, and the guide's pages | A guide page is added, renamed or removed |
+| `docs/guide/` | The user guide, a page per area: getting started, lanes, road fields, roadside, street parking, junctions, crossings and markings, areas and surfaces, signs, railways, tools, checks | Anything users see or do, or any tag Lane Studio reads, changes |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the code fits together: modules, how a frame is drawn, editing, tools, caching | The structure, the drawing steps or a module's job changes |
+| `docs/develop/` | Running locally, the code map (where each part lives, iD's hooks), iD's core, customising, iD's accessibility | A file, folder, setup step or iD hook is added, moved or removed |
+| Walkthrough and help (`modules/lanes/ui/intro.ts`, `modules/lanes/ui/help.ts`, `_lanes.intro` and `_lanes.help` in `data/lanes.yaml`) | Lane Studio's walkthrough chapters and Help pane pages | A feature users would notice is added, changed or removed, or a part of the screen they point at moves |
 | [API.md](docs/API.md) | Starting Lane Studio on a page, files it serves, URL parameters, build settings | `LaneStudio.init`, served files, URL parameters or environment variables change |
 | [FAQ.md](docs/FAQ.md) | Common questions | A change answers, changes or raises a common question |
 | [PRIVACY.md](docs/PRIVACY.md) | What is stored, sent and to whom | Anything new is stored in the browser or sent anywhere (add a line to its changelog) |
@@ -97,6 +103,21 @@ Before committing, look at what the change touches and check the documents that 
 - A commit that only updates documents still gets a version and changelog section
   (`#### Behind the scenes`, or `#### Website` when it changes what users read).
 - Each field's i button overview (`info` in `data/lanes.yaml`) is documentation too: keep it accurate with the field.
+
+## Keep the wiki, walkthrough and help short
+
+People skim; nobody reads a wall of text. **Every change to a document, the walkthrough or the help pages keeps them
+short and to the point**:
+
+- **One page per area.** Put new material on the guide or developer page that covers it, or a new page in
+  `docs/guide/` or `docs/develop/` (linked from its main page's table) when no page does. Never let one page grow
+  into a manual: split it when it covers more than one thing.
+- **Lead with what to do or what is drawn**, then the tags. Prefer a table or a short list to a paragraph, one fact
+  per line; cut history, repetition and asides. Link to another page rather than repeating it.
+- **The walkthrough** (`ui/intro.ts`) shows what is different from iD, a few steps per chapter, each one or two
+  sentences; a step points at something on screen (it scrolls it into view), and only the action asked for is in
+  `**bold**`. Check it in the browser when a part of the screen it points at changes.
+- **The help pages** (`ui/help.ts`) are a short list per topic, ending in a pointer to the wiki for the rest.
 
 ## One sidebar, in iD's design
 

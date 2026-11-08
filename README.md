@@ -67,11 +67,14 @@ The website is Lane Studio only; iD's own page is still in the repository for de
 * **Measure**: measure a distance on the imagery and set it as a road, lane, pavement, cycle lane, hard
   shoulder or parking width with one click.
 * **Map key**: a pane explaining every colour, line, symbol and surface on the map.
+* **Walkthrough and help**: Lane Studio's own walkthrough chapters and Help pages, showing what it adds to iD.
 * **Checks**: a lane tags rule in iD's Issues pane (lane counts, widths, unmarked bus lanes, old values, turn
   arrows at dead ends, merges that never end), with fixes where the answer is certain.
 * **What's new**: after an update, a menu lists what changed since the version you last used.
 
-The full guide (zoom levels, tools, what is drawn and how junctions work) is in [LANES.md](docs/LANES.md).
+New here? Help (`H`) → **Start the walkthrough**. The guide ([LANES.md](docs/LANES.md), also the
+[wiki](https://github.com/MarcelMarzec/LaneStudio/wiki)) has a short page for each part: lanes, roadside, parking,
+junctions, crossings, tools and more.
 
 Lane Studio draws what the tags say. Tag what is on the ground, not what makes the drawing look right
 ([don't tag for the renderer](https://wiki.openstreetmap.org/wiki/Tagging_for_the_renderer)); if the tags
@@ -104,10 +107,10 @@ try it locally, run
 
 ## More
 
-* [LANES.md](docs/LANES.md): the user and developer guide
+* [LANES.md](docs/LANES.md): the guide, with its pages in `docs/guide/`
 * [CHANGELOG.md](docs/CHANGELOG.md): what changed in each version
 * [CONTRIBUTING.md](docs/CONTRIBUTING.md): reporting issues and contributing code
-* [ARCHITECTURE.md](docs/ARCHITECTURE.md): how Lane Studio and iD fit together
+* [ARCHITECTURE.md](docs/ARCHITECTURE.md): how Lane Studio and iD fit together, with developer pages in `docs/develop/`
 * [API.md](docs/API.md): URL parameters, build settings and embedding
 * [FAQ.md](docs/FAQ.md), [PRIVACY.md](docs/PRIVACY.md), [ACCESSIBILITY.md](docs/ACCESSIBILITY.md),
   [CODE_OF_CONDUCT.md](docs/CODE_OF_CONDUCT.md)

@@ -685,3 +685,15 @@
 .ideditor.lane-studio .lanes-measure-result { font-size: 22px; font-weight: 700; margin: 6px 0; }
 .ideditor.lane-studio .lanes-measure-targets { display: flex; flex-direction: column; gap: 6px; }
 .ideditor.lane-studio .lanes-measure-target { text-align: left; padding: 6px 10px; height: auto; white-space: normal; }
+
+/* Lane Studio's pages in the Help pane: lists read like iD's paragraphs */
+.ideditor.lane-studio .help-pane .left-content ul {
+    list-style: disc;
+    padding-left: 20px;
+    margin-bottom: 15px;
+}
+.ideditor.lane-studio .help-pane .left-content li {
+    font-size: 15px;
+    line-height: 1.5;
+    margin-bottom: 6px;
+}

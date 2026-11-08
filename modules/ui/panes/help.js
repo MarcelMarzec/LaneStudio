@@ -10,6 +10,14 @@ import { uiTooltip } from '../tooltip';
 import { helpHtml } from '../intro/helper';
 import { utilSanitizeHTML } from '../../util/sanitize';
 
+// An app built on iD can add help pages of its own before iD's: each `{ titleKey, markdown }`, where `titleKey` is
+// a string key for its title and `markdown()` gives its text. By default, none.
+let _extraDocs = [];
+
+export function uiPaneHelpAddDocs(docs) {
+    _extraDocs = _extraDocs.concat(docs);
+}
+
 export function uiPaneHelp(context) {
 
     var docKeys = [
@@ -256,7 +264,15 @@ export function uiPaneHelp(context) {
     };
 
     // For each section, squash all the texts into a single markdown document
-    var docs = docKeys.map(function(key) {
+    var extraDocs = _extraDocs.map(function(doc) {
+        return {
+            title: t.addOrUpdate(doc.titleKey),
+            _title: t(doc.titleKey),
+            sanitized_html: utilSanitizeHTML(marked(doc.markdown().trim()))
+        };
+    });
+
+    var docs = extraDocs.concat(docKeys.map(function(key) {
         var helpkey = 'help.' + key[0];
         var helpPaneReplacements = { version: context.version };
         var text = key[1].reduce(function(all, part) {
@@ -274,7 +290,7 @@ export function uiPaneHelp(context) {
                 .replace(/<code>/g, '<kbd>')
                 .replace(/<\/code>/g, '<\/kbd>')
         };
-    });
+    }));
 
     var helpPane = uiPane('help', context)
         .key(t('help.key'))
