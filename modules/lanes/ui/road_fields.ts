@@ -11,7 +11,7 @@ import { actionChangeLanes } from '../actions/change_lanes';
 import { laneDriveSide } from '../core/drive_side';
 import { laneState } from '../core/lane_state';
 import {
-    assumedShoulder, cyclewayValue, hasOldCycleways, isSidewalkWay, parallelWays, roadContraflowSide, shoulderValue, sidewalkValue,
+    assumedShoulder, busValue, cyclewayValue, hasOldCycleways, isSidewalkWay, parallelWays, roadContraflowSide, shoulderValue, sidewalkValue,
     upgradeOldCycleways, withCycleway, withShoulder, withSidewalk
 } from '../core/roadside';
 import { isLaneRoad, laneRoadHighways, sidewalkExpectedHighways } from '../core/roads';
@@ -30,6 +30,7 @@ import type { InfoTopic } from './field_info';
 import { choiceButtons, fieldNote, fieldReference, sidedRows } from './lane_fields';
 import { parkingSideDetails, roadParkingScope } from './parking_fields';
 import { centreLineIcon } from './section_lanes';
+import { cyclewaySideDetails } from './cycleway_fields';
 import { mphOf, roadSpeedPick, speedRoundels, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed } from './speed_roundels';
 
 type Div = d3.Selection<HTMLDivElement>;
@@ -118,6 +119,39 @@ function drawCounts(context: iD.Context, wrap: Div, road: osmWay) {
             .on('click', () => perform(m => insertLane(m, direction), 'add_lane'));
     }
     if (model.countSource === 'assumed') fieldNote(wrap, t('_lanes.section.assumed'), 'assumed');
+    // bus lanes tagged the old way (busway:<side>=lane): one click makes each a lane of its own, bus:lanes=designated
+    const graph = context.graph();
+    const oneSide = shoulderSide(road, graph);
+    const contraflow = roadContraflowSide(road, graph);
+    const oldBus = (['left', 'right'] as const).filter(side => busValue(road.tags, side, oneSide, contraflow) === 'lane');
+    if (oldBus.length && !laneRefsInWayOrder(model).some(ref => ['bus', 'psv'].includes(laneKindOf(model, ref)))) {
+        const note = fieldNote(wrap, t('_lanes.section.old_busway'), 'lanes-suggestion');
+        note.append('button').attr('type', 'button').text(t('_lanes.parking.upgrade'))
+            .on('click', () => context.perform((g: iD.Graph) => {
+                const changed = actionChangeLanes(road.id, m => upgradeOldBusway(m, oldBus))(g);
+                const way = changed.entity(road.id) as osmWay;
+                const next = { ...way.tags };
+                for (const key of ['busway', 'busway:both', 'busway:left', 'busway:right']) delete next[key];
+                return actionChangeTags(road.id, next)(changed);
+            }, t('_lanes.annotation.add_lane')));
+    }
+}
+
+/**
+ * Adds a bus lane for each side tagged `busway:<side>=lane` (wiki: Key:busway, deprecated for bus:lanes): a lane on the
+ * kerb side of the traffic beside it, `bus:lanes=designated`
+ */
+export function upgradeOldBusway(model: LaneModel, sides: ParkingSide[]): LaneModel {
+    let next = model;
+    for (const side of sides) {
+        // the traffic beside a side: on a one-way road the road's, else the side's own (forward on the way's right
+        // where traffic keeps right)
+        const direction: LaneDirection = next.oneway || ((side === 'right') === (next.driveSide === 'right') ? 'forward' : 'backward');
+        // a lane's index counts from the driver's left: the kerb side is the start where traffic keeps left
+        const index = next.driveSide === 'left' ? 0 : next.lanes[direction].length;
+        next = setLaneKind(insertLane(next, direction, index), [{ direction, index }], 'bus');
+    }
+    return next;
 }
 
 /** The centre line, picked from its four paintings (wiki: Key:overtaking) */
@@ -186,7 +220,7 @@ function drawSided(feature: SidedFeature) {
         const values: Record<SidedFeature, { values: string[]; read: (side: ParkingSide) => string | undefined; write: (side: ParkingSide, value: string | undefined) => Tags }> = {
             shoulder: { values: ['yes', 'no'], read: side => shoulderValue(tags, side, oneSide),
                 write: (side, v) => withShoulder(tags, side, v as 'yes' | 'no' | undefined, oneSide) },
-            sidewalk: { values: ['yes', 'no', 'separate'], read: side => sidewalkValue(tags, side), write: (side, v) => withSidewalk(tags, side, v) },
+            sidewalk: { values: ['yes', 'no', 'separate', 'lane'], read: side => sidewalkValue(tags, side), write: (side, v) => withSidewalk(tags, side, v) },
             cycleway: { values: ['lane', 'track', 'shared_lane', 'share_busway', 'separate', 'no'], read: side => cyclewayValue(tags, side, contraflow),
                 write: (side, v) => withCycleway(tags, side, v, contraflow) },
             parking: { values: [...parkingPositions], read: side => parkingValue(tags, side),
@@ -210,6 +244,7 @@ function drawSided(feature: SidedFeature) {
 
         if (feature === 'shoulder') drawShoulderExtras(context, wrap, road, sides, nameOf, oneSide);
         if (feature === 'sidewalk') drawSidewalkExtras(context, wrap, road, sides, nameOf);
+        if (feature === 'cycleway') cyclewaySideDetails(context, wrap, road, sides, nameOf);
         if (feature === 'cycleway' && hasOldCycleways(tags)) {
             const note = fieldNote(wrap, t('_lanes.roadside.old_cycleway'), 'lanes-suggestion');
             note.append('button').attr('type', 'button').text(t('_lanes.parking.upgrade'))

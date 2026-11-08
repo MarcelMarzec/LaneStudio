@@ -4,6 +4,7 @@ import type { OsmEntity } from '../../osm';
 import type { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
 import { add, dot, len, metricFrame, scale, sub } from './frame';
+import { multipolygonRings } from './street';
 
 /** What a parking space is for, by `parking_space=*`: each kind has its own colour */
 export type ParkingSpaceKind = 'normal' | 'disabled' | 'charging' | 'parent' | 'motorcycle' | 'other';
@@ -22,6 +23,8 @@ export interface ParkingSpaceShape {
 export interface CarParkShape {
     id: string;
     polygon: Vec2[];
+    /** a multipolygon car park's other rings (inner rings are holes) */
+    rings?: Vec2[][];
 }
 
 const spaceKinds: Record<string, ParkingSpaceKind> = {
@@ -54,6 +57,12 @@ export function parkingSpaceGeometry(entities: OsmEntity[], graph: coreGraph): {
     const carParks: CarParkShape[] = [];
     const roads = entities.filter(e => e.type === 'way' && !!e.tags.highway && !(e as osmWay).isClosed()) as osmWay[];
     for (const entity of entities) {
+        // a car park mapped as a multipolygon
+        if (entity.type === 'relation' && entity.tags.amenity === 'parking' && (!entity.tags.parking || entity.tags.parking === 'surface')) {
+            const rings = multipolygonRings(entity, graph);
+            if (rings) carParks.push({ id: entity.id, polygon: rings.outer, rings: rings.rings });
+            continue;
+        }
         if (entity.type !== 'way' || !(entity as osmWay).isClosed()) continue;
         const way = entity as osmWay;
         const amenity = way.tags.amenity;

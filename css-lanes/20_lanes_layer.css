@@ -55,6 +55,13 @@
 }
 .ideditor.lane-studio .lanes-layer .divider.dashed  { stroke-dasharray: 8, 8; }
 .ideditor.lane-studio .lanes-layer .divider.unknown { stroke-opacity: 0.5; }
+/* a bus lane's edge in the UK, and lanes with a coloured surface (surface:colour) */
+.ideditor.lane-studio .lanes-layer .divider.wide { stroke-width: 3; }
+.ideditor.lane-studio .lanes-layer .lane.surface-colour-red    { fill: rgb(190, 50, 45); --lanes-a: 0.7; }
+.ideditor.lane-studio .lanes-layer .lane.surface-colour-green  { fill: rgb(40, 150, 70); --lanes-a: 0.7; }
+.ideditor.lane-studio .lanes-layer .lane.surface-colour-blue   { fill: rgb(50, 110, 200); --lanes-a: 0.65; }
+.ideditor.lane-studio .lanes-layer .lane.surface-colour-yellow,
+.ideditor.lane-studio .lanes-layer .lane.surface-colour-orange { fill: rgb(220, 160, 40); --lanes-a: 0.6; }
 .ideditor.lane-studio .lanes-layer .divider.double  { stroke-width: 1.25; }
 .ideditor.lane-studio .lanes-layer .divider.double.dashed { stroke-dasharray: 6, 6; }
 
@@ -67,6 +74,10 @@
     stroke-opacity: 0.7;
 }
 
+/* a guided busway's concrete track, and an escape lane's arrester bed of gravel */
+.ideditor.lane-studio .lanes-layer .carriageway.lanes-guideway { fill: rgb(170, 170, 165); --lanes-a: 0.6; stroke: #d8d8d4; stroke-width: 3; }
+.ideditor.lane-studio .lanes-layer .carriageway.lanes-escape:not([class*='surface-']) { fill: url(#lanes-texture-gravel); --lanes-a: 0.7; }
+
 /* roadside strips outside the kerb (transparency in --lanes-a, scaled by the surface opacity setting) */
 .ideditor.lane-studio .lanes-layer .roadside { stroke: none; }
 .ideditor.lane-studio .lanes-layer .roadside-sidewalk         { fill: rgb(236, 205, 150); --lanes-a: 0.7; }
@@ -74,6 +85,24 @@
 .ideditor.lane-studio .lanes-layer .roadside-sidewalk_unknown { fill: url(#lanes-hatch); --lanes-a: 0.6; }
 .ideditor.lane-studio .lanes-layer .roadside-cycle_lane       { fill: rgb(45, 170, 95); --lanes-a: 0.55; }
 .ideditor.lane-studio .lanes-layer .roadside-cycle_track      { fill: rgb(45, 170, 95); --lanes-a: 0.7; }
+/* a cycle lane's colour (cycleway:<side>:surface:colour), the painted buffer beside it, a pedestrian lane on the road,
+   a bus lane tagged the old way (busway:<side>=lane) and a bus bay (bus_bay=*), in the road's colour */
+.ideditor.lane-studio .lanes-layer .roadside-cycle_lane.colour-green  { fill: rgb(40, 150, 70); --lanes-a: 0.8; }
+.ideditor.lane-studio .lanes-layer .roadside-cycle_lane.colour-red    { fill: rgb(190, 60, 50); --lanes-a: 0.75; }
+.ideditor.lane-studio .lanes-layer .roadside-cycle_lane.colour-blue   { fill: rgb(50, 110, 200); --lanes-a: 0.75; }
+.ideditor.lane-studio .lanes-layer .roadside-cycle_lane.colour-yellow,
+.ideditor.lane-studio .lanes-layer .roadside-cycle_lane.colour-orange { fill: rgb(220, 160, 40); --lanes-a: 0.7; }
+.ideditor.lane-studio .lanes-layer .roadside-cycle_buffer      { fill: url(#lanes-hatch); --lanes-a: 0.9; }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk_lane     { fill: rgb(236, 205, 150); --lanes-a: 0.45; }
+.ideditor.lane-studio .lanes-layer .roadside-bus_lane          { fill: rgb(204, 51, 51); --lanes-a: 0.55; }
+.ideditor.lane-studio .lanes-layer .roadside-bus_bay           { fill: var(--lanes-road-fill, rgb(67, 72, 82)); fill-opacity: var(--lanes-road-alpha, 0.545); }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk.surface-paving   { fill: url(#lanes-texture-paving); }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk.surface-sett     { fill: url(#lanes-texture-sett); }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk.surface-gravel   { fill: url(#lanes-texture-gravel); }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk.surface-asphalt  { fill: rgb(60, 64, 72); }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk.surface-concrete { fill: rgb(170, 170, 165); }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk.surface-unpaved  { fill: rgb(150, 115, 75); }
+.ideditor.lane-studio .lanes-layer .roadside-sidewalk.surface-grass    { fill: rgb(110, 165, 80); }
 /* a hard shoulder: road surface, a shade lighter than the lanes */
 .ideditor.lane-studio .lanes-layer .roadside-shoulder         { fill: rgb(110, 115, 125); --lanes-a: 0.55; }
 .ideditor.lane-studio .lanes-layer .roadside-shoulder.selected {
@@ -85,6 +114,40 @@
     fill: none;
     stroke: #f2f2f2;
     stroke-width: 2;
+}
+/* beside a bus lane, a wide solid line; beside an advisory cycle lane a dashed one; what keeps a cycle lane apart */
+.ideditor.lane-studio .lanes-layer .shoulder-edge.bus-lane-edge { stroke-width: 3; }
+.ideditor.lane-studio .lanes-layer .shoulder-edge.advisory { stroke-dasharray: 8, 6; }
+.ideditor.lane-studio .lanes-layer .shoulder-edge.separation { stroke-width: 4; stroke-linecap: round; }
+.ideditor.lane-studio .lanes-layer .shoulder-edge.separation-bollard,
+.ideditor.lane-studio .lanes-layer .shoulder-edge.separation-flex_post,
+.ideditor.lane-studio .lanes-layer .shoulder-edge.separation-vertical_panel { stroke-dasharray: 0.1, 10; stroke-width: 5; }
+.ideditor.lane-studio .lanes-layer .shoulder-edge.separation-kerb,
+.ideditor.lane-studio .lanes-layer .shoulder-edge.separation-separation_kerb,
+.ideditor.lane-studio .lanes-layer .shoulder-edge.separation-bump { stroke: #c8c8c4; stroke-width: 4; }
+.ideditor.lane-studio .lanes-layer .shoulder-edge.separation-planter { stroke: rgb(90, 150, 70); stroke-dasharray: 10, 6; stroke-width: 6; }
+.ideditor.lane-studio .lanes-layer .shoulder-edge.separation-fence,
+.ideditor.lane-studio .lanes-layer .shoulder-edge.separation-guard_rail { stroke: #b9bec6; stroke-width: 2.5; }
+/* the kerb of a pavement tagged lowered, flush or rolled (sidewalk:<side>:kerb) */
+.ideditor.lane-studio .lanes-layer .kerb.kerb-lowered { stroke: #8fe3d0; stroke-dasharray: 6, 3; }
+.ideditor.lane-studio .lanes-layer .kerb.kerb-flush,
+.ideditor.lane-studio .lanes-layer .kerb.kerb-no      { stroke: #7fc8ff; stroke-dasharray: 2, 3; }
+.ideditor.lane-studio .lanes-layer .kerb.kerb-rolled  { stroke: #c9c9ff; stroke-dasharray: 8, 3, 2, 3; }
+
+/* symbols and words painted along lanes: cycle symbols, sharrows, BUS LANE and a bus bay's yellow BUS STOP box */
+.ideditor.lane-studio .lanes-layer .lane-symbol { pointer-events: none; filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.8)); }
+.ideditor.lane-studio .lanes-layer .lane-word {
+    fill: #f4f4f4;
+    font-weight: 700;
+    font-family: 'Arial Narrow', Arial, sans-serif;
+}
+.ideditor.lane-studio .lanes-layer .lane-symbol-bus_stop_text .lane-word { fill: #f6c700; }
+.ideditor.lane-studio .lanes-layer .lane-box.bus-stop-box {
+    fill: none;
+    stroke: #f6c700;
+    stroke-width: 2;
+    stroke-dasharray: 10, 5;
+    pointer-events: none;
 }
 
 /* turn arrows: white (set on the symbols) with a dark edge, readable on light and dark imagery */
@@ -100,6 +163,12 @@
     stroke-width: 3px;
     font-weight: 600;
 }
+/* a destination label in its sign's colour (destination:colour) */
+.ideditor.lane-studio .lanes-layer .lane-label.sign-blue   { stroke: rgba(30, 80, 170, 0.95); }
+.ideditor.lane-studio .lanes-layer .lane-label.sign-green  { stroke: rgba(20, 110, 60, 0.95); fill: #ffd400; }
+.ideditor.lane-studio .lanes-layer .lane-label.sign-brown  { stroke: rgba(120, 70, 35, 0.95); }
+.ideditor.lane-studio .lanes-layer .lane-label.sign-white  { stroke: rgba(255, 255, 255, 0.95); fill: #111; }
+.ideditor.lane-studio .lanes-layer .lane-label.sign-yellow { stroke: rgba(250, 210, 0, 0.95); fill: #111; }
 
 /* where lanes are drawn, iD's own road line becomes a thin centre line you can still click and drag */
 .ideditor.lane-studio .surface.lanes-visible .layer-osm path.line.stroke.lanes-drawn {

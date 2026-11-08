@@ -55,6 +55,22 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
         .attr('fill', 'none').attr('stroke', 'currentColor').attr('stroke-width', 1.4).attr('stroke-linecap', 'round');
     travel.append('path').attr('d', 'M-3.2 -2L0 -9.5L3.2 -2Z').attr('fill', 'currentColor');
 
+    // the cycle symbol painted in cycle lanes (TSRGD diagram 1057): a bicycle seen from the side, front wheel ahead (up),
+    // in a box 20 units long
+    const cycle = (id: string, y: number, k: number) => {
+        const s = defs.append('symbol').attr('id', id).attr('overflow', 'visible');
+        const g = s.append('g').attr('transform', `translate(0,${y}) scale(${k})`)
+            .attr('fill', 'none').attr('stroke', '#fff').attr('stroke-width', 1.2).attr('stroke-linejoin', 'round').attr('stroke-linecap', 'round');
+        g.append('circle').attr('cx', 0).attr('cy', -5.5).attr('r', 4);
+        g.append('circle').attr('cx', 0).attr('cy', 5.5).attr('r', 4);
+        g.append('path').attr('d', 'M0 5.5L-2.6 0L0 -5.5M-2.6 0H1.6L0 5.5M1.6 0L2.6 -3.4M-3.2 1.8H-1.4M2 -3.6H3.4');
+        return s;
+    };
+    cycle('lanes-cycle', 0, 0.85);
+    // a shared lane (sharrow): a cycle symbol with two chevrons ahead of it
+    cycle('lanes-sharrow', 3, 0.6).append('path').attr('d', 'M-4 -5L0 -8.5L4 -5M-4 -9L0 -12.5L4 -9')
+        .attr('fill', 'none').attr('stroke', '#fff').attr('stroke-width', 1.3).attr('stroke-linejoin', 'round');
+
     // give-way triangle painted on the road: its base faces the line ahead, its tip the driver
     defs.append('symbol').attr('id', 'lanes-giveway').attr('overflow', 'visible')
         .append('path').attr('d', 'M-7 -10L7 -10L0 10Z')
@@ -67,6 +83,26 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
     for (const [cy, colour] of [[-6, '#e33'], [0, '#fb3'], [6, '#3c5']] as const) {
         signals.append('circle').attr('cx', 0).attr('cy', cy).attr('r', 2.2).attr('fill', colour);
     }
+
+    // other signal heads: flashing amber, lane control (a green arrow over a red cross), emergency (two red lamps)
+    const head = (id: string, lamps: [number, string][]) => {
+        const s = defs.append('symbol').attr('id', id).attr('overflow', 'visible');
+        s.append('rect').attr('x', -4).attr('y', -10).attr('width', 8).attr('height', 20).attr('rx', 2)
+            .attr('fill', '#222').attr('stroke', '#fff').attr('stroke-width', 1);
+        for (const [cy, colour] of lamps) s.append('circle').attr('cx', 0).attr('cy', cy).attr('r', 2.4).attr('fill', colour);
+        return s;
+    };
+    head('lanes-signals-blinker', [[0, '#fb3']]);
+    head('lanes-signals-emergency', [[-4, '#e33'], [4, '#e33']]);
+    const control = defs.append('symbol').attr('id', 'lanes-signals-lane-control').attr('overflow', 'visible');
+    control.append('rect').attr('x', -7).attr('y', -7).attr('width', 14).attr('height', 14).attr('rx', 1.5)
+        .attr('fill', '#222').attr('stroke', '#fff').attr('stroke-width', 1);
+    control.append('path').attr('d', 'M0 4V-4M-3 -1L0 -4L3 -1').attr('fill', 'none').attr('stroke', '#3c5').attr('stroke-width', 1.6);
+
+    // a Belisha beacon seen from above: an amber globe on a black and white post
+    const beacon = defs.append('symbol').attr('id', 'lanes-belisha').attr('overflow', 'visible');
+    beacon.append('circle').attr('r', 9).attr('fill', '#f5a623').attr('stroke', '#1b1b1b').attr('stroke-width', 2);
+    beacon.append('circle').attr('r', 4).attr('fill', 'none').attr('stroke', '#fff').attr('stroke-width', 1.5);
 
     // fills for painted areas (road_marking with pattern=*), one per colour: patterns take their
     // colours from where they are defined, not from the shape that uses them

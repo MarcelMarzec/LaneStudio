@@ -17,7 +17,8 @@ const symbols: Partial<Record<ParkingSpaceShape['kind'], string>> = {
 export function drawParkingSpaces(group: (name: string) => Group, spaces: ParkingSpaceShape[], carParks: CarParkShape[],
     projection: Projection, markings: boolean) {
     const path = pathFor(projection);
-    joinPaths(group('car-parks'), carParks, d => d.id, d => `car-park ${d.id}`, d => path(d.polygon, true));
+    joinPaths(group('car-parks'), carParks, d => d.id, d => `car-park ${d.id}`,
+        d => path(d.polygon, true) + (d.rings ?? []).map(ring => path(ring, true)).join(''));
     joinPaths(group('parking-spaces'), spaces.flatMap(space => [
         { key: space.id, cls: `parking-space parking-space-${space.kind} ${space.id}`, d: path(space.polygon, true) },
         ...(markings ? [{ key: `${space.id}-lines`, cls: `parking-space-lines parking-space-${space.kind}`, d: space.lines.map(line => path(line, false)).join('') }] : [])

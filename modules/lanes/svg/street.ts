@@ -117,14 +117,16 @@ export function drawStreet(
     const symbols = zoom >= zooms.labels;
 
     // a road's carriageway area carries the road's id too, so it lights up with the road
+    // (a multipolygon's other rings go in the same path: its inner rings are holes)
+    const areaPath = (d: AreaShape) => path(d.polygon, true) + (d.rings ?? []).map(ring => path(ring, true)).join('');
     joinPaths(group('areas'), street.areas.filter(a => a.kind !== 'island' && !paintedAreaKinds.has(a.kind)), d => d.id,
         d => `street-area street-area-${d.kind} ${d.id}` + (areaRoads.has(d.id) ? ` ${areaRoads.get(d.id)}` : '') +
-            (d.surface ? ` surface-${d.surface}` : ''), d => path(d.polygon, true));
+            (d.surface ? ` surface-${d.surface}` : ''), areaPath);
 
     drawPaintedAreas(group('area-markings'), street.areas.filter(a => paintedAreaKinds.has(a.kind)), path);
 
     joinPaths(group('islands'), street.areas.filter(a => a.kind === 'island'), d => d.id,
-        d => `street-area street-area-island ${d.id} surface-${d.surface ?? 'concrete'}`, d => path(d.polygon, true));
+        d => `street-area street-area-island ${d.id} surface-${d.surface ?? 'concrete'}`, areaPath);
 
     // paths by kind, surface and use; segregated foot and cycle paths get a line down the middle. Footways, paths and
     // pedestrian ways are drawn under the roads (crossings, drawn on their own, go over them), those on bridges over
@@ -168,8 +170,8 @@ export function drawStreet(
         .attr('stroke-width', d => Math.max(1.2, d.width * metres).toFixed(1));
 
     // node markings, with the bands under the bars and lines
-    const order = ['ford', 'crossing', 'crossing_surface', 'calming', 'cattle_grid', 'mini_roundabout', 'island', 'turning_loop_island', 'kerb_node', 'zebra_bar', 'crossing_line', 'crossing_pictogram',
-        'stop_line', 'give_way_line', 'signal_line', 'barrier_line', 'barrier_post', 'barrier_node'];
+    const order = ['ford', 'tactile', 'asl_box', 'crossing', 'crossing_surface', 'calming', 'cattle_grid', 'mini_roundabout', 'island', 'turning_loop_island', 'kerb_node', 'zebra_bar', 'crossing_line', 'crossing_pictogram',
+        'stop_line', 'give_way_line', 'signal_line', 'zigzag', 'barrier_line', 'barrier_post', 'barrier_node'];
     const nodeShapes = !markings ? [] : [...street.markings].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
     joinPaths(group('markings'), nodeShapes, d => d.key,
         d => `marking marking-${d.kind}` + (d.variant ? ` ${d.variant}` : ''), d => path(d.points, d.closed));
@@ -177,6 +179,12 @@ export function drawStreet(
     drawSymbols(group('symbols'), symbols ? street.symbols : [], projection);
 }
 
+
+// symbols drawn as a copy of one in the layer's defs
+const symbolHref: Partial<Record<SymbolShape['kind'], string>> = {
+    signals: '#lanes-signals', signals_blinker: '#lanes-signals-blinker', signals_lane_control: '#lanes-signals-lane-control',
+    signals_emergency: '#lanes-signals-emergency', belisha: '#lanes-belisha', cycle: '#lanes-cycle', give_way_triangle: '#lanes-giveway'
+};
 
 function drawSymbols(group: Group, data: SymbolShape[], projection: Projection) {
     const items = data.map(d => {
@@ -239,7 +247,7 @@ function drawSymbols(group: Group, data: SymbolShape[], projection: Projection) 
         })
         .attr('stroke-width', d => Math.max(1, d.k * 0.07).toFixed(1));
     all.select('use')
-        .each(attrChanged('href', d => (d.kind === 'signals' ? '#lanes-signals' : '#lanes-giveway')))
+        .each(attrChanged('href', d => symbolHref[d.kind] ?? '#lanes-giveway'))
         .each(attrChanged('transform', d => `scale(${(d.k / 20).toFixed(3)})`));
 }
 

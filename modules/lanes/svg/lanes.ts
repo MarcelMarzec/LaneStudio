@@ -13,7 +13,11 @@ import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind } from '../c
 import { drawRoutes, laneUnder } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
 import { roadGeometry, type LaneSwap, type LineTrim, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
-import type { LaneInfo, ParkingLayout } from '../geometry/layout';
+import type { CycleDetail, LaneInfo, ParkingLayout } from '../geometry/layout';
+import type { SurfaceGroup } from '../model/street_features';
+import { laneSymbols } from '../geometry/lane_symbols';
+import { drawLaneSymbols } from './lane_symbols';
+import { ukMarkings } from '../core/drive_side';
 import { t } from '../../core/localizer';
 import {
     parseLanes, parseTurn, formatTurn, dividerAt, setDivider, nextDivider, setLaneValue, setLaneKind, parseConnectivity,
@@ -28,7 +32,7 @@ import { actionConnectLanes, connectionNode, findConnectivity } from '../actions
 import { streetGeometry, carriagewayAreaEdges, isCarriagewayArea, type StreetGeometry } from '../geometry/street';
 import { parkingGeometry, type ParkingShape } from '../geometry/parking';
 import { roadMarkingGeometry } from '../geometry/road_marking';
-import { isStreetParking, isTrafficIsland, overtakingBanned, surfaceGroup, withOvertaking } from '../model/street_features';
+import { isStreetParking, isTrafficIsland, markingColour, overtakingBanned, surfaceGroup, withOvertaking } from '../model/street_features';
 import { metricFrame, offsetPolyline, pointAlong, pointInPolygon, polylineLength } from '../geometry/frame';
 import { parkingBadgeParts, parkingUse, parkingValue } from '../model/parking';
 import { openRoadsideMenu } from '../ui/roadside_menu';
@@ -131,6 +135,67 @@ function capEdges(pieces: RoadPiece[], building: (piece: RoadPiece) => boolean) 
 
 
 /** A parking strip's classes: where it is, what it is kept for and its own surface */
+// the symbols UK direction signs carry, as a character before the destination (`destination:symbol`)
+const destinationSymbols: Record<string, string> = {
+    airport: '✈', ferry: '⛴', hospital: 'H', train_station: '⇌', railway: '⇌', parking: 'P', motorway: 'M', centre: '◎', city_centre: '◎',
+    industrial: '⚙', services: '⛽', fuel: '⛽', tourism: '✿'
+};
+// sign colours with a style of their own (`destination:colour`): motorway blue, primary route green, local white,
+// tourist brown, diversion yellow
+const signColours = ['blue', 'green', 'white', 'brown', 'yellow'];
+
+/**
+ * A lane's label: its destinations and road numbers (with the sign's symbol, `destination:symbol`), its own speed limit
+ * and its restrictions, and the colour of the sign the destination is on (`destination:colour`). A destination the whole
+ * road has (`destination`, not `destination:lanes`) is shown once per direction, on its middle lane.
+ */
+function laneLabel(piece: RoadPiece, lane: LaneInfo, tags: Tags): { text: string; sign: string } {
+    const sameWay = piece.layout.lanes.filter(l => l.ref.direction === lane.ref.direction);
+    const middle = sameWay[Math.floor((sameWay.length - 1) / 2)] === lane;
+    const shownKey = (key: string) => (!lane.inherited?.includes(key) || middle ? lane.values[key] : undefined);
+    const symbol = destinationSymbols[(lane.values['destination:symbol:lanes'] || '').split(';')[0]];
+    const text = [
+        shownKey('destination:ref:lanes'),
+        // (several destinations on one lane: the first two, after the sign's symbol)
+        [symbol, shownKey('destination:lanes')?.split(';').slice(0, 2).join(' / ')].filter(Boolean).join(' '),
+        lane.values['maxspeed:lanes'],
+        ...laneRestrictions(lane.values)
+    ].filter(Boolean).join(' · ');
+    const colour = (lane.values['destination:colour:lanes'] || tags['destination:colour'] || '').split(';')[0].toLowerCase();
+    return { text, sign: signColours.includes(colour) ? colour : '' };
+}
+
+/**
+ * A lane's restrictions as short words on its label (wiki: Lanes): no lorries (`hgv:lanes=no`), a crawler lane
+ * (`hgv:lanes=designated`), and its height, width and weight limits (`maxheight:lanes`, `maxwidth:lanes`,
+ * `maxweight:lanes`)
+ */
+export function laneRestrictions(values: Record<string, string>): string[] {
+    const out: string[] = [];
+    if (values['hgv:lanes'] === 'no') out.push(t('_lanes.labels.no_hgv'));
+    if (values['hgv:lanes'] === 'designated') out.push(t('_lanes.labels.hgv'));
+    if (values['maxheight:lanes'] && values['maxheight:lanes'] !== 'none') out.push(`↕ ${values['maxheight:lanes']}`);
+    if (values['maxwidth:lanes'] && values['maxwidth:lanes'] !== 'none') out.push(`↔ ${values['maxwidth:lanes']}`);
+    if (values['maxweight:lanes'] && values['maxweight:lanes'] !== 'none') out.push(`${values['maxweight:lanes']}${/\d$/.test(values['maxweight:lanes']) ? ' t' : ''}`);
+    return out;
+}
+
+/** How traffic calming tagged on a road way is drawn along it: a table, a painted table, a hump, rumble strips, or hatched */
+function calmingAlongWay(tags: Tags): string | undefined {
+    const value = tags.traffic_calming?.split(';')[0].trim();
+    if (!value || value === 'no') return undefined;
+    if (value === 'table' || value === 'choked_table') return 'table';
+    if (value === 'painted_table') return 'painted';
+    if (['hump', 'bump', 'cushion', 'dynamic_bump', 'speed_hump', 'speed_bump'].includes(value)) return 'hump';
+    if (value === 'rumble_strip' || value === 'mini_bumps') return 'rumble';
+    return 'other';
+}
+
+/** A strip's colour or surface: a coloured cycle lane (`cycleway:<side>:surface:colour`), a pavement's `sidewalk:<side>:surface` */
+function stripDetailClass(strip: { cycle?: CycleDetail; surface?: SurfaceGroup }): string {
+    return (strip.cycle?.colour && strip.cycle.colour !== 'white' ? ` colour-${strip.cycle.colour}` : '') + (strip.surface ? ` surface-${strip.surface}` : '');
+}
+
 function parkingClass(parking: ParkingLayout | undefined): string {
     if (!parking) return '';
     const surface = surfaceGroup(parking.surface);
@@ -139,27 +204,45 @@ function parkingClass(parking: ParkingLayout | undefined): string {
 
 
 /**
- * A side's kerb, as drawn: a hard shoulder, a cycle lane and parking on the road are inside it, so it runs beyond the
- * last of them; `edge` is the lanes' own edge, where the white line beside a hard shoulder or a cycle lane goes
- * (`edgeKind` says which)
+ * A side's kerb, as drawn: a hard shoulder, a bus lane, a cycle lane and its buffer, a pedestrian lane, parking on the
+ * road and a bus bay are inside it, so it runs beyond the last of them; `edge` is the lanes' own edge, where the white
+ * line beside the first of them goes (`edge` says how it is drawn, with the strip beside it), and `kerb` names the
+ * pavement's kerb (`sidewalk:<side>:kerb`)
  */
 function kerbLine(piece: RoadPiece, side: 'left' | 'right') {
     const edge = piece.lines[side === 'left' ? 0 : piece.lines.length - 1];
     const strips = piece.roadside.filter(strip => strip.side === side);
-    const onRoad = (strip: typeof strips[number]) => strip.kind === 'shoulder' || strip.kind === 'cycle_lane' ||
-        strip.kind === 'sidewalk_lane' || (strip.kind === 'parking' && strip.parking?.position !== 'on_kerb');
+    const onRoad = (strip: typeof strips[number]) => ['shoulder', 'cycle_lane', 'cycle_buffer', 'sidewalk_lane', 'bus_lane', 'bus_bay'].includes(strip.kind) ||
+        (strip.kind === 'parking' && strip.parking?.position !== 'on_kerb');
     let inside = 0;
     while (inside < strips.length && onRoad(strips[inside])) inside++;
-    const first = strips[0]?.kind;
-    const edgeKind = inside && (first === 'shoulder' || first === 'cycle_lane' || first === 'sidewalk_lane') ? first : null;
-    return { edge, kerb: inside ? ringEdges(strips[inside - 1].polygon)[1] : edge, edgeKind };
+    const first = inside ? strips[0] : undefined;
+    // (a buffer's line belongs to the cycle lane beyond it)
+    const beside = first?.kind === 'cycle_buffer' && strips[1] ? strips[1] : first;
+    const kerbStyle = strips.find(strip => strip.kind === 'sidewalk')?.kerb;
+    return {
+        edge,
+        kerb: inside ? ringEdges(strips[inside - 1].polygon)[1] : edge,
+        edgeClass: beside && beside.kind !== 'parking' && beside.kind !== 'bus_bay' ? edgeLineClass(beside) : '',
+        kerbClass: kerbStyle && ['raised', 'lowered', 'flush', 'rolled', 'no'].includes(kerbStyle) ? ` kerb-${kerbStyle}` : ''
+    };
 }
 
-/** The class of the white line at the lanes' edge beside a hard shoulder, a cycle lane or a pedestrian lane */
-function edgeLineClass(kind: 'shoulder' | 'cycle_lane' | 'sidewalk_lane'): string {
-    if (kind === 'shoulder') return 'shoulder-edge';
-    if (kind === 'sidewalk_lane') return 'shoulder-edge sidewalk-lane-edge';
-    return 'shoulder-edge cycle-lane-edge';
+/**
+ * The class of the white line at the lanes' edge: a hard shoulder's, a bus lane's (wide, TSRGD diagram 1049), or a cycle
+ * lane's, solid unless it is advisory (`cycleway:<side>:lane=advisory`), with what keeps it apart from the lanes
+ * (`cycleway:<side>:separation`); a pedestrian lane's
+ */
+function edgeLineClass(strip: RoadPiece['roadside'][number]): string {
+    if (strip.kind === 'bus_lane') return 'shoulder-edge bus-lane-edge';
+    if (strip.kind === 'sidewalk_lane') return 'shoulder-edge sidewalk-lane-edge';
+    if (strip.kind === 'cycle_lane' || strip.kind === 'cycle_buffer') {
+        const cycle = strip.cycle;
+        const separation = cycle?.separation?.split(';')[0].trim();
+        return 'shoulder-edge cycle-lane-edge' + (cycle?.lane === 'advisory' ? ' advisory' : '') +
+            (separation && separation !== 'no' ? ` separation separation-${separation.replace(/[^a-z_]/g, '')}` : '');
+    }
+    return 'shoulder-edge';
 }
 
 /**
@@ -230,7 +313,7 @@ function parkingBadgeData(show: boolean, shown: RoadPiece[], areas: ParkingShape
  * lanes going opposite ways it follows the Highway Code: a dashed centre line, unless `overtaking=*` bars a direction,
  * when a double white line is solid on the side of the traffic that may not cross it.
  */
-export function dividerClass(left: LaneInfo, right: LaneInfo, layoutMarkings: boolean, tags: Tags): string {
+export function dividerClass(left: LaneInfo, right: LaneInfo, layoutMarkings: boolean, tags: Tags, uk = false): string {
     if (!layoutMarkings) return 'none';
     if (left.ref.direction !== right.ref.direction) {
         const leftBanned = overtakingBanned(tags, left.ref.direction);
@@ -241,7 +324,9 @@ export function dividerClass(left: LaneInfo, right: LaneInfo, layoutMarkings: bo
     }
     // a variable-access lane (a running hard shoulder) is kept apart by a solid line
     if ((left.kind === 'variable') !== (right.kind === 'variable')) return 'solid';
-    if (!left.change && !right.change) return 'dashed unknown';
+    // in the UK a bus lane is kept apart from the lane beside it by a wide solid line (TSRGD diagram 1049)
+    const bus = (lane: LaneInfo) => lane.kind === 'bus' || lane.kind === 'psv';
+    if (!left.change && !right.change) return uk && bus(left) !== bus(right) ? 'solid wide unknown' : 'dashed unknown';
 
     // backward lanes are seen from behind their drivers, so their left and right swap
     const flipped = left.ref.direction === 'backward';
@@ -422,8 +507,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs', 'kerb-markings', 'managed-edges',
-                'paths-over', 'rail-over-road', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'arrows', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols',
+                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'calming-ways', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs', 'kerb-markings', 'managed-edges',
+                'paths-over', 'rail-over-road', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'lane-boxes', 'arrows', 'lane-symbols', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols',
                 'shields', 'managed-badges', 'parking-badges', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
                 'surface-targets', 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
             ])
@@ -557,7 +642,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const strips = [
             ...pieces.filter(piece => !inArea.has(piece)).flatMap(piece => piece.roadside.map((strip, i) => ({ ...strip, key: `${pieceKey(piece)}-${i}`, wayID: piece.wayID }))),
             // pavements carried round turning heads
-            ...heads.flatMap(head => head.pavements.map((polygon, i) => ({ key: `${head.nodeID}-pavement-${i}`, kind: 'sidewalk', assumed: false, polygon, wayID: '', parking: undefined as ParkingLayout | undefined })))
+            ...heads.flatMap(head => head.pavements.map((polygon, i) => ({ key: `${head.nodeID}-pavement-${i}`, kind: 'sidewalk', assumed: false, polygon, wayID: '',
+                parking: undefined as ParkingLayout | undefined, cycle: undefined as CycleDetail | undefined, surface: undefined as SurfaceGroup | undefined })))
         ];
         const stripPaths = group('roadside').selectAll<SVGPathElement, typeof strips[number]>('path')
             .data(strips, d => d.key);
@@ -565,7 +651,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         stripPaths.enter().append('path')
             .merge(stripPaths)
             .each(attrChanged('class', d => `roadside roadside-${d.kind}` + (d.assumed ? ' assumed' : '') + (d.wayID ? coveredTag(d.wayID) : '') +
-                parkingClass(d.parking) +
+                parkingClass(d.parking) + stripDetailClass(d) +
                 (d.kind === 'shoulder' && state.shoulder()?.wayID === d.wayID && state.shoulder()?.side === (d as { side?: string }).side ? ' selected' : '') +
                 (d.wayID && isUnderConstruction(tagsOf(d.wayID)) ? ' lanes-construction' : '')))
             .each(attrChanged('d', d => path(d.polygon, true)));
@@ -604,11 +690,19 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 return withIdState(this, `carriageway ${piece.wayID}` + coveredTag(piece.wayID) + (building(piece) ? ' lanes-construction' : '') +
                     (piece.layout.assumed ? ' assumed' : '') +
                     (tagsOf(piece.wayID).highway === 'emergency_bay' ? ' lanes-emergency-bay' : '') +
+                    (tagsOf(piece.wayID).highway === 'bus_guideway' ? ' lanes-guideway' : '') +
+                    (tagsOf(piece.wayID).highway === 'escape' ? ' lanes-escape' : '') +
                     (surfaceOf(piece) ? ` surface-${surfaceOf(piece)}` : '') +
                     (selected.has(piece.wayID) ? ' selected' : '') +
                     (corridor.has(piece.wayID) && !selected.has(piece.wayID) ? ' corridor' : ''));
             }))
             .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')));
+
+        // traffic calming mapped along a way (a long table, a rumble strip, a chicane…, wiki: Key:traffic_calming)
+        // covers the whole carriageway of that way
+        const calmingData = byWay(marked.filter(piece => markings && calmingAlongWay(tagsOf(piece.wayID))), piece => [piece.carriageway]);
+        joinPaths(group('calming-ways'), calmingData, d => d.key,
+            d => `calming-way calming-way-${calmingAlongWay(tagsOf(d.piece.wayID))}`, d => d.polygons.map(polygon => path(polygon, true)).join(''));
 
 
         // the Speed Limit tool's class for road surface at a node: a junction, a mini-roundabout, a turning circle (a
@@ -701,7 +795,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         };
         const laneClass = (piece: RoadPiece, lane: LaneInfo) => {
             const surface = surfaceGroup(lane.values['surface:lanes']) ?? surfaceOf(piece);
+            // (a coloured surface, `surface:colour` or `surface:colour:lanes`, such as a red bus lane)
+            const colour = lane.values['surface:colour:lanes'] || tagsOf(piece.wayID)['surface:colour'];
             return `lane lane-${lane.kind} lane-${lane.ref.direction}` + (surface ? ` surface-${surface}` : '') + coveredTag(piece.wayID) +
+                (colour ? ` surface-colour-${markingColour({ colour })}` : '') +
                 (building(piece) ? ' lanes-construction' : '') + speedClass(piece, lane);
         };
         const laneShapes = new Map<string, { key: string; cls: string; polygons: Vec2[][] }>();
@@ -761,7 +858,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const lanes = piece.layout.lanes;
             const result: { key: string; style: string; line: string; piece: RoadPiece; k: number }[] = [];
             for (let k = 1; k < lanes.length; k++) {
-                const style = dividerClass(lanes[k - 1], lanes[k], piece.layout.markings, tagsOf(piece.wayID));
+                const style = dividerClass(lanes[k - 1], lanes[k], piece.layout.markings, tagsOf(piece.wayID), ukMarkings(piece.middle));
                 if (style === 'none') continue;
                 const key = `${pieceKey(piece)}-${k}`;
                 // a double marking: one line either side of the boundary
@@ -791,12 +888,11 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const kerbData = [
             ...kerbPieces.flatMap(piece => (['left', 'right'] as const).flatMap(side => {
                 const key = `${pieceKey(piece)}-${side === 'left' ? 'l' : 'r'}`;
-                const { edge, kerb, edgeKind } = kerbLine(piece, side);
-                // a hard shoulder or a cycle lane gets a white line at the lanes' edge
+                const { edge, kerb, edgeClass, kerbClass } = kerbLine(piece, side);
+                // a hard shoulder, a bus lane or a cycle lane gets a white line at the lanes' edge
                 return [
-                    { key, line: kerb, assumed: piece.layout.assumed, construction: building(piece), edgeClass: '' },
-                    ...(edgeKind ? [{ key: `${key}-edge`, line: edge, assumed: false, construction: false,
-                        edgeClass: edgeLineClass(edgeKind) }] : [])
+                    { key, line: kerb, assumed: piece.layout.assumed, construction: building(piece), edgeClass: kerbClass ? `kerb${kerbClass}` : '' },
+                    ...(edgeClass ? [{ key: `${key}-edge`, line: edge, assumed: false, construction: false, edgeClass }] : [])
                 ];
             })),
             // the rounded end of a road that stops with nothing joining it: the edge line carried round it
@@ -894,6 +990,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             };
         }));
         arrowData.push(...travelData);
+
+        /* symbols painted along lanes and strips: cycle symbols, sharrows, BUS LANE, a bus bay's BUS STOP box */
+        const painted = laneSymbols(marked.filter(() => markings), tagsOf, graph, ukMarkings);
+        drawLaneSymbols(group('lane-symbols'), group('lane-boxes'), painted.symbols, painted.boxes, projection);
         const arrows = group('arrows').selectAll<SVGUseElement, typeof arrowData[number]>('use')
             .data(arrowData, d => d.key);
         arrows.exit().remove();
@@ -907,17 +1007,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         /* labels: destination and speed */
         const labelData = !labels ? [] : shown.flatMap(piece => piece.labels.map(mark => {
             const lane = piece.layout.lanes[mark.lane];
-            // a destination the whole road has (`destination`, not `destination:lanes`) is shown once per direction, on
-            // the middle lane
-            const sameWay = piece.layout.lanes.filter(l => l.ref.direction === lane.ref.direction);
-            const middle = sameWay[Math.floor((sameWay.length - 1) / 2)] === lane;
-            const shownKey = (key: string) => (!lane.inherited?.includes(key) || middle ? lane.values[key] : undefined);
-            const text = [
-                shownKey('destination:ref:lanes'),
-                // (several destinations on one lane: the first two)
-                shownKey('destination:lanes')?.split(';').slice(0, 2).join(' / '),
-                lane.values['maxspeed:lanes']
-            ].filter(Boolean).join(' · ');
+            const { text, sign } = laneLabel(piece, lane, tagsOf(piece.wayID));
             const { p, pxPerMetre, angle } = screenMark(mark);
             // keep text upright: read along the lane, never upside down
             let rotation = angle;
@@ -926,6 +1016,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             return {
                 key: `${pieceKey(piece)}-${mark.lane}`,
                 text,
+                sign,
                 size: Math.max(9, Math.min(13, lane.width * pxPerMetre * 0.4)),
                 transform: `translate(${p[0].toFixed(1)},${p[1].toFixed(1)}) rotate(${rotation.toFixed(1)})`
             };
@@ -934,10 +1025,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .data(labelData, d => d.key);
         texts.exit().remove();
         texts.enter().append('text')
-            .each(attrChanged('class', 'lane-label'))
             .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'central')
             .merge(texts)
+            .each(attrChanged('class', d => 'lane-label' + (d.sign ? ` sign-${d.sign}` : '')))
             .attr('font-size', d => d.size.toFixed(1))
             .each(attrChanged('transform', d => d.transform))
             .text(d => d.text);

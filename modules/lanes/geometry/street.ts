@@ -171,6 +171,21 @@ export interface AreaShape {
     surface?: SurfaceGroup;
     /** a zebra crossing's white bars, across the way people walk, or hatching's (clipped to the area when drawn) */
     stripes?: Vec2[][];
+    /** a multipolygon's other rings, drawn in the same shape (inner rings leave holes) */
+    rings?: Vec2[][];
+}
+
+/**
+ * A multipolygon relation's rings (`type=multipolygon`): its first outer ring, and the rest (other outers and every
+ * inner), as iD joins its member ways
+ */
+export function multipolygonRings(relation: OsmEntity, graph: coreGraph): { outer: Vec2[]; rings: Vec2[][] } | undefined {
+    const rel = relation as unknown as { isMultipolygon(): boolean; multipolygon(graph: coreGraph): Vec2[][][] };
+    if (relation.type !== 'relation' || !rel.isMultipolygon()) return undefined;
+    const polygons = rel.multipolygon(graph).filter(p => p[0]?.length > 3);
+    if (!polygons.length) return undefined;
+    const [first, ...others] = polygons;
+    return { outer: first[0], rings: [...first.slice(1), ...others.flat()] };
 }
 
 export interface KerbLine {
@@ -185,7 +200,8 @@ export type MarkingKind =
     | 'stop_line' | 'give_way_line' | 'signal_line'
     | 'calming' | 'mini_roundabout' | 'kerb_node' | 'ford'
     | 'mini_roundabout_surface' | 'passing_place_surface' | 'emergency_bay_surface' | 'turning_loop_island'
-    | 'barrier_line' | 'barrier_post' | 'barrier_node' | 'cattle_grid';
+    | 'barrier_line' | 'barrier_post' | 'barrier_node' | 'cattle_grid'
+    | 'zigzag' | 'tactile' | 'asl_box' | 'calming_way';
 
 export interface MarkingShape {
     key: string;
@@ -197,7 +213,8 @@ export interface MarkingShape {
     variant?: string;
 }
 
-export type SymbolKind = 'stop_text' | 'give_way_triangle' | 'signals' | 'speed_limit' | 'min_speed' | 'national_limit' | 'motorway_start';
+export type SymbolKind = 'stop_text' | 'give_way_triangle' | 'signals' | 'signals_blinker' | 'signals_lane_control' | 'signals_emergency'
+    | 'speed_limit' | 'min_speed' | 'national_limit' | 'motorway_start' | 'belisha' | 'cycle';
 
 export interface SymbolShape {
     key: string;
@@ -933,6 +950,8 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
     if ((highway === 'crossing' || (tags.crossing && !highway) || signalCrossing) && !crossingWay) {
         crossingNodeMarkings(node, cs, out, signalCrossing);
     }
+    crossingSurroundings(node, road, cs, parents, signalCrossing, graph, out);
+    if (tags.cycleway === 'asl') advancedStopLine(node, cs, graph, out);
     if (highway === 'passing_place') passingPlace(node, cs, out, left, right);
     if (highway === 'emergency_bay') emergencyBay(node, cs, out, left, right);
 
@@ -946,7 +965,12 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
     const atJunction = armCount >= 3;
     if (highway === 'traffic_signals' && atJunction) junctionSignalLines(node, roads, graph, out, visuals);
 
-    if (highway === 'stop' || highway === 'give_way' || (highway === 'traffic_signals' && !atJunction)) {
+    // flashing amber signals and lane control signals have no stop line, only their heads (wiki: Key:traffic_signals)
+    const signalKind = signalsKind(tags);
+    if (highway === 'traffic_signals' && !atJunction && (signalKind === 'signals_blinker' || signalKind === 'signals_lane_control')) {
+        out.symbols.push({ key: `${node.id}-signals`, kind: signalKind, loc: cs.frame.toLoc(scale(cs.normal, right + 0.8)),
+            ahead: cs.frame.toLoc(add(scale(cs.normal, right + 0.8), cs.direction)), size: 1.8 });
+    } else if (highway === 'stop' || highway === 'give_way' || (highway === 'traffic_signals' && !atJunction)) {
         const kind: MarkingKind = highway === 'stop' ? 'stop_line' : highway === 'give_way' ? 'give_way_line' : 'signal_line';
         // at a junction node, the line stands back by half the width of the widest other road
         const back = atJunction ? junctionClearance(node, road, graph) : 0;
@@ -973,7 +997,7 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
         }
         if (highway === 'traffic_signals') {
             const loc = cs.frame.toLoc(scale(cs.normal, right + 0.8));
-            out.symbols.push({ key: `${node.id}-signals`, kind: 'signals', loc, ahead: cs.frame.toLoc(add(scale(cs.normal, right + 0.8), cs.direction)), size: 1.8 });
+            out.symbols.push({ key: `${node.id}-signals`, kind: signalKind, loc, ahead: cs.frame.toLoc(add(scale(cs.normal, right + 0.8), cs.direction)), size: 1.8 });
         }
     }
 
@@ -984,6 +1008,170 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
 
     if (highway === 'mini_roundabout') miniRoundaboutMarkings(node, parents, cs, graph, out, visuals);
     if (tags.barrier && tags.barrier !== 'kerb' && tags.barrier !== 'no') barrierMarkings(node, cs, out);
+}
+
+
+/**
+ * The kind of signal head a `traffic_signals=*` node has: flashing amber (`blinker`), lane control signals over the lanes
+ * (`lane_control`), signals for emergency vehicles (`emergency`), or ordinary signals (`signal`, `ramp_meter` and the rest)
+ */
+export function signalsKind(tags: Tags): 'signals' | 'signals_blinker' | 'signals_lane_control' | 'signals_emergency' {
+    switch (tags.traffic_signals) {
+        case 'blinker': return 'signals_blinker';
+        case 'lane_control': return 'signals_lane_control';
+        case 'emergency': return 'signals_emergency';
+        default: return 'signals';
+    }
+}
+
+/** How many 2 m zig-zag marks stand on each approach to a UK crossing, as a rule, and the fewest there may be */
+const zigzagMarks = 8;
+const zigzagMinimum = 2;
+
+/**
+ * Whether a UK crossing has a controlled area (TSRGD diagram 1001.3): a zebra (without signals), and pelican, puffin,
+ * toucan, pegasus and other signal crossings; not an unmarked or informal one
+ */
+export function ukControlledCrossing(tags: Tags): 'zebra' | 'signals' | null {
+    if (tags.crossing === 'no' || tags.crossing === 'unmarked' || tags.crossing === 'informal') return null;
+    if (isSignalCrossing(tags)) return 'signals';
+    const markings = crossingMarkingList(tags, true);
+    return markings.includes('zebra') || markings.includes('tiger') || markings.includes('zebra_double') ? 'zebra' : null;
+}
+
+/**
+ * A UK crossing's controlled area, implied by the crossing as painted on British roads (Highway Code rule 191, TSRGD
+ * diagram 1001.3): white zig-zags along both kerbs and down the centre line on each approach, up to eight 2 m marks,
+ * stopping short of a junction (fewer than two, none); a give way line before a zebra (or a stop line before a signal
+ * crossing whose signals are not drawn with their own line) where none is mapped near it; and at a zebra a Belisha
+ * beacon at each kerb. Drawn along the road the crossing is on.
+ */
+function ukCrossingMarkings(node: osmNode, road: osmWay, cs: CrossSection, tags: Tags, signalCrossing: boolean, graph: coreGraph, out: StreetGeometry) {
+    const controlled = ukControlledCrossing(tags);
+    if (!controlled) return;
+    const left = cs.edges[0];
+    const right = cs.edges[cs.edges.length - 1];
+    const half = crossingMarkings(tags, true) === 'tiger' ? 2.5 : 1.5;
+    const frame = cs.frame;
+    const points = road.nodes.map(id => frame.toMetres((graph.entity(id) as osmNode).loc));
+    const cumulative = cumulativeLengths(points);
+    const here = cumulative[cs.nodeIndex];
+    const total = cumulative[cumulative.length - 1];
+    // where a junction (a node another road shares) is along the road, so the zig-zags stop before it
+    const junctions = road.nodes.flatMap((id, k) => (k !== cs.nodeIndex &&
+        graph.parentWays(graph.entity(id)).some(w => w.id !== road.id && isLaneRoad(w)) ? [cumulative[k]] : []));
+    // across the road: the kerbs, and the centre line between the two directions
+    const forward = approachRange(cs, 'forward');
+    const backward = approachRange(cs, 'backward');
+    const centre = forward && backward ? (cs.layout.model.driveSide === 'left' ? (forward[1] + backward[0]) / 2 : (backward[1] + forward[0]) / 2) : undefined;
+    const lines = [left + 0.3, right - 0.3, ...(centre !== undefined ? [centre] : [])];
+
+    for (const side of [1, -1]) {
+        // `side` 1: the approach further along the way, traffic coming back towards the node
+        const direction = side > 0 ? 'backward' : 'forward';
+        const start = half + (controlled === 'zebra' ? 1.1 : 1.7);
+        const room = side > 0 ? total - here : here;
+        const nearestJunction = Math.min(Infinity, ...junctions.map(s => side * (s - here)).filter(d => d > 0));
+        const end = Math.min(start + zigzagMarks * 2, room, nearestJunction - 3);
+        const marks = Math.floor((end - start) / 2);
+        const at = (s: number, across: number) => {
+            const p = pointAlong(points, here + side * s);
+            return frame.toLoc(add(p.point, scale(rightNormal(p.direction), across)));
+        };
+        if (marks >= zigzagMinimum) {
+            lines.forEach((across, l) => {
+                const zig: Vec2[] = [];
+                for (let k = 0; k <= marks; k++) zig.push(at(start + k * 2, across + (k % 2 ? 0.15 : -0.15)));
+                out.markings.push({ key: `${node.id}-zigzag-${side}-${l}`, kind: 'zigzag', nodeID: node.id, closed: false, points: zig });
+            });
+        }
+        // the line traffic waits at, unless one is mapped on the approach or the signals draw their own
+        const range = approachRange(cs, direction);
+        if (range && !signalCrossing && !mappedLine(road, cs.nodeIndex, side, start + 6, graph)) {
+            const kind: MarkingKind = controlled === 'zebra' ? 'give_way_line' : 'stop_line';
+            out.markings.push({ key: `${node.id}-uk-${kind}-${side}`, kind, nodeID: node.id, closed: false, points: [at(start, range[0]), at(start, range[1])] });
+        }
+    }
+
+    // Belisha beacons: an amber globe on a black and white post at each end of a zebra
+    if (controlled === 'zebra') {
+        for (const [k, across] of [[0, left - 0.9], [1, right + 0.9]] as const) {
+            const loc = frame.toLoc(add(scale(cs.normal, across), scale(cs.direction, (k ? 1 : -1) * (half + 0.4))));
+            out.symbols.push({ key: `${node.id}-belisha-${k}`, kind: 'belisha', loc, ahead: frame.toLoc(add(scale(cs.normal, across), add(scale(cs.direction, (k ? 1 : -1) * (half + 0.4)), cs.direction))), size: 0.9 });
+        }
+    }
+}
+
+/**
+ * What stands round a crossing on a road: in the UK its controlled area and beacons, and its tactile paving. Its tags
+ * are the node's, or the crossing way's where the node says nothing of its own.
+ */
+function crossingSurroundings(node: osmNode, road: osmWay, cs: CrossSection, parents: OsmEntity[], signalCrossing: boolean,
+    graph: coreGraph, out: StreetGeometry) {
+    const tags = node.tags;
+    const crossingPath = parents.find(w => isCrossingPath(w.tags));
+    const own = tags.highway === 'crossing' || !!tags.crossing;
+    const crossingTags = own ? tags : crossingPath?.tags;
+    if (!crossingTags) return;
+    if (ukMarkings(node.loc)) ukCrossingMarkings(node, road, cs, crossingTags, signalCrossing, graph, out);
+    tactilePaving(node, cs, { ...crossingTags, ...tags }, out);
+}
+
+/** Is a stop, give way or signals line mapped on a road within `distance` metres of node `index`, going `side` along it? */
+function mappedLine(way: osmWay, index: number, side: number, distance: number, graph: coreGraph): boolean {
+    const origin = (graph.entity(way.nodes[index]) as osmNode).loc;
+    const frame = metricFrame(origin);
+    for (let i = index + side; i >= 0 && i < way.nodes.length; i += side) {
+        const node = graph.entity(way.nodes[i]) as osmNode;
+        const p = frame.toMetres(node.loc);
+        if (Math.hypot(p[0], p[1]) > distance) break;
+        if (['give_way', 'stop', 'traffic_signals'].includes(node.tags.highway ?? '')) return true;
+    }
+    return false;
+}
+
+/**
+ * Tactile paving at a crossing (`tactile_paving=yes`, wiki: Key:tactile_paving): blister paving on the pavement at each
+ * end, red at a crossing with signals and buff at others, as laid in the UK; at one end only where it is `partial` or
+ * `incorrect`
+ */
+function tactilePaving(node: osmNode, cs: CrossSection, tags: Tags, out: StreetGeometry) {
+    const value = tags.tactile_paving;
+    if (!value || value === 'no') return;
+    const ends = value === 'partial' || value === 'incorrect' ? ['left'] as const : ['left', 'right'] as const;
+    const half = crossingMarkings(tags) === 'tiger' ? 2.5 : 1.5;
+    for (const side of ends) {
+        // beyond whatever is on the road on that side: the kerb is where the pavement starts
+        const onRoad = cs.layout.roadside[side].filter(strip => strip.kind !== 'sidewalk' && strip.kind !== 'sidewalk_unknown' &&
+            strip.kind !== 'cycle_track' && !(strip.kind === 'parking' && strip.parking?.position === 'on_kerb')).reduce((sum, s) => sum + s.width, 0);
+        const kerb = side === 'left' ? cs.edges[0] - onRoad : cs.edges[cs.edges.length - 1] + onRoad;
+        const outward = side === 'left' ? -1 : 1;
+        out.markings.push({
+            key: `${node.id}-tactile-${side}`, kind: 'tactile', nodeID: node.id, closed: true,
+            variant: isSignalCrossing(tags) ? 'red' : 'buff',
+            points: band(cs, -half, half, Math.min(kerb, kerb + outward * 1.2), Math.max(kerb, kerb + outward * 1.2))
+        });
+    }
+}
+
+/**
+ * An advanced stop line for cycles (`cycleway=asl`, on the cycles' stop line, wiki: Tag:cycleway=asl): the cycles' stop
+ * line at the node and the other traffic's 5 m before it across the lanes coming in, the box between them (often
+ * coloured), and a cycle symbol in it
+ */
+function advancedStopLine(node: osmNode, cs: CrossSection, graph: coreGraph, out: StreetGeometry) {
+    for (const direction of approachDirections(node.tags, cs, graph)) {
+        const range = approachRange(cs, direction);
+        if (!range) continue;
+        const travel = direction === 'forward' ? cs.direction : scale(cs.direction, -1);
+        const at = (along: number, across: number) => cs.frame.toLoc(add(scale(travel, along), scale(cs.normal, across)));
+        out.markings.push({ key: `${node.id}-asl-box-${direction}`, kind: 'asl_box', nodeID: node.id, closed: true,
+            points: [at(0, range[0]), at(0, range[1]), at(-5, range[1]), at(-5, range[0])] });
+        out.markings.push({ key: `${node.id}-asl-cycles-${direction}`, kind: 'stop_line', nodeID: node.id, closed: false, points: [at(0, range[0]), at(0, range[1])] });
+        out.markings.push({ key: `${node.id}-asl-traffic-${direction}`, kind: 'stop_line', nodeID: node.id, closed: false, points: [at(-5, range[0]), at(-5, range[1])] });
+        const mid = (range[0] + range[1]) / 2;
+        out.symbols.push({ key: `${node.id}-asl-cycle-${direction}`, kind: 'cycle', loc: at(-2.5, mid), ahead: at(-1.5, mid), size: 1.8 });
+    }
 }
 
 
@@ -1223,6 +1411,14 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?
             if (isLaneRoad(way)) speedLimitSymbols(way, graph, visuals, out);
         } else if (entity.type === 'node' && Object.keys(entity.tags).length) {
             nodeMarkings(entity as osmNode, graph, out, visuals);
+        } else if (entity.type === 'relation') {
+            // areas mapped as multipolygons: road and junction areas, pavements, islands… with their holes
+            const kind = areaKind(entity.tags);
+            const rings = kind ? multipolygonRings(entity, graph) : undefined;
+            if (kind && rings) {
+                out.areas.push({ id: entity.id, kind, polygon: rings.outer, rings: rings.rings,
+                    surface: kind === 'island' ? islandSurface(entity.tags) : surfaceGroup(entity.tags.surface) });
+            }
         }
     }
 

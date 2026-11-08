@@ -11,7 +11,8 @@ import {
     metricFrame, sub, add, scale, rightNormal, len, unit,
     dot, pointAlong, slicePolyline, offsetPolyline, cumulativeLengths, polylineLength, pointInPolygon, type MetricFrame
 } from './frame';
-import { laneLayout, parseWidth, type LaneLayout, type ParkingLayout, type RoadsideKind } from './layout';
+import { laneLayout, parseWidth, type LaneLayout, type ParkingLayout, type RoadsideKind, type CycleDetail } from './layout';
+import type { SurfaceGroup } from '../model/street_features';
 import { hull, turningHead } from './turning_head';
 import { parseTurn, parseConnectivity, type LaneDirection } from '../model';
 
@@ -53,7 +54,8 @@ export interface RoadPiece {
     travel: LaneMark[];
     /** where lane labels go, one per lane in the middle of the piece */
     labels: LaneMark[];
-    roadside: { side: 'left' | 'right'; kind: RoadsideKind; assumed: boolean; polygon: Vec2[]; parking?: ParkingLayout }[];
+    roadside: { side: 'left' | 'right'; kind: RoadsideKind; assumed: boolean; polygon: Vec2[]; parking?: ParkingLayout;
+        cycle?: CycleDetail; surface?: SurfaceGroup; kerb?: string }[];
     /** metres */
     length: number;
     /** whether this piece starts at the way's first node / ends at its last node */
@@ -2269,7 +2271,8 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
                 const inner = clip(offset(cursor), fromStart, fromEnd);
                 const outside = clip(offset(outer), fromStart, fromEnd);
                 if (inner.length > 1 && outside.length > 1) {
-                    roadside.push({ side, kind: strip.kind, assumed: strip.assumed, polygon: toLocs(frame, ring(inner, outside)), parking: strip.parking });
+                    roadside.push({ side, kind: strip.kind, assumed: strip.assumed, polygon: toLocs(frame, ring(inner, outside)), parking: strip.parking,
+                        cycle: strip.cycle, surface: strip.surface, kerb: strip.kerb });
                 }
                 cursor = outer;
             }

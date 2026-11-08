@@ -207,6 +207,21 @@ is on the road, inside the kerb, with a white line between it and the lanes. The
 (`cycleway=opposite_lane`, `opposite_track`, `opposite`) on a one-way road are one lane on the side its cycles keep
 to, and the Cycleway field offers to **Upgrade** them to `cycleway:<side>=lane` with `cycleway:<side>:oneway=-1` and
 `oneway:bicycle=no`.
+
+Each side's cycle lane or track has its details folded under the Cycleway field ("Forward side cycle lane"):
+the line beside it (`cycleway:<side>:lane`: solid for `exclusive`, dashed for `advisory`), which way its cycles go
+(`cycleway:<side>:oneway`: with the way, against it with `-1`, or both), its width, a painted buffer
+(`cycleway:<side>:buffer`, hatched), what keeps it apart from the lanes (`cycleway:<side>:separation`: bollards,
+posts, a kerb, planters, panels) and its colour (`cycleway:<side>:surface:colour`). A cycle symbol is painted in it
+every 40 m, pointing the way its cycles go. A shared lane (`shared_lane`) has cycle symbols with chevrons in the
+outer lane, and a shared bus lane (`share_busway`) cycle symbols in the bus lane.
+
+Pavements: `sidewalk=lane` (or per side) is a pedestrian lane painted on the road, inside the kerb;
+`sidewalk:<side>:surface` gives a pavement its surface, and `sidewalk:<side>:kerb` (`lowered`, `flush`, `rolled`)
+draws its kerb as mapped kerbs are drawn. A bus bay (`bus_bay=left|right|both`, on the stretch of road beside it) is
+a layby the kerb goes round, with the yellow BUS STOP box in the UK. Bus lanes tagged the old way
+(`busway:<side>=lane`) are drawn beside the lanes, and the Number of lanes field offers to **Upgrade** them to lanes
+of their own (`bus:lanes=designated`, on the kerb side).
 Clicking a hard shoulder on the map selects its road and marks the Hard shoulder field. Lane Studio also
 looks at what is mapped next to the road:
 
@@ -290,6 +305,31 @@ line along its lanes, and from zoom 18 a road with a scheme or a variable limit 
 4.6 m deep past any hard shoulder, on the side `direction=forward|backward` gives, else beside the road's
 traffic; the Markings tool places one. A bay mapped as its own short way is a one-lane orange road. An
 `emergency=phone` node is an orange box with a handset.
+
+**Bus lanes** in the UK have BUS LANE painted along them, and the line between a bus lane and the lane beside it
+is the wide solid line when `change:lanes` doesn't say otherwise. A lane or road with a coloured surface
+(`surface:colour`, or `surface:colour:lanes`) is drawn in that colour, such as a red bus lane.
+
+**Lane labels** (from zoom 19) show a lane's destinations and road numbers, its sign's symbol
+(`destination:symbol`: ✈ for an airport, H for a hospital…), its own speed limit, and its restrictions: no HGV
+(`hgv:lanes=no`), HGV lane (`hgv:lanes=designated`, a crawler lane), and its height, width and weight limits
+(`maxheight:lanes`, `maxwidth:lanes`, `maxweight:lanes`). A label is in the colour of its sign
+(`destination:colour`: blue, green, white, brown or yellow).
+
+**UK crossings** (Highway Code rule 191): a zebra and a signal crossing (pelican, puffin, toucan, pegasus) have
+their controlled area painted on the road they cross: white zig-zags along both kerbs and down the centre line on
+each approach, up to eight 2 m marks, stopping 3 m short of a junction (fewer than two marks, none), with a give
+way line before a zebra or a stop line before a signal crossing where none is mapped near it. A zebra has a
+Belisha beacon at each kerb. None of this is tagged in OpenStreetMap: it follows from the crossing, and is drawn
+along the road the crossing is on. Anywhere, `tactile_paving=yes` on a crossing (or the crossing way) lays blister
+paving on the pavement at each end, red at a crossing with signals and buff at others (one end only for `partial`
+or `incorrect`).
+
+**Advanced stop lines** (`cycleway=asl`, on the cycles' stop line, with `direction`): the cycles' stop line, the
+other traffic's 5 m before it, the green box between them and a cycle symbol in it.
+
+**Traffic signals** by `traffic_signals=*`: flashing amber (`blinker`) and lane control signals (`lane_control`)
+have their own heads and no stop line; signals for emergency vehicles (`emergency`) have two red lamps.
 
 **Lines down the road** follow the Highway Code. The carriageway edge is a solid line, fainter where the
 road's width is a guess; a road mapped as an area (`area:highway=*`) has the same line round its outline,
@@ -418,6 +458,12 @@ look: asphalt, concrete, paving slabs, setts and gravel (as textures), unpaved, 
 A road mapped as an area (`area=yes` + `highway=service` etc., or `area:highway=<road>`) is the road's
 surface: ways inside it draw only their lane lines, arrows and special lanes.
 
+**Traffic calming** tagged on a road way (a long table, a rumble strip…) covers that way's carriageway: a table
+in paving colour, a painted table in red, a hump darker, rumble strips and the rest hatched.
+
+**Escape lanes and guided busways**: `highway=escape` (a runaway lorry ramp) is one lane of gravel, and
+`highway=bus_guideway` a concrete track whose lanes are bus lanes, as a busway's are.
+
 **Traffic calming** (wiki: Key:traffic_calming) on a road node is drawn as built and marked on British
 roads, each value of a `;` list, across the lanes `direction=forward|backward` gives or all of them: a hump
 or dynamic bump with a white triangle on each lane's approach ramp; a table (a paved flat top, triangles on
@@ -444,7 +490,9 @@ as a routable area, `area=yes` + `highway=*`, is a plaza or service area, not mi
   walk unless `crossing:markings` says otherwise, and a cycle crossing area (`area:highway=cycleway` +
   `cycleway=crossing`) with a dashed edge.
 
-Highway areas are areas drawn from closed ways; multipolygons are not drawn yet. Shared foot and cycle
+Highway areas are drawn from closed ways and from multipolygons (`type=multipolygon`, holes and all), as are
+traffic islands and car parks; a multipolygon carriageway area is drawn as its surface, but roads are not fitted
+into it. Shared foot and cycle
 paths are striped with both colours, segregated ones split in two.
 
 **Also drawn**: mini-roundabouts (a circular carriageway from `diameter=*` or the roads, the white
@@ -599,10 +647,10 @@ that names its `created_by` value, listed on the wiki's Editors page.
 | Lane model (parse, edit, write `*:lanes` tags), lane types, markings, connectivity, street feature tags and the centre line, street parking (`parking.ts`), active traffic management | `modules/lanes/model/` |
 | Actions (lanes, markings, copy, connect), each one undo step | `modules/lanes/actions/` |
 | Selected lanes, tools, keyboard, settings, roadside detection, the what's new state, links | `modules/lanes/core/` |
-| Geometry in metres: lanes, junctions and lane connections, street features, road markings, parking, parking spaces, railways and their features | `modules/lanes/geometry/` |
+| Geometry in metres: lanes, junctions and lane connections, street features (UK crossings, tactile paving, advanced stop lines, multipolygon areas), road markings, symbols along lanes (`lane_symbols.ts`), parking, parking spaces, railways and their features | `modules/lanes/geometry/` |
 | Look-ahead corridor, roundabouts | `modules/lanes/osm/` |
 | Map drawing and click targets | `modules/lanes/svg/` |
-| The sidebar: Lanes, sign, street feature, roundabout and look-ahead sections; Lane Studio's road fields in iD's Fields section (`road_fields.ts`); the parts every field shares (`lane_fields.ts`), the i button's topics and wiki pages (`field_info.ts`); street parking's fields (`parking_fields.ts`); the roadside + menu (`roadside_menu.ts`); the filter leaving out iD's fields for the same tags (`field_filter.ts`). Also the settings pane, welcome screen, what's new menu, logo, speed roundels | `modules/lanes/ui/` |
+| The sidebar: Lanes, sign, street feature, roundabout and look-ahead sections; Lane Studio's road fields in iD's Fields section (`road_fields.ts`); the parts every field shares (`lane_fields.ts`), the i button's topics and wiki pages (`field_info.ts`); street parking's fields (`parking_fields.ts`); each side's cycle lane details (`cycleway_fields.ts`); the roadside + menu (`roadside_menu.ts`); the filter leaving out iD's fields for the same tags (`field_filter.ts`). Also the settings pane, welcome screen, what's new menu, logo, speed roundels | `modules/lanes/ui/` |
 | The logo as an SVG file (for the README and anywhere else it is needed) | `docs/img/lane-studio-logo.svg` |
 | Lane tags validation rule | `modules/lanes/validations/` |
 | Styles (built into `dist/lanes.css`) | `css-lanes/` |

@@ -3,8 +3,9 @@ import type { NodeId } from '../../osm';
 import type { osmWay } from '../../osm/way';
 import { laneDriveSide } from '../core/drive_side';
 import { builtHighway, isLaneRoad, sidewalkExpectedHighways } from '../core/roads';
-import { assumedShoulder, contraflowSide, cyclewayValue, cyclewayWidth, shoulderValue, type Side } from '../core/roadside';
+import { assumedShoulder, busValue, contraflowSide, cyclewayValue, cyclewayWidth, shoulderValue, type Side } from '../core/roadside';
 import { laneKindFromValues, type LaneKindValue } from '../model/kinds';
+import { markingColour, surfaceGroup, type MarkingColour, type SurfaceGroup } from '../model/street_features';
 import { kerbMarking, parkingUse, parkingValue, type KerbMarking, type ParkingUse } from '../model/parking';
 import {
     parseLanes, laneRefsInWayOrder, parseChange,
@@ -26,7 +27,20 @@ export interface LaneInfo {
     inherited?: string[];
 }
 
-export type RoadsideKind = 'shoulder' | 'sidewalk' | 'sidewalk_unknown' | 'sidewalk_lane' | 'cycle_lane' | 'cycle_track' | 'parking';
+export type RoadsideKind = 'shoulder' | 'sidewalk' | 'sidewalk_unknown' | 'sidewalk_lane' | 'cycle_lane' | 'cycle_buffer' | 'cycle_track'
+    | 'parking' | 'bus_lane' | 'bus_bay';
+
+/** A cycle lane or track's details (wiki: Key:cycleway) */
+export interface CycleDetail {
+    /** `cycleway:<side>:lane`: a solid line others may not cross (`exclusive`) or a dashed one (`advisory`) */
+    lane?: 'exclusive' | 'advisory';
+    /** which way its cycles go along the way: with it, against it, or both (`cycleway:<side>:oneway=no`) */
+    travel: 'forward' | 'backward' | 'both';
+    /** `cycleway:<side>:separation`: what keeps it apart from the lanes (bollards, a kerb, planters…) */
+    separation?: string;
+    /** `cycleway:<side>:surface:colour`, when it is coloured */
+    colour?: MarkingColour;
+}
 
 export interface RoadsideStrip {
     kind: RoadsideKind;
@@ -36,6 +50,11 @@ export interface RoadsideStrip {
     assumed: boolean;
     /** parking: how cars stand, and whether they stand on the road or on the pavement */
     parking?: ParkingLayout;
+    /** cycle lanes and tracks */
+    cycle?: CycleDetail;
+    /** pavements: their surface (`sidewalk:<side>:surface`) and the kerb between them and the road (`sidewalk:<side>:kerb`) */
+    surface?: SurfaceGroup;
+    kerb?: string;
 }
 
 export interface ParkingLayout {
@@ -103,7 +122,7 @@ export const defaultLaneWidths: Record<string, number> = {
     primary: 3.65, primary_link: 3.5,
     secondary: 3.5, secondary_link: 3.5,
     tertiary: 3.25, tertiary_link: 3.25,
-    unclassified: 3.25, road: 3.25, busway: 3.25, bus_guideway: 3.25,
+    unclassified: 3.25, road: 3.25, busway: 3.25, bus_guideway: 3.25, escape: 4.5,
     residential: 2.75, service: 2.75,
     living_street: 2.4
 };
@@ -146,7 +165,32 @@ function sideValue(tags: Tags, key: string, side: 'left' | 'right'): string | un
     return plain;
 }
 
-function roadsideStrips(tags: Tags, side: Side, shoulderSide: Side | null, runningShoulder: boolean, contraflow: Side | null): RoadsideStrip[] {
+/** Which way traffic beside a side of the way goes along it: the side's own traffic on a two-way road, the road's on a one-way one */
+function sideTravel(side: Side, driveSide: Side, oneway: LaneLayout['model']['oneway']): 'forward' | 'backward' {
+    if (oneway) return oneway;
+    // where traffic keeps right, traffic going along the way is on its right
+    return (side === 'right') === (driveSide === 'right') ? 'forward' : 'backward';
+}
+
+/** A side's cycle lane or track details, from `cycleway:<side>:*` (or `cycleway:both:*`, `cycleway:*`) */
+function cycleDetail(tags: Tags, side: Side, value: string, travel: 'forward' | 'backward', contraflow: Side | null): CycleDetail {
+    const get = (key: string) => tags[`cycleway:${side}:${key}`] ?? tags[`cycleway:both:${key}`] ?? tags[`cycleway:${key}`];
+    const lane = get('lane');
+    const oneway = get('oneway');
+    const against = travel === 'forward' ? 'backward' : 'forward';
+    const colour = get('surface:colour');
+    return {
+        lane: lane === 'exclusive' || lane === 'advisory' ? lane : undefined,
+        // an old contraflow value runs against the road; `cycleway:<side>:oneway` says it outright
+        travel: oneway === '-1' ? 'backward' : oneway === 'yes' ? 'forward' : oneway === 'no' ? 'both'
+            : (value.startsWith('opposite') && side === contraflow) ? against : travel,
+        separation: get('separation') ?? get('separation:left') ?? get('separation:right'),
+        colour: colour ? markingColour({ colour }) : undefined
+    };
+}
+
+function roadsideStrips(tags: Tags, side: Side, shoulderSide: Side | null, runningShoulder: boolean, contraflow: Side | null,
+    driveSide: Side, oneway: LaneLayout['model']['oneway'], busLanes: boolean): RoadsideStrip[] {
     const strips: RoadsideStrip[] = [];
 
     // a hard shoulder runs right beside the carriageway (wiki: Key:shoulder)
@@ -157,10 +201,19 @@ function roadsideStrips(tags: Tags, side: Side, shoulderSide: Side | null, runni
 
     // a cycle lane is painted on the carriageway (wiki: Key:cycleway); `opposite_lane` is an old way of tagging a
     // contraflow lane on a one-way road, on the side its cycles keep to
+    // a bus lane tagged in the old way (`busway:<side>=lane`, wiki: Key:busway), when the lanes have none of their own
+    const bus = busValue(tags, side, shoulderSide, contraflow);
+    if (!busLanes && (bus === 'lane' || bus === 'opposite_lane')) strips.push({ kind: 'bus_lane', width: 3, assumed: true });
+
     const cycleway = cyclewayValue(tags, side, contraflow);
     const cycleWidth = cyclewayWidth(tags, side);
+    const travel = sideTravel(side, driveSide, oneway);
     if (cycleway === 'lane' || cycleway === 'opposite_lane') {
-        strips.push({ kind: 'cycle_lane', width: cycleWidth ?? 1.5, assumed: cycleWidth === undefined });
+        // a painted buffer between the lanes and the cycle lane (`cycleway:<side>:buffer`: yes, or its width)
+        const buffer = tags[`cycleway:${side}:buffer`] ?? tags['cycleway:both:buffer'];
+        const bufferWidth = buffer === 'yes' ? 0.5 : parseWidth(buffer);
+        if (bufferWidth) strips.push({ kind: 'cycle_buffer', width: bufferWidth, assumed: buffer === 'yes' });
+        strips.push({ kind: 'cycle_lane', width: cycleWidth ?? 1.5, assumed: cycleWidth === undefined, cycle: cycleDetail(tags, side, cycleway, travel, contraflow) });
     }
 
     // on-street parking sits between the carriageway (or its cycle lane) and the kerb (wiki: Street parking)
@@ -185,18 +238,29 @@ function roadsideStrips(tags: Tags, side: Side, shoulderSide: Side | null, runni
         strips.push({ kind: 'parking', width, assumed: taggedWidth === undefined, parking: details(parking) });
     }
 
+    // a pedestrian lane painted on the road (`sidewalk=lane`)
+    const sidewalk = sideValue(tags, 'sidewalk', side);
+    const sidewalkWidth = parseWidth(tags[`sidewalk:${side}:width`] ?? tags['sidewalk:both:width'] ?? tags['sidewalk:width']);
+    if (sidewalk === 'lane') strips.push({ kind: 'sidewalk_lane', width: sidewalkWidth ?? 1.5, assumed: sidewalkWidth === undefined });
+
+    // a bus bay (`bus_bay=left|right|both`, on the stretch of road beside it): a layby the kerb goes round
+    if (tags.bus_bay === side || tags.bus_bay === 'both') strips.push({ kind: 'bus_bay', width: 3, assumed: true });
+
     if (cycleway === 'track' || cycleway === 'opposite_track') {
-        strips.push({ kind: 'cycle_track', width: cycleWidth ?? 2, assumed: cycleWidth === undefined });
+        strips.push({ kind: 'cycle_track', width: cycleWidth ?? 2, assumed: cycleWidth === undefined, cycle: cycleDetail(tags, side, cycleway, travel, contraflow) });
     }
     // parking on the pavement: beyond the kerb, before the walking space
     if (parking === 'on_kerb') {
         strips.push({ kind: 'parking', width: parkingWidth, assumed: taggedWidth === undefined, parking: details('on_kerb') });
     }
 
-    const sidewalk = sideValue(tags, 'sidewalk', side);
-    const width = parseWidth(tags[`sidewalk:${side}:width`] ?? tags['sidewalk:both:width'] ?? tags['sidewalk:width']);
+    const width = sidewalkWidth;
     if (sidewalk === 'yes') {
-        strips.push({ kind: 'sidewalk', width: width ?? 2, assumed: width === undefined });
+        const sidewalkTag = (key: string) => tags[`sidewalk:${side}:${key}`] ?? tags[`sidewalk:both:${key}`] ?? tags[`sidewalk:${key}`];
+        strips.push({
+            kind: 'sidewalk', width: width ?? 2, assumed: width === undefined,
+            surface: surfaceGroup(sidewalkTag('surface')), kerb: sidewalkTag('kerb')
+        });
     } else if (sidewalk === undefined && sidewalkExpectedHighways.has(builtHighway(tags) ?? '')) {
         strips.push({ kind: 'sidewalk_unknown', width: 1.5, assumed: true });
     }
@@ -233,7 +297,7 @@ const minimumLaneWidth = 2;
  * `shoulder:width`, and bays beside the road, a cycle track and parking on the pavement are beyond the kerb.
  */
 export function stripOnCarriageway(strip: RoadsideStrip): boolean {
-    if (strip.kind === 'cycle_lane' || strip.kind === 'sidewalk_lane') return true;
+    if (['cycle_lane', 'cycle_buffer', 'sidewalk_lane', 'bus_lane'].includes(strip.kind)) return true;
     if (strip.kind !== 'parking' || !strip.parking) return false;
     return ['lane', 'yes', 'half_on_kerb'].includes(strip.parking.position);
 }
@@ -264,9 +328,10 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
 
     const kinds = refs.map(ref => laneKindFromValues(model.lanes[ref.direction][ref.index].values, builtHighway(tags)));
     const runningShoulder = kinds.includes('variable');
+    const busLanes = kinds.some(kind => kind === 'bus' || kind === 'psv');
     const roadside = {
-        left: roadsideStrips(tags, 'left', shoulderSide, runningShoulder, contraflow),
-        right: roadsideStrips(tags, 'right', shoulderSide, runningShoulder, contraflow)
+        left: roadsideStrips(tags, 'left', shoulderSide, runningShoulder, contraflow, driveSide, model.oneway, busLanes),
+        right: roadsideStrips(tags, 'right', shoulderSide, runningShoulder, contraflow, driveSide, model.oneway, busLanes)
     };
 
     // `width` is the carriageway from kerb to kerb, cycle lanes and parking on the road included (wiki: Key:width), so

@@ -187,6 +187,21 @@ export function roadContraflowSide(road: osmWay, graph: coreGraph): Side | null 
     return contraflowSide(laneOneway(road.tags), laneDriveSide(road, graph));
 }
 
+/**
+ * One side's bus lane in the old scheme (`busway:<side>`, `busway:both`, or plain `busway` on both sides of a two-way
+ * road, on the nearside `oneSide` of a one-way road, its contraflow side for `opposite_lane`; wiki: Key:busway). Not on
+ * a busway, where `busway=*` says what kind of busway it is.
+ */
+export function busValue(tags: Tags, side: Side, oneSide: Side | null, contraflow: Side | null): string | undefined {
+    if (builtHighway(tags) === 'busway') return undefined;
+    const specific = tags[`busway:${side}`] ?? tags['busway:both'];
+    if (specific) return specific;
+    const plain = tags.busway;
+    if (!plain) return undefined;
+    if (plain === 'opposite_lane') return contraflow === side ? plain : undefined;
+    return !oneSide || oneSide === side ? plain : undefined;
+}
+
 /** Whether a road still uses the old `opposite_*` cycleway values */
 export function hasOldCycleways(tags: Tags): boolean {
     return ['cycleway', 'cycleway:both', 'cycleway:left', 'cycleway:right'].some(key => oldContraflowCycleways.includes(tags[key] ?? ''));

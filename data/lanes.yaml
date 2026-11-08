@@ -21,6 +21,7 @@ en:
       twoway: "{forward} forward, {backward} backward"
       both_ways: "{n} both ways"
     assumed: Lane count assumed from the road type; nothing is written until you change it.
+    old_busway: "This road's bus lanes are tagged the old way (busway:<side>=lane). Upgrade them to lanes of their own (bus:lanes=designated)."
     no_markings: No lane markings
     counts:
       title: Number of lanes
@@ -274,6 +275,41 @@ en:
       school_zone: School zone
       border_control: Border control
     signals: "maxspeed=signals is the old way to tag this. Give the highest limit in maxspeed, and tick Variable speed limit."
+  cycleway:
+    details_title: "{side} cycle lane"
+    lane: Line beside it
+    oneway: Cycles go
+    width: Width (m)
+    buffer: Buffer
+    separation: Kept apart by
+    surface_colour: Colour
+    values:
+      lane:
+        exclusive: Solid (mandatory)
+        advisory: Dashed (advisory)
+      oneway:
+        "yes": With the way
+        minus1: Against the way
+        "no": Both ways
+      buffer:
+        "yes": "Yes"
+        "no": "No"
+        0_5: 0.5 m
+        "1": 1 m
+      separation:
+        bollard: Bollards
+        flex_post: Flexible posts
+        kerb: A kerb
+        planter: Planters
+        vertical_panel: Panels
+        "no": Nothing
+      surface_colour:
+        green: Green
+        red: Red
+        blue: Blue
+  labels:
+    no_hgv: no HGV
+    hgv: HGV lane
   roadside:
     title: Roadside
     hint: "Forward is the side beside traffic going along the way's drawing direction, backward the side beside traffic going the other way."
@@ -663,7 +699,7 @@ en:
     camera: "A speed camera or red light camera (highway=speed_camera); the limit it enforces is its maxspeed, and direction is the way it faces."
     centre_line: "The line between traffic going opposite ways. Dashed where either way may overtake; a double white line is solid on the side of the traffic that may not cross it (overtaking=*, overtaking:forward, overtaking:backward)."
     change: "Whether traffic may change into the lane beside it (change:lanes: yes, no, not_left, not_right). Beside the centre line this is overtaking (overtaking=*); beside the kerb there is nothing to change into."
-    cycleway: "Cycle lanes and tracks along the road, per side (cycleway:left, cycleway:right): a lane is painted on the road, inside the kerb, a track is kept apart from it. Their width is cycleway:<side>:width. A contraflow lane is cycleway:<side>=lane with cycleway:<side>:oneway=-1 and oneway:bicycle=no, not the old opposite_lane."
+    cycleway: "Cycle lanes and tracks along the road, per side (cycleway:left, cycleway:right): a lane is painted on the road, inside the kerb, a track is kept apart from it. Their width is cycleway:<side>:width. A contraflow lane is cycleway:<side>=lane with cycleway:<side>:oneway=-1 and oneway:bicycle=no, not the old opposite_lane. Each side's details (the line beside it, direction, width, buffer, separation, colour) fold away under the field."
     destination: "Where a lane goes, as the signs say (destination:lanes); several places are separated by semicolons. Lanes with none take the road's destination:forward or destination:backward (destination on a one-way road)."
     destination_ref: "The road numbers on the signs for a lane (destination:ref:lanes), such as M6 or A38."
     direction: "Which way the lane's traffic goes: forward (along the way's drawing direction), backward, or both ways for a centre turn lane (lanes:forward, lanes:backward, lanes:both_ways)."
@@ -708,7 +744,7 @@ en:
     roundabout: "A roundabout's ring (junction=roundabout): the ring's segments and the roads joining it."
     shoulder: "A hard shoulder beside the lanes (shoulder=*, or shoulder:left and shoulder:right). Motorways are drawn with one until the road says otherwise."
     shoulder_width: "How wide the hard shoulder is, in metres (shoulder:<side>:width); drawn 2.5 m wide until tagged."
-    sidewalk: "Pavements along the road, per side (sidewalk:left, sidewalk:right, sidewalk:both): yes, no, or mapped separately as a way of its own."
+    sidewalk: "Pavements along the road, per side (sidewalk:left, sidewalk:right, sidewalk:both): yes, no, mapped separately as a way of its own, or lane for a pedestrian lane painted on the road. sidewalk:<side>:surface and sidewalk:<side>:kerb are drawn too."
     sign: "Which sign this is (traffic_sign=*), such as GB:670[40] for a 40 mph limit. UK signs are drawn as their pictures; several on one post are separated by semicolons."
     sign_direction: "The compass bearing the sign faces (direction=*), towards the traffic that reads it."
     sign_tool: "Pick a sign, a message sign or a camera, then click a lane: it is placed beside the road, facing that lane's traffic."

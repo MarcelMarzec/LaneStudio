@@ -8,6 +8,41 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.08r2
+##### 2026-Nov-08
+
+#### Roads and signs
+* UK crossings have their controlled area painted on the road: zig-zags along both kerbs and the centre line on
+  each approach (stopping short of junctions), a give way line before a zebra or a stop line before a signal
+  crossing, and Belisha beacons at each end of a zebra
+* Tactile paving (`tactile_paving=yes`) is laid at each end of a crossing, red at signals and buff elsewhere
+* Advanced stop lines (`cycleway=asl`) are drawn with both stop lines, the green box and a cycle symbol
+* Flashing amber, lane control and emergency signals (`traffic_signals=*`) have heads of their own, and the first
+  two no stop line
+* Bus bays (`bus_bay=left|right|both`) are a layby the kerb goes round, with the yellow BUS STOP box in the UK
+* Traffic calming tagged on a road way (a long table, rumble strips) covers that way
+* Escape lanes (`highway=escape`) and guided busways (`highway=bus_guideway`) are drawn as roads
+* Road areas, traffic islands and car parks mapped as multipolygons are drawn, with their holes
+
+#### Lanes and junctions
+* Cycle lanes show their details: a dashed line for an advisory lane (`cycleway:<side>:lane`), a painted buffer,
+  bollards, posts, kerbs or planters keeping them apart (`cycleway:<side>:separation`), their colour
+  (`cycleway:<side>:surface:colour`), and cycle symbols pointing the way their cycles go (`cycleway:<side>:oneway`);
+  each side's details can be set under the Cycleway field
+* Shared lanes (`cycleway=shared_lane`) have cycle symbols with chevrons, and shared bus lanes (`share_busway`)
+  cycle symbols in the bus lane
+* UK bus lanes have BUS LANE painted along them and a wide solid line beside them, and lanes with
+  `surface:colour` are drawn in that colour
+* Bus lanes tagged the old way (`busway:<side>=lane`) are drawn, and the Number of lanes field offers to upgrade
+  them to lanes of their own
+* Pavements can be a pedestrian lane on the road (`sidewalk=lane`), and are drawn with their surface and kerb
+  (`sidewalk:<side>:surface`, `sidewalk:<side>:kerb`)
+* Lane labels show restrictions (no HGV, HGV lane, height, width and weight limits), the destination sign's symbol
+  (`destination:symbol`) and its colour (`destination:colour`)
+
+#### Website
+* The front page mentions the UK markings Lane Studio draws
+
 # 26.11.08
 ##### 2026-Nov-08
 

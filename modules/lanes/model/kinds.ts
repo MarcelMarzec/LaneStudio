@@ -29,7 +29,8 @@ const reservedKinds = ['bus', 'psv', 'taxi', 'hov', 'bicycle', 'pedestrian'] as 
  * A lane's type from its `*:lanes` values (wiki: Lanes). `designated` marks a lane kept for a type of traffic; a lane
  * closed to general traffic (`access`, `motor_vehicle` or `vehicle:lanes=no`) that is open to buses, PSVs, taxis, HOVs
  * or cycles (`yes` or `designated`) is kept for them too, and `cycleway:lanes=lane` is a cycle lane. A closed lane
- * open to none of them is `restricted`. On a busway (`highway=busway`) a lane with no type is a bus lane.
+ * open to none of them is `restricted`. On a busway or a guided busway (`highway=busway`, `bus_guideway`) a lane with no
+ * type is a bus lane.
  */
 export function laneKindFromValues(values: Record<string, string>, highway?: string): LaneKindValue {
     const v = (key: string) => values[key] || undefined;
@@ -40,7 +41,7 @@ export function laneKindFromValues(values: Record<string, string>, highway?: str
         for (const kind of reservedKinds) if (kind !== 'pedestrian' && open(v(laneKindKeys[kind]!))) return kind;
         return 'restricted';
     }
-    return highway === 'busway' ? 'bus' : 'general';
+    return highway === 'busway' || highway === 'bus_guideway' ? 'bus' : 'general';
 }
 
 /** A lane's type, as the lane type field shows it (a restricted lane is general traffic with its access closed) */
