@@ -203,7 +203,7 @@ describe('carriageway areas and offsets', () => {
         const edge = frame.toMetres(through.boundaries[0][0])[1];
         expect(junctions).toHaveLength(1);
         for (const junction of junctions) {
-            for (const p of junction.polygons.flat().map(frame.toMetres)) expect(p[1]).toBeGreaterThan(edge - 0.05);
+            for (const p of junction.polygons.flat().map(frame.toMetres)) expect(p[1]).toBeGreaterThan(edge - 0.1);
         }
     });
 

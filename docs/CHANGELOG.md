@@ -8,6 +8,22 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.09
+##### 2026-Nov-09
+
+#### Lanes and junctions
+* A slip road's lane runs on along the motorway's edge until its own way has drawn away, then follows it, instead of
+  bowing out and back (M5 at junction 14, M6 at the M6 Toll)
+* The motorway has no hard shoulder beside a slip lane leaving or joining it, until the slip road has drawn away
+* Lanes moving aside for chevrons or hatching never move more than 1 m sideways in 12 m, and ease back to their own
+  line past the area, so long areas no longer make roads wobble
+* Chevrons point back at the oncoming traffic, as UK chevrons do
+
+#### Editing
+* **Chevron area** in Add Area maps chevrons with all their tags (`road_marking=restriction`, `pattern=chevron`,
+  `stroke=solid`, `colour=white`); **Hatched area** does the same with `pattern=stripes`
+* Clicking a hard shoulder while drawing a line or area adds a point, as on a lane, instead of ending the drawing
+
 # 26.11.08r12
 ##### 2026-Nov-08
 

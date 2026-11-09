@@ -26,6 +26,14 @@ const node = (id: string, x: number, y: number, tags: Tags = {}) => new iD.osmNo
 const way = (id: string, nodes: string[], tags: Tags) => new iD.osmWay({ id: id as `w${number}`, nodes: nodes as `n${number}`[], tags });
 
 
+
+/** A way's drawing shift where it starts or ends: a slip road's bend there, else its join shift */
+const startShift = (visuals: Map<string, any>, id: string) => visuals.get(id)?.bends?.[0]?.[1] ?? visuals.get(id)?.start;
+const endShift = (visuals: Map<string, any>, id: string) => {
+    const bends = visuals.get(id)?.bends;
+    return bends?.length ? bends[bends.length - 1][1] : visuals.get(id)?.end;
+};
+
 describe('road shields', () => {
     it('signs UK road numbers by road type', () => {
         expect(shieldRefs({ highway: 'motorway', ref: 'M6' })).toEqual([{ text: 'M6', style: 'motorway' }]);
@@ -89,7 +97,7 @@ describe('slip roads', () => {
         const lane = laneLayout(graph.entity('w1'), graph).lanes[0].width;
         // a motorway has a hard shoulder: the slip road's lane opens up over it, beside the outer (left) lane
         const slip = laneLayout(graph.entity('w3'), graph).lanes[0].width;
-        expect(visuals.get('w3')?.start).toBeCloseTo(outer - slip / 2, 1);
+        expect(startShift(visuals, 'w3')).toBeCloseTo(outer - slip / 2, 1);
         expect(lane).toBeGreaterThan(3);
     });
 
@@ -104,8 +112,8 @@ describe('slip roads', () => {
         const outer = laneLayout(graph.entity('w1'), graph).edges[0];
         const lane = laneLayout(graph.entity('w1'), graph).lanes[0].width;
         // the slip road's centre starts on the outer (left) lane's centre, more than a lane from the middle
-        expect(visuals.get('w3')?.start).toBeCloseTo(outer + lane / 2, 1);
-        expect(Math.abs(visuals.get('w3')!.start)).toBeGreaterThan(3.5);
+        expect(startShift(visuals, 'w3')).toBeCloseTo(outer + lane / 2, 1);
+        expect(Math.abs(startShift(visuals, 'w3'))).toBeGreaterThan(3.5);
     });
 
     it('runs a motorway with a slip road peeling off straight through, its hard shoulder stopping at the mouth', () => {
@@ -120,7 +128,7 @@ describe('slip roads', () => {
         const graph = new iD.coreGraph(entities);
         const { visuals, pieces } = roadGeometry(waysOf(graph), graph);
         // the slip road is lined up over the hard shoulder, outside the left lane
-        expect(visuals.get('w23658069')?.start).toBeLessThan(-6);
+        expect(startShift(visuals, 'w23658069')).toBeLessThan(-6);
         // the motorway runs on with its hard shoulder either side of the junction
         expect(pieces.filter(p => p.wayID === 'w315021126').every(p => p.roadside.some(s => s.kind === 'shoulder'))).toBe(true);
     });
@@ -135,7 +143,7 @@ describe('slip roads', () => {
         const { visuals } = roadGeometry(waysOf(graph), graph);
         const after = laneLayout(graph.entity('w2'), graph);
         // the gained lane is the left one of the four
-        expect(visuals.get('w3')?.end).toBeCloseTo((after.edges[0] + after.edges[1]) / 2, 1);
+        expect(endShift(visuals, 'w3')).toBeCloseTo((after.edges[0] + after.edges[1]) / 2, 1);
     });
 
     it('keeps a one-way road that gives way at its end on its way, not merged into a lane', () => {
@@ -147,7 +155,7 @@ describe('slip roads', () => {
             way('w3', ['n4', 'n6', 'n2'], { highway: 'tertiary', oneway: 'yes', lanes: '1' })
         ]);
         const { visuals } = roadGeometry(waysOf(graph), graph);
-        expect(visuals.get('w3')?.end ?? 0).toBe(0);
+        expect(endShift(visuals, 'w3') ?? 0).toBe(0);
     });
 });
 

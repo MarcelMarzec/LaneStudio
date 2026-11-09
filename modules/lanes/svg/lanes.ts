@@ -1437,6 +1437,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             }));
         });
 
+        // clicks on lanes and shoulders select only while browsing or selecting, not mid-drawing
+        const selectingMode = () => ['browse', 'select'].includes(context.mode()?.id ?? '');
         const lanes = target.selectAll<SVGPathElement, LaneTarget>('path.lane-target')
             .data(laneTargets, d => d.key);
         lanes.exit().remove();
@@ -1462,6 +1464,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                     connectLane(d);
                     return;
                 }
+                // while drawing a line or area (or in any other mode), the click is iD's: it adds a point
+                if (!selectingMode()) return;
                 const ids = context.selectedIDs();
                 if (event.shiftKey) {
                     // iD's select behaviour toggles the road on shift-click; lanes add to the selection instead
@@ -1492,7 +1496,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         shoulders.enter().append('path')
             .each(attrChanged('class', 'shoulder-target'))
             .on('click.lanes', (_event: MouseEvent, d: ShoulderTarget) => {
-                if (tools.tool() !== 'select') return;
+                // as on a lane: while drawing, the click is iD's
+                if (tools.tool() !== 'select' || !selectingMode()) return;
                 const ids = context.selectedIDs();
                 if (ids.length !== 1 || ids[0] !== d.wayID) context.enter(modeSelect(context, [d.wayID]));
                 state.selectShoulder(d.wayID, d.side);

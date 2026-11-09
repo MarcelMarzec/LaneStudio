@@ -89,15 +89,15 @@ describe('lanes parting round painted areas', () => {
         expect(scene(tags, box(kerb - 1.5, kerb), hatched).visual?.parts).toBeUndefined();
     });
 
-    it('turns chevrons to point the way traffic runs past them', () => {
+    it('turns chevrons to point back at the traffic coming towards them', () => {
         const { graph } = scene({ highway: 'motorway', oneway: 'yes', lanes: '2' }, box(10, 20), { road_marking: 'restriction', pattern: 'chevron' });
         const [area] = roadMarkingGeometry([graph.entity('w1'), graph.entity('w2')], graph).areas;
         expect(area.stripes!.length).toBeGreaterThan(10);
-        // each bar runs from its point back up the road
-        for (const bar of area.stripes!) expect(bar[0][0]).toBeGreaterThan(bar[1][0]);
+        // traffic runs east: each bar runs from its point (upstream, west) on down the road
+        for (const bar of area.stripes!) expect(bar[0][0]).toBeLessThan(bar[1][0]);
 
         const against = scene({ highway: 'motorway', oneway: '-1', lanes: '2' }, box(10, 20), { road_marking: 'gore_chevron' });
         const [reversed] = roadMarkingGeometry([against.graph.entity('w1'), against.graph.entity('w2')], against.graph).areas;
-        for (const bar of reversed.stripes!) expect(bar[0][0]).toBeLessThan(bar[1][0]);
+        for (const bar of reversed.stripes!) expect(bar[0][0]).toBeGreaterThan(bar[1][0]);
     });
 });

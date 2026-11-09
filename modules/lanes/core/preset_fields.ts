@@ -5,23 +5,30 @@ import { presetManager } from '../../presets';
 /** Lane Studio's own field: whether a crossing has traffic signals (`crossing:signals`), which iD has no field for */
 export const crossingSignalsField = 'lanes/crossing_signals';
 
-/** Lane Studio's preset for hatching or chevrons painted on the road (wiki: Key:road_marking), which iD has none for */
+/** Lane Studio's presets for hatching and chevrons painted on the road (wiki: Key:road_marking), which iD has none for */
 export const paintedAreaPreset = 'lanes/road_marking/restriction';
+export const chevronAreaPreset = 'lanes/road_marking/restriction/chevron';
 
 /**
- * Adds the Painted area preset (`road_marking=restriction`), named in iD's tagging strings so Add Area's search finds
- * it like iD's own; its pattern, outline (`stroke`) and colour are set in Lane Studio's Painted marking section
+ * Adds the Hatched area and Chevron area presets (`road_marking=restriction` with `pattern=stripes` or `chevron`, a solid
+ * white outline), named in iD's tagging strings so Add Area's search finds them like iD's own; their pattern, outline
+ * (`stroke`) and colour are set in Lane Studio's Painted marking section
  */
 function addPaintedAreaPreset() {
+    const painted = { area: 'yes', stroke: 'solid', colour: 'white' };
     presetManager.merge({
         presets: {
-            [paintedAreaPreset]: { tags: { road_marking: 'restriction' }, geometry: ['area'], icon: 'maki-triangle-stroked', fields: [] }
+            [paintedAreaPreset]: { tags: { road_marking: 'restriction' }, addTags: { road_marking: 'restriction', pattern: 'stripes', ...painted },
+                geometry: ['area'], icon: 'maki-triangle-stroked', fields: [] },
+            [chevronAreaPreset]: { tags: { road_marking: 'restriction', pattern: 'chevron' },
+                addTags: { road_marking: 'restriction', pattern: 'chevron', ...painted }, geometry: ['area'], icon: 'maki-triangle', fields: [] }
         }
     } as any);
     localizer.mergeStrings('tagging', 'en', {
         presets: {
             presets: {
-                [paintedAreaPreset]: { name: t('_lanes.fields.painted_area.name'), terms: t('_lanes.fields.painted_area.terms') }
+                [paintedAreaPreset]: { name: t('_lanes.fields.painted_area.name'), terms: t('_lanes.fields.painted_area.terms') },
+                [chevronAreaPreset]: { name: t('_lanes.fields.chevron_area.name'), terms: t('_lanes.fields.chevron_area.terms') }
             }
         }
     });

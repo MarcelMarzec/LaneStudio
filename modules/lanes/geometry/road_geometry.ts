@@ -151,6 +151,14 @@ export interface WayVisual {
     gapEnd?: number;
     /** painted areas the lanes part round (hatching or chevrons between lanes, or between two roads) */
     parts?: LanePart[];
+    /**
+     * A slip road lined up with the lane it leaves or joins, as (distance along the way, shift) points: the shift its
+     * lane needs at the junction, less as its way draws away from the main road, so it follows the main road's edge
+     * until it has room of its own (nothing beyond the points)
+     */
+    bends?: [number, number][];
+    /** stretches of road where a side's roadside strips give way (the main road's hard shoulder beside a slip lane) */
+    squeeze?: { side: 'left' | 'right'; from: number; to: number }[];
 }
 
 /**
@@ -165,6 +173,12 @@ export interface LanePart {
     edge: number;
     /** (distance along the way, the area's left side, its right side), offsets from the way's line (right positive) */
     samples: [number, number, number][];
+    /**
+     * How the lanes move for it, as (distance along the way, a, b) points, smoothed so they never move sideways more
+     * than 1 m in 12 (see `smoothMoves`): beside the road, `a` is how far the road moves away from the area (less than
+     * 0: in towards it); between lanes, `a` and `b` are how far the lanes left and right of it move apart
+     */
+    moves: [number, number, number][];
 }
 
 /** A closed way the lanes part round: hatching or chevrons painted on the road */
@@ -210,6 +224,50 @@ function partSidesAt(part: LanePart, s: number, fadeLength = partFade, shrink = 
     return [l0 + (l1 - l0) * t, r0 + (r1 - r0) * t, 1];
 }
 
+// the steepest a road or its lanes move sideways for a painted area: 1 m in this many
+const moveTaper = 12;
+
+/**
+ * A move wanted at points along a road, smoothed so it changes by at most 1 m in `moveTaper` and never by less than
+ * wanted where the road must clear something: each point's move, falling away at that rate either side of it (the
+ * greatest push, else the strongest pull, at each place), so beyond the points it falls to nothing. Given at the area's points, and every 2 m beyond them to where it has gone.
+ */
+function smoothMoves(wanted: [number, number][], total: number): [number, number][] {
+    if (!wanted.length) return [];
+    const first = wanted[0][0];
+    const last = wanted[wanted.length - 1][0];
+    const reach = Math.max(...wanted.map(w => Math.abs(w[1]))) * moveTaper + 2;
+    const out: [number, number][] = [];
+    // at the area's own points, and every 2 m beyond its ends
+    const before = Array.from({ length: Math.ceil(reach / 2) }, (_, i) => first - reach + i * 2).filter(at => at >= 0 && at < first);
+    const after = Array.from({ length: Math.ceil(reach / 2) }, (_, i) => last + (i + 1) * 2).filter(at => at <= total);
+    for (const s of [...before, ...wanted.map(w => w[0]), ...after]) {
+        // a push (clearing the area) falls away from each point at the taper's rate, the greatest winning; so does
+        // a pull (meeting it), the strongest winning; a push wins over a pull
+        let push = 0;
+        let pull = 0;
+        for (const [at, value] of wanted) {
+            const fall = Math.abs(s - at) / moveTaper;
+            if (value > 0) push = Math.max(push, value - fall);
+            else pull = Math.min(pull, value + fall);
+        }
+        out.push([s, push > 0 ? push : pull]);
+    }
+    return out.map(([s, v]) => [s, Math.abs(v) < 0.005 ? 0 : v]);
+}
+
+/** A part's moves at distance `s` along the way (nothing outside them) */
+function movesAt(part: LanePart, s: number): [number, number] {
+    const moves = part.moves;
+    if (!moves.length || s < moves[0][0] || s > moves[moves.length - 1][0]) return [0, 0];
+    const i = moves.findIndex(m => m[0] >= s);
+    if (i <= 0) return [moves[0][1], moves[0][2]];
+    const [s0, a0, b0] = moves[i - 1];
+    const [s1, a1, b1] = moves[i];
+    const t = s1 > s0 ? (s - s0) / (s1 - s0) : 0;
+    return [a0 + (a1 - a0) * t, b0 + (b1 - b0) * t];
+}
+
 /** How far a road is moved towards a painted area beside it that stands `gap` metres off its kerb */
 function pullTowards(gap: number): number {
     if (gap <= 0) return 0;
@@ -251,17 +309,27 @@ const smooth = (x: number) => {
     return r * r * (3 - 2 * r);
 };
 
+/** A value from (distance, value) points in order: interpolated between them, 0 beyond them */
+function along(points: [number, number][] | undefined, s: number): number {
+    if (!points?.length || s < points[0][0] || s > points[points.length - 1][0]) return 0;
+    const i = points.findIndex(p => p[0] >= s);
+    if (i <= 0) return points[0][1];
+    const [s0, v0] = points[i - 1];
+    const [s1, v1] = points[i];
+    return v0 + (v1 - v0) * (s1 > s0 ? (s - s0) / (s1 - s0) : 0);
+}
+
 /** The drawing-only sideways shift of a way at distance `s` along it */
 export function visualShift(visual: WayVisual, s: number, total: number): number {
-    let shift: number;
+    let shift = along(visual.bends, s);
     if (total >= 2 * (offsetHold + offsetFade)) {
         // long ways: each end's shift holds near its join, then fades, so the middle is not moved
         const weight = (d: number) => 1 - smooth((d - offsetHold) / offsetFade);
-        shift = visual.start * weight(s) + visual.end * weight(total - s);
+        shift += visual.start * weight(s) + visual.end * weight(total - s);
     } else {
         // short ways: change from one end's shift to the other's over the middle
         const ramp = Math.min(total, taperLength * 2);
-        shift = visual.start + (visual.end - visual.start) * (ramp > 0 ? smooth((s - (total - ramp) / 2) / ramp) : 0);
+        shift += visual.start + (visual.end - visual.start) * (ramp > 0 ? smooth((s - (total - ramp) / 2) / ramp) : 0);
     }
 
     const fit = visual.fit;
@@ -377,29 +445,29 @@ export function edgesAndGapsAt(layout: LaneLayout, visual: WayVisual, s: number,
     }
     // painted areas: the lanes either side part round one between them; a road moves away from one beside it
     const gaps: { edge: number; left: number; right: number }[] = [];
-    // the room beside a kerb before a painted area there, which the roadside (a hard shoulder) squeezes into
+    // the room beside a kerb before a painted area there, which the roadside (a hard shoulder) squeezes into; and
+    // beside a slip lane, none (the strips come back over 16 m either side)
     const room: { left?: number; right?: number } = {};
+    for (const { side, from, to } of visual.squeeze ?? []) {
+        const outside = s < from ? from - s : s > to ? s - to : 0;
+        room[side] = Math.min(room[side] ?? Infinity, outside * 0.25);
+    }
     for (const part of visual.parts ?? []) {
         const k = part.edge;
-        // beside the road, the area's edge held past its ends, for a road pulled in to meet it
-        const sides = k <= 0 || k >= n ? partSidesAt(part, s, pullFade, false) : partSidesAt(part, s);
-        if (!sides) continue;
-        const [left, right] = [sides[0] - shift, sides[1] - shift];
-        if (k <= 0) {
+        const [a, b] = movesAt(part, s);
+        // the area's edge held past its ends, for the roadside giving way to it
+        const sides = partSidesAt(part, s, pullFade, false);
+        if (k <= 0 || k >= n) {
             // away from an area over the lanes, or in to meet one standing off (its edge is the road's edge)
-            const over = (right - edges[0]) * sides[2];
-            const move = over > 0 ? over : -pullTowards(-over / sides[2]) * sides[2];
-            for (let e = 0; e <= n; e++) edges[e] += move;
+            for (let e = 0; e <= n; e++) edges[e] += k <= 0 ? a : -a;
+            if (!sides) continue;
             // (past its ends the roadside comes back as the road eases out)
-            room.left = Math.min(room.left ?? Infinity, Math.max(0, edges[0] - right) + (1 - sides[2]) * 10);
-        } else if (k >= n) {
-            const over = (edges[n] - left) * sides[2];
-            const move = over > 0 ? over : -pullTowards(-over / sides[2]) * sides[2];
-            for (let e = 0; e <= n; e++) edges[e] -= move;
-            room.right = Math.min(room.right ?? Infinity, Math.max(0, left - edges[n]) + (1 - sides[2]) * 10);
+            const free = k <= 0 ? edges[0] - (sides[1] - shift) : (sides[0] - shift) - edges[n];
+            const side = k <= 0 ? 'left' : 'right';
+            room[side] = Math.min(room[side] ?? Infinity, Math.max(0, free) + (1 - sides[2]) * 10);
         } else {
-            const pushLeft = Math.max(0, edges[k] - left);
-            const pushRight = Math.max(0, right - edges[k]);
+            const pushLeft = a;
+            const pushRight = b;
             if (pushLeft < 0.01 && pushRight < 0.01) continue;
             for (let e = 0; e < k; e++) edges[e] -= pushLeft;
             for (let e = k + 1; e <= n; e++) edges[e] += pushRight;
@@ -1195,7 +1263,7 @@ function alignBranches(node: osmNode, graph: coreGraph, visuals: Map<string, Way
             // only a branch peeling off (one way, leaving at a shallow angle), not a side road
             if (Math.abs(exit.angle) > 60 || side.layout.model.lanes[armLaneDirection(side, true)].length) continue;
             const visual = visuals.get(side.way.id) ?? noVisual;
-            if ((side.nodeIndex === 0 ? visual.start : visual.end) !== 0) continue;
+            if ((side.nodeIndex === 0 ? visual.start : visual.end) !== 0 || visual.bends) continue;
             let fromLanes = lanes.targets.flatMap((set, index) => (set.has(exit.j) ? [index] : []));
             // beside a hard shoulder, the slip road's lane opens up over the shoulder, outside the outer lane
             let besideShoulder = 0;
@@ -1220,12 +1288,48 @@ function alignBranches(node: osmNode, graph: coreGraph, visuals: Map<string, Way
             const delta = sideDirection === 'backward' ? -mean : mean;
             // a slip road leaves from the outer lane, which on a wide road is more than a lane from its centre
             if (Math.abs(delta) < 0.05 || Math.abs(delta) > branchShiftLimit(up) + Math.abs(besideShoulder)) continue;
-            const next = { ...visual };
-            if (side.nodeIndex === 0) next.start = delta;
-            else next.end = delta;
-            visuals.set(side.way.id, next);
+            // the slip road leaves beside the main road carrying on
+            const beside = arms[through.find(k => k !== i)!];
+            const { bends, apart } = bendAlong(side, beside, delta, graph);
+            visuals.set(side.way.id, { ...visual, bends });
+            if (besideShoulder) squeezeBeside(beside, exit.angle > 0 === beside.alongWay ? 'left' : 'right', apart, graph, visuals);
         }
     }
+}
+
+/**
+ * A slip road's shift as it draws away from the main road beside it: `delta` at the junction, less by how far its way
+ * has moved from the main road's line, smoothly to nothing once it is clear, so the slip lane runs on along the main
+ * road's edge and then follows its own way without bowing out. `apart` is how far from the junction that is.
+ */
+function bendAlong(side: Arm, beside: Arm, delta: number, graph: coreGraph): { bends: [number, number][]; apart: number } {
+    const total = polylineLength(lineLocs(side.way, graph).map(metricFrame((graph.entity(side.way.first()) as osmNode).loc).toMetres));
+    const length = Math.min(polylineLength(side.line), 300);
+    const need = Math.abs(delta);
+    const ease = 1.5;
+    const soft = (f: number) => (f >= ease ? f : f <= -ease ? 0 : (f + ease) * (f + ease) / (4 * ease));
+    const points: [number, number][] = [];
+    let apart = length;
+    for (let t = 0; t <= length; t += 2) {
+        const p = pointAlong(side.line, t).point;
+        const away = len(sub(p, pointAlong(beside.line, projectOnto(beside.line, p)).point));
+        const shift = Math.sign(delta) * soft(need - away);
+        points.push([side.nodeIndex === 0 ? t : total - t, shift]);
+        if (shift === 0 && t > 0) {
+            apart = t;
+            break;
+        }
+    }
+    return { bends: points.sort((a, b) => a[0] - b[0]), apart };
+}
+
+/** The main road's strips on `side` give way for `apart` metres from the junction along an arm (a slip lane is there) */
+function squeezeBeside(arm: Arm, side: 'left' | 'right', apart: number, graph: coreGraph, visuals: Map<string, WayVisual>) {
+    const frame = metricFrame((graph.entity(arm.way.first()) as osmNode).loc);
+    const at = cumulativeLengths(lineLocs(arm.way, graph).map(frame.toMetres))[arm.nodeIndex];
+    const range = arm.alongWay ? { from: at, to: at + apart } : { from: at - apart, to: at };
+    const visual = visuals.get(arm.way.id) ?? noVisual;
+    visuals.set(arm.way.id, { ...visual, squeeze: [...(visual.squeeze ?? []), { side, ...range }] });
 }
 
 /**
@@ -1301,7 +1405,7 @@ function alignMerges(node: osmNode, graph: coreGraph, visuals: Map<string, WayVi
             const angle = Math.acos(Math.max(-1, Math.min(1, dot(unit(arriving), unit(down.direction))))) * 180 / Math.PI;
             if (angle > 60) return;
             const visual = visuals.get(side.way.id) ?? noVisual;
-            if ((side.nodeIndex === 0 ? visual.start : visual.end) !== 0) return;
+            if ((side.nodeIndex === 0 ? visual.start : visual.end) !== 0 || visual.bends) return;
 
             // joining on the left meets the leftmost lanes ahead (lane 0 is the left one), on the right the rightmost
             const fromLeft = down.direction[0] * side.direction[1] - down.direction[1] * side.direction[0] > 0;
@@ -1326,10 +1430,11 @@ function alignMerges(node: osmNode, graph: coreGraph, visuals: Map<string, WayVi
             const mean = differences.reduce((x, y) => x + y, 0) / differences.length + besideShoulder;
             const delta = sideDirection === 'backward' ? -mean : mean;
             if (Math.abs(delta) < 0.05 || Math.abs(delta) > branchShiftLimit(down) + Math.abs(besideShoulder)) return;
-            const next = { ...visual };
-            if (side.nodeIndex === 0) next.start = delta;
-            else next.end = delta;
-            visuals.set(side.way.id, next);
+            // the slip road arrives beside the main road coming up to the junction
+            const { bends, apart } = bendAlong(side, up, delta, graph);
+            visuals.set(side.way.id, { ...visual, bends });
+            // (travelling towards the junction, the main road's left is its way's left where its arm runs against it)
+            if (besideShoulder) squeezeBeside(up, fromLeft !== up.alongWay ? 'left' : 'right', apart, graph, visuals);
         });
     }
 }
@@ -1565,7 +1670,9 @@ function visualSignature(ways: osmWay[], visuals: Map<string, WayVisual>): strin
         const v = visuals.get(w.id);
         return v ? `${w.id}:${v.start.toFixed(2)}:${v.end.toFixed(2)}:${v.taperStart.map(t => t.lane)}:${v.taperEnd.map(t => t.lane)}` +
             `:${v.fit ? v.fit.map(p => `${p[0].toFixed(0)}/${p[1].toFixed(2)}`).join(',') : ''}:${v.gapStart ?? ''}:${v.gapEnd ?? ''}` +
-            `:${v.parts ? v.parts.map(p => `${p.edge}/${p.samples.map(q => q.map(x => x.toFixed(1)).join('/')).join(',')}`).join(';') : ''}` : '';
+            `:${v.parts ? v.parts.map(p => `${p.edge}/${p.samples.map(q => q.map(x => x.toFixed(1)).join('/')).join(',')}`).join(';') : ''}` +
+            `:${v.bends ? v.bends.map(p => p.map(x => x.toFixed(1)).join('/')).join(',') : ''}` +
+            `:${v.squeeze ? v.squeeze.map(q => `${q.side}${q.from.toFixed(0)}-${q.to.toFixed(0)}`).join(',') : ''}` : '';
     }).join('|');
 }
 
@@ -2106,7 +2213,22 @@ function partsFromAreas(way: osmWay, graph: coreGraph, areas: osmWay[]): LanePar
         // beside the road, it must reach well past the kerb (between two roads), not lie along it
         if (edge === 0 && widest[1] > kerbLeft - 1.5) continue;
         if (edge === n && widest[2] < kerbRight + 1.5) continue;
-        parts.push({ edge, samples });
+        // how the lanes move for it, smoothed along the road
+        let moves: [number, number, number][];
+        if (edge === 0 || edge === n) {
+            const wanted = samples.map(([at, l, r]): [number, number] => {
+                const [kl, kr] = placed(at);
+                const over = edge === 0 ? r - kl : kr - l;
+                return [at, over > 0 ? over : -pullTowards(-over)];
+            });
+            moves = smoothMoves(wanted, total).map(([at, v]) => [at, v, 0]);
+        } else {
+            const line = (at: number) => placed(at)[0] - layout.edges[0] + layout.edges[edge];
+            const lefts = smoothMoves(samples.map(([at, l]): [number, number] => [at, Math.max(0, line(at) - l)]), total);
+            const rights = smoothMoves(samples.map(([at, , r]): [number, number] => [at, Math.max(0, r - line(at))]), total);
+            moves = lefts.map(([at, v], i) => [at, Math.max(0, v), Math.max(0, rights[i]?.[1] ?? 0)]);
+        }
+        parts.push({ edge, samples, moves });
     }
     const result = parts.length ? parts : undefined;
     partCache.set(way, { deps, parts: result });
@@ -2412,12 +2534,11 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
         const startAt = cumulative[a] + trimStart;
         // vertices where tapers end, so the taper is drawn as a straight slope
         const breaks = [
+            ...(visual.bends ?? []).map(p => p[0] - startAt),
+            ...(visual.squeeze ?? []).flatMap(q => [q.from - 16, q.from, q.to, q.to + 16].map(at => at - startAt)),
             ...(visual.parts ?? []).flatMap(part => {
                 // vertices along the area, and every 3 m where the lanes ease back past its ends
-                const [a, b] = [part.samples[0][0], part.samples[part.samples.length - 1][0]];
-                const ease = Array.from({ length: Math.ceil(pullFade / 3) }, (_, i) => (i + 1) * 3);
-                return [a - partFade, ...ease.map(d => a - d), ...part.samples.map(q => q[0]), ...ease.map(d => b + d), b + partFade]
-                    .map(at => at - startAt);
+                return part.moves.map(m => m[0] - startAt);
             }),
             ...visual.taperStart.map(t => t.length - startAt),
             ...visual.taperEnd.map(t => total - t.length - startAt),

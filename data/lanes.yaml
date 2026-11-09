@@ -262,8 +262,11 @@ en:
   fields:
     crossing_signals: Traffic signals
     painted_area:
-      name: Painted area (hatching, chevrons)
-      terms: hatched area, hatching, chevrons, gore, ghost island, road marking, restriction
+      name: Hatched area
+      terms: hatched area, hatching, diagonal stripes, ghost island, painted island, road marking, restriction
+    chevron_area:
+      name: Chevron area
+      terms: chevrons, chevron markings, gore, nose, diverge, merge, slip road, hatched area, road marking, restriction
   markings:
     types:
       none: Nothing

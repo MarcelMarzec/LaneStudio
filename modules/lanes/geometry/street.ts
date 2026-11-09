@@ -1404,16 +1404,18 @@ function speedLimitSymbols(way: osmWay, graph: coreGraph, visuals: Map<string, W
 
 /**
  * Chevrons painted in an area (`pattern=chevron`, as between a motorway and a slip road leaving it): bars 0.6 m wide
- * every 5 m, each a V whose point is on the middle of the area and points `travel` (the traffic's direction, in metres
- * in the frame of the polygon's first point), its arms sweeping back at 45° (clipped to the area when drawn). Without
- * a direction they point along the area's length.
+ * every 5 m, each a V whose point is on the middle of the area and points back at the traffic coming towards it
+ * (against `travel`, the traffic's direction, in metres in the frame of the polygon's first point), its arms sweeping
+ * away at 45° either side, as UK chevrons do (clipped to the area when drawn). `direction=*` gives the way the points
+ * face instead; with neither they point along the area's length.
  */
 export function chevronStripes(polygon: Vec2[], travel: Vec2 | undefined, direction?: string): Vec2[][] {
     const frame = metricFrame(polygon[0]);
     const points = polygon.map(frame.toMetres);
     const shape = longAxis(points);
     const tagged = direction === undefined ? NaN : cardinals[direction.toUpperCase()] ?? parseFloat(direction);
-    const along: Vec2 = Number.isFinite(tagged) ? [Math.sin(tagged * Math.PI / 180), Math.cos(tagged * Math.PI / 180)] : travel ?? shape.axis;
+    const along: Vec2 = Number.isFinite(tagged) ? [Math.sin(tagged * Math.PI / 180), Math.cos(tagged * Math.PI / 180)]
+        : travel ? scale(travel, -1) : shape.axis;
     const across = rightNormal(along);
     const reach = shape.reach + 1;
     const ring = len(sub(points[0], points[points.length - 1])) < 1e-6 ? points : [...points, points[0]];

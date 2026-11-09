@@ -73,7 +73,8 @@ Lines, areas and text drawn from `stroke` (or `stroke:left|right`), `pattern`, `
 
 ### Hatched areas and chevrons
 
-Map the painted area as its own area (Add Area → **Painted area**), drawn round its outline at whatever width it has:
+Map the painted area as its own area (Add Area → **Chevron area** or **Hatched area**, which add all the tags below),
+drawn round its outline at whatever width it has:
 
 | Marking | Tags |
 | --- | --- |
@@ -83,9 +84,10 @@ Map the painted area as its own area (Add Area → **Painted area**), drawn roun
 
 `area:highway=prohibited` and `road_marking=hatched|gore_chevron` are read too (the wiki prefers the tags above).
 
-- Stripes run at 45° to the area; chevrons point the way traffic runs on the nearest road (`direction=*` overrides).
-- **Lanes fit round it**: lanes either side of an area between them part as wide as it is mapped, and join again
-  past it. A road beside an area that reaches towards another road (chevrons at a slip road) meets its edge: moved
-  away where it would run over it, pulled in (up to 4 m, easing back over 30 m past its ends) where it stands off,
-  its hard shoulder giving way. Drawing only: tags are not changed. Areas painted across the whole road (box junctions)
+- Stripes run at 45° to the area; chevrons point back at the traffic coming towards them on the nearest road, as UK
+  chevrons do (`direction=*`, the way the points face, overrides).
+- **Lanes fit round it**: lanes either side of an area between them part as wide as it is mapped. A road beside an
+  area that reaches towards another road (chevrons at a slip road) meets its edge: moved away where it would run over
+  it, pulled in (up to 4 m) where it stands off, its hard shoulder giving way. Lanes never move sideways more than 1 m
+  in 12, easing back to their own line past the area. Drawing only: tags are not changed. Areas painted across the whole road (box junctions)
   or inside one lane (keep-clear markings) are left on the lanes.

@@ -13,9 +13,10 @@ Junctions are drawing only: nothing here writes tags.
 - **Short links** (40 m or less, no arrows of their own, as between the halves of a dual carriageway) take the
   arrows of the road leading in, less the turns already taken.
 - **Slip roads** joining or leaving at a shallow angle line up with the lane they become, unless they give way, stop
-  or have signals within 30 m of the end. Beside a hard shoulder, a one-lane slip road runs over the shoulder, outside
-  the outer lane, and the main road runs straight through with its shoulder stopping at the slip road's mouth and
-  starting again past it. A slip road (`*_link`) never makes a fork, even with the main road's ref.
+  or have signals within 30 m of the end. The slip lane runs on along the main road's edge until its own way has drawn
+  that far away, then follows its way, so it never bows out. Beside a hard shoulder, a one-lane slip road runs over
+  the shoulder, outside the outer lane, and the main road runs straight through with no hard shoulder beside the slip
+  lane (it comes back over 16 m past it). A slip road (`*_link`) never makes a fork, even with the main road's ref.
 - **Centre turn lanes**: a two-way road joining one with centre turn lanes parts its directions over 40 m round a
   hatched ghost island; a centre lane changing direction gets a diagonal white line.
 - **Junctions closer than 25 m** are one junction: one box, the short link drawn as guide lines, or as whole lanes
