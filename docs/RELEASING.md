@@ -29,8 +29,9 @@ The full rules are in [CLAUDE.md](../CLAUDE.md); `test/spec/lanes/version.ts` ch
 1. Actions → **Deploy LaneStudio to server** → Run workflow: **editor and website**, **editor** or **website**.
    - The editor: `npm run all` packages `dist-lanes/` (`index.html`, `land.html`, `dist/`, `.htaccess`), uploaded to
      `/editor/`. Files are loaded with a stamp of their contents, so visitors get the new version at once.
-   - The website (`LanesWebsite/`: overview, changelog, privacy) goes to the web root with the current changelog,
-     under its own upload record so it never deletes the editor.
+   - The website (`LanesWebsite/`: overview, statistics, changelog, privacy) goes to the web root with the current
+     changelog, under its own upload record so it never deletes the editor. The statistics' `config.php` and the
+     `data/` files the collector writes stay on the server untouched.
 2. Check: the footer shows the version, you can log in, and a test changeset says `created_by=LaneStudio YY.MM.DD`.
 
 By hand: set `ID_API_CONNECTION_URL`, `ID_API_CONNECTION_API_URL` and `ID_API_CONNECTION_CLIENT_ID`, run
@@ -38,9 +39,11 @@ By hand: set `ID_API_CONNECTION_URL`, `ID_API_CONNECTION_API_URL` and `ID_API_CO
 
 ## The website
 
-`LanesWebsite/` is a PHP site: `index.php`, `changelog.php` (renders the changelog), `privacy_policy.php`, `error.php`,
-`includes/` (settings, header, footer, icons, Markdown) and `assets/`. Run it with `php -S localhost:8000 router.php`
-in that folder.
+`LanesWebsite/` is a PHP site: `index.php`, `statistics.php`, `changelog.php` (renders the changelog),
+`privacy_policy.php`, `error.php`, `includes/` (settings, header, footer, icons, Markdown, the statistics) and
+`assets/`. Run it with `php -S localhost:8000 router.php` in that folder.
+
+The statistics need a database and a cron job on the server, set up once: [Statistics](develop/Statistics.md).
 
 ## The wiki
 

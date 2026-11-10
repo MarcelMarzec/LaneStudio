@@ -31,6 +31,7 @@ $noindex     = true;
 
 $navLinks = [
     ['label' => 'Overview', 'href' => '/'],
+    ['label' => 'Statistics', 'href' => '/statistics'],
     ['label' => 'Changelog', 'href' => '/changelog'],
     ['label' => 'Contact', 'href' => $site['contact']],
 ];

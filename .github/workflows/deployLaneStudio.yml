@@ -89,6 +89,11 @@ jobs:
           password: ${{ secrets.FTP_ROOT_PASSWORD }}
           local-dir: LanesWebsite/
           state-name: .ftp-deploy-website-state.json
+          # the statistics' settings, database and data files belong to the server: never upload or delete them
           exclude: |
             **/.DS_Store
             router.php
+            includes/statistics/config.php
+            includes/statistics/*.sqlite
+            includes/statistics/collect.lock
+            data/**

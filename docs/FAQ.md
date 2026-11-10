@@ -26,6 +26,10 @@ Anywhere, with left- and right-hand traffic. Lane widths, sign pictures, shields
 crossings and railway signals follow UK practice; elsewhere signs are a plate with their code. Speeds are in mph
 (km/h tags are read).
 
+**How many people use Lane Studio, and where?**
+The website's [statistics](https://lanestudio.marcelmarzec.com/statistics) map every changeset saved with it, with
+the latest ones, figures and a leaderboard, updated every few minutes from OpenStreetMap's changeset feed.
+
 **What do the colours and symbols mean?**
 Open the Map key pane (`G`).
 

@@ -10,6 +10,7 @@ $path        = '/changelog';
 
 $navLinks = [
     ['label' => 'Overview', 'href' => '/'],
+    ['label' => 'Statistics', 'href' => '/statistics'],
     ['label' => 'Changelog', 'href' => '/changelog'],
     ['label' => 'Contact', 'href' => $site['contact']],
     ['label' => 'marcelmarzec.com', 'href' => $site['home']],

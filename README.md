@@ -105,10 +105,12 @@ the folder it is served from. The **Deploy LaneStudio to server** workflow in `.
 builds `mm/lane-studio-main` and uploads the editor and the website over FTP (or either one alone). Logging in from your own domain needs your own
 OpenStreetMap OAuth 2 application. [RELEASING.md](docs/RELEASING.md) has the steps.
 
-The pages about Lane Studio (overview, changelog and privacy policy) are a small PHP site in
+The pages about Lane Studio (overview, statistics, changelog and privacy policy) are a small PHP site in
 `LanesWebsite/`, served at the root of lanestudio.marcelmarzec.com with the editor in `/editor/`. To
 try it locally, run
-`php -S localhost:8000 router.php` in `LanesWebsite/`.
+`php -S localhost:8000 router.php` in `LanesWebsite/`. Its statistics (a map of every changeset saved with
+Lane Studio, the latest ones, figures and a leaderboard) come from a cron job and a database on the server:
+[Statistics](docs/develop/Statistics.md) has the setup.
 
 ## More
 

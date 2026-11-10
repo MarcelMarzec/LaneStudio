@@ -31,6 +31,9 @@ Elsewhere: styles `css-lanes/` (built into `dist/lanes.css`), strings `data/lane
 the logo `docs/img/lane-studio-logo.svg`, site packaging `scripts/build_lanes_site.js`, the wiki
 `scripts/build_wiki.js`, tests `test/spec/lanes/`.
 
+The website is `LanesWebsite/`; its statistics' collector and page parts are in `LanesWebsite/includes/statistics/`,
+their country borders built by `scripts/build_statistics_countries.js` ([Statistics](Statistics.md)).
+
 ## iD hooks
 
 iD needed only small hooks that keep its behaviour by default, so plain iD (`index.html`) works as before:

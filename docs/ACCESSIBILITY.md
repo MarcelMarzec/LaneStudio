@@ -28,6 +28,7 @@ support is in [iD accessibility](develop/iD-Accessibility.md).
 | 🟠 | Railways, signals and level crossings | Drawn as symbols on the map; what each one is shows in the inspector when it is selected, as for any feature in iD |
 | 🟩 | What's new menu | A dialog listing the changes since the version you last used; closed with Esc or its button, and turned off under About in the Lane Studio pane |
 | 🟩 | Walkthrough and help | iD's walkthrough and Help pane, with Lane Studio's chapters and pages: keyboard and screen readers as in iD; the first Lanes step asks for a click on the map |
+| 🟠 | Website statistics | The figures, latest changesets, lists and leaderboard are text, and the chart has a table view; the map pans and zooms from the keyboard, but its dots are opened with a pointer (the latest five are also buttons in the list beside it) |
 | ❌ | Routing tool | Routes are shown for the lane under the pointer; there is no keyboard way to pick a lane in it yet |
 | 🤷 | Touch | Not yet tested on touch screens; the Routing tool relies on hovering |
 | ❌ | Translation | Lane Studio's own strings are English only; the rest of the editor uses iD's translations |

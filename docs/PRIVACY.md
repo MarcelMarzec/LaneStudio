@@ -9,12 +9,17 @@ The project's code and issues are at [https://github.com/MarcelMarzec/LaneStudio
 
 ### The website and source code
 
-Lane Studio is a static website: it has no server-side code, accounts or database of its own, and
-runs entirely in your browser. The web server that hosts it keeps ordinary access logs (such as your
+The Lane Studio editor runs entirely in your browser: it has no accounts or server of its own. The web server that hosts it keeps ordinary access logs (such as your
 IP address, the pages and files requested, and your browser's user agent), which are used only to keep
 the site running. The pages describing Lane Studio at lanestudio.marcelmarzec.com load their
 typefaces from Google Fonts, so Google receives your IP address when one of them opens, under
-[Google's privacy policy](https://policies.google.com/privacy); they set no cookies. If you interact with the project on GitHub, you do so under
+[Google's privacy policy](https://policies.google.com/privacy); they set no cookies. Their statistics (the front
+page's map and `/statistics`) load the MapLibre map library from [jsDelivr](https://www.jsdelivr.com/) and map tiles
+from [OpenFreeMap](https://openfreemap.org/), which receive your IP address and the area of the map in view. The
+statistics are made on the server from OpenStreetMap's public changeset data: every changeset whose `created_by`
+starts with `LaneStudio`, with its number, username, user id, time, comment, area and what it changed, kept in the
+site's database and shown on the map and leaderboard. To be left off the leaderboard and have your name hidden there,
+use the [contact form](https://marcelmarzec.com/contact). If you interact with the project on GitHub, you do so under
 [GitHub's Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
 ### Storage in your browser
@@ -91,6 +96,7 @@ law, or want to ask about it, open an issue at
 
 ### Changelog
 
+* _2026-Nov-10_ - The website's statistics keep public changeset data from OpenStreetMap (number, username, time, comment, area and what changed) for changesets made with Lane Studio, and show them on a map and leaderboard; their pages load MapLibre from jsDelivr and map tiles from OpenFreeMap.
 * _2026-Nov-08_ - The roads overlay shown when zoomed out can also be set when the site is built. The third-party icons setting moved from iD's Preferences pane to the Lane Studio pane.
 * _2026-Nov-08_ - Whether the Map key's sections and each side's cycle lane details are folded away is stored with your settings. The Measure tool measures in your browser and sends nothing anywhere.
 

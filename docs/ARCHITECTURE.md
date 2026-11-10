@@ -75,4 +75,5 @@ graphs in code or load fixtures from real data (`test/spec/lanes/fixtures/`).
 ## Developer pages
 
 [Running locally](develop/Running-Locally.md) · [Code map](develop/Code-Map.md) · [iD core](develop/iD-Core.md) ·
-[Customising](develop/Customising.md) · [iD accessibility](develop/iD-Accessibility.md)
+[Customising](develop/Customising.md) · [iD accessibility](develop/iD-Accessibility.md) ·
+[Website statistics](develop/Statistics.md)

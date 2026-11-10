@@ -46,7 +46,7 @@ $ogType  = $ogType ?? 'website';
     <meta name="twitter:description" content="<?= e($description) ?>">
 
     <link rel="icon" href="/assets/img/lanestudio-mark.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/assets/css/site.css?v=2">
+    <link rel="stylesheet" href="/assets/css/site.css?v=8">
     <?php if (!empty($jsonLd)): ?>
       <script type="application/ld+json"><?= json_encode(
           $jsonLd,

@@ -22,6 +22,7 @@ defined('SITE') or exit;
         <div style="display: flex; flex-direction: column; align-items: flex-end">
           <div class="footer-links">
             <a href="/">Overview</a>
+            <a href="/statistics">Statistics</a>
             <a href="/changelog">Changelog</a>
             <a href="/privacy_policy">Privacy</a>
             <a href="<?= e($site['contact']) ?>" target="_blank" rel="noopener">Contact</a>

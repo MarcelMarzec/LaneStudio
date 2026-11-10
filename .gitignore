@@ -28,3 +28,9 @@ transifex.auth
 
 # copied from docs/CHANGELOG.md by the website's deploy workflow
 /LanesWebsite/includes/changelog.md
+
+# the website's statistics: settings and database on the server only, data files written by the collector
+/LanesWebsite/includes/statistics/config.php
+/LanesWebsite/includes/statistics/*.sqlite
+/LanesWebsite/includes/statistics/collect.lock
+/LanesWebsite/data/

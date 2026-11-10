@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/statistics/view.php';
 
 $title       = 'Lane Studio — a visual road and lane editor for OpenStreetMap';
 $description = 'Lane Studio is a visual road and lane editor for OpenStreetMap. Lay out turn '
@@ -12,11 +13,14 @@ $navLinks = [
     ['label' => 'The problem', 'href' => '#problem'],
     ['label' => 'Features', 'href' => '#features'],
     ['label' => 'How it works', 'href' => '#how'],
+    ['label' => 'Statistics', 'href' => '/statistics'],
     ['label' => 'Changelog', 'href' => '/changelog'],
     ['label' => 'Contact', 'href' => $site['contact']],
     ['label' => 'marcelmarzec.com', 'href' => $site['home']],
 ];
 $navCta = ['label' => 'Open editor', 'href' => $site['editor'], 'icon' => 'external'];
+
+$stats = stats_data();
 
 require __DIR__ . '/includes/head.php';
 ?>
@@ -247,6 +251,33 @@ require __DIR__ . '/includes/head.php';
   </div>
 </section>
 
+<?php if ($stats): $t = $stats['totals']; ?>
+<section id="statistics" class="stats-section">
+  <div class="section-inner">
+    <div class="section-head">
+      <h2>Lane Studio on the map</h2>
+      <p>
+        Every changeset saved with Lane Studio, read from OpenStreetMap's changeset feed and updated
+        every few minutes.
+      </p>
+    </div>
+
+    <?php stats_tiles([
+        ['Changesets', stats_n($t['changesets']), stats_n($t['week']['changesets']) . ' in the last 7 days'],
+        ['Mappers', stats_n($t['mappers']), null],
+        ['Ways with lane tags changed', stats_n($t['lane_ways']), null],
+        ['Km of road edited', stats_n($t['road_km'], 1), null],
+    ], 'stats-tiles-4'); ?>
+
+    <?php stats_map($stats, 'Map of changesets saved with Lane Studio'); ?>
+
+    <div class="stats-more">
+      <a class="btn-secondary" href="/statistics">All statistics <?php icon_arrow_right(); ?></a>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
 <section id="screens">
   <div class="section-inner">
     <div class="section-head">
@@ -302,5 +333,7 @@ require __DIR__ . '/includes/head.php';
     </div>
   </div>
 </section>
+
+<?php if ($stats) stats_scripts(); ?>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>

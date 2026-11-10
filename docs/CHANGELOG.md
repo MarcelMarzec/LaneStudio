@@ -8,6 +8,20 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.10
+##### 2026-Nov-10
+
+#### Website
+* **Statistics**: a map of every changeset saved with Lane Studio, updated every few minutes from OpenStreetMap's
+  changeset feed, with the latest five changesets beside it, on the front page and on its own page (`/statistics`)
+* The statistics page adds changesets per day, mappers, changes, countries, ways with lane tags changed, km of road
+  edited, the tags changed most, changesets by version, and a leaderboard of the mappers with the most changesets
+* The privacy policy says what the statistics keep and show, and how to be left off the leaderboard
+
+#### Behind the scenes
+* The statistics' collector runs by cron on the web server, keeping changesets in a database; setting it up is in
+  the developer page Statistics
+
 # 26.11.09
 ##### 2026-Nov-09
 

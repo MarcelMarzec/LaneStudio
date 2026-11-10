@@ -3,12 +3,13 @@ require_once __DIR__ . '/includes/config.php';
 
 $title       = 'Privacy policy — Lane Studio';
 $description = 'What Lane Studio does with your data. It runs in your browser, has no accounts '
-             . 'and no servers of its own, and edits go to OpenStreetMap under your account.';
+             . 'of its own, and edits go to OpenStreetMap under your account.';
 $theme       = 'orange';
 $path        = '/privacy_policy';
 
 $navLinks = [
     ['label' => 'Overview', 'href' => '/'],
+    ['label' => 'Statistics', 'href' => '/statistics'],
     ['label' => 'Changelog', 'href' => '/changelog'],
     ['label' => 'Contact', 'href' => $site['contact']],
     ['label' => 'marcelmarzec.com', 'href' => $site['home']],
@@ -27,7 +28,7 @@ require __DIR__ . '/includes/head.php';
         Lane Studio is an editor, not a service. It runs in your browser, it has no accounts of
         its own, and your edits go to OpenStreetMap rather than to me.
       </p>
-      <p class="hero-meta"><span>Last updated 27 October 2026</span></p>
+      <p class="hero-meta"><span>Last updated 10 November 2026</span></p>
     </div>
   </div>
 </section>
@@ -50,7 +51,29 @@ require __DIR__ . '/includes/head.php';
         server keeps standard access logs (your IP address, the time, the page requested and your
         browser's user-agent) so the host can run the service securely; I do not analyse them.
         The typefaces come from Google Fonts, so Google receives your IP address when a page
-        loads. The rest of this policy is about the editor, which does more.
+        loads. The rest of this policy is about the statistics and the editor.
+      </p>
+
+      <h2>The statistics</h2>
+      <p>
+        The <a href="/statistics">statistics</a> and the map on the front page show every changeset
+        saved with Lane Studio. They are made on this site's server from OpenStreetMap's public
+        changeset data: each changeset whose <code>created_by</code> tag starts with
+        <code>LaneStudio</code>, with its number, the mapper's username and user id, the time, the
+        comment, the area edited and what it changed. That is kept in the site's database and shown on
+        the map, in the latest changesets and on the leaderboard. Nothing is collected from you when
+        you use the editor or visit these pages: it is all already public on OpenStreetMap.
+      </p>
+      <p>
+        To be left off the leaderboard, with your name hidden on the map and in the latest
+        changesets, use the <a href="<?= e($site['contact']) ?>">contact form</a>. Your changesets
+        still count in the totals.
+      </p>
+      <p>
+        The map loads the MapLibre library from
+        <a href="https://www.jsdelivr.com/" target="_blank" rel="noopener">jsDelivr</a> and its map
+        tiles from <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>,
+        so they receive your IP address and the area of the map in view.
       </p>
 
       <h2>What Lane Studio is</h2>
@@ -58,8 +81,8 @@ require __DIR__ . '/includes/head.php';
         Lane Studio is a fork of
         <a href="https://github.com/openstreetmap/iD" target="_blank" rel="noopener">iD</a>, the
         OpenStreetMap editor, with a visual lane editor in place of the raw tag list. It is
-        JavaScript that runs in your browser. I do not operate a backend for it, I have no
-        database, and there is no Lane Studio account to create.
+        JavaScript that runs in your browser. I do not operate a backend for it, and there is no
+        Lane Studio account to create.
       </p>
 
       <h2>Your OpenStreetMap account</h2>
@@ -106,13 +129,15 @@ require __DIR__ . '/includes/head.php';
 
       <h2>What I collect</h2>
       <p>
-        Nothing. There is no analytics, no error reporting service, no telemetry and no
-        advertising in Lane Studio. I have no way of knowing you used it.
+        Nothing from you. There is no analytics, no error reporting service, no telemetry and no
+        advertising in Lane Studio. The only trace of your use is what you upload to OpenStreetMap,
+        which is public, and which the statistics count.
       </p>
 
       <h2>Your rights</h2>
       <p>
-        Because I hold no data about you, there is nothing for me to show, correct or delete. For
+        The only data about you here is the public changeset data the statistics show; ask through
+        the contact form to be left off the leaderboard. For
         data held by OpenStreetMap, the OpenStreetMap Foundation is the controller and their
         policy explains how to exercise your rights. Questions about Lane Studio itself can go to
         the <a href="<?= e($site['contact']) ?>">contact form</a> or to the
