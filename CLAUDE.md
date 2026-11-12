@@ -143,6 +143,22 @@ way**:
   sections are.
 - Look at the result in the browser, in the light and dark themes, before committing.
 
+## Every feature searchable and tagged as the wiki says
+
+Lane Studio adds many features to iD. **Every feature, key and value it adds or draws can be found by search and is
+tagged exactly as the OpenStreetMap wiki documents it**:
+
+- **Searchable**: each feature people map (a point, line or area: a road marking, a painted area, a sign…) has a
+  preset in Add Point, Add Line or Add Area, named and with search terms in `data/lanes.yaml`, for the geometry the
+  wiki gives it ([modules/lanes/core/preset_fields.ts](modules/lanes/core/preset_fields.ts)); iD's own preset is used
+  where it has one.
+- **Templated as the wiki says**: a preset adds the wiki's tags (`tags`, `addTags`), never Lane Studio's own or
+  deprecated ones; legacy values are read but never written. Its fields offer the wiki's keys and values first.
+- **Drawn**: every key and value the wiki documents for a feature Lane Studio draws is drawn, or listed in the guide
+  as not drawn yet.
+- **When unsure what the tags should be, look them up on the wiki** (the key's page, its values' pages and the pages
+  they link to), **or ask the user**. Never guess a tag, invent a value or follow another editor's habit instead.
+
 ## Keep the website up to date
 
 The website in `LanesWebsite/` tells people what Lane Studio is and does before they open it. **Every commit that

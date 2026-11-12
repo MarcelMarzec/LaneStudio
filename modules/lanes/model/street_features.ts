@@ -43,20 +43,24 @@ export function islandSurface(tags: Tags): IslandSurface {
 
 /* ---------- road markings ---------- */
 
-/** `road_marking=*` values: the wiki's (Key:road_marking), then others Lane Studio draws (`box_junction`, `give_way`) */
+/**
+ * `road_marking=*` values, as the wiki documents them (Key:road_marking). Others are still read (`box_junction`, legacy
+ * values: see `markingKind`) but not offered
+ */
 export const roadMarkingValues = [
-    'lane_divider', 'edge_line', 'stop_line', 'crossing_edge', 'restriction', 'crossing', 'arrow', 'text', 'symbol',
-    'traffic_sign', 'box_junction', 'give_way'
+    'lane_divider', 'edge_line', 'stop_line', 'crossing_edge', 'restriction', 'crossing', 'arrow', 'text', 'symbol', 'traffic_sign'
 ] as const;
 
 export const strokeValues = ['solid', 'dashed', 'double_solid', 'double_dashed', 'sharks_teeth', 'zigzag', 'dotted', 'solid_dashed', 'dashed_solid'] as const;
 /** `arrow=*` values of a painted arrow (the values of `turn=*`) */
-export const arrowValues = ['through', 'left', 'right', 'through;left', 'through;right', 'slight_left', 'slight_right', 'merge_to_left',
-    'merge_to_right', 'reverse'] as const;
+export const arrowValues = ['left', 'through', 'right', 'through;right', 'left;through', 'left;right', 'merge_to_left', 'merge_to_right',
+    'reverse', 'slight_left', 'slight_right', 'no_right_turn', 'no_left_turn', 'no_u_turn', 'no_straight_on'] as const;
+/** `symbol=*` values of a painted symbol: the wiki's generic terms (Key:symbol) */
+export const symbolValues = ['bicycle', 'pedestrian', 'hov', 'airport', 'wheelchair', 'motorway'] as const;
 /** `reason=*` values of a restriction area: why it is painted */
 export const restrictionReasons = ['junction', 'bus_stop', 'driveway', 'emergency'] as const;
 /** `pattern=*` values of a painted area (wiki: Key:road_marking; `hatch` is read as `stripes`) */
-export const patternValues = ['stripes', 'chevron', 'crosshatch', 'x', 'zigzag', 'chessboard', 'dots', 'solid'] as const;
+export const patternValues = ['stripes', 'crosshatch', 'x', 'chevron', 'zigzag', 'chessboard', 'solid', 'none', 'dots'] as const;
 export const markingColours = ['white', 'yellow', 'red', 'blue', 'green', 'orange'] as const;
 export type MarkingColour = typeof markingColours[number];
 

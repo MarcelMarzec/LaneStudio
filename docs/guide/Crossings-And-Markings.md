@@ -68,23 +68,31 @@ hatched for rumble strips and the rest.
 
 ## Road markings (`road_marking=*`)
 
-Drawn from `stroke` (or `stroke:left|right`), `pattern`, `width`, `dasharray`, `colour`, `arrow`, `symbol` and
-`inscription`, edited in their own sidebar section (Painted marking):
+Every marking the wiki lists has a preset: search Add Point, Add Line or Add Area for it. Each is drawn from `stroke`
+(or `stroke:left|right`), `pattern`, `width`, `dasharray`, `colour`, `arrow`, `symbol` and `inscription`, edited in
+the Painted marking section:
 
-| Marking | Mapped as | Drawn |
+| Preset | Tags | Drawn |
 | --- | --- | --- |
-| `lane_divider`, `edge_line`, `crossing_edge`, `stop_line` | way | A line: `stroke=solid`, `dashed`, `double_solid`, `double_dashed`, `sharks_teeth` (triangles pointing right of the way), `zigzag` |
-| `stop_line` | node on a road | A stop line across the lanes `direction=forward\|backward` faces |
-| `restriction`, `crossing`, `box_junction` | closed way or multipolygon | Filled with `pattern=stripes`, `chevron`, `crosshatch`, `x`, `zigzag`, `chessboard`, `dots` or `solid`; a multipolygon's inner rings (islands) are left out |
-| `arrow` | way, from its base to its tip | Arrows for each `arrow=*` value (`through;right`, `merge_to_left`…), as long as the way |
-| `text`, `symbol`, `traffic_sign` | node | `inscription=*`; `symbol=bicycle` as a cycle symbol, other symbols by name; a painted speed limit (`traffic_sign=GB:670[30]`) as its number |
+| Lane line, Edge line, Crossing edge, Stop line (line) | `road_marking=lane_divider\|edge_line\|crossing_edge\|stop_line` | `stroke=solid`, `dashed`, `double_solid`, `double_dashed`, `zigzag` |
+| Shark's teeth | `road_marking=stop_line`, `stroke=sharks_teeth` | Triangles pointing right of the way |
+| Stop line (on a road's node) | `road_marking=stop_line`, `direction=forward\|backward` | Across the lanes it faces |
+| Hatched area, Chevron area, Box junction, Bus stop marking, Crossed-out area, Crossing marking area | `road_marking=restriction\|crossing` on a closed way (`area=yes`) or multipolygon | `pattern=stripes`, `crosshatch`, `x` (corner to corner), `chevron`, `zigzag` (end to end), `chessboard`, `solid`, `none` (outline only); holes (islands) left out |
+| Painted arrow | `road_marking=arrow`, a way from base to tip | Each `arrow=*` value (`through;right`, `merge_to_left`…); banned turns (`no_right_turn`, `no_u_turn`) crossed out |
+| Painted text | `road_marking=text`, `inscription=*` | The words, read along the road or `direction` |
+| Painted symbol | `road_marking=symbol`, `symbol=bicycle\|pedestrian\|wheelchair\|hov\|airport\|motorway` | The pictogram (`hov` a diamond), `length` metres long; other symbols by name |
+| Painted traffic sign | `road_marking=traffic_sign`, `traffic_sign=*` | A speed limit (`GB:670[30]`, or `maxspeed`) as its number in a red ring |
 
-Legacy values are read as the wiki's: `solid_stop_line`, `dash` (dashed `lane_divider`), `solid_lane_divider`,
-`solid_road_edge`, `gore_chevron` (chevrons), `left|right|through` (arrows). `reason=*` says why a restriction is painted.
+The presets add the wiki's example tags (Box junction: `pattern=crosshatch`, `reason=junction`, `colour=yellow`; Bus stop
+marking: `pattern=zigzag`, `reason=bus_stop`). `reason=*` says why a restriction is painted. An area's outline takes
+`stroke=solid` or `dashed`; double, shark's teeth and zigzag outlines are drawn as one line.
+
+Legacy values are read but never written: `solid_stop_line`, `dash` (dashed `lane_divider`), `solid_lane_divider`,
+`solid_road_edge`, `solid_crossing_edge`, `gore_chevron` (chevrons), `left|right|through` (arrows), `box_junction`.
 
 ### Hatched areas and chevrons
 
-Map the painted area as its own area (Add Area → **Chevron area** or **Hatched area**, which add all the tags below),
+Map the painted area as its own area (Add Area → **Chevron area** or **Hatched area**, which add the tags below),
 drawn round its outline at whatever width it has:
 
 | Marking | Tags |

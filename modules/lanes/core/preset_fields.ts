@@ -9,27 +9,81 @@ export const crossingSignalsField = 'lanes/crossing_signals';
 export const paintedAreaPreset = 'lanes/road_marking/restriction';
 export const chevronAreaPreset = 'lanes/road_marking/restriction/chevron';
 
+interface MarkingPreset {
+    /** its string key in `_lanes.fields` (`name` and `terms`) */
+    strings: string;
+    tags: Record<string, string>;
+    /** tags added with it beyond `tags`: the wiki's example for the marking */
+    addTags?: Record<string, string>;
+    geometry: string[];
+    icon: string;
+}
+
+// an area painted on the road: a closed way is an area by `area=yes` (iD reads `road_marking` as a line)
+const area = { area: 'yes' };
+
 /**
- * Adds the Hatched area and Chevron area presets (`road_marking=restriction` with `pattern=stripes` or `chevron`, a solid
- * white outline), named in iD's tagging strings so Add Area's search finds them like iD's own; their pattern, outline
- * (`stroke`) and colour are set in Lane Studio's Painted marking section
+ * Every road marking the wiki documents (Key:road_marking), so Add Point, Add Line and Add Area find each one, tagged
+ * as the wiki's examples tag it. iD has no road marking presets; their stroke, pattern, arrow, symbol, text and colour
+ * are set in Lane Studio's Painted marking section.
+ */
+export const markingPresets: Record<string, MarkingPreset> = {
+    'lanes/road_marking/lane_divider': { strings: 'lane_divider', tags: { road_marking: 'lane_divider' }, geometry: ['line'], icon: 'iD-other-line' },
+    'lanes/road_marking/edge_line': { strings: 'edge_line', tags: { road_marking: 'edge_line' }, geometry: ['line'], icon: 'iD-other-line' },
+    'lanes/road_marking/stop_line': { strings: 'stop_line', tags: { road_marking: 'stop_line' }, geometry: ['line', 'vertex'], icon: 'temaki-stop' },
+    'lanes/road_marking/stop_line/sharks_teeth': {
+        strings: 'sharks_teeth', tags: { road_marking: 'stop_line', stroke: 'sharks_teeth' }, geometry: ['line'], icon: 'temaki-yield'
+    },
+    'lanes/road_marking/crossing_edge': {
+        strings: 'crossing_edge', tags: { road_marking: 'crossing_edge' }, geometry: ['line'], icon: 'temaki-crossing_markings-ladder'
+    },
+    'lanes/road_marking/arrow': { strings: 'arrow', tags: { road_marking: 'arrow' }, geometry: ['line'], icon: 'temaki-chicane_arrow' },
+    [paintedAreaPreset]: {
+        strings: 'painted_area', tags: { road_marking: 'restriction' },
+        addTags: { ...area, road_marking: 'restriction', pattern: 'stripes', stroke: 'solid', colour: 'white' }, geometry: ['area'], icon: 'maki-triangle-stroked'
+    },
+    [chevronAreaPreset]: {
+        strings: 'chevron_area', tags: { road_marking: 'restriction', pattern: 'chevron' },
+        addTags: { ...area, road_marking: 'restriction', pattern: 'chevron', stroke: 'solid', colour: 'white' }, geometry: ['area'], icon: 'maki-triangle'
+    },
+    'lanes/road_marking/restriction/junction': {
+        strings: 'box_junction', tags: { road_marking: 'restriction', reason: 'junction' },
+        addTags: { ...area, road_marking: 'restriction', pattern: 'crosshatch', reason: 'junction', colour: 'yellow' }, geometry: ['area'], icon: 'temaki-junction'
+    },
+    'lanes/road_marking/restriction/bus_stop': {
+        strings: 'bus_stop_marking', tags: { road_marking: 'restriction', reason: 'bus_stop' },
+        addTags: { ...area, road_marking: 'restriction', pattern: 'zigzag', reason: 'bus_stop' }, geometry: ['area'], icon: 'roentgen-bus_stop_sign'
+    },
+    'lanes/road_marking/restriction/x': {
+        strings: 'crossed_area', tags: { road_marking: 'restriction', pattern: 'x' },
+        addTags: { ...area, road_marking: 'restriction', pattern: 'x' }, geometry: ['area'], icon: 'maki-roadblock'
+    },
+    'lanes/road_marking/crossing': {
+        strings: 'crossing_marking', tags: { road_marking: 'crossing' }, addTags: { ...area, road_marking: 'crossing' }, geometry: ['area'],
+        icon: 'temaki-pedestrian_crosswalk'
+    },
+    'lanes/road_marking/text': { strings: 'painted_text', tags: { road_marking: 'text' }, geometry: ['point', 'vertex'], icon: 'fas-sign-hanging' },
+    'lanes/road_marking/symbol': { strings: 'painted_symbol', tags: { road_marking: 'symbol' }, geometry: ['point', 'vertex'], icon: 'maki-bicycle' },
+    'lanes/road_marking/traffic_sign': {
+        strings: 'painted_sign', tags: { road_marking: 'traffic_sign' }, geometry: ['point', 'vertex'], icon: 'fas-triangle-exclamation'
+    }
+};
+
+/**
+ * Adds the road marking presets (`markingPresets`), named in iD's tagging strings so Add Point, Add Line and Add Area's
+ * search finds them like iD's own
  */
 function addPaintedAreaPreset() {
-    const painted = { area: 'yes', stroke: 'solid', colour: 'white' };
     presetManager.merge({
-        presets: {
-            [paintedAreaPreset]: { tags: { road_marking: 'restriction' }, addTags: { road_marking: 'restriction', pattern: 'stripes', ...painted },
-                geometry: ['area'], icon: 'maki-triangle-stroked', fields: [] },
-            [chevronAreaPreset]: { tags: { road_marking: 'restriction', pattern: 'chevron' },
-                addTags: { road_marking: 'restriction', pattern: 'chevron', ...painted }, geometry: ['area'], icon: 'maki-triangle', fields: [] }
-        }
+        presets: Object.fromEntries(Object.entries(markingPresets).map(([id, p]) => [id, {
+            tags: p.tags, addTags: p.addTags ?? p.tags, geometry: p.geometry, icon: p.icon, fields: []
+        }]))
     } as any);
     localizer.mergeStrings('tagging', 'en', {
         presets: {
-            presets: {
-                [paintedAreaPreset]: { name: t('_lanes.fields.painted_area.name'), terms: t('_lanes.fields.painted_area.terms') },
-                [chevronAreaPreset]: { name: t('_lanes.fields.chevron_area.name'), terms: t('_lanes.fields.chevron_area.terms') }
-            }
+            presets: Object.fromEntries(Object.entries(markingPresets).map(([id, p]) => [id, {
+                name: t(`_lanes.fields.${p.strings}.name`), terms: t(`_lanes.fields.${p.strings}.terms`)
+            }]))
         }
     });
 }

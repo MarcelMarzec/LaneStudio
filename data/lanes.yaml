@@ -267,6 +267,45 @@ en:
     chevron_area:
       name: Chevron area
       terms: chevrons, chevron markings, gore, nose, diverge, merge, slip road, hatched area, road marking, restriction
+    lane_divider:
+      name: Lane line
+      terms: lane divider, lane line, lane marking, dashed line, broken line, white line, centre line, road marking
+    edge_line:
+      name: Edge line
+      terms: edge line, road edge, carriageway edge, solid line, white line, road marking
+    stop_line:
+      name: Stop line
+      terms: stop line, give way line, yield line, junction line, signal line, road marking
+    sharks_teeth:
+      name: Shark's teeth
+      terms: sharks teeth, shark teeth, give way triangles, yield line, triangles, dragon teeth, road marking
+    crossing_edge:
+      name: Crossing edge
+      terms: crossing edge, crossing line, crosswalk line, cycle crossing, studs, road marking
+    arrow:
+      name: Painted arrow
+      terms: arrow, turn arrow, lane arrow, direction arrow, merge arrow, no right turn, no u-turn, road marking
+    box_junction:
+      name: Box junction
+      terms: box junction, yellow box, crosshatch, criss-cross, keep clear, junction, road marking, restriction
+    bus_stop_marking:
+      name: Bus stop marking
+      terms: bus stop marking, bus stop box, zigzag, bus stop clearway, road marking, restriction
+    crossed_area:
+      name: Crossed-out area
+      terms: crossed area, cross, x, no parking field, no stopping area, road marking, restriction
+    crossing_marking:
+      name: Crossing marking area
+      terms: crossing marking, coloured crossing, red crossing, cycle crossing, painted surface, road marking
+    painted_text:
+      name: Painted text
+      terms: text, words, lettering, inscription, bus, slow, stop, keep clear, look right, road marking
+    painted_symbol:
+      name: Painted symbol
+      terms: symbol, pictogram, bicycle, cycle symbol, pedestrian, wheelchair, disabled, hov, diamond, airport, motorway, road marking
+    painted_sign:
+      name: Painted traffic sign
+      terms: painted sign, speed limit roundel, painted roundel, road marking, traffic sign
   markings:
     types:
       none: Nothing
@@ -674,11 +713,12 @@ en:
       stripes: Diagonal stripes
       chevron: Chevrons
       crosshatch: Crosshatch
-      x: Crosses
-      zigzag: Zig-zags
+      x: Cross, corner to corner
+      zigzag: Zig-zag line
       chessboard: Chessboard
       dots: Dots
       solid: Filled
+      none: Outline only
     width: Line width (m)
     dasharray: Dashes and gaps (m)
     inscription: Painted text

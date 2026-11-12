@@ -9,7 +9,7 @@ Where each part of Lane Studio lives, and the hooks it uses in iD.
 | Entry point and boot | `index.ts`, `core/boot.ts`, `lanes.html` |
 | Lane model: parse, edit and write `*:lanes` tags; lane types; markings; connectivity; street features and the centre line; street parking (`parking.ts`); active traffic management | `model/` |
 | Actions (lanes, markings, signs, copy, connect), each one undo step | `actions/` |
-| State: selected lanes, tools, keyboard, settings, roadside detection, what's new, links; fields and the Hatched area and Chevron area presets added to iD's presets (`preset_fields.ts`) | `core/` |
+| State: selected lanes, tools, keyboard, settings, roadside detection, what's new, links; fields and a preset for every road marking (`markingPresets`) added to iD's presets (`preset_fields.ts`) | `core/` |
 | Geometry in metres: lane layout, roads and junctions, street features (crossings, UK crossings, tactile paving, advanced stop lines, multipolygon areas), road markings, symbols along lanes, parking, parking spaces, railways, signs, routing | `geometry/` |
 | Look-ahead corridor, roundabouts | `osm/` |
 | Map drawing and click targets | `svg/` |

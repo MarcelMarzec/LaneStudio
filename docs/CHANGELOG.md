@@ -8,6 +8,26 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.12r3
+##### 2026-Nov-12
+
+#### Roads and signs
+* Every road marking the wiki lists can be found by name in Add Point, Add Line and Add Area, tagged as the wiki's
+  examples: Lane line, Edge line, Stop line, Shark's teeth, Crossing edge, Painted arrow, Box junction, Bus stop
+  marking, Crossed-out area, Crossing marking area, Painted text, Painted symbol and Painted traffic sign, with the
+  Hatched area and Chevron area
+* `pattern=x` is drawn as a cross from corner to corner, `pattern=zigzag` as a zigzag from end to end, and
+  `pattern=none` as the outline alone
+* Banned turns painted as arrows (`arrow=no_right_turn`, `no_u_turn`…) are drawn crossed out
+* `symbol=pedestrian`, `wheelchair`, `hov` (a diamond), `airport` and `motorway` are drawn as pictograms; a painted
+  speed limit (`road_marking=traffic_sign`) as its number in a red ring
+* The Painted marking section offers the wiki's values first: its markings, strokes, patterns (with `none`), arrows
+  (with banned turns) and symbols; `give_way` and `box_junction` are no longer offered (still drawn)
+
+#### Behind the scenes
+* CLAUDE.md: every feature Lane Studio adds is searchable and tagged as the wiki documents it; look tags up on the
+  wiki, or ask, when unsure
+
 # 26.11.12r2
 ##### 2026-Nov-12
 

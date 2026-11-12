@@ -7,7 +7,7 @@ import { utilDisplayName } from '../../util';
 import { parkingGeometry } from '../geometry/parking';
 import {
     isTrafficIsland, isStreetParking, parkingOnCarriageway, islandSurface,
-    roadMarkingValues, strokeValues, patternValues, markingColours, streetParkingValues, arrowValues, restrictionReasons
+    roadMarkingValues, strokeValues, patternValues, markingColours, streetParkingValues, arrowValues, restrictionReasons, symbolValues
 } from '../model/street_features';
 import { markingKind } from '../geometry/road_marking';
 import type { InfoTopic } from './field_info';
@@ -116,7 +116,7 @@ export function uiSectionStreetFeature(context: iD.Context) {
                 field(wrap, e, 'width', t('_lanes.street_feature.width'), ['0.1', '0.15', '0.2', '0.3', '0.5']);
                 field(wrap, e, 'dasharray', t('_lanes.street_feature.dasharray'), ['1,1', '2,4', '3,6', '4,2', '6,3']);
             } else if (marking === 'symbol') {
-                field(wrap, e, 'symbol', t('_lanes.street_feature.symbol'), ['bicycle', 'pedestrian', 'bus', 'hov', 'wheelchair', 'motorway', 'airport']);
+                field(wrap, e, 'symbol', t('_lanes.street_feature.symbol'), symbolValues);
             } else {
                 field(wrap, e, 'inscription', t('_lanes.street_feature.inscription'), ['STOP', 'SLOW', 'KEEP CLEAR', 'BUS', 'BUS STOP', 'SCHOOL', 'LOOK RIGHT', 'LOOK LEFT']);
             }

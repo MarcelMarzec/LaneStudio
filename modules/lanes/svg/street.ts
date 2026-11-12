@@ -356,7 +356,8 @@ export function drawRoadMarkings(group: Group, data: RoadMarkings, projection: P
         .attr('stroke-width', d => px(d.style.width))
         .attr('stroke-dasharray', d => d.style.lines[0] === 'solid' ? null : (d.style.dash ?? defaultDash[d.style.lines[0]] ?? []).map(px).join(',') || null)
         .attr('fill', d => {
-            if (d.stripes) return 'none';
+            // (`pattern=none`: the outline alone)
+            if (d.stripes || d.style.pattern === 'none') return 'none';
             const pattern = d.style.pattern;
             if (!pattern || pattern === 'solid' || pattern === 'filled') return markingColourValues[d.style.colour];
             // (`x` is a criss-cross, as `crosshatch`)
@@ -406,6 +407,20 @@ export function drawRoadMarkings(group: Group, data: RoadMarkings, projection: P
             const dash = d.stroke === 'solid' ? null : (d.style.dash ?? defaultDash[d.stroke]);
             return dash ? dash.map(px).join(',') : null;
         });
+
+    // a painted speed limit's red ring round its number
+    const rings = group.selectAll<SVGCircleElement, typeof data.texts[number]>('circle.road-marking-ring')
+        .data(showText ? data.texts.filter(d => d.ring) : [], d => d.key);
+    rings.exit().remove();
+    rings.enter().append('circle').attr('class', 'road-marking-ring').attr('fill', 'none')
+        .merge(rings)
+        .attr('stroke', markingColourValues.red)
+        .attr('stroke-width', () => px(0.35))
+        .attr('r', () => px(1.4))
+        .each(attrChanged('transform', d => {
+            const p = projection(d.loc);
+            return `translate(${p[0].toFixed(1)},${p[1].toFixed(1)})`;
+        }));
 
     const texts = group.selectAll<SVGTextElement, typeof data.texts[number]>('text.road-marking-text')
         .data(showText ? data.texts : [], d => d.key);

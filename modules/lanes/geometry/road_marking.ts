@@ -6,7 +6,7 @@ import type { osmWay } from '../../osm/way';
 import { isLaneRoad } from '../core/roads';
 import { roadMarkingStyle, type RoadMarkingStyle, type StrokeStyle } from '../model/street_features';
 import { metricFrame, sub, unit, offsetPolyline, dot, len, add, scale, rightNormal, pointAlong, polylineLength } from './frame';
-import { chevronStripes, hatchStripes, multipolygonRings } from './street';
+import { chevronStripes, crossStripes, hatchStripes, multipolygonRings, zigzagStripes } from './street';
 
 /*
  * Painted road markings mapped as their own features (`road_marking=*`): lines painted with
@@ -41,6 +41,8 @@ export interface MarkingText {
     /** a point 1 m further along the direction the text is read */
     ahead: Vec2;
     style: RoadMarkingStyle;
+    /** a painted speed limit: its number in a red ring */
+    ring?: boolean;
 }
 
 /** Shapes painted solid along a line: shark's teeth (`stroke=sharks_teeth`) */
@@ -51,14 +53,21 @@ export interface MarkingShape {
     style: RoadMarkingStyle;
 }
 
+/** The pictograms drawn for `symbol=*` on a node (wiki: Key:symbol): the wiki's generic terms */
+export const markingPictograms: Record<string, string> = {
+    bicycle: 'cycle', cycle: 'cycle', cyclist: 'cycle', bicycle_lane: 'cycle',
+    pedestrian: 'pedestrian', wheelchair: 'wheelchair', hov: 'hov', airport: 'airport', motorway: 'motorway'
+};
+
 /**
  * A pictogram painted on the road: an arrow mapped as a way from its base to its tip (`road_marking=arrow` with
- * `arrow=*`, the values of `turn=*`), or a cycle symbol on a node (`road_marking=symbol`, `symbol=bicycle`)
+ * `arrow=*`, the values of `turn=*`, or a turn banned, `no_right_turn`, as `restriction=*` names it, crossed out), or a
+ * symbol on a node (`road_marking=symbol` with `symbol=*`: see `markingPictograms`)
  */
 export interface MarkingSymbol {
     key: string;
     id: string;
-    kind: 'arrow' | 'cycle';
+    kind: 'arrow' | 'cycle' | 'pedestrian' | 'wheelchair' | 'hov' | 'airport' | 'motorway';
     /** an arrow's `turn` values */
     turns?: string[];
     /** its middle, and a point 1 m further the way it points */
@@ -195,14 +204,12 @@ function nodeDirection(node: osmNode, graph: coreGraph): Vec2 {
     return direction;
 }
 
-const cycleSymbols = new Set(['bicycle', 'cycle', 'cyclist', 'bicycle_lane']);
-
 /** The words painted for a node: `inscription`, a symbol's name (`symbol=bus`: BUS), or a painted sign's number */
 function nodeWords(tags: Tags): string | undefined {
     const text = tags.inscription ?? tags['road_marking:text'];
     if (text) return text;
     const kind = markingKind(tags.road_marking);
-    if (kind === 'symbol' && tags.symbol && !cycleSymbols.has(tags.symbol)) return tags.symbol.replace(/_/g, ' ').toUpperCase();
+    if (kind === 'symbol' && tags.symbol && !markingPictograms[tags.symbol]) return tags.symbol.replace(/_/g, ' ').toUpperCase();
     if (kind === 'traffic_sign') {
         // a speed limit painted on the road: `traffic_sign=GB:670[30]`, or `maxspeed=30 mph`
         const number = /\[(\d+)\]/.exec(tags.traffic_sign ?? '')?.[1] ?? /^(\d+)/.exec(tags.maxspeed ?? '')?.[1];
@@ -219,19 +226,24 @@ function nodeText(node: osmNode, graph: coreGraph): MarkingText | null {
     const text = nodeWords(node.tags);
     if (!text) return null;
     const frame = metricFrame(node.loc);
+    const ring = markingKind(node.tags.road_marking) === 'traffic_sign' && /^\d+$/.test(text) && !node.tags.inscription;
     return {
         key: node.id, id: node.id, text, style: roadMarkingStyle(node.tags),
-        loc: node.loc, ahead: frame.toLoc(nodeDirection(node, graph))
+        loc: node.loc, ahead: frame.toLoc(nodeDirection(node, graph)), ...(ring ? { ring } : {})
     };
 }
 
-/** A cycle symbol painted on a node (`road_marking=symbol`, `symbol=bicycle`), facing the way it is read, `length` metres long */
+/**
+ * A pictogram painted on a node (`road_marking=symbol` with `symbol=*`, see `markingPictograms`), facing the way it is
+ * read, `length` metres long (2 m by default)
+ */
 function nodeSymbol(node: osmNode, graph: coreGraph): MarkingSymbol | null {
-    if (markingKind(node.tags.road_marking) !== 'symbol' || !cycleSymbols.has(node.tags.symbol ?? '')) return null;
+    const kind = markingPictograms[node.tags.symbol ?? ''] as MarkingSymbol['kind'] | undefined;
+    if (markingKind(node.tags.road_marking) !== 'symbol' || !kind) return null;
     const frame = metricFrame(node.loc);
     const length = parseFloat(node.tags.length ?? '');
     return {
-        key: node.id, id: node.id, kind: 'cycle', loc: node.loc, ahead: frame.toLoc(nodeDirection(node, graph)),
+        key: node.id, id: node.id, kind, loc: node.loc, ahead: frame.toLoc(nodeDirection(node, graph)),
         length: Number.isFinite(length) && length > 0 && length < 10 ? length : 2, style: roadMarkingStyle(node.tags)
     };
 }
@@ -265,6 +277,15 @@ const stripeCache = new WeakMap<OsmEntity, { key: string; stripes: Vec2[][] | un
 function areaStripes(way: OsmEntity, area: MarkingArea, roads: osmWay[], graph: coreGraph): Vec2[][] | undefined {
     const pattern = area.style.pattern;
     const chevrons = pattern === 'chevron';
+    // a cross from corner to corner, or a zigzag from end to end
+    if (pattern === 'x' || pattern === 'zigzag') {
+        const key = `${pattern}|${area.polygon.map(p => p.join(',')).join(';')}`;
+        const cached = stripeCache.get(way);
+        if (cached?.key === key) return cached.stripes;
+        const stripes = pattern === 'x' ? crossStripes(area.polygon) : zigzagStripes(area.polygon);
+        stripeCache.set(way, { key, stripes });
+        return stripes;
+    }
     if (!chevrons && pattern !== 'hatch' && pattern !== 'stripes' && pattern !== 'diagonal') return undefined;
     const travel = chevrons ? travelPast(area.polygon, roads, graph) : undefined;
     const key = `${area.polygon.map(p => p.join(',')).join(';')}|${travel?.map(v => v.toFixed(2))}|${way.tags.direction}|${chevrons}`;

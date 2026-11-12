@@ -71,6 +71,30 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
         return s;
     };
     cycle('lanes-cycle', 0, 0.85);
+    // pictograms painted on the road (`road_marking=symbol`, the wiki's generic `symbol=*` terms), facing up the way they
+    // are read, in a box 20 units long, drawn in currentColor (the marking's colour)
+    const pictogram = (name: string, draw: (g: d3.Selection<SVGGElement>) => void) => {
+        const g = defs.append('symbol').attr('id', `lanes-marking-${name}`).attr('overflow', 'visible').append('g')
+            .attr('fill', 'none').attr('stroke', 'currentColor').attr('stroke-width', 1.4).attr('stroke-linejoin', 'round').attr('stroke-linecap', 'round');
+        draw(g as any);
+    };
+    // a person walking
+    pictogram('pedestrian', g => {
+        g.append('circle').attr('cx', 0).attr('cy', -8).attr('r', 1.8);
+        g.append('path').attr('d', 'M0 -5V3L-3 10M0 3L3 10M-4 -1L0 -4L4 -1');
+    });
+    // the wheelchair symbol
+    pictogram('wheelchair', g => {
+        g.append('circle').attr('cx', 1).attr('cy', -8).attr('r', 1.8);
+        g.append('path').attr('d', 'M1 -5V2H6L8 8M-3 -1A5.5 5.5 0 1 0 6 6');
+    });
+    // a high-occupancy vehicle lane's diamond
+    pictogram('hov', g => g.append('path').attr('d', 'M0 -10L4.5 0L0 10L-4.5 0Z'));
+    // an aeroplane, nose ahead
+    pictogram('airport', g => g.append('path').attr('d', 'M0 -10V8M-9 1L0 -3L9 1M-4 9L0 7L4 9'));
+    // the motorway symbol: a bridge over a road
+    pictogram('motorway', g => g.append('path').attr('d', 'M-7 10L-2 -4M7 10L2 -4M0 10V7M0 4V1M-9 -6H9'));
+
     // a shared lane (sharrow): a cycle symbol with two chevrons ahead of it
     cycle('lanes-sharrow', 3, 0.6).append('path').attr('d', 'M-4 -5L0 -8.5L4 -5M-4 -9L0 -12.5L4 -9')
         .attr('fill', 'none').attr('stroke', '#fff').attr('stroke-width', 1.3).attr('stroke-linejoin', 'round');

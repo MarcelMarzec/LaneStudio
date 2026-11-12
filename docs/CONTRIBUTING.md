@@ -32,6 +32,10 @@ Never edit or commit `dist/` or `dist-lanes/`.
 **Style**: modern TypeScript, 4-space indents; `npm run lint` with no warnings; match the file you're in; comments say
 why and name the wiki pages for the tags read; geometry in metres (`metricFrame`).
 
+**Tags**: every feature Lane Studio adds has a preset found by search in Add Point, Line or Area, tagged as the
+OpenStreetMap wiki documents it, and every key and value the wiki gives it is drawn (or listed in the guide as not
+drawn). When unsure what the tags should be, read the wiki's pages for them, or ask.
+
 **Tests**: every fix comes with a test that fails without it. Look at drawing changes in the browser, before and
 after.
 

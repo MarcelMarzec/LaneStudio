@@ -584,6 +584,47 @@ export function hatchStripes(polygon: Vec2[], direction: string | undefined): Ve
     return bars;
 }
 
+/** A bar `width` metres wide from `a` to `b`, in metres */
+function bar(a: Vec2, b: Vec2, width: number): Vec2[] {
+    const side = scale(rightNormal(unit(sub(b, a))), width / 2);
+    return [add(a, side), add(b, side), sub(b, side), sub(a, side)];
+}
+
+/** The area's extent along its long axis and across it, about its middle, in metres */
+function axisBox(points: Vec2[]) {
+    const { centre, axis } = longAxis(points);
+    const across = rightNormal(axis);
+    const along = points.map(p => dot(sub(p, centre), axis));
+    const side = points.map(p => dot(sub(p, centre), across));
+    const at = (u: number, v: number) => add(add(centre, scale(axis, u)), scale(across, v));
+    return { at, u0: Math.min(...along), u1: Math.max(...along), v0: Math.min(...side), v1: Math.max(...side) };
+}
+
+/**
+ * `pattern=x` (wiki: Key:pattern, as a Swiss no-parking field): a cross from corner to corner of the area, its bars
+ * 0.3 m wide (clipped to the area when drawn)
+ */
+export function crossStripes(polygon: Vec2[]): Vec2[][] {
+    const frame = metricFrame(polygon[0]);
+    const { at, u0, u1, v0, v1 } = axisBox(polygon.map(frame.toMetres));
+    return [bar(at(u0, v0), at(u1, v1), 0.3), bar(at(u0, v1), at(u1, v0), 0.3)].map(b => b.map(frame.toLoc));
+}
+
+/**
+ * `pattern=zigzag` (wiki: Key:pattern, as a Polish bus stop marking): a zigzag line along the area from end to end,
+ * swinging from side to side, its strokes 0.2 m wide (clipped to the area when drawn)
+ */
+export function zigzagStripes(polygon: Vec2[]): Vec2[][] {
+    const frame = metricFrame(polygon[0]);
+    const { at, u0, u1, v0, v1 } = axisBox(polygon.map(frame.toMetres));
+    const half = Math.max(0.2, (v1 - v0) / 2 - 0.2);
+    const middle = (v0 + v1) / 2;
+    // each stroke runs about as far along as the zigzag is wide, so it leans at about 45°
+    const count = Math.max(1, Math.round((u1 - u0) / Math.max(1, half * 2)));
+    const points = Array.from({ length: count + 1 }, (_, i) => at(u0 + (u1 - u0) * i / count, middle + (i % 2 ? half : -half)));
+    return points.slice(1).map((p, i) => bar(points[i], p, 0.2).map(frame.toLoc));
+}
+
 /** A mapped area that is a road's carriageway, which roads inside it are fitted to */
 export function isCarriagewayArea(entity: OsmEntity): boolean {
     if (entity.type === 'relation') return entity.tags.type === 'multipolygon' && areaKind(entity.tags) === 'carriageway';
