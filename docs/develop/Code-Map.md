@@ -29,7 +29,7 @@ Where each part of Lane Studio lives, and the hooks it uses in iD.
 
 Elsewhere: styles `css-lanes/` (built into `dist/lanes.css`), strings `data/lanes.yaml` (read as `t('_lanes.…')`),
 the logo `docs/img/lane-studio-logo.svg`, site packaging `scripts/build_lanes_site.js`, the wiki
-`scripts/build_wiki.js`, tests `test/spec/lanes/`.
+`scripts/build_wiki.js`, the tag coverage pages `scripts/build_tag_coverage.js`, tests `test/spec/lanes/`.
 
 The website is `LanesWebsite/`; its statistics' collector and page parts are in `LanesWebsite/includes/statistics/`,
 their country borders built by `scripts/build_statistics_countries.js` ([Statistics](Statistics.md)).

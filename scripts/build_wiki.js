@@ -6,7 +6,7 @@ import path from 'node:path';
  * Writes the GitHub wiki's pages from `docs/` into a folder (the wiki's own git repository, checked out by the
  * **Sync docs to the wiki** workflow). `docs/` is the source of truth: the wiki is a copy, rewritten on every sync.
  *
- * - each `docs/NAME.md` becomes the page `NAME`, and each page in a section folder (`docs/guide/`, `docs/develop/`)
+ * - each `docs/NAME.md` becomes the page `NAME`, and each page in a section folder (`docs/guide/`, `docs/develop/`, `docs/tags/`)
  *   a sub page under its section's main page; page names are file names, so they are unique across folders;
  * - the guide (`LANES.md`) is also the wiki's `Home`;
  * - links between documents (relative, from any folder) lose their path and `.md` (wiki pages are flat);
@@ -25,6 +25,7 @@ const branch = process.argv[4] ?? 'mm/lane-studio-main';
 export const mainPages = [
     { page: 'LANES', title: 'Guide', folder: 'guide' },
     { page: 'FAQ', title: 'FAQ' },
+    { page: 'TAGS', title: 'Tag coverage', folder: 'tags' },
     { page: 'ARCHITECTURE', title: 'Developers', folder: 'develop' },
     { page: 'API', title: 'API' },
     { page: 'CONTRIBUTING', title: 'Contributing' },

@@ -71,8 +71,9 @@ the user to run it when they want the site updated.
 accurate, in the same commit.** A feature isn't finished while a document still describes the old
 behaviour, leaves the new one out, or names files, settings or steps that no longer exist.
 
-The documents are in `docs/`: main pages at its top, the user guide's pages in `docs/guide/` and developer pages in
-`docs/develop/` (sub pages under the Guide and Developers pages on the wiki). Only [README.md](README.md), this file
+The documents are in `docs/`: main pages at its top, the user guide's pages in `docs/guide/`, developer pages in
+`docs/develop/` and the tag coverage tables in `docs/tags/` (sub pages under the Guide, Developers and Tag coverage
+pages on the wiki). Only [README.md](README.md), this file
 and [LICENSE.md](LICENSE.md) stay at the root, where GitHub and Claude Code look for them; links between documents are
 relative to where each one is, and page file names are unique across the folders. The GitHub wiki is a copy of
 `docs/`, rebuilt on every push by the **Sync docs to the wiki** workflow (`scripts/build_wiki.js`): edit the documents
@@ -88,6 +89,7 @@ Before committing, look at what the change touches and check the documents that 
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the code fits together: modules, how a frame is drawn, editing, tools, caching | The structure, the drawing steps or a module's job changes |
 | `docs/develop/` | Running locally, the code map (where each part lives, iD's hooks), iD's core, customising, iD's accessibility | A file, folder, setup step or iD hook is added, moved or removed |
 | Walkthrough and help (`modules/lanes/ui/intro.ts`, `modules/lanes/ui/help.ts`, `_lanes.intro` and `_lanes.help` in `data/lanes.yaml`) | Lane Studio's walkthrough chapters and Help pane pages | A feature users would notice is added, changed or removed, or a part of the screen they point at moves |
+| [TAGS.md](docs/TAGS.md) and `docs/tags/` | Every key and tag on the OSM wiki, and whether Lane Studio draws it, could, or cannot (and why) | Lane Studio draws a key or value it did not: run `node scripts/build_tag_coverage.js` (needs network) |
 | [API.md](docs/API.md) | Starting Lane Studio on a page, files it serves, URL parameters, build settings | `LaneStudio.init`, served files, URL parameters or environment variables change |
 | [FAQ.md](docs/FAQ.md) | Common questions | A change answers, changes or raises a common question |
 | [PRIVACY.md](docs/PRIVACY.md) | What is stored, sent and to whom | Anything new is stored in the browser or sent anywhere (add a line to its changelog) |
@@ -155,7 +157,8 @@ tagged exactly as the OpenStreetMap wiki documents it**:
 - **Templated as the wiki says**: a preset adds the wiki's tags (`tags`, `addTags`), never Lane Studio's own or
   deprecated ones; legacy values are read but never written. Its fields offer the wiki's keys and values first.
 - **Drawn**: every key and value the wiki documents for a feature Lane Studio draws is drawn, or listed in the guide
-  as not drawn yet.
+  as not drawn yet. [Tag coverage](docs/TAGS.md) lists every key and tag on the wiki with Lane Studio's answer;
+  regenerate it when that changes.
 - **When unsure what the tags should be, look them up on the wiki** (the key's page, its values' pages and the pages
   they link to), **or ask the user**. Never guess a tag, invent a value or follow another editor's habit instead.
 

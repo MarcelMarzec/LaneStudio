@@ -8,6 +8,16 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.12r5
+##### 2026-Nov-12
+
+#### Website
+* New wiki page Tag coverage: every key and tag the OpenStreetMap wiki documents (9,965, proposed and deprecated ones
+  left out), one page per wiki group, each marked rendered, could be rendered, or cannot be rendered with the reason
+
+#### Behind the scenes
+* `scripts/build_tag_coverage.js` rebuilds the Tag coverage pages from the wiki's API and Lane Studio's code
+
 # 26.11.12r4
 ##### 2026-Nov-12
 

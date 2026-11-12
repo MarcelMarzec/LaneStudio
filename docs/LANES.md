@@ -25,7 +25,7 @@ features) works as in iD.
 | [Tools](guide/Tools.md) | Routing, Speed Limit and Measure |
 | [Checks](guide/Checks.md) | The Lane tags rule in the Issues pane |
 
-Questions: [FAQ](FAQ.md). Developers: [Architecture](ARCHITECTURE.md), [Running locally](develop/Running-Locally.md),
+Questions: [FAQ](FAQ.md). Which of the wiki's keys and tags Lane Studio draws: [Tag coverage](TAGS.md). Developers: [Architecture](ARCHITECTURE.md), [Running locally](develop/Running-Locally.md),
 [Code map](develop/Code-Map.md), [API](API.md), [Releasing](RELEASING.md). What changed: [Changelog](CHANGELOG.md).
 
 Not built yet: turbo roundabouts with one way per lane (drawn, not specially handled), `:conditional` lane tags
