@@ -242,7 +242,9 @@ export function signGeometry(entities: OsmEntity[], graph: coreGraph): SignGeome
         }
         const message = isMessageSign(tags);
         const camera = isCamera(tags) || graph.parentRelations(node).some(r => r.tags.type === 'enforcement' && r.memberById(node.id)?.role === 'device');
-        const faces = message ? [] : parseTrafficSign(tags.traffic_sign ?? tags['traffic_sign:forward'] ?? tags['traffic_sign:backward']);
+        // (a sign painted on the road, `road_marking=traffic_sign`, is drawn with the road markings, not as a sign post)
+        const painted = tags.road_marking === 'traffic_sign';
+        const faces = message || painted ? [] : parseTrafficSign(tags.traffic_sign ?? tags['traffic_sign:forward'] ?? tags['traffic_sign:backward']);
         const phone = tags.emergency === 'phone';
         if (!message && !camera && !phone && !faces.length) continue;
 

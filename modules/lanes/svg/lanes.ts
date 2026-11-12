@@ -12,11 +12,11 @@ import { laneRouting } from '../core/lane_routing';
 import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind } from '../core/lane_speed';
 import { drawRoutes, laneUnder } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
-import { isLanePartArea, roadGeometry, type CarriagewayArea, type LaneSwap, type LineTrim, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
+import { isLanePartArea, roadGeometry, type CarriagewayArea, type PartArea, type LaneSwap, type LineTrim, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
 import type { CycleDetail, LaneInfo, ParkingLayout } from '../geometry/layout';
 import type { SurfaceGroup } from '../model/street_features';
 import { laneSymbols } from '../geometry/lane_symbols';
-import { drawLaneSymbols } from './lane_symbols';
+import { drawLaneSymbols, drawMarkingSymbols } from './lane_symbols';
 import { ukMarkings } from '../core/drive_side';
 import { t } from '../../core/localizer';
 import {
@@ -32,7 +32,7 @@ import { drawStreet, drawParking, drawRoadMarkings, joinPaths, pathFor, classCha
 import { actionConnectLanes, connectionNode, findConnectivity } from '../actions/connect_lanes';
 import { streetGeometry, carriagewayAreaEdges, isCarriagewayArea, type StreetGeometry } from '../geometry/street';
 import { parkingGeometry, type ParkingShape } from '../geometry/parking';
-import { roadMarkingGeometry } from '../geometry/road_marking';
+import { roadMarkingGeometry, roadMarkingIDs } from '../geometry/road_marking';
 import { isStreetParking, isTrafficIsland, markingColour, overtakingBanned, surfaceGroup, withOvertaking } from '../model/street_features';
 import { metricFrame, offsetPolyline, pointAlong, pointInPolygon, polylineLength } from '../geometry/frame';
 import { parkingBadgeParts, parkingUse, parkingValue } from '../model/parking';
@@ -628,7 +628,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         // (multipolygon relations too: a road area with holes, such as round a traffic island)
         const carriagewayAreas = visible.filter(isCarriagewayArea) as CarriagewayArea[];
         const islands = visible.filter(entity => entity.type === 'way' && (entity as osmWay).isClosed() && isTrafficIsland(entity.tags)) as osmWay[];
-        const partAreas = visible.filter(entity => entity.type === 'way' && (entity as osmWay).isClosed() && isLanePartArea(entity.tags)) as osmWay[];
+        // (closed ways, or multipolygons: hatching or chevrons round a traffic island)
+        const partAreas = visible.filter(entity => isLanePartArea(entity.tags) && (entity.type === 'way' ? (entity as osmWay).isClosed()
+            : entity.type === 'relation' && entity.tags.type === 'multipolygon')) as PartArea[];
         // the geometry is in map coordinates, so it holds while the graph and the features in view are the same (a new
         // selection, tool or mode redraws without working it out again)
         const visibleIDs = visible.map(entity => entity.id).join(',');
@@ -668,7 +670,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const building = (piece: RoadPiece) => isUnderConstruction(tagsOf(piece.wayID));
         const marked = [...shown, ...channelled].filter(piece => !building(piece));
         const parking = parkingGeometry(visible, graph);
-        const roadMarkings = markings ? roadMarkingGeometry(visible, graph) : { lines: [], areas: [], texts: [] };
+        const roadMarkings = markings ? roadMarkingGeometry(visible, graph) : { lines: [], areas: [], texts: [], shapes: [], symbols: [] };
         drawStreet(group, street, projection, zoom, laneZooms, areaRoads);
         // land use and natural areas, which their settings hide on their own
         group('areas').selectAll<SVGPathElement, { id: string }>('path')
@@ -686,6 +688,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         drawParkingSpaces(group, parkingSpaces.spaces, parkingSpaces.carParks, projection, markings);
         drawParking(group('parking'), parking, projection, markings);
         drawRoadMarkings(group('road-markings'), roadMarkings, projection, labels);
+        drawMarkingSymbols(group('road-markings'), roadMarkings.symbols, projection);
 
         /* traffic signs, message signs, gantries, enforcement cameras */
         // (each sign carries its node for iD's select and hover behaviours)
@@ -1197,8 +1200,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         for (const k of street.kerbs) drawnWays.add(k.id);
         for (const b of street.barriers) drawnWays.add(b.id);
         for (const p of parking) drawnWays.add(p.id);
-        for (const l of roadMarkings.lines) drawnWays.add(l.id);
-        for (const a of roadMarkings.areas) drawnWays.add(a.id);
+        const markingIDs = roadMarkingIDs(roadMarkings);
+        markingIDs.ways.forEach(id => drawnWays.add(id));
         // street furniture drawn on its own
         const furniture = street.symbols.flatMap(symbol => (symbol.nodeID ? [symbol.nodeID] : []));
         const drawnNodes = new Set<string>([...[...street.markings, ...street.surfaces, ...signData.signs, ...junctionData].map(m => m.nodeID), ...furniture]);
@@ -1206,11 +1209,11 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         for (const track of tracks) drawnWays.add(track.id);
         for (const space of [...parkingSpaces.spaces, ...parkingSpaces.carParks]) drawnWays.add(space.id);
         for (const shape of [...rail.ground, ...rail.trackside, ...rail.overRoad, ...rail.symbols]) (shape.id.startsWith('n') ? drawnNodes : drawnWays).add(shape.id);
-        for (const text of roadMarkings.texts) drawnNodes.add(text.id);
+        markingIDs.nodes.forEach(id => drawnNodes.add(id));
         // the nodes drawn here as what they are (markings, signs, railway equipment…), whose icons iD need not draw too
         const renderedNodes = new Set<string>([...[...street.markings, ...street.surfaces, ...signData.signs].map(m => m.nodeID), ...furniture]);
         for (const shape of [...rail.ground, ...rail.trackside, ...rail.overRoad, ...rail.symbols]) if (shape.id.startsWith('n')) renderedNodes.add(shape.id);
-        for (const text of roadMarkings.texts) renderedNodes.add(text.id);
+        markingIDs.nodes.forEach(id => renderedNodes.add(id));
         for (const id of drawnWays) {
             const way = graph.hasEntity(id as osmWay['id']) as osmWay | undefined;
             if (way?.type === 'way') way.nodes.forEach(n => drawnNodes.add(n));

@@ -1,7 +1,7 @@
 import { isTrafficIsland, islandSurface, overtakingBanned, roadMarkingStyle, isStreetParking, surfaceGroup } from '../../../../modules/lanes/model/street_features';
 import { carriagewayAreaEdges, streetGeometry } from '../../../../modules/lanes/geometry/street';
 import { parkingGeometry } from '../../../../modules/lanes/geometry/parking';
-import { roadMarkingGeometry } from '../../../../modules/lanes/geometry/road_marking';
+import { markingKind, roadMarkingGeometry, roadMarkingIDs } from '../../../../modules/lanes/geometry/road_marking';
 import { metricFrame } from '../../../../modules/lanes/geometry/frame';
 
 const m = 1 / 111320;
@@ -177,6 +177,58 @@ describe('roadMarkingGeometry', () => {
         expect(out.areas.map(a => [a.id, a.style.pattern, a.polygon.length])).toEqual([['w2', 'crosshatch', 3]]);
         expect(out.texts.map(t => t.text)).toEqual(['SLOW']);
     });
+
+    /** A 20 m way running east with `tags`, and a road with a node tagged `nodeTags` */
+    function marked(tags: Tags, nodeTags: Tags = {}) {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(20, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags }),
+            new iD.osmNode({ id: 'n3', loc: at(0, 10) }),
+            new iD.osmNode({ id: 'n4', loc: at(10, 10), tags: nodeTags }),
+            new iD.osmNode({ id: 'n5', loc: at(20, 10) }),
+            new iD.osmWay({ id: 'w2', nodes: ['n3', 'n4', 'n5'], tags: { highway: 'residential' } })
+        ];
+        const graph = new iD.coreGraph(entities);
+        return roadMarkingGeometry(entities.map(e => graph.entity(e.id)), graph);
+    }
+
+    it('reads legacy values as the wiki\'s', () => {
+        expect(['solid_stop_line', 'dash', 'gore_chevron', 'left', 'solid_road_edge'].map(markingKind))
+            .toEqual(['stop_line', 'lane_divider', 'restriction', 'arrow', 'edge_line']);
+        expect(marked({ road_marking: 'dash' }).lines[0].stroke).toBe('dashed');
+        expect(marked({ road_marking: 'left' }).symbols[0].turns).toEqual(['left']);
+    });
+
+    it('draws an arrow mapped from its base to its tip, as long as its way, with each arrow value', () => {
+        const out = marked({ road_marking: 'arrow', arrow: 'through;right' });
+        expect(out.lines).toHaveLength(0);
+        const arrow = out.symbols[0];
+        expect([arrow.kind, arrow.turns, arrow.length]).toEqual(['arrow', ['through', 'right'], expect.closeTo(20, 1)]);
+        // pointing east, the way it was drawn
+        const frame = metricFrame(arrow.loc);
+        expect(frame.toMetres(arrow.ahead)[0]).toBeCloseTo(1, 2);
+    });
+
+    it('draws shark\'s teeth pointing to the right of their line, and a zigzag line', () => {
+        const teeth = marked({ road_marking: 'stop_line', stroke: 'sharks_teeth' }).shapes[0].polygons;
+        expect(teeth.length).toBeGreaterThan(15);
+        const frame = metricFrame(origin);
+        // the way runs east: its right is south
+        expect(frame.toMetres(teeth[0][2])[1]).toBeLessThan(-0.3);
+        const zigzag = marked({ road_marking: 'lane_divider', stroke: 'zigzag' }).lines[0].line.map(frame.toMetres);
+        expect(zigzag).toHaveLength(21);
+        expect(zigzag[0][1]).toBeCloseTo(0.25, 2);
+        expect(zigzag[1][1]).toBeCloseTo(-0.25, 2);
+    });
+
+    it('paints symbols on nodes: a cycle symbol, others by name, and a painted speed limit as its number', () => {
+        const cycle = marked({}, { road_marking: 'symbol', symbol: 'bicycle' });
+        expect(cycle.symbols.map(s => [s.id, s.kind, s.length])).toEqual([['n4', 'cycle', 2]]);
+        expect(marked({}, { road_marking: 'symbol', symbol: 'bus' }).texts.map(t => t.text)).toEqual(['BUS']);
+        expect(marked({}, { road_marking: 'traffic_sign', traffic_sign: 'GB:670[30]' }).texts.map(t => t.text)).toEqual(['30']);
+        expect(roadMarkingIDs(cycle)).toEqual({ ways: [], nodes: ['n4'] });
+    });
 });
 
 
@@ -228,6 +280,22 @@ describe('streetGeometry: traffic calming', () => {
         expect(calming({ traffic_calming: 'choker;cushion' })).toContain('buildout');
         // one direction only: one lane's hump and triangle
         expect(calming({ traffic_calming: 'hump', direction: 'forward' })).toEqual(['hump', 'tooth']);
+    });
+});
+
+
+describe('streetGeometry: a stop line painted on a node', () => {
+    it('draws road_marking=stop_line across the lanes it faces, with no STOP painted before it', () => {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(0, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(50, 0), tags: { road_marking: 'stop_line', direction: 'forward' } }),
+            new iD.osmNode({ id: 'n3', loc: at(100, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: { highway: 'residential', lanes: '2' } })
+        ];
+        const graph = new iD.coreGraph(entities);
+        const street = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
+        expect(street.markings.filter(m => m.nodeID === 'n2').map(m => m.kind)).toEqual(['stop_line']);
+        expect(street.symbols.filter(s => s.key.startsWith('n2'))).toHaveLength(0);
     });
 });
 

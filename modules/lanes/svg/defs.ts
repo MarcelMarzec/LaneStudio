@@ -143,6 +143,7 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
         stroke(pattern('chevron', 14) as any, 'M0 10L7 3L14 10', 2.5);
         stroke(pattern('zigzag', 12) as any, 'M0 9L6 3L12 9', 1.5);
         pattern('dots', 8).append('circle').attr('cx', 4).attr('cy', 4).attr('r', 1.6).attr('fill', colour);
+        pattern('chessboard', 12).append('path').attr('d', 'M0 0H6V6H0ZM6 6H12V12H6Z').attr('fill', colour);
     }
 
     // the Speed Limit tool's colours with a pattern over them where the limit is set by its type rather than a

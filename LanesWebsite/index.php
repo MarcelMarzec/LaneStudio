@@ -168,7 +168,8 @@ require __DIR__ . '/includes/head.php';
           The main road runs through, lanes that carry on line up, added lanes taper, lanes part round
           hatched areas and chevrons, and guide lines carry each lane to where it leads. Roundabouts,
           traffic islands, crossings, stop lines, signs, solar panels and railways are drawn too — with UK markings: zig-zags and Belisha beacons at crossings, BUS LANE,
-          cycle symbols, bus stop boxes and advanced stop lines.
+          cycle symbols, bus stop boxes and advanced stop lines — and painted road markings: lines, shark's teeth, hatching
+          and chevrons (multipolygons too), arrows, symbols and text.
         </p>
       </article>
 

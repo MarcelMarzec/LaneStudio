@@ -68,8 +68,19 @@ hatched for rumble strips and the rest.
 
 ## Road markings (`road_marking=*`)
 
-Lines, areas and text drawn from `stroke` (or `stroke:left|right`), `pattern`, `width`, `dasharray`, `colour` and
-`inscription`, edited in their own sidebar section. Box junctions are areas with `road_marking=box_junction`.
+Drawn from `stroke` (or `stroke:left|right`), `pattern`, `width`, `dasharray`, `colour`, `arrow`, `symbol` and
+`inscription`, edited in their own sidebar section (Painted marking):
+
+| Marking | Mapped as | Drawn |
+| --- | --- | --- |
+| `lane_divider`, `edge_line`, `crossing_edge`, `stop_line` | way | A line: `stroke=solid`, `dashed`, `double_solid`, `double_dashed`, `sharks_teeth` (triangles pointing right of the way), `zigzag` |
+| `stop_line` | node on a road | A stop line across the lanes `direction=forward\|backward` faces |
+| `restriction`, `crossing`, `box_junction` | closed way or multipolygon | Filled with `pattern=stripes`, `chevron`, `crosshatch`, `x`, `zigzag`, `chessboard`, `dots` or `solid`; a multipolygon's inner rings (islands) are left out |
+| `arrow` | way, from its base to its tip | Arrows for each `arrow=*` value (`through;right`, `merge_to_left`…), as long as the way |
+| `text`, `symbol`, `traffic_sign` | node | `inscription=*`; `symbol=bicycle` as a cycle symbol, other symbols by name; a painted speed limit (`traffic_sign=GB:670[30]`) as its number |
+
+Legacy values are read as the wiki's: `solid_stop_line`, `dash` (dashed `lane_divider`), `solid_lane_divider`,
+`solid_road_edge`, `gore_chevron` (chevrons), `left|right|through` (arrows). `reason=*` says why a restriction is painted.
 
 ### Hatched areas and chevrons
 
@@ -89,5 +100,8 @@ drawn round its outline at whatever width it has:
 - **Lanes fit round it**: lanes either side of an area between them part as wide as it is mapped. A road beside an
   area that reaches towards another road (chevrons at a slip road) meets its edge: moved away where it would run over
   it, pulled in (up to 4 m) where it stands off, its hard shoulder giving way. Lanes never move sideways more than 1 m
-  in 12, easing back to their own line past the area. Drawing only: tags are not changed. Areas painted across the whole road (box junctions)
-  or inside one lane (keep-clear markings) are left on the lanes.
+  in 12, easing back to their own line past the area. Drawing only: tags are not changed.
+- Left on their own line: lanes under an area painted across the whole road (box junction) or inside one lane
+  (keep-clear marking); a roundabout's ring beside the hatching round its middle or chevrons outside it; a road with
+  another road between it and the area. At a junction (three arms or more) the move eases to nothing, so lanes meet
+  the roads there. Where two areas overlap, lanes move once, for the larger.

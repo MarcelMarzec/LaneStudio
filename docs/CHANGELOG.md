@@ -8,6 +8,28 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.12
+##### 2026-Nov-12
+
+#### Lanes and junctions
+* A roundabout's ring keeps to its line beside the hatching round its middle and the chevrons outside it, so its ways
+  meet without steps or jagged kerbs (Holdingham Roundabout, Sleaford)
+* Roads joining a roundabout are no longer pushed aside in their last metres by hatching across the ring from them
+* Lanes moved by a painted area ease back to their own line at a junction, so they meet the roads there
+* Where two painted areas overlap (an outline tagged as well as its multipolygon), lanes move once, not twice
+* Lanes part round hatching and chevrons mapped as multipolygons (`type=multipolygon`, round a traffic island) too
+* The Routing tool's route lines follow these lanes, so they no longer jump where a ring way was offset
+
+#### Roads and signs
+* Road markings mapped as multipolygons are drawn, their traffic islands left out of the pattern
+* Arrows mapped as a way from base to tip (`road_marking=arrow` with `arrow=*`), shark's teeth (`stroke=sharks_teeth`),
+  zig-zag lines (`stroke=zigzag`) and `pattern=x` and `chessboard` are drawn
+* `road_marking=stop_line` on a road's node is drawn as a stop line; `road_marking=symbol` as a cycle symbol
+  (`symbol=bicycle`) or by name; a painted speed limit (`road_marking=traffic_sign`) as its number, not a sign post
+* The wiki's legacy values are read as their replacements (`solid_stop_line`, `dash`, `gore_chevron`, `left`…)
+* The Painted marking section offers the wiki's values, `sharks_teeth` and `zigzag`, and adds Arrow, Symbol,
+  Why it is painted (`reason`) and, for a stop line on a node, the traffic it faces
+
 # 26.11.10
 ##### 2026-Nov-10
 

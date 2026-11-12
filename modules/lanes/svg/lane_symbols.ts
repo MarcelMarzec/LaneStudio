@@ -2,7 +2,9 @@ import { select as d3_select } from 'd3-selection';
 
 import type { Projection } from '../../geo/raw_mercator';
 import type { LaneBox, LaneSymbol } from '../geometry/lane_symbols';
-import { attrChanged, joinPaths, pathFor, screenPlacement } from './street';
+import type { MarkingSymbol } from '../geometry/road_marking';
+import { turnArrowSymbol } from './defs';
+import { attrChanged, joinPaths, markingColourValues, pathFor, screenPlacement } from './street';
 
 type Group = d3.Selection<SVGGElement>;
 
@@ -46,4 +48,37 @@ export function drawLaneSymbols(group: Group, boxGroup: Group, symbols: LaneSymb
             const i = (this as SVGTextElement).classList.contains('lane-word-0') ? -1 : 1;
             return `translate(0,${(i * d.k * 0.32).toFixed(1)}) scale(1,1.6)`;
         });
+}
+
+
+/**
+ * Draws pictograms mapped as road markings (see geometry/road_marking): an arrow as long as its way, one `<use>` of the
+ * turn arrows per `arrow` value (overlapping into one arrow, as on lanes), at most 1.8 m wide; a cycle symbol on a node
+ */
+export function drawMarkingSymbols(group: Group, symbols: MarkingSymbol[], projection: Projection) {
+    const items = symbols.map(d => {
+        const { p, pxPerMetre, angle } = screenPlacement(projection, d.loc, d.ahead);
+        // the turn arrows' box is 24 units long and 18 wide; the cycle symbol's 20 long
+        const along = d.length * pxPerMetre / (d.kind === 'arrow' ? 24 : 20);
+        const across = d.kind === 'arrow' ? Math.min(along, 1.8 * pxPerMetre / 18) : along;
+        return { ...d, along, across, transform: `translate(${p[0].toFixed(1)},${p[1].toFixed(1)}) rotate(${(angle + 90).toFixed(1)})` };
+    });
+    const all = group.selectAll<SVGGElement, typeof items[number]>('g.road-marking-symbol').data(items, d => d.key);
+    all.exit().remove();
+    const merged = all.enter().append('g').merge(all)
+        .each(attrChanged('class', d => `road-marking-symbol road-marking-symbol-${d.kind} ${d.id}`))
+        .each(attrChanged('transform', d => d.transform))
+        .style('color', d => markingColourValues[d.style.colour]);
+    merged.each(function(d) {
+        const uses = (d.kind === 'arrow' ? d.turns ?? [] : ['cycle']).map(turn => {
+            if (turn === 'cycle') return { href: '#lanes-cycle', mirror: false };
+            const symbol = turnArrowSymbol(turn);
+            return symbol ? { href: `#${symbol.id}`, mirror: symbol.mirror } : null;
+        }).filter((u): u is { href: string; mirror: boolean } => !!u);
+        const use = d3_select(this).selectAll<SVGUseElement, typeof uses[number]>('use').data(uses);
+        use.exit().remove();
+        use.enter().append('use').merge(use)
+            .each(attrChanged('href', u => u.href))
+            .each(attrChanged('transform', u => `scale(${((u.mirror ? -1 : 1) * d.across).toFixed(3)},${d.along.toFixed(3)})`));
+    });
 }

@@ -984,6 +984,7 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
         return n + (i > 0 ? 1 : 0) + (i < w.nodes.length - 1 ? 1 : 0);
     }, 0);
     const atJunction = armCount >= 3;
+    const paintedStopLine = tags.road_marking === 'stop_line' || tags.road_marking === 'solid_stop_line';
     if (highway === 'traffic_signals' && atJunction) junctionSignalLines(node, roads, graph, out, visuals);
 
     // flashing amber signals and lane control signals have no stop line, only their heads (wiki: Key:traffic_signals)
@@ -991,8 +992,9 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
     if (highway === 'traffic_signals' && !atJunction && (signalKind === 'signals_blinker' || signalKind === 'signals_lane_control')) {
         out.symbols.push({ key: `${node.id}-signals`, kind: signalKind, loc: cs.frame.toLoc(scale(cs.normal, right + 0.8)),
             ahead: cs.frame.toLoc(add(scale(cs.normal, right + 0.8), cs.direction)), size: 1.8 });
-    } else if (highway === 'stop' || highway === 'give_way' || (highway === 'traffic_signals' && !atJunction)) {
-        const kind: MarkingKind = highway === 'stop' ? 'stop_line' : highway === 'give_way' ? 'give_way_line' : 'signal_line';
+    } else if (highway === 'stop' || highway === 'give_way' || (highway === 'traffic_signals' && !atJunction) || paintedStopLine) {
+        // (a stop line painted on its own, `road_marking=stop_line` on the road's node, is the line alone)
+        const kind: MarkingKind = highway === 'give_way' ? 'give_way_line' : highway === 'stop' || paintedStopLine ? 'stop_line' : 'signal_line';
         // at a junction node, the line stands back by half the width of the widest other road
         const back = atJunction ? junctionClearance(node, road, graph) : 0;
         for (const direction of approachDirections(tags, cs, graph)) {
@@ -1005,7 +1007,7 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
             out.markings.push({ key: `${node.id}-${kind}-${direction}`, kind, nodeID: node.id, closed: false, points: [at(0, range[0]), at(0, range[1])] });
 
             // painted STOP or give-way triangles on each approach lane, a few metres before the line
-            if (highway === 'traffic_signals') continue;
+            if (highway === 'traffic_signals' || (paintedStopLine && highway !== 'stop' && highway !== 'give_way')) continue;
             cs.layout.lanes.forEach((lane, i) => {
                 if (lane.ref.direction !== direction) return;
                 const mid = (cs.edges[i] + cs.edges[i + 1]) / 2;

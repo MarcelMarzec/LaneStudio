@@ -7,8 +7,9 @@ import { utilDisplayName } from '../../util';
 import { parkingGeometry } from '../geometry/parking';
 import {
     isTrafficIsland, isStreetParking, parkingOnCarriageway, islandSurface,
-    roadMarkingValues, strokeValues, patternValues, markingColours, streetParkingValues
+    roadMarkingValues, strokeValues, patternValues, markingColours, streetParkingValues, arrowValues, restrictionReasons
 } from '../model/street_features';
+import { markingKind } from '../geometry/road_marking';
 import type { InfoTopic } from './field_info';
 import { fieldNote, laneField, tagChrome } from './lane_fields';
 import { areaParkingScope, parkingDetails } from './parking_fields';
@@ -96,7 +97,13 @@ export function uiSectionStreetFeature(context: iD.Context) {
 
         if (kind === 'road_marking') {
             field(wrap, e, 'road_marking', t('_lanes.street_feature.marking'), roadMarkingValues);
-            if (e.type === 'way') {
+            const marking = markingKind(e.tags.road_marking);
+            if (marking === 'arrow') {
+                // an arrow is mapped from its base to its tip
+                field(wrap, e, 'arrow', t('_lanes.street_feature.arrow'), arrowValues);
+            } else if (e.type === 'node' && marking === 'stop_line') {
+                field(wrap, e, 'direction', t('_lanes.street_feature.direction'), ['forward', 'backward', 'both']);
+            } else if (e.type !== 'node') {
                 const paired = !!(e.tags['stroke:left'] || e.tags['stroke:right']);
                 if (paired) {
                     field(wrap, e, 'stroke:left', t('_lanes.street_feature.stroke_left'), ['solid', 'dashed', 'dotted']);
@@ -105,8 +112,11 @@ export function uiSectionStreetFeature(context: iD.Context) {
                     field(wrap, e, 'stroke', t('_lanes.street_feature.stroke'), strokeValues);
                 }
                 field(wrap, e, 'pattern', t('_lanes.street_feature.pattern'), patternValues, v => t(`_lanes.street_feature.patterns.${v}`));
+                if (marking === 'restriction') field(wrap, e, 'reason', t('_lanes.street_feature.reason'), restrictionReasons);
                 field(wrap, e, 'width', t('_lanes.street_feature.width'), ['0.1', '0.15', '0.2', '0.3', '0.5']);
                 field(wrap, e, 'dasharray', t('_lanes.street_feature.dasharray'), ['1,1', '2,4', '3,6', '4,2', '6,3']);
+            } else if (marking === 'symbol') {
+                field(wrap, e, 'symbol', t('_lanes.street_feature.symbol'), ['bicycle', 'pedestrian', 'bus', 'hov', 'wheelchair', 'motorway', 'airport']);
             } else {
                 field(wrap, e, 'inscription', t('_lanes.street_feature.inscription'), ['STOP', 'SLOW', 'KEEP CLEAR', 'BUS', 'BUS STOP', 'SCHOOL', 'LOOK RIGHT', 'LOOK LEFT']);
             }

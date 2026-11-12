@@ -43,12 +43,18 @@ export function islandSurface(tags: Tags): IslandSurface {
 
 /* ---------- road markings ---------- */
 
+/** `road_marking=*` values: the wiki's (Key:road_marking), then others Lane Studio draws (`box_junction`, `give_way`) */
 export const roadMarkingValues = [
-    'solid_line', 'dashed_line', 'stop_line', 'give_way', 'crossing', 'restriction', 'hatched',
-    'arrow', 'text', 'symbol', 'bus_stop', 'parking', 'coloured'
+    'lane_divider', 'edge_line', 'stop_line', 'crossing_edge', 'restriction', 'crossing', 'arrow', 'text', 'symbol',
+    'traffic_sign', 'box_junction', 'give_way'
 ] as const;
 
-export const strokeValues = ['solid', 'dashed', 'dotted', 'double_solid', 'double_dashed', 'solid_dashed', 'dashed_solid'] as const;
+export const strokeValues = ['solid', 'dashed', 'double_solid', 'double_dashed', 'sharks_teeth', 'zigzag', 'dotted', 'solid_dashed', 'dashed_solid'] as const;
+/** `arrow=*` values of a painted arrow (the values of `turn=*`) */
+export const arrowValues = ['through', 'left', 'right', 'through;left', 'through;right', 'slight_left', 'slight_right', 'merge_to_left',
+    'merge_to_right', 'reverse'] as const;
+/** `reason=*` values of a restriction area: why it is painted */
+export const restrictionReasons = ['junction', 'bus_stop', 'driveway', 'emergency'] as const;
 /** `pattern=*` values of a painted area (wiki: Key:road_marking; `hatch` is read as `stripes`) */
 export const patternValues = ['stripes', 'chevron', 'crosshatch', 'x', 'zigzag', 'chessboard', 'dots', 'solid'] as const;
 export const markingColours = ['white', 'yellow', 'red', 'blue', 'green', 'orange'] as const;
@@ -148,7 +154,7 @@ export function roadMarkingStyle(tags: Tags): RoadMarkingStyle {
         lines = [singleStroke(a)!, singleStroke(b)!];
     } else {
         const single = singleStroke(stroke) ?? (
-            kind === 'dashed_line' || kind === 'give_way' ? 'dashed' :
+            kind === 'dashed_line' || kind === 'give_way' || kind === 'dash' ? 'dashed' :
             'solid');
         lines = [single];
     }

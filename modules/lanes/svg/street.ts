@@ -281,8 +281,9 @@ function drawPaintedAreas(group: Group, areas: AreaShape[], path: ReturnType<typ
     enter.append('path').attr('class', 'painted-area-stripes').attr('clip-path', d => `url(#lanes-clip-${d.id})`);
     const all = enter.merge(items)
         .each(attrChanged('class', function(d) { return withIdState(this, `painted-area painted-area-${d.kind} ${d.id}`); }));
-    all.select('clipPath').select('path').each(attrChanged('d', d => path(d.polygon, true)));
     const areaPath = (d: AreaShape) => path(d.polygon, true) + (d.rings ?? []).map(ring => path(ring, true)).join('');
+    // (a multipolygon's holes are left out of the bars)
+    all.select('clipPath').select('path').attr('clip-rule', d => (d.rings ? 'evenodd' : null)).each(attrChanged('d', areaPath));
     all.select('.painted-area-fill').each(attrChanged('d', areaPath));
     all.select('.painted-area-stripes')
         .each(attrChanged('d', d => d.rows !== undefined ? areaPath(d) : (d.stripes ?? []).map(bar => path(bar, true)).join('')))
@@ -349,7 +350,8 @@ export function drawRoadMarkings(group: Group, data: RoadMarkings, projection: P
     areas.enter().append('path')
         .merge(areas)
         .each(attrChanged('class', function(d) { return withIdState(this, `road-marking-area ${d.id}`); }))
-        .each(attrChanged('d', d => path(d.polygon, true)))
+        .each(attrChanged('d', d => path(d.polygon, true) + (d.rings ?? []).map(ring => path(ring, true)).join('')))
+        .attr('fill-rule', d => (d.rings ? 'evenodd' : null))
         .attr('stroke', d => markingColourValues[d.style.colour])
         .attr('stroke-width', d => px(d.style.width))
         .attr('stroke-dasharray', d => d.style.lines[0] === 'solid' ? null : (d.style.dash ?? defaultDash[d.style.lines[0]] ?? []).map(px).join(',') || null)
@@ -357,8 +359,10 @@ export function drawRoadMarkings(group: Group, data: RoadMarkings, projection: P
             if (d.stripes) return 'none';
             const pattern = d.style.pattern;
             if (!pattern || pattern === 'solid' || pattern === 'filled') return markingColourValues[d.style.colour];
-            const known = ['crosshatch', 'hatch', 'chevron', 'dots', 'zigzag'];
-            return `url(#lanes-pattern-${known.includes(pattern) ? pattern : 'hatch'}-${d.style.colour})`;
+            // (`x` is a criss-cross, as `crosshatch`)
+            const known = ['crosshatch', 'hatch', 'chevron', 'dots', 'zigzag', 'chessboard'];
+            const name = pattern === 'x' ? 'crosshatch' : pattern;
+            return `url(#lanes-pattern-${known.includes(name) ? name : 'hatch'}-${d.style.colour})`;
         })
         .attr('fill-opacity', d => (!d.style.pattern || d.style.pattern === 'solid' || d.style.pattern === 'filled' ? 0.45 : 1));
 
@@ -371,9 +375,21 @@ export function drawRoadMarkings(group: Group, data: RoadMarkings, projection: P
     stripesEnter.append('clipPath').attr('id', d => `lanes-clip-marking-${d.key}`).append('path');
     stripesEnter.append('path').attr('class', 'road-marking-stripe').attr('clip-path', d => `url(#lanes-clip-marking-${d.key})`);
     const allStripes = stripesEnter.merge(stripes);
-    allStripes.select('clipPath').select('path').each(attrChanged('d', d => path(d.polygon, true)));
+    // (a multipolygon's holes are left out of the bars)
+    allStripes.select('clipPath').select('path')
+        .attr('clip-rule', d => (d.rings ? 'evenodd' : null))
+        .each(attrChanged('d', d => path(d.polygon, true) + (d.rings ?? []).map(ring => path(ring, true)).join('')));
     allStripes.select('.road-marking-stripe')
         .each(attrChanged('d', d => d.stripes!.map(bar => path(bar, true)).join('')))
+        .attr('fill', d => markingColourValues[d.style.colour]);
+
+    // shark's teeth: triangles painted solid
+    const shapes = group.selectAll<SVGPathElement, typeof data.shapes[number]>('path.road-marking-shape').data(data.shapes, d => d.key);
+    shapes.exit().remove();
+    shapes.enter().append('path')
+        .merge(shapes)
+        .each(attrChanged('class', function(d) { return withIdState(this, `road-marking-shape ${d.id}`); }))
+        .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')))
         .attr('fill', d => markingColourValues[d.style.colour]);
 
     const lines = group.selectAll<SVGPathElement, typeof data.lines[number]>('path.road-marking-line')
