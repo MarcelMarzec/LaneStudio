@@ -3220,5 +3220,5 @@ export const _test = { throughPair, zipLanes, unit, uncovered };
 export const junctionRules = {
     armsAt: (node: osmNode, graph: coreGraph) => armsAt(node, graph, new Map()),
     throughPair, armLaneDirection, signedAngle, idealAngle, connectivityRelation, relationPairs, zipLanes, continuationPairs, isRing, curve,
-    arrowExit
+    arrowExit, ringMiddle
 };

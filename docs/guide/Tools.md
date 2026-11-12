@@ -8,10 +8,20 @@ Routing, Speed Limit and Measure are in the top bar. Each turns editing off whil
   with the lanes traffic comes from and the turns it may not take (red, with the reason). Click to pin; click the map
   to let go.
 - **Car, Bus, Bicycle, Lorry**: each keeps to the lanes, access tags, height and weight limits and roads open to it.
-- Routes follow turn arrows, lane connections and turn restrictions (via nodes and via ways), keep to their lane
-  through short links, and leave a roundabout only by the exits the entry lane's arrows point to. On a stretch too
-  short to change lanes, a route enters a lane that leads on, not one whose only way on is banned (a right turn lane
-  whose turn is a banned U-turn).
+- Routes follow turn arrows, lane connections and turn restrictions (via nodes and via ways), and keep to their lane
+  through short links. On a stretch too short to change lanes, a route enters a lane that leads on, not one whose
+  only way on is banned (a right turn lane whose turn is a banned U-turn).
+- **Roundabouts**: an entry's arrows name exits in order round the ring, not by angle:
+
+  | Entry lane | Leaves by |
+  | --- | --- |
+  | `left` (nearside) | The first exit |
+  | `through` | The exits between, shared in order across the `through` lanes, nearside lane first |
+  | `right` (offside), or the offside lane when none is | The last exit before going back |
+  | `reverse` | Back round to the road it came from (no other lane may) |
+
+  Arrows on the ring's own ways (`through|right|right`, or `left|through`) say which lanes leave at its next exit
+  and which go on round, matched in order the same way.
 - Cycles may ride a one-way road against it with `oneway:bicycle=no` or a contraflow cycle lane
   (`cycleway=opposite*`, `cycleway:<side>:oneway=-1`), buses with `oneway:bus=no` or `oneway:psv=no`; drawn along
   the road's line. Cycles keep off `motorroad=yes`.

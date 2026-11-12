@@ -228,8 +228,6 @@ function turnWord(angle: number): TurnWord {
     return `sharp_${side}`;
 }
 
-/** The way an arm heads overall, from the node to a point 30 m out (its first metres may curve, round a roundabout) */
-const heading = (arm: Arm): Vec2 => unit(pointAlong(arm.line, Math.min(30, polylineLength(arm.line))).point);
 
 /**
  * Whether the vehicle may ride a one-way road against its direction (wiki: Key:oneway:bicycle, Key:oneway:bus): a
@@ -295,6 +293,7 @@ function lanesOn(junction: Junction, i: number, graph: coreGraph, profileID: Rou
     const turns = up.arrows;
     const anyTagged = turns.some(t => t.length);
     const n = upLanes.length;
+    const ringTurns = onRing(i) && anyTagged ? ringArrowExits(turns, exits) : null;
     const targets = upLanes.map((_, lane) => {
         const result = new Set<number>();
         if (arms.length === 2) {
@@ -302,6 +301,11 @@ function lanesOn(junction: Junction, i: number, graph: coreGraph, profileID: Rou
         } else if (ring && !onRing(i)) {
             // into the roundabout, whatever the arrows say about where to leave it
             exits.filter(x => onRing(x.j)).forEach(x => result.add(x.j));
+        } else if (ringTurns && turns[lane].length) {
+            for (const value of turns[lane]) {
+                const j = ringTurns.get(value);
+                if (j !== undefined) result.add(j);
+            }
         } else if (turns[lane].length) {
             for (const value of turns[lane]) {
                 const ideal = junctionRules.idealAngle[value];
@@ -377,6 +381,32 @@ function lanesOn(junction: Junction, i: number, graph: coreGraph, profileID: Rou
             result[p.from].set(x.j, moves);
         }
     }
+    return result;
+}
+
+/**
+ * Round a roundabout, where its ways' own arrows (`turn:lanes` on the ring) say which lanes leave and which go on
+ * round: each arrow to a way on, matched by order (the leftmost arrow to the leftmost way, the rightmost to the
+ * rightmost), as the ring bends only slightly and its exits leave almost straight ahead, so a `right` or `through`
+ * may be far from either by angle. Mappers use both `through|right` and `left|through` for "leave|go on round".
+ * One way on (a road joining the ring, none leaving) takes every arrow.
+ */
+function ringArrowExits(turns: string[][], exits: { j: number; angle: number }[]): Map<string, number> {
+    const result = new Map<string, number>();
+    const ways = [...exits].sort((a, b) => b.angle - a.angle);
+    if (!ways.length) return result;
+    const values = [...new Set(turns.flat())].filter(v => junctionRules.idealAngle[v] !== undefined)
+        .sort((a, b) => junctionRules.idealAngle[b] - junctionRules.idealAngle[a]);
+    if (ways.length === 1 || values.length === 1) {
+        // (a single kind of arrow: the way nearest it by angle)
+        for (const value of values) {
+            const ideal = junctionRules.idealAngle[value];
+            const nearest = ways.reduce((best, x) => (Math.abs(x.angle - ideal) < Math.abs(best.angle - ideal) ? x : best));
+            result.set(value, (ways.length === 1 ? ways[0] : nearest).j);
+        }
+        return result;
+    }
+    values.forEach((value, k) => result.set(value, ways[Math.round(k / (values.length - 1) * (ways.length - 1))].j));
     return result;
 }
 
@@ -481,8 +511,11 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
         length: number;
         visited: Set<string>;
         ringExits: number;
-        /** entering a roundabout from a lane with arrows: the arrows, and the way the vehicle was heading, which pick its exits */
-        ringArrows?: { values: string[]; heading: Vec2 };
+        /**
+         * entering a roundabout from a lane with arrows: the entry's arrows lane by lane, the lane entered from, and
+         * the way the vehicle was heading, which pick its exits (see ringExitFits)
+         */
+        ringArrows?: { lane: number; exits: Map<string, Set<number>> };
         /**
          * the roads traffic in the starting lane may have come from, that the route so far has not ruled out: a
          * route starting part way along a restriction's via-ways (on the link between the halves of a dual
@@ -585,16 +618,7 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
             const upOnRing = junctionRules.isRing(upWay);
             const downOnRing = junctionRules.isRing(down.way);
             // leaving a roundabout: only by the exits the arrows of the lane it was entered from point to
-            if (s.ringArrows && upOnRing && !downOnRing) {
-                const bearing = junctionRules.signedAngle(s.ringArrows.heading, heading(down));
-                const fits = s.ringArrows.values.some(value => {
-                    const ideal = junctionRules.idealAngle[value];
-                    // going back the way it came takes a U-turn arrow
-                    if (Math.abs(bearing) > 150) return value === 'reverse';
-                    return ideal !== undefined && Math.abs(((bearing - ideal + 540) % 360) - 180) < 75;
-                });
-                if (!fits) continue;
-            }
+            if (s.ringArrows && upOnRing && !downOnRing && !(s.ringArrows.exits.get(armID(down))?.has(s.ringArrows.lane) ?? true)) continue;
             // the ways driven so far, each once in a row, for restrictions via ways
             const path = [...s.runs.map(r => r.wayID as string), s.way.id].filter((id, n, all) => id !== all[n - 1]);
             let restriction = restrictionAt(graph, upWay, j.node.id, down.way, profileID) ??
@@ -632,9 +656,10 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
             if (s.visited.has(key)) continue;
             const [upRing, downRing] = [upOnRing, downOnRing];
             const ring: RouteMove['ring'] = !upRing && downRing ? 'enter' : upRing && !downRing ? 'exit' : upRing ? 'round' : undefined;
-            const arrows = parseTurn(j.arms[i].layout.model.lanes[s.enter.direction][lane]?.values['turn:lanes'] ?? '');
-            const ringArrows = ring === 'enter' ? (arrows.length ? { values: arrows, heading: scale(heading(j.arms[i]), -1) } : undefined)
-                : downRing ? s.ringArrows : undefined;
+            const entryLanes = j.arms[i].layout.model.lanes[s.enter.direction].map(l => parseTurn(l.values['turn:lanes'] ?? ''));
+            const ringArrows = ring === 'enter' ? (entryLanes[lane]?.length ? {
+                lane, exits: ringExitLanes(graph, j.node, j.arms[i], down.way, entryLanes, j.arms[i].layout.model.driveSide === 'left')
+            } : undefined) : downRing ? s.ringArrows : undefined;
             // round a roundabout, count the roads leaving it that the route passes
             const passes = upRing && downRing ? j.arms.filter(a => !junctionRules.isRing(a.way) &&
                 a.layout.model.lanes[junctionRules.armLaneDirection(a, false)].length).length : 0;
@@ -669,7 +694,134 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
         feeders: feederChains(graph, way, startRef, from, step, profileID)
     });
 
-    return { routes, incoming, blocked };
+    return { routes: withoutRingLoops(routes), incoming, blocked };
+}
+
+/**
+ * Routes cut short by the limit while going round a roundabout, where another route takes the same roads onto it and
+ * leaves it: going on round is no way on of its own (every exit it would reach is a route already)
+ */
+function withoutRingLoops(routes: Route[]): Route[] {
+    const onRing = (route: Route) => {
+        const last = route.moves[route.moves.length - 1];
+        return route.end === 'limit' && (last?.ring === 'enter' || last?.ring === 'round');
+    };
+    const roadsTo = (route: Route, k: number) => route.moves.slice(0, k + 1).map(m => `${m.nodeID}>${m.toWayID}`).join(',');
+    return routes.filter(route => {
+        if (!onRing(route)) return true;
+        const entered = route.moves.map(m => m.ring).lastIndexOf('enter');
+        if (entered < 0) return true;
+        const key = roadsTo(route, entered);
+        return !routes.some(other => other !== route && !onRing(other) && other.moves.length > entered + 1 &&
+            roadsTo(other, entered) === key && other.moves.slice(entered + 1).some(m => m.ring === 'exit'));
+    });
+}
+
+/** A point 30 m out along a road from the junction it meets at `node` (or its far end, if nearer), in lon/lat */
+function farLoc(node: osmNode, arm: Arm): Vec2 {
+    return metricFrame(node.loc).toLoc(pointAlong(arm.line, Math.min(30, polylineLength(arm.line))).point);
+}
+
+
+/** An arm's key: its way, node and direction */
+const armID = (arm: Arm) => `${arm.way.id}:${arm.nodeIndex}:${arm.alongWay}`;
+
+/**
+ * Which lanes of a road entering a roundabout may leave it by each of its exits (by `armID`), from the entry's arrows.
+ * On a roundabout arrows name the order of the exits rather than their angles (on five arms, the second exit is well
+ * to the left yet straight on), so the exits are taken in order round the ring: a nearside arrow (`left` where
+ * traffic keeps left) takes the first exit, and any sharply that way; an offside arrow the last before going back,
+ * and any sharply that way; the rest are shared in order across the lanes marked straight on, the nearside lane
+ * taking the first of them. A turn no lane is marked for is for the lane furthest that way (a right turn for the
+ * offside lane, where traffic keeps left), as lanes are taken on the ground; going back round takes a U-turn arrow.
+ */
+function ringExitLanes(graph: coreGraph, node: osmNode, entry: Arm, ringWay: osmWay, lanes: string[][], nearsideLeft: boolean): Map<string, Set<number>> {
+    // the ring's ways, and the roads leaving it
+    const ringWays = new Set<osmWay>([ringWay]);
+    const queue = [ringWay];
+    while (queue.length && ringWays.size < 64) {
+        const current = queue.shift()!;
+        for (const id of [current.first(), current.last()]) {
+            for (const next of graph.parentWays(nodeOf(graph, id)) as osmWay[]) {
+                if (ringWays.has(next) || !junctionRules.isRing(next)) continue;
+                ringWays.add(next);
+                queue.push(next);
+            }
+        }
+    }
+    const centre = junctionRules.ringMiddle(ringWay, graph);
+    const frame = metricFrame(centre);
+    const inward = scale(unit(frame.toMetres(farLoc(node, entry))), -1);
+    const exits: { key: string; turn: number }[] = [];
+    for (const id of new Set([...ringWays].flatMap(w => w.nodes))) {
+        const ringNode = nodeOf(graph, id);
+        for (const arm of junctionRules.armsAt(ringNode, graph)) {
+            if (junctionRules.isRing(arm.way) || !arm.layout.model.lanes[junctionRules.armLaneDirection(arm, false)].length) continue;
+            const turn = junctionRules.signedAngle(inward, unit(frame.toMetres(farLoc(ringNode, arm))));
+            // (nearside positive, so exits come in order round the ring from the most nearside; straight back is
+            // all the way round, the last)
+            const toNearside = nearsideLeft ? turn : -turn;
+            exits.push({ key: armID(arm), turn: toNearside > 165 ? toNearside - 360 : toNearside });
+        }
+    }
+    exits.sort((a, b) => b.turn - a.turn);
+
+    // each lane's arrows as nearside, straight on, offside or back (an unmarked lane goes straight on)
+    const kind = (value: string) => {
+        if (value === 'reverse') return 'back';
+        const ideal = junctionRules.idealAngle[value];
+        if (ideal === undefined) return 'ahead';
+        const toNearside = nearsideLeft ? ideal : -ideal;
+        return toNearside > 20 ? 'near' : toNearside < -20 ? 'far' : 'ahead';
+    };
+    const kinds = lanes.map(values => new Set<string>((values.length ? values : ['through']).map(kind)));
+    // lanes from the nearside one
+    const order = lanes.map((_, k) => k);
+    if (!nearsideLeft) order.reverse();
+    const marked = (k: string) => order.filter(lane => kinds[lane].has(k));
+    const nearside = order[0];
+    const offside = order[order.length - 1];
+
+    const result = new Map<string, Set<number>>();
+    const middle: typeof exits = [];
+    // going back: the last exit round, turning well past the offside (onto the other half of the road come along)
+    const back = exits.length > 1 && exits[exits.length - 1].turn < -130 ? exits[exits.length - 1] : undefined;
+    const real = exits.filter(e => e !== back);
+    exits.forEach(exit => {
+        let to: number[];
+        if (exit === back) {
+            // (only with a U-turn arrow: arrows that say where a lane goes and have none do not go back)
+            to = marked('back');
+        } else if (marked('near').length && (exit === real[0] && exit.turn > 20 || exit.turn > 100)) {
+            to = marked('near');
+        } else if (exit === real[real.length - 1] && exit.turn < -20 || exit.turn < -100) {
+            to = marked('far').length ? marked('far') : [offside];
+        } else if (!marked('ahead').length) {
+            to = exit.turn >= 0 ? (marked('near').length ? marked('near') : [nearside]) : (marked('far').length ? marked('far') : [offside]);
+        } else {
+            middle.push(exit);
+            return;
+        }
+        result.set(exit.key, new Set(to));
+    });
+    // the exits in between, shared in order across the lanes marked straight on
+    const ahead = marked('ahead');
+    middle.forEach((exit, k) => {
+        const first = Math.floor(k * ahead.length / middle.length);
+        const last = Math.max(first, Math.ceil((k + 1) * ahead.length / middle.length) - 1);
+        result.set(exit.key, new Set(ahead.slice(first, last + 1)));
+    });
+    // a lane left with no exit (straight on, where the exit ahead is also the last before going back) shares those of
+    // the nearest lane with an arrow of the same kind, else the nearest lane
+    const exitsOf = (lane: number) => [...result.values()].filter(set => set.has(lane));
+    for (const lane of order) {
+        if (exitsOf(lane).length) continue;
+        const others = order.filter(o => o !== lane && exitsOf(o).length)
+            .sort((a, b) => Number([...kinds[b]].some(k => kinds[lane].has(k))) - Number([...kinds[a]].some(k => kinds[lane].has(k))) ||
+                Math.abs(a - lane) - Math.abs(b - lane));
+        if (others.length) for (const set of exitsOf(others[0])) set.add(lane);
+    }
+    return result;
 }
 
 /** The runs leading into a lane from the junction behind it: every lane there whose moves lead into it */

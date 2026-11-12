@@ -8,6 +8,20 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.12r2
+##### 2026-Nov-12
+
+#### Routing tool
+* Routes go on round a roundabout whose ways have arrows of their own (`turn:lanes=through|right|right` on the ring):
+  they are matched to the way out and the way on round in order, as both are almost straight ahead (Holdingham
+  Roundabout, Sleaford, where every route left by the first exit)
+* An entry lane leaves a roundabout by the exits its arrows name in order round the ring: `left` the first, the
+  exits between shared across the `through` lanes, the offside lane the last; turns are measured through the
+  roundabout's middle, so roads joining a large one at a tangent count right
+* A lane with arrows no longer goes back round to the road it came from without a `reverse` arrow, and a `left` lane
+  no longer leaves by an exit that is nearly a U-turn
+* Routes that only go round a roundabout until they run out of length are left out where another route leaves it
+
 # 26.11.12
 ##### 2026-Nov-12
 

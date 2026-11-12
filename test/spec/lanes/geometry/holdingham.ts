@@ -3,6 +3,7 @@ import { isLaneRoad } from '../../../../modules/lanes/core/roads';
 import { metricFrame, polylineLength } from '../../../../modules/lanes/geometry/frame';
 import { edgesAt, isLanePartArea, roadGeometry } from '../../../../modules/lanes/geometry/road_geometry';
 import { roadMarkingGeometry } from '../../../../modules/lanes/geometry/road_marking';
+import { vehicleRoutes } from '../../../../modules/lanes/geometry/routing';
 import { isCarriagewayArea } from '../../../../modules/lanes/geometry/street';
 import { isTrafficIsland } from '../../../../modules/lanes/model/street_features';
 
@@ -109,5 +110,54 @@ describe('Holdingham Roundabout: lanes beside painted areas', () => {
         expect(area).toBeDefined();
         expect(area!.rings).toHaveLength(1);
         expect(area!.stripes?.length).toBeGreaterThan(5);
+    });
+});
+
+
+describe('Holdingham Roundabout: routes from each entry lane', () => {
+    /** The exits a lane leaves the ring by, as `exit number:way` */
+    const exitsFrom = (graph: any, wayID: string, lane: number) => {
+        const way = graph.entity(wayID);
+        const routes = vehicleRoutes(graph, wayID as `w${number}`, { direction: 'forward', index: lane }, 0, way.nodes.length - 1).routes;
+        return [...new Set(routes.map(route => route.moves.find(m => m.ring === 'exit')).filter(Boolean).map(m => `${m!.exit}:${m!.toWayID}`))].sort();
+    };
+    // the exits, clockwise from each entry, by their roads
+    const lincolnNorth = 'w149949452', a17 = 'w4277109', b1518 = 'w167096364', a15South = 'w213561588', newark = 'w213561589';
+
+    it.each([
+        // entry, lane: the exits its `destination:lanes` name (the left lane takes the first exit; the exits between are
+        // shared in order across the lanes marked straight on; the offside lane takes the last before going back)
+        ['Newark Road (A17)', 'w23423616', [[`1:${lincolnNorth}`, `2:${a17}`], [`2:${a17}`, `3:${b1518}`], [`3:${b1518}`, `4:${a15South}`]]],
+        ['Sleaford Bypass (A15)', 'w4543597', [[`1:${newark}`], [`2:${lincolnNorth}`], [`3:${a17}`, `4:${b1518}`]]],
+        ['Sleaford Bypass (A17)', 'w77342869', [[`1:${b1518}`], [`2:${a15South}`], [`3:${newark}`, `4:${lincolnNorth}`]]],
+        ['Lincoln Road (B1518)', 'w77020344', [[`1:${a15South}`], [`2:${newark}`], [`3:${lincolnNorth}`, `4:${a17}`]]],
+        ['Lincoln Road (A15)', 'w213561590', [[`1:${a17}`], [`2:${b1518}`], [`3:${a15South}`, `4:${newark}`]]]
+    ] as [string, string, string[][]][])('%s: each lane round to the exits it is signed for', (_, wayID, lanes) => {
+        const { graph } = holdingham();
+        lanes.forEach((expected, lane) => expect(exitsFrom(graph, wayID, lane), `lane ${lane}`).toEqual([...expected].sort()));
+    });
+
+    it('goes on round from the ring\'s inner lanes, and leaves from its outer lane, by the ring\'s own arrows', () => {
+        // w1226788825 (through|right|right) ends where Lincoln Road (A15) leaves, almost straight ahead, the ring
+        // bending only slightly right: its arrows name the way out and the way on round in order, not by their angles
+        const { graph } = holdingham();
+        const way = graph.entity('w1226788825');
+        const firstMoves = (lane: number) => [...new Set(vehicleRoutes(graph, 'w1226788825', { direction: 'forward', index: lane }, 0, way.nodes.length - 1)
+            .routes.map(route => route.moves[0].toWayID))].sort();
+        expect(firstMoves(0)).toEqual(['w149949452']);
+        expect(firstMoves(1)).toEqual(['w1226788826']);
+        expect(firstMoves(2)).toEqual(['w1226788826']);
+    });
+
+    it('shows no route that only goes round the ring until it runs out of length', () => {
+        const { graph } = holdingham();
+        for (const wayID of ['w23423616', 'w4543597', 'w77342869', 'w77020344', 'w213561590']) {
+            const way = graph.entity(wayID);
+            for (let lane = 0; lane < 3; lane++) {
+                for (const route of vehicleRoutes(graph, wayID as `w${number}`, { direction: 'forward', index: lane }, 0, way.nodes.length - 1).routes) {
+                    expect(route.moves.some(m => m.ring === 'exit'), `${wayID} lane ${lane}`).toBe(true);
+                }
+            }
+        }
     });
 });
