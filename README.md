@@ -49,14 +49,15 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   island widens into its two halves, lanes part round hatched areas and chevrons mapped between them
   (`road_marking=restriction`, closed ways or multipolygons), and roundabout entries and exits flare into the ring.
 * **Street features**: pavements, footways and crossings at their width (paths drawn over the roads
-  they cross), stop and give way lines, traffic signals, islands, road markings (lines, shark's teeth, zig-zags,
+  they cross), stop and give way lines, traffic signals, traffic calming, barriers and kerbs, islands, road markings (lines, shark's teeth, zig-zags,
   hatched and chevron areas, arrows, symbols and text), street parking,
   parking spaces and car parks, traffic signs, message signs, cameras, priority signs on narrow
   stretches, toll gantries, street lamps, bus stops and shelters, traffic mirrors, milestones, bridges,
   tunnels, roads under construction and solar panels; micro-mapped highway areas (`area:highway=*`: road and junction areas, hatching,
   crossings, multipolygons too); UK markings (crossing zig-zags and Belisha beacons, BUS LANE, cycle
   symbols, bus stop boxes, advanced stop lines, tactile paving); and brand logos from Wikidata in place of
-  shop and restaurant markers.
+  shop and restaurant markers. Each has a preset in Add Feature (Lane Studio's where iD has none), tagged as the
+  OpenStreetMap wiki documents it.
 * **Railways**: track at its gauge (ballast, sleepers, rails and conductor rails) for main lines, the
   Underground, light rail, trams, narrow gauge and more; platforms; level crossings with UK-style
   barriers, light signals and road markings; Network Rail colour-light, shunt and semaphore signals

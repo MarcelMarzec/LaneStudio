@@ -249,9 +249,9 @@ export function laneRestrictions(values: Record<string, string>): string[] {
 function calmingAlongWay(tags: Tags): string | undefined {
     const value = tags.traffic_calming?.split(';')[0].trim();
     if (!value || value === 'no') return undefined;
-    if (value === 'table' || value === 'choked_table') return 'table';
+    if (value === 'table' || value === 'choked_table' || value === 'ramp') return 'table';
     if (value === 'painted_table') return 'painted';
-    if (['hump', 'bump', 'cushion', 'dynamic_bump', 'speed_hump', 'speed_bump'].includes(value)) return 'hump';
+    if (['hump', 'bump', 'cushion', 'choked_cushion', 'dynamic_bump', 'speed_hump', 'speed_bump'].includes(value)) return 'hump';
     if (value === 'rumble_strip' || value === 'mini_bumps') return 'rumble';
     return 'other';
 }

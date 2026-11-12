@@ -50,9 +50,12 @@ Painted just inside the kerb where nobody parks on the road:
 
 ## Parking mapped on its own
 
-- Street parking areas (`amenity=parking` + `parking=street_side|lane|layby|on_kerb|half_on_kerb`): the same fields
-  without the `parking:<side>:` prefix, the road it joins, and a layby joining it to the road.
+- Street parking areas (`amenity=parking` + `parking=street_side|lane|layby|on_kerb|half_on_kerb|shoulder`): the same
+  fields without the `parking:<side>:` prefix, the road it joins, and a layby joining it to the road. Each has a
+  preset (Parking lane, Parking layby, Pavement parking, Half-on-pavement parking, Shoulder parking).
 - Parking spaces (`amenity=parking_space`): white bay lines on every side but the one driven in from, coloured by
-  `parking_space=*` (disabled blue, charging green, parent and child purple, motorcycles orange).
+  `parking_space=*` (disabled blue, charging green, parent and child purple, motorcycles orange; `bus`, `pregnant`,
+  `veteran` and the rest plain). Presets for disabled, charging, parent and child, expectant mother, veteran and bus
+  spaces.
 - Car parks (`amenity=parking`, no `parking=*` or `parking=surface`, multipolygons too): asphalt. Car parks, spaces
   and highway areas can be clicked anywhere on their surface.

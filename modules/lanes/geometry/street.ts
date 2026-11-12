@@ -12,7 +12,7 @@ import { parseWidth, type LaneLayout } from './layout';
 import { roadMaxspeed, speedTypeOf } from '../model/speed_limits';
 import { cachedLayout, edgesAt, visualShift, miniRoundaboutRadius, type WayVisual } from './road_geometry';
 import { isFord } from './structures';
-import { isTrafficIsland, islandSurface, markingColour, surfaceGroup, type MarkingColour, type SurfaceGroup } from '../model/street_features';
+import { isTrafficIsland, islandSurface, kerbKind, markingColour, surfaceGroup, type MarkingColour, type SurfaceGroup } from '../model/street_features';
 import { ukMarkings } from '../core/drive_side';
 
 /*
@@ -264,16 +264,23 @@ export interface StreetGeometry {
 /** Default widths of barriers mapped as lines, in metres */
 export const barrierWidths: Record<string, number> = {
     wall: 0.3, retaining_wall: 0.4, city_wall: 1.5, fence: 0.1, guard_rail: 0.3, jersey_barrier: 0.6,
-    hedge: 1, handrail: 0.08, cable_barrier: 0.1, railing: 0.1, wire_fence: 0.1, chain: 0.05, ditch: 1
+    hedge: 1, handrail: 0.08, cable_barrier: 0.1, railing: 0.1, wire_fence: 0.1, chain: 0.05, ditch: 1,
+    delineators: 0.2, delineator_kerb: 0.3, armadillo: 0.3, planter: 1, barrier_board: 0.1, tyres: 0.6, 'dug-in_tyres': 0.5,
+    berm: 2, haha: 1.5, hedge_bank: 2, wicket_gate: 0.1, step: 0.3, parking_bumper: 0.15, collision_protection: 0.5,
+    tank_trap: 1, coupure: 0.5, wedge: 0.5, lych_gate: 0.5, bollard: 0.3, block: 0.8
 };
 
 // barriers on a road node drawn as a line across it, or as a row of posts
-const lineBarriers = new Set(['gate', 'swing_gate', 'sliding_gate', 'lift_gate', 'chain', 'rope', 'bar', 'hampshire_gate',
+export const lineBarriers = new Set(['gate', 'swing_gate', 'sliding_gate', 'lift_gate', 'chain', 'rope', 'bar', 'hampshire_gate',
     'border_control', 'toll_booth', 'height_restrictor', 'spikes', 'debris', 'log', 'kissing_gate', 'cycle_barrier',
-    'turnstile', 'full-height_turnstile', 'stile', 'motorcycle_barrier', 'entrance', 'barrier_board']);
-const postBarriers: Record<string, { spacing: number; size: number }> = {
+    'turnstile', 'full-height_turnstile', 'stile', 'motorcycle_barrier', 'entrance', 'barrier_board', 'bump_gate', 'sliding_beam',
+    'wicket_gate', 'lych_gate', 'horse_stile', 'sally_port', 'coupure', 'barricade', 'wedge', 'step', 'delineator_kerb',
+    'parking_bumper', 'collision_protection']);
+export const postBarriers: Record<string, { spacing: number; size: number }> = {
     bollard: { spacing: 1.5, size: 0.35 }, block: { spacing: 2, size: 0.8 }, planter: { spacing: 2.2, size: 1 },
-    jersey_barrier: { spacing: 1.3, size: 0.6 }, sump_buster: { spacing: 2.5, size: 0.4 }, bus_trap: { spacing: 2.5, size: 0.5 }
+    jersey_barrier: { spacing: 1.3, size: 0.6 }, sump_buster: { spacing: 2.5, size: 0.4 }, bus_trap: { spacing: 2.5, size: 0.5 },
+    delineators: { spacing: 1, size: 0.2 }, armadillo: { spacing: 1.2, size: 0.3 }, parking_lock: { spacing: 2.5, size: 0.4 },
+    tyres: { spacing: 1.2, size: 0.7 }, tank_trap: { spacing: 2, size: 1 }, czech_hedgehog: { spacing: 2, size: 1 }
 };
 
 const circle = (centre: Vec2, r: number, steps = 32): Vec2[] => Array.from({ length: steps }, (_, a) =>
@@ -733,8 +740,11 @@ function band(cs: CrossSection, a: number, b: number, left: number, right: numbe
  * - cushions: a pad 1.8 m wide in the middle of each lane, with its triangle
  * - a dip (or a double dip): a dashed outline across the road
  * - a choker: the kerb built out into the road on both sides; a chicane: on alternate sides, one after the other
- * - an island: a small island in the middle of the road
- * - choked_table, choked_island: a choker with a table or an island; anything else: a hatched band
+ * - an island: a small island in the middle of the road; a painted island: its outline in white paint
+ * - choked_table, choked_island, choked_cushion: a choker with a table, an island or cushions
+ * - a ramp (up to a table, wiki: Tag:traffic_calming=ramp): a band 2 m long with its triangles
+ * - markings: three white bars painted across the lanes; a flexible delineator: a post on the middle of the road
+ * - anything else (`yes`): a hatched band
  */
 function calmingShapes(node: osmNode, cs: CrossSection, out: StreetGeometry, left: number, right: number) {
     const tags = node.tags;
@@ -779,7 +789,7 @@ function calmingShapes(node: osmNode, cs: CrossSection, out: StreetGeometry, lef
             }
         } else if (value === 'rumble_strip') {
             for (let k = 0; k < 6; k++) push(`${value}-${k}`, 'rumble', band(cs, -2 + k * 0.8, -1.85 + k * 0.8, from, to));
-        } else if (value === 'cushion') {
+        } else if (value === 'cushion' || value === 'choked_cushion') {
             cs.layout.lanes.forEach((lane, i) => {
                 const mid = (cs.edges[i] + cs.edges[i + 1]) / 2;
                 if (mid <= from || mid >= to || lane.ref.direction === 'both_ways') return;
@@ -802,10 +812,21 @@ function calmingShapes(node: osmNode, cs: CrossSection, out: StreetGeometry, lef
         } else if (value === 'choked_island') {
             const centre = (left + right) / 2;
             push(value, 'island', [p(-4, centre), p(-1.5, centre - 0.8), p(1.5, centre - 0.8), p(4, centre), p(1.5, centre + 0.8), p(-1.5, centre + 0.8)]);
+        } else if (value === 'painted_island') {
+            const centre = (from + to) / 2;
+            push(value, 'painted_island', [p(-5, centre), p(-2, centre - 0.9), p(2, centre - 0.9), p(5, centre), p(2, centre + 0.9), p(-2, centre + 0.9)]);
+        } else if (value === 'ramp') {
+            push(value, 'table', band(cs, -1, 1, from, to));
+            teeth(value, -1, 1);
+        } else if (value === 'markings') {
+            for (let k = 0; k < 3; k++) push(`${value}-${k}`, 'paint', band(cs, -2.2 + k * 2, -1.8 + k * 2, from, to));
+        } else if (value === 'flexible_delineator') {
+            const centre: Vec2 = scale(cs.normal, (left + right) / 2);
+            push(value, 'delineator', circle(centre, 0.2, 10).map(cs.frame.toLoc));
         } else {
             push(value, 'band', band(cs, -1.5, 1.5, from, to));
         }
-        if (value === 'choked_table' || value === 'choked_island') {
+        if (value === 'choked_table' || value === 'choked_island' || value === 'choked_cushion') {
             buildOut(`${value}-l`, 0, 'left');
             buildOut(`${value}-r`, 0, 'right');
         }
@@ -993,7 +1014,7 @@ function nodeMarkings(node: osmNode, graph: coreGraph, out: StreetGeometry, visu
             const frame = metricFrame(node.loc);
             const r = 0.5;
             out.markings.push({
-                key: `${node.id}-kerb`, kind: 'kerb_node', nodeID: node.id, closed: true, variant: tags.kerb ?? 'raised',
+                key: `${node.id}-kerb`, kind: 'kerb_node', nodeID: node.id, closed: true, variant: kerbKind(tags.kerb),
                 points: [[-r, -r], [r, -r], [r, r], [-r, r]].map(p => frame.toLoc(p as Vec2))
             });
         }
@@ -1592,7 +1613,7 @@ export function streetGeometry(entities: OsmEntity[], graph: coreGraph, visuals?
                 }
             }
             if (tags.barrier === 'kerb') {
-                out.kerbs.push({ id: way.id, kerb: tags.kerb ?? 'raised', line: locs(way, graph) });
+                out.kerbs.push({ id: way.id, kerb: kerbKind(tags.kerb), line: locs(way, graph) });
             } else if (tags.barrier && barrierWidths[tags.barrier] !== undefined && way.nodes.length > 1) {
                 out.barriers.push({ id: way.id, kind: tags.barrier, line: locs(way, graph), width: parseWidth(tags.width) ?? barrierWidths[tags.barrier] });
             }

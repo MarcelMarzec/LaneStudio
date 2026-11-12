@@ -19,6 +19,12 @@ interface MarkingPreset {
     icon: string;
 }
 
+interface FeaturePreset extends Omit<MarkingPreset, 'icon'> {
+    /** iD's preset whose fields (and icon, unless `icon` is given) it shows */
+    like: string;
+    icon?: string;
+}
+
 // an area painted on the road: a closed way is an area by `area=yes` (iD reads `road_marking` as a line)
 const area = { area: 'yes' };
 
@@ -69,20 +75,106 @@ export const markingPresets: Record<string, MarkingPreset> = {
     }
 };
 
+const point = ['point', 'vertex'];
+const pointLine = ['point', 'vertex', 'line'];
+const vertexLine = ['vertex', 'line'];
+const anywhere = ['point', 'vertex', 'area'];
+
+const calming = (value: string, geometry = ['vertex']): [string, FeaturePreset] => [`lanes/traffic_calming/${value}`, {
+    strings: `calming_${value}`, tags: { traffic_calming: value }, geometry, like: 'traffic_calming'
+}];
+const signals = (value: string): [string, FeaturePreset] => [`lanes/highway/traffic_signals/${value}`, {
+    strings: `signals_${value}`, tags: { highway: 'traffic_signals', traffic_signals: value }, geometry: ['vertex'], like: 'highway/traffic_signals'
+}];
+const parking = (value: string): [string, FeaturePreset] => [`lanes/amenity/parking/${value}`, {
+    strings: `parking_${value}`, tags: { amenity: 'parking', parking: value }, geometry: anywhere, like: 'amenity/parking/street-side'
+}];
+const space = (value: string, icon?: string): [string, FeaturePreset] => [`lanes/amenity/parking_space/${value}`, {
+    strings: `space_${value}`, tags: { amenity: 'parking_space', parking_space: value }, geometry: anywhere, like: 'amenity/parking_space', icon
+}];
+const barrier = (value: string, geometry: string[], icon?: string): [string, FeaturePreset] => [`lanes/barrier/${value}`, {
+    strings: `barrier_${value.replace(/-/g, '_')}`, tags: { barrier: value }, geometry, like: 'barrier', icon
+}];
+const roadArea = (value: string, icon: string): [string, FeaturePreset] => [`lanes/area/highway/${value}`, {
+    strings: `area_${value}`, tags: { 'area:highway': value }, geometry: ['area'], like: 'area/highway', icon
+}];
+
 /**
- * Adds the road marking presets (`markingPresets`), named in iD's tagging strings so Add Point, Add Line and Add Area's
- * search finds them like iD's own
+ * Presets for the features Lane Studio draws that iD has none for, each a value with its own page on the wiki,
+ * tagged as the wiki documents it, so Add Point, Add Line and Add Area find them. Each shows the fields of iD's
+ * preset for the same kind of feature (`like`). Values the wiki discourages or replaces (`barrier=sliding_gate`,
+ * `barrier=wire_fence`, `area:highway=emergency`…) are still drawn but get no preset.
+ */
+export const featurePresets: Record<string, FeaturePreset> = Object.fromEntries([
+    // the outline of a path or street (wiki: Key:area:highway); roads' own areas are iD's Road Area
+    roadArea('cycleway', 'fas-biking'), roadArea('path', 'iD-other-line'), roadArea('pedestrian', 'temaki-pedestrian'),
+    roadArea('steps', 'iD-highway-steps'), roadArea('prohibited', 'maki-roadblock'),
+    // traffic calming (wiki: Key:traffic_calming)
+    calming('dynamic_bump'), calming('choked_table'), calming('painted_table'), calming('double_dip'), calming('choked_island'),
+    calming('choked_cushion'), calming('painted_island'), calming('ramp'), calming('markings'), calming('flexible_delineator'),
+    // traffic signals of a kind (wiki: Key:traffic_signals)
+    signals('blinker'), signals('emergency'), signals('ramp_meter'), signals('tram_priority'), signals('continuous_green'),
+    // street parking (wiki: Street parking, Key:parking)
+    parking('lane'), parking('layby'), parking('on_kerb'), parking('half_on_kerb'), parking('shoulder'),
+    // parking spaces (wiki: Key:parking_space)
+    space('charging', 'fas-charging-station'), space('parent'), space('pregnant'), space('veteran'), space('bus', 'temaki-bus'),
+    // barriers on roads and paths (wiki: Key:barrier)
+    barrier('bar', point), barrier('debris', point), barrier('barrier_board', pointLine), barrier('sump_buster', point),
+    barrier('sliding_beam', point, 'temaki-lift_gate'), barrier('barricade', point), barrier('parking_lock', point),
+    barrier('horse_stile', point, 'temaki-stile_squeezer'), barrier('lych_gate', vertexLine, 'temaki-gate'),
+    barrier('coupure', vertexLine), barrier('wedge', vertexLine), barrier('step', vertexLine, 'iD-highway-steps'),
+    barrier('delineator_kerb', vertexLine, 'temaki-kerb-unspecified'), barrier('delineators', ['line'], 'temaki-bollard'),
+    barrier('armadillo', pointLine), barrier('parking_bumper', pointLine), barrier('collision_protection', pointLine),
+    barrier('tyres', pointLine), barrier('tank_trap', pointLine), barrier('dug-in_tyres', ['line']),
+    barrier('berm', ['line', 'area'], 'temaki-hedge'), barrier('haha', ['line', 'area'], 'temaki-trench'),
+    // solar water heating (wiki: Tag:generator:method=thermal, Tag:generator:type=solar_thermal_collector)
+    ['lanes/power/generator/solar_thermal', {
+        strings: 'solar_thermal', tags: { power: 'generator', 'generator:source': 'solar', 'generator:method': 'thermal' },
+        addTags: { power: 'generator', 'generator:source': 'solar', 'generator:method': 'thermal', 'generator:type': 'solar_thermal_collector', 'generator:output:hot_water': 'yes' },
+        geometry: anywhere, like: 'power/generator', icon: 'fas-solar-panel'
+    }],
+    // railways (wiki: Key:proposed, Tag:railway=traverser)
+    ['lanes/railway/proposed', {
+        strings: 'railway_proposed', tags: { railway: 'proposed' }, addTags: { railway: 'proposed', proposed: 'rail' }, geometry: ['line'],
+        like: 'railway/abandoned', icon: 'temaki-railway_track_askew'
+    }],
+    ['lanes/railway/traverser', { strings: 'railway_traverser', tags: { railway: 'traverser' }, geometry: ['area'], like: 'railway/turntable' }]
+]);
+
+/** iD's presets for features the wiki documents and Lane Studio draws that iD leaves out of search */
+export const unhiddenPresets = ['highway/crossing/informal', 'highway/footway/crossing/informal', 'barrier/planter'];
+
+/**
+ * Adds the road marking presets (`markingPresets`) and the other features' (`featurePresets`), named in iD's tagging
+ * strings so Add Point, Add Line and Add Area's search finds them like iD's own, and lets search find iD's
+ * `unhiddenPresets`
  */
 function addPaintedAreaPreset() {
+    const fieldsOf = (id: string) => {
+        const like = presetManager.item(id) as any;
+        return { fields: [...(like?.originalFields ?? [])], moreFields: [...(like?.originalMoreFields ?? [])], icon: like?.icon };
+    };
     presetManager.merge({
-        presets: Object.fromEntries(Object.entries(markingPresets).map(([id, p]) => [id, {
-            tags: p.tags, addTags: p.addTags ?? p.tags, geometry: p.geometry, icon: p.icon, fields: []
-        }]))
+        presets: {
+            ...Object.fromEntries(Object.entries(markingPresets).map(([id, p]) => [id, {
+                tags: p.tags, addTags: p.addTags ?? p.tags, geometry: p.geometry, icon: p.icon, fields: []
+            }])),
+            ...Object.fromEntries(Object.entries(featurePresets).map(([id, p]) => {
+                const like = fieldsOf(p.like);
+                return [id, { tags: p.tags, addTags: p.addTags ?? p.tags, geometry: p.geometry, icon: p.icon ?? like.icon, fields: like.fields, moreFields: like.moreFields }];
+            }))
+        }
     } as any);
+    for (const id of unhiddenPresets) {
+        const preset = presetManager.item(id) as any;
+        if (preset) preset.searchable = true;
+    }
+    const all = { ...markingPresets, ...featurePresets };
     localizer.mergeStrings('tagging', 'en', {
         presets: {
-            presets: Object.fromEntries(Object.entries(markingPresets).map(([id, p]) => [id, {
-                name: t(`_lanes.fields.${p.strings}.name`), terms: t(`_lanes.fields.${p.strings}.terms`)
+            presets: Object.fromEntries(Object.entries(all).map(([id, p]) => [id, {
+                // iD's tagging strings keep a preset's search terms as a list
+                name: t(`_lanes.fields.${p.strings}.name`), terms: t(`_lanes.fields.${p.strings}.terms`).split(/\s*,\s*/).filter(Boolean)
             }]))
         }
     });

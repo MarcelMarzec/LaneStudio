@@ -159,6 +159,9 @@
 .ideditor.lane-studio .lanes-layer .marking-calming.dip      { fill: none; stroke: #fff; stroke-width: 1.2; stroke-dasharray: 4 3; }
 .ideditor.lane-studio .lanes-layer .marking-calming.island   { fill: rgba(190, 190, 185, 0.95); stroke: #fff; stroke-width: 1.5; }
 .ideditor.lane-studio .lanes-layer .marking-calming.buildout { fill: rgba(236, 205, 150, 0.95); stroke: #ddd; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .marking-calming.painted_island { fill: rgba(255, 255, 255, 0.2); stroke: #fff; stroke-width: 1.5; }
+.ideditor.lane-studio .lanes-layer .marking-calming.paint    { fill: #fff; stroke: none; }
+.ideditor.lane-studio .lanes-layer .marking-calming.delineator { fill: #ffd84d; stroke: #222; stroke-width: 1; }
 .ideditor.lane-studio .lanes-layer .marking-mini_roundabout {
     fill: rgba(255, 255, 255, 0.55);
     stroke: #fff;
@@ -168,6 +171,7 @@
 .ideditor.lane-studio .lanes-layer .marking-kerb_node.lowered { fill: #8fe3d0; }
 .ideditor.lane-studio .lanes-layer .marking-kerb_node.flush,
 .ideditor.lane-studio .lanes-layer .marking-kerb_node.no     { fill: #7fc8ff; }
+.ideditor.lane-studio .lanes-layer .marking-kerb_node.rolled { fill: #c9c9ff; }
 
 /* painted words and signs */
 .ideditor.lane-studio .lanes-layer .symbol-stop_text text {
@@ -322,6 +326,9 @@
     stroke-width: 1;
 }
 .ideditor.lane-studio .lanes-layer .marking-barrier_post.bollard { fill: #ffd84d; }
+.ideditor.lane-studio .lanes-layer .marking-barrier_post.delineators,
+.ideditor.lane-studio .lanes-layer .marking-barrier_post.armadillo { fill: #ffd84d; }
+.ideditor.lane-studio .lanes-layer .marking-barrier_post.tyres { fill: #333; stroke: #999; }
 .ideditor.lane-studio .lanes-layer .marking-barrier_node {
     fill: #c85a1e;
     stroke: #fff;
@@ -346,6 +353,17 @@
 .ideditor.lane-studio .lanes-layer .street-barrier.barrier-guard_rail,
 .ideditor.lane-studio .lanes-layer .street-barrier.barrier-cable_barrier { stroke: #b8c0c8; stroke-dasharray: 8, 2; }
 .ideditor.lane-studio .lanes-layer .street-barrier.barrier-hedge { stroke: #3f7a3a; stroke-opacity: 0.85; }
+.ideditor.lane-studio .lanes-layer .street-barrier.barrier-hedge_bank,
+.ideditor.lane-studio .lanes-layer .street-barrier.barrier-berm,
+.ideditor.lane-studio .lanes-layer .street-barrier.barrier-haha { stroke: #6f8f4a; stroke-opacity: 0.85; }
+.ideditor.lane-studio .lanes-layer .street-barrier.barrier-delineators { stroke: #ffd84d; stroke-dasharray: 1, 6; stroke-linecap: round; }
+.ideditor.lane-studio .lanes-layer .street-barrier.barrier-bollard { stroke: #ffd84d; stroke-dasharray: 1, 5; stroke-linecap: round; }
+.ideditor.lane-studio .lanes-layer .street-barrier.barrier-block { stroke: #c8c8c2; stroke-dasharray: 4, 6; }
+.ideditor.lane-studio .lanes-layer .street-barrier.barrier-armadillo { stroke: #ffd84d; stroke-dasharray: 2, 6; }
+.ideditor.lane-studio .lanes-layer .street-barrier.barrier-delineator_kerb,
+.ideditor.lane-studio .lanes-layer .street-barrier.barrier-parking_bumper { stroke: #e8e8e2; }
+.ideditor.lane-studio .lanes-layer .street-barrier.barrier-tyres,
+.ideditor.lane-studio .lanes-layer .street-barrier.barrier-dug-in_tyres { stroke: #333; stroke-dasharray: 3, 1; }
 .ideditor.lane-studio .lanes-layer .street-barrier.barrier-fence,
 .ideditor.lane-studio .lanes-layer .street-barrier.barrier-wire_fence,
 .ideditor.lane-studio .lanes-layer .street-barrier.barrier-railing { stroke: #b49a74; stroke-dasharray: 5, 2; }

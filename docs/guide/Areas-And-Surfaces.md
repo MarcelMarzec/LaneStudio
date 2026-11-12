@@ -31,6 +31,10 @@ ones split in two. A free path end is rounded. Steps with a ramp (`ramp`, `ramp:
 | `shoulder` | Hard shoulder |
 | Footway with `footway=crossing` | Zebra bars across the way people walk |
 
+Add Area finds each: iD's Road Area, Footway Area and Traffic Island, and Lane Studio's Cycleway, Path, Pedestrian
+street, Steps and Prohibited road areas. `emergency` is read but not offered: the wiki maps such hatching as
+`road_marking=restriction`.
+
 A road mapped as a routable area (`area=yes` + `highway=*`) is a plaza or service area: ways inside it draw only
 their lines, arrows and special lanes. Roads are fitted into way and multipolygon areas alike (a multipolygon by its
 largest outer ring).
@@ -63,7 +67,7 @@ Panels (wiki: Tag:generator:source=solar) are drawn dark blue with a grid of mod
 | --- | --- | --- |
 | A row of panels, or a roof's panels, as an area | `power=generator`, `generator:source=solar`, `generator:method=photovoltaic` | Modules about 1.1 by 2 m, in rows across the way they face (`generator:orientation` or `direction`), else along the area |
 | Panels as a node | the same | A rectangle of `generator:solar:modules` modules (2 m² each), else 4 by 2 m |
-| Solar water heating | `generator:method=thermal` | Dark grey |
+| Solar water heating (preset: Solar water heater) | `generator:method=thermal`, `generator:type=solar_thermal_collector` | Dark grey |
 | The whole solar farm | `power=plant`, `plant:source=solar` | iD's outline |
 
 ## Brand logos

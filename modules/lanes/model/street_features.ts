@@ -34,6 +34,27 @@ export function surfaceGroup(value: string | undefined): SurfaceGroup | undefine
 
 export type IslandSurface = SurfaceGroup;
 
+/** How a kerb is drawn */
+export type KerbKind = 'raised' | 'lowered' | 'flush' | 'rolled' | 'no';
+
+/**
+ * How high a kerb is, from `kerb=*` (wiki: Key:kerb): `raised`, `lowered`, `flush`, `rolled` or `no`, or a height in
+ * metres or with its unit (`0.12`, `4 cm`, `6"`): up to 1 cm flush, up to 3 cm lowered, higher raised. `yes` and
+ * anything else is a raised kerb
+ */
+export function kerbKind(value: string | undefined): KerbKind {
+    const v = (value ?? '').trim();
+    if (v === 'lowered' || v === 'flush' || v === 'rolled' || v === 'no') return v;
+    const height = /^(\d+(?:\.\d+)?)\s*(m|cm|mm|"|in)?$/.exec(v.replace(/_/g, ' '));
+    if (height) {
+        const n = parseFloat(height[1]);
+        const unit = height[2] ?? 'm';
+        const metres = unit === 'cm' ? n / 100 : unit === 'mm' ? n / 1000 : unit === '"' || unit === 'in' ? n * 0.0254 : n;
+        return metres <= 0.01 ? 'flush' : metres <= 0.03 ? 'lowered' : 'raised';
+    }
+    return 'raised';
+}
+
 /** What an island is covered with, for its colour; untagged islands are concrete */
 export function islandSurface(tags: Tags): IslandSurface {
     if (tags.landuse === 'grass' || tags.landcover === 'grass' || tags.natural === 'grassland') return 'grass';
@@ -180,8 +201,8 @@ export function roadMarkingStyle(tags: Tags): RoadMarkingStyle {
 
 /* ---------- street parking ---------- */
 
-/** `parking=*` values for parking beside or on the carriageway */
-export const streetParkingValues = ['street_side', 'lane', 'layby', 'on_kerb', 'half_on_kerb'] as const;
+/** `parking=*` values for parking beside or on the carriageway (wiki: Key:parking) */
+export const streetParkingValues = ['street_side', 'lane', 'layby', 'on_kerb', 'half_on_kerb', 'shoulder'] as const;
 
 /** A parking area on or beside the street, which Lane Studio joins to the road */
 export function isStreetParking(tags: Tags): boolean {

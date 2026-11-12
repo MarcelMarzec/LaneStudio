@@ -45,6 +45,7 @@ for `partial` or `incorrect`.
 | `highway=traffic_signals` | Stop line and signal head; on a junction node, a line on every approach |
 | `traffic_signals=blinker`, `lane_control` | Their own heads, no stop line |
 | `traffic_signals=emergency` | Two red lamps |
+| `traffic_signals=ramp_meter`, `tram_priority`, `continuous_green` | As other signals |
 | `cycleway=asl` (with `direction`) | Advanced stop line: the cycles' line, the traffic's 5 m before it, the green box and a cycle symbol |
 
 A line on a pedestrian crossing, or up to 10 m past one, stands just before the crossing.
@@ -52,9 +53,10 @@ A line on a pedestrian crossing, or up to 10 m past one, stands just before the 
 ## Traffic calming
 
 On a node (each value of a `;` list, across the lanes `direction` gives or all): hump and dynamic bump (with white
-triangles), table and painted table, bump, mini bumps, rumble strip, cushions, dip and double dip, choker, chicane,
-island, `choked_table`, `choked_island`. Tagged on a road way, it covers that way: table, painted table, hump, or
-hatched for rumble strips and the rest.
+triangles), table, painted table and ramp, bump, mini bumps, rumble strip, cushions, dip and double dip, choker,
+chicane, island and painted island, `choked_table`, `choked_island`, `choked_cushion`, `markings` (white bars) and a
+flexible delineator (a post in the middle); `yes` a hatched band. Tagged on a road way, it covers that way: table,
+painted table, hump, or hatched for rumble strips and the rest.
 
 ## Other features on roads
 
@@ -62,9 +64,19 @@ hatched for rumble strips and the rest.
   gives, both when untagged.
 - **Emergency bays** (`highway=emergency_bay` node): an orange layby 100 m long past any hard shoulder; as its own way,
   a one-lane orange road. `emergency=phone`: an orange box with a handset.
-- **Barriers** on roads and paths: gates and the like across, bollards and blocks as posts, cattle grids; fences,
-  walls, guard rails, jersey barriers and hedges at their width. Mapped kerbs (`barrier=kerb`) styled by `kerb=*`.
+- **Barriers** on roads: gates, bars, steps, wedges and the like across; bollards, blocks, planters, delineators,
+  armadillos, tyres and tank traps as posts; cattle grids. On paths, any barrier is a marker. As lines: fences, walls,
+  guard rails, jersey barriers, hedges, berms, delineators, bollards and the rest at their width. Not drawn on roads
+  yet: `avalanche_protection`, `horse_jump`, `steeplechase_jump`, `floating_boom`, `furrow`, `kent_carriage_gap`,
+  `yes`, and values the wiki leaves undescribed (`boom`, `fenced_wall`, `vehicle_arresting`…).
+- **Kerbs** (`barrier=kerb`): styled by `kerb=raised|lowered|flush|rolled|no`, or a height (`kerb=0.12`, `4 cm`):
+  flush up to 1 cm, lowered up to 3 cm.
 - **Fords**: a ford way is water; a ford node a band of water across the road.
+
+Every feature here has a preset in Add Point or Add Line: iD's, or Lane Studio's where iD has none (dynamic bump,
+choked and painted tables, islands and cushions, ramp, calming markings, flexible delineator; flashing, emergency,
+ramp meter, tram priority and continuous green signals; bars, debris, barrier boards, sump busters, delineators,
+armadillos, parking locks and bumpers, and other barriers the wiki documents).
 
 ## Road markings (`road_marking=*`)
 

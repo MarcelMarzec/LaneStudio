@@ -8,6 +8,35 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.12r4
+##### 2026-Nov-12
+
+#### Editing
+* Every feature Lane Studio draws can be found by name in Add Point, Add Line and Add Area, tagged as the wiki
+  documents it. New presets where iD has none: Cycleway, Path, Pedestrian street, Steps and Prohibited road areas;
+  Dynamic speed bump, Choked speed table, Painted speed table, Double dip, Choked island, Choked speed cushion,
+  Painted island, Traffic calming ramp, Traffic calming markings and Flexible delineator; Flashing, Emergency, Tram
+  priority and Continuous green signals and Ramp meter; Parking lane, Parking layby, Pavement parking,
+  Half-on-pavement parking and Shoulder parking; Charging, Parent and child, Expectant mother, Veteran and Bus
+  parking spaces; Solar water heater; Proposed railway and Traverser; and barriers: Bar, Debris, Barrier board, Sump
+  buster, Sliding beam, Barricade, Parking lock, Horse stile, Lych gate, Coupure, Wedge barrier, Step, Delineator
+  kerb, Delineators, Armadillo, Parking bumper, Collision protection, Tyre barrier, Tank trap, Dug-in tyres, Berm and
+  Ha-ha
+* Informal crossings and planters, which iD hides from search, can be found by name
+* Lane Studio's presets are found by their other names too (`keep clear`, `give way triangles`, `wheel stop`…), not
+  only by their own
+
+#### Lanes and junctions
+* Traffic calming the wiki lists is drawn as built: `choked_cushion` (a choker with cushions), `painted_island` (a
+  white outline), `ramp` (a short ramp with its triangles), `markings` (white bars) and `flexible_delineator` (a post
+  in the middle of the road)
+* More barriers are drawn on roads: bump gates, sliding beams, steps, wedges, barricades and the like across the
+  road; delineators, armadillos, parking locks, tyres and tank traps as posts; and as lines delineators, delineator
+  kerbs, berms, ha-has, tyres, planters, bollards and blocks
+* `parking=shoulder` is street parking, joined to its road like a layby
+* Kerbs tagged with a height (`kerb=0.12`, `kerb=4 cm`) are drawn raised, lowered or flush by it; rolled kerb points
+  have their own colour
+
 # 26.11.12r3
 ##### 2026-Nov-12
 

@@ -91,7 +91,7 @@ en:
       text: |
         Lane Studio draws, from the tags: lanes by type, lane lines and turn arrows; junctions with the lanes lined up and guide lines; pavements, cycle lanes, hard shoulders, parking bays and UK yellow lines; crossings with UK zig-zags, beacons and tactile paving; stop and give way lines, signals, traffic calming, mini-roundabouts and turning heads; signs, cameras and road numbers; mapped road areas and surfaces; bridges, tunnels and roads being built; railways with level crossings and signals.
 
-        Where tags are missing the drawing is a guess (fainter lines, hatched pavements). The **Map key** (`G`) explains it, and the wiki's guide has every tag Lane Studio reads.
+        Every feature it draws on or beside the road (markings, calming, barriers, parking…) has a preset in Add Feature, tagged as the OpenStreetMap wiki documents it. Where tags are missing the drawing is a guess (fainter lines, hatched pavements). The **Map key** (`G`) explains it, and the wiki's guide has every tag Lane Studio reads.
   section:
     title: Lanes
     summary:
@@ -306,6 +306,171 @@ en:
     painted_sign:
       name: Painted traffic sign
       terms: painted sign, speed limit roundel, painted roundel, road marking, traffic sign
+    area_cycleway:
+      name: Cycleway area
+      terms: cycleway area, cycle track outline, bike path area, cycle lane area, area highway, micromapping
+    area_path:
+      name: Path area
+      terms: path area, path outline, area highway, micromapping
+    area_pedestrian:
+      name: Pedestrian street area
+      terms: pedestrian street area, pedestrian zone outline, plaza outline, area highway, micromapping
+    area_steps:
+      name: Steps area
+      terms: steps area, stairs outline, staircase, area highway, micromapping
+    area_prohibited:
+      name: Prohibited road area
+      terms: prohibited area, no entry area, road area not to be driven on, area highway, micromapping
+    calming_dynamic_bump:
+      name: Dynamic speed bump
+      terms: dynamic bump, smart speed bump, active speed bump, traffic calming
+    calming_choked_table:
+      name: Choked speed table
+      terms: choked table, pinch point with table, narrowing, speed table, traffic calming
+    calming_painted_table:
+      name: Painted speed table
+      terms: painted table, painted hump, coloured surface, fake table, traffic calming
+    calming_double_dip:
+      name: Double dip
+      terms: double dip, cycle path dip, moped calming, traffic calming
+    calming_choked_island:
+      name: Choked island
+      terms: choked island, pinch point with island, narrowing, pedestrian refuge, traffic calming
+    calming_choked_cushion:
+      name: Choked speed cushion
+      terms: choked cushion, pinch point with cushion, narrowing, speed cushion, traffic calming
+    calming_painted_island:
+      name: Painted island
+      terms: painted island, painted traffic island, ghost island, traffic calming
+    calming_ramp:
+      name: Traffic calming ramp
+      terms: ramp, table ramp, speed ramp, incline, traffic calming
+    calming_markings:
+      name: Traffic calming markings
+      terms: calming markings, slow markings, school markings, painted warning, traffic calming
+    calming_flexible_delineator:
+      name: Flexible delineator
+      terms: flexible delineator, flexible bollard, centre line bollard, speed limit reminder, traffic calming
+    signals_blinker:
+      name: Flashing signal
+      terms: blinker, flashing amber, flashing yellow, beacon, traffic signals
+    signals_emergency:
+      name: Emergency signal
+      terms: emergency signal, fire station signal, ambulance signal, traffic signals
+    signals_ramp_meter:
+      name: Ramp meter
+      terms: ramp meter, ramp metering, motorway entry signal, slip road signal, traffic signals
+    signals_tram_priority:
+      name: Tram priority signal
+      terms: tram priority, tram signal, light rail priority, traffic signals
+    signals_continuous_green:
+      name: Continuous green signal
+      terms: continuous green, green arrow, free flow signal, traffic signals
+    parking_lane:
+      name: Parking lane
+      terms: parking lane, on-street parking, street parking, parking on the road, kerbside parking
+    parking_layby:
+      name: Parking layby
+      terms: layby, lay-by, roadside parking, pull-in, street parking
+    parking_on_kerb:
+      name: Pavement parking
+      terms: on kerb, pavement parking, sidewalk parking, footway parking, street parking
+    parking_half_on_kerb:
+      name: Half-on-pavement parking
+      terms: half on kerb, half on pavement, partial pavement parking, street parking
+    parking_shoulder:
+      name: Shoulder parking
+      terms: shoulder parking, verge parking, roadside parking, hard shoulder, street parking
+    space_charging:
+      name: Charging parking space
+      terms: charging space, electric vehicle bay, ev charging bay, parking space
+    space_parent:
+      name: Parent and child parking space
+      terms: parent space, parent and child, family parking, parking space
+    space_pregnant:
+      name: Expectant mother parking space
+      terms: pregnant, expectant mother, maternity parking, parking space
+    space_veteran:
+      name: Veteran parking space
+      terms: veteran, military veteran, parking space
+    space_bus:
+      name: Bus parking space
+      terms: bus space, coach bay, school bus parking, parking space
+    barrier_bar:
+      name: Bar barrier
+      terms: bar, fixed bar, horizontal bar, barrier
+    barrier_debris:
+      name: Debris
+      terms: debris, rubble, road blocked, barrier
+    barrier_barrier_board:
+      name: Barrier board
+      terms: barrier board, road closed board, barricade board, barrier
+    barrier_sump_buster:
+      name: Sump buster
+      terms: sump buster, car trap, bus gate trap, barrier
+    barrier_sliding_beam:
+      name: Sliding beam
+      terms: sliding beam, sliding bar, barrier
+    barrier_barricade:
+      name: Barricade
+      terms: barricade, road block, temporary barrier, barrier
+    barrier_parking_lock:
+      name: Parking lock
+      terms: parking lock, parking barrier, folding post, barrier
+    barrier_horse_stile:
+      name: Horse stile
+      terms: horse stile, horse gap, barrier
+    barrier_lych_gate:
+      name: Lych gate
+      terms: lych gate, lychgate, churchyard gate, barrier
+    barrier_coupure:
+      name: Coupure
+      terms: coupure, flood gate, flood wall opening, dyke opening, barrier
+    barrier_wedge:
+      name: Wedge barrier
+      terms: wedge, rising barrier, road blocker, barrier
+    barrier_step:
+      name: Step
+      terms: step, single step, kerb step, barrier
+    barrier_delineator_kerb:
+      name: Delineator kerb
+      terms: delineator kerb, lane separator, cycle lane separator, low kerb, barrier
+    barrier_delineators:
+      name: Delineators
+      terms: delineators, flexible posts, wands, bollards, lane separator, barrier
+    barrier_armadillo:
+      name: Armadillo
+      terms: armadillo, zebra separator, cycle lane bump, lane separator, barrier
+    barrier_parking_bumper:
+      name: Parking bumper
+      terms: parking bumper, wheel stop, car stop, barrier
+    barrier_collision_protection:
+      name: Collision protection
+      terms: collision protection, crash barrier, impact protection, barrier
+    barrier_tyres:
+      name: Tyre barrier
+      terms: tyres, tires, tyre wall, crash barrier, barrier
+    barrier_tank_trap:
+      name: Tank trap
+      terms: tank trap, anti-tank obstacle, dragon teeth, czech hedgehog, barrier
+    barrier_dug_in_tyres:
+      name: Dug-in tyres
+      terms: dug-in tyres, buried tyres, tire fence, barrier
+    barrier_berm:
+      name: Berm
+      terms: berm, earth bank, bund, barrier
+    barrier_haha:
+      name: Ha-ha
+      terms: ha-ha, haha, sunken fence, barrier
+    solar_thermal:
+      name: Solar water heater
+      terms: solar thermal, solar water heater, solar hot water, thermal collector, solar panel
+    railway_proposed:
+      name: Proposed railway
+      terms: proposed railway, planned railway, future railway, railway
+    railway_traverser:
+      name: Traverser
+      terms: traverser, transfer table, sliding track, railway
   markings:
     types:
       none: Nothing
@@ -733,6 +898,7 @@ en:
       layby: Layby
       on_kerb: On the pavement
       half_on_kerb: Half on the pavement
+      shoulder: On the shoulder
     orientation: Parking direction
     capacity: Spaces
     joined: "Joined to {road} with a layby."
@@ -1076,7 +1242,7 @@ en:
     sign_direction: "The compass bearing the sign faces (direction=*), towards the traffic that reads it."
     sign_tool: "Pick a sign, a message sign or a camera, then click a lane: it is placed beside the road, facing that lane's traffic."
     sign_value: "The number on the sign, written in its code's brackets or, for a speed limit, as the node's maxspeed."
-    street_parking: "Parking mapped as an area of its own (amenity=parking with parking=street_side, lane, layby, on_kerb or half_on_kerb), joined to the road beside it."
+    street_parking: "Parking mapped as an area of its own (amenity=parking with parking=street_side, lane, layby, on_kerb, half_on_kerb or shoulder), joined to the road beside it."
     surface: "The lane's own surface (surface:lanes), where it differs from the road's."
     tools: "Select edits lanes; Paint applies one value to many lanes; Width drags lane widths; Markings and Signs place features on the road; Connect links a lane to the lanes it leads to across a junction."
     turbo: "A turbo roundabout (roundabout=turbo with change:lanes=no) keeps traffic in its lane round the ring. Tag every ring segment."

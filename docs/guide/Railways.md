@@ -28,6 +28,8 @@ Laid out as in the Office of Rail and Road's layouts and the Highway Code (rules
 | Barriers, gates or lights | Stop line; an open crossing without lights: give way line |
 | `crossing:whistle` | Whistle boards 40 m out each way |
 
+Not drawn: `crossing:bell` and `crossing:on_demand` (nothing to see).
+
 Barriers and lights stand outside all the tracks a road crosses. Footpath crossings (`railway=crossing`) and tram
 crossings (`railway=tram_level_crossing`) get panels and rails.
 
@@ -39,9 +41,11 @@ crossings (`railway=tram_level_crossing`) get panels and rails.
   `railway:signal:direction`: colour-light heads with 2–4 aspects (`railway:signal:main:states`, else 3), distant
   signals yellow, shunt signals as position lights, each over its `ref` plate. Semaphores
   (`railway:signal:main:form=semaphore`) as a red arm, distant ones yellow and fishtailed; other countries'
-  colour-light signals (`DE-ESO:hp` and the like) red over green.
+  colour-light signals (`DE-ESO:hp` and the like) red over green. Not drawn yet: other kinds of signal
+  (`railway:signal:speed_limit`, `route`, `crossing`, `whistle` and the rest of the OpenRailwayMap scheme).
 - Electrified track (`electrified=contact_line`): the contact wire along it and masts beside it every 60 m, or the
   masts mapped (`power=catenary_mast`).
-- Buffer stops, switches (with point motors), derailers and stop boards at the track; turntables and traversers as
-  pits.
+- Buffer stops, switches (with point motors) and derailers at the track; a stop board at a train's stop position
+  (`railway=stop`); turntables and traversers as pits (Lane Studio's Traverser preset). Proposed lines have a preset (Proposed
+  railway: `railway=proposed` + `proposed=rail`).
 - Stations, stops, subway entrances and railway buildings are left to iD.
