@@ -233,9 +233,17 @@ const height = /^(height|min_height|building:|roof:|building_levels|min_level|ma
 const routingKeys = new Set(['access', 'motor_vehicle', 'motorcar', 'vehicle', 'bus', 'psv', 'hgv', 'goods', 'bicycle', 'foot', 'except',
     'restriction', 'maxheight', 'maxweight']);
 // keys Lane Studio builds from parts (`cycleway:${side}:width`, `parking:${side}:…`, `*:lanes`)
-const families = ['cycleway:', 'sidewalk:', 'parking:', 'shoulder:', 'busway:', 'turn:lanes', 'destination:', 'maxspeed:', 'overtaking:',
-    'change:', 'width:', 'placement:', 'crossing:', 'railway:signal', 'traffic_signals:', 'traffic_sign:', 'road_marking', 'area:highway',
-    'maxheight', 'maxweight', 'maxwidth', 'minspeed', 'oneway:bicycle', 'oneway:bus', 'oneway:psv', 'restriction:', 'lanes:'];
+// (keys with fixed names, `crossing:*`, `railway:signal:*`, `maxspeed:*`, are found in the code as they are written)
+const families = ['cycleway:', 'sidewalk:', 'parking:', 'shoulder:', 'busway:', 'turn:lanes', 'destination:', 'overtaking:', 'change:',
+    'width:', 'placement:', 'road_marking', 'area:highway', 'restriction:', 'lanes:'];
+// keys read for each direction (`maxspeed:forward`), built in the code from their parts
+const directional = ['maxspeed:forward', 'maxspeed:backward', 'maxspeed:hgv:forward', 'maxspeed:hgv:backward', 'traffic_sign:forward',
+    'traffic_sign:backward', 'oneway:bicycle', 'oneway:bus', 'oneway:psv'];
+// values the code names near their key for something else (a path's kind, a prefix it reads past): not drawn
+const notDrawn = {
+    highway: ['corridor', 'no', 'ladder', 'proposed', 'platform', 'priority', 'turntable'], construction: ['steps'], cycleway: ['proposed'],
+    footway: ['residential', 'service'], path: ['sidewalk'], 'restriction:bicycle': ['stop'], 'lane_markings': []
+};
 // broad keys of which Lane Studio draws only these values (the rest of each key is iD's)
 const onlyValues = {
     amenity: ['parking', 'parking_space'], natural: ['grassland'], landuse: ['grass'], landcover: ['grass'], power: ['catenary_mast', 'generator'],
@@ -253,15 +261,19 @@ const split = title => {
 const perLane = key => /(^|:)lanes(:|$)/.test(key) && !/^(source|note|fixme)/.test(key);
 
 function sorter(code, groupOf) {
-    const reads = key => code.keys.has(key) || routingKeys.has(key) || families.some(f => key.startsWith(f));
+    const reads = key => code.keys.has(key) || routingKeys.has(key) || directional.includes(key) || families.some(f => key.startsWith(f));
     return title => {
         const [key, value] = split(title);
         const top = key.split(':')[0];
         const only = onlyValues[key];
-        const drawn = value === null || value === '*' ? true : only ? only.includes(value) : code.named(key, value) || perLane(key);
+        const drawn = value === null || value === '*' ? true : only ? only.includes(value) :
+            !notDrawn[key]?.includes(value) && (code.named(key, value) || perLane(key));
         if (reads(key) && drawn) {
             if (routingKeys.has(key)) return [RENDERED, 'Routing tool: which vehicles may use the road or lane'];
             if ((top === 'name' || top === 'ref') && (value === null || value === '*')) return [RENDERED, 'Road shields and the panels; iD draws the names'];
+            if (only && (value === null || value === '*')) {
+                return [RENDERED, only.length ? `Only ${only.map(v => `\`${key}=${v}\``).join(', ')}; iD draws the rest` : 'Read, not drawn'];
+            }
             return [RENDERED, ''];
         }
         if (perLane(key)) {
@@ -279,6 +291,31 @@ function sorter(code, groupOf) {
         if (/:(conditional|forward|backward|both|left|right)$/.test(key)) return [CANNOT, reasons.rule];
         return [CANNOT, things ? reasons.place : reasons.info];
     };
+}
+
+
+/** The guide page covering a key or tag Lane Studio draws (the Routing tool's keys: Tools) */
+function guidePage(key, value) {
+    const top = key.split(':')[0];
+    const is = (k, values) => key === k && (!values || values.includes(value));
+    if (routingKeys.has(key) || top === 'restriction' || key === 'except') return 'Tools';
+    if (top === 'railway' || /:railway$/.test(key) || ['electrified', 'gauge', 'tracks', 'usage'].includes(key) || is('power', ['catenary_mast'])) {
+        return 'Railways';
+    }
+    if (top === 'parking' || top === 'parking_space' || is('amenity') || key === 'capacity' || key === 'capacity:disabled') return 'Street-Parking';
+    if (['junction', 'roundabout', 'turning_circle'].includes(top) || is('highway', ['mini_roundabout', 'turning_circle', 'turning_loop'])) return 'Junctions';
+    if (['traffic_sign', 'enforcement', 'ref', 'name', 'destination', 'camera', 'brand'].includes(top) ||
+        is('highway', ['speed_camera', 'toll_gantry', 'variable_message_sign', 'milestone', 'traffic_mirror', 'street_lamp', 'bus_stop']) ||
+        is('man_made', ['gantry']) || is('emergency') || key === 'shelter') return 'Signs';
+    if (['crossing', 'crossing_ref', 'traffic_signals', 'traffic_calming', 'road_marking', 'arrow', 'stroke', 'pattern', 'dasharray', 'barrier',
+        'ford', 'colour', 'inscription', 'symbol', 'kerb'].includes(top) ||
+        is('highway', ['crossing', 'stop', 'give_way', 'traffic_signals', 'passing_place', 'emergency_bay']) || is('footway', ['crossing']) ||
+        is('cycleway', ['crossing', 'asl']) || is('path', ['crossing'])) return 'Crossings-And-Markings';
+    if (['sidewalk', 'cycleway', 'shoulder', 'busway', 'bus_bay', 'segregated', 'verge'].includes(top)) return 'Roadside';
+    if (['maxspeed', 'minspeed', 'overtaking', 'oneway', 'lane_markings', 'active_traffic_management', 'priority', 'dual_carriageway',
+        'source', 'motorroad', 'toll'].includes(top)) return 'Road-Fields';
+    if (['lanes', 'turn', 'width', 'change', 'placement', 'hov', 'bus', 'psv'].includes(top) || /(^|:)lanes(:|$)/.test(key)) return 'Lanes';
+    return 'Areas-And-Surfaces';
 }
 
 
@@ -306,7 +343,12 @@ function writePages(rows, date, depth) {
             '',
             '| Key or tag | Wiki status | Lane Studio | Why, or how |',
             '| --- | --- | --- | --- |',
-            ...list.map(r => `| [\`${cell(r.value === null ? `${r.key}=*` : `${r.key}=${r.value}`)}\`](${WIKI}${encodeURI(r.title).replace(/\(/g, '%28').replace(/\)/g, '%29')}) | ${r.status === 'none' ? '—' : r.status} | ${r.ls} | ${cell(r.note)} |`)
+            ...list.map(r => {
+                // a rendered row says where the guide covers it
+                const where = r.ls === RENDERED ? `[${guidePage(r.key, r.value).replace(/-/g, ' ')}](../guide/${guidePage(r.key, r.value)}.md)` : '';
+                const note = [cell(r.note), where].filter(Boolean).join('; ');
+                return `| [\`${cell(r.value === null ? `${r.key}=*` : `${r.key}=${r.value}`)}\`](${WIKI}${encodeURI(r.title.replace(/ /g, '_')).replace(/\(/g, '%28').replace(/\)/g, '%29')}) | ${r.status === 'none' ? '—' : r.status} | ${r.ls} | ${note} |`;
+            })
         ];
         fs.writeFileSync(`docs/tags/${pageName(group)}.md`, lines.join('\n') + '\n');
     }
@@ -320,7 +362,7 @@ function writePages(rows, date, depth) {
         '',
         '| Lane Studio | Means |',
         '| --- | --- |',
-        `| ${RENDERED} | Drawn on the map, or used by the Routing tool (said so beside it) |`,
+        `| ${RENDERED} | Drawn on the map, or used by the Routing tool (said so beside it), with the guide page covering it |`,
         `| ${COULD} | On or beside the street, where Lane Studio's layer could draw it, but does not yet |`,
         `| ${CANNOT} | Not a shape Lane Studio's street layer could draw; the reason is given |`,
         '',

@@ -5,4 +5,4 @@ The wiki's keys and tags in its group "buses", and whether Lane Studio draws the
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
-| [`amenity=bus_station`](https://wiki.openstreetmap.org/wiki/Tag:amenity=bus%20station) | approved | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`amenity=bus_station`](https://wiki.openstreetmap.org/wiki/Tag:amenity=bus_station) | approved | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |

@@ -16,27 +16,27 @@ The wiki's keys and tags in its group "landuse", and whether Lane Studio draws t
 | [`cemetery=cillín`](https://wiki.openstreetmap.org/wiki/Tag:cemetery=cill%C3%ADn) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`cemetery=grave`](https://wiki.openstreetmap.org/wiki/Tag:cemetery=grave) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`cemetery=sector`](https://wiki.openstreetmap.org/wiki/Tag:cemetery=sector) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`cemetery=war_cemetery`](https://wiki.openstreetmap.org/wiki/Tag:cemetery=war%20cemetery) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`cemetery=war_cemetery`](https://wiki.openstreetmap.org/wiki/Tag:cemetery=war_cemetery) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`cemetery=wood`](https://wiki.openstreetmap.org/wiki/Tag:cemetery=wood) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`CLC:code=*`](https://wiki.openstreetmap.org/wiki/Key:CLC:code) | imported | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`depot=*`](https://wiki.openstreetmap.org/wiki/Key:depot) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`disused:landuse=landfill`](https://wiki.openstreetmap.org/wiki/Tag:disused:landuse=landfill) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`disused:landuse=quarry`](https://wiki.openstreetmap.org/wiki/Tag:disused:landuse=quarry) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`fallow=*`](https://wiki.openstreetmap.org/wiki/Key:fallow) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`farming_system=*`](https://wiki.openstreetmap.org/wiki/Key:farming%20system) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`fdep:landuse_code=*`](https://wiki.openstreetmap.org/wiki/Key:fdep:landuse%20code) | imported | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`farming_system=*`](https://wiki.openstreetmap.org/wiki/Key:farming_system) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`fdep:landuse_code=*`](https://wiki.openstreetmap.org/wiki/Key:fdep:landuse_code) | imported | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`flats=*`](https://wiki.openstreetmap.org/wiki/Key:flats) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`industrial=shipyard`](https://wiki.openstreetmap.org/wiki/Tag:industrial=shipyard) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=*`](https://wiki.openstreetmap.org/wiki/Key:landuse) | de facto | ✅ Rendered |  |
+| [`landuse=*`](https://wiki.openstreetmap.org/wiki/Key:landuse) | de facto | ✅ Rendered | Only `landuse=grass`; iD draws the rest; [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`landuse=allotments`](https://wiki.openstreetmap.org/wiki/Tag:landuse=allotments) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=animal_keeping`](https://wiki.openstreetmap.org/wiki/Tag:landuse=animal%20keeping) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=animal_keeping`](https://wiki.openstreetmap.org/wiki/Tag:landuse=animal_keeping) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=apiary`](https://wiki.openstreetmap.org/wiki/Tag:landuse=apiary) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=aquaculture`](https://wiki.openstreetmap.org/wiki/Tag:landuse=aquaculture) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=basin`](https://wiki.openstreetmap.org/wiki/Tag:landuse=basin) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=canal`](https://wiki.openstreetmap.org/wiki/Tag:landuse=canal) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=cemetery`](https://wiki.openstreetmap.org/wiki/Tag:landuse=cemetery) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=civic`](https://wiki.openstreetmap.org/wiki/Tag:landuse=civic) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=civic_admin`](https://wiki.openstreetmap.org/wiki/Tag:landuse=civic%20admin) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=civic_admin`](https://wiki.openstreetmap.org/wiki/Tag:landuse=civic_admin) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=commercial`](https://wiki.openstreetmap.org/wiki/Tag:landuse=commercial) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=conservation`](https://wiki.openstreetmap.org/wiki/Tag:landuse=conservation) | undefined | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=culture`](https://wiki.openstreetmap.org/wiki/Tag:landuse=culture) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -49,9 +49,9 @@ The wiki's keys and tags in its group "landuse", and whether Lane Studio draws t
 | [`landuse=forestry`](https://wiki.openstreetmap.org/wiki/Tag:landuse=forestry) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=garages`](https://wiki.openstreetmap.org/wiki/Tag:landuse=garages) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=governmental`](https://wiki.openstreetmap.org/wiki/Tag:landuse=governmental) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=grass`](https://wiki.openstreetmap.org/wiki/Tag:landuse=grass) | de facto | ✅ Rendered |  |
+| [`landuse=grass`](https://wiki.openstreetmap.org/wiki/Tag:landuse=grass) | de facto | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`landuse=greenery`](https://wiki.openstreetmap.org/wiki/Tag:landuse=greenery) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=greenhouse_horticulture`](https://wiki.openstreetmap.org/wiki/Tag:landuse=greenhouse%20horticulture) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=greenhouse_horticulture`](https://wiki.openstreetmap.org/wiki/Tag:landuse=greenhouse_horticulture) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=harbour`](https://wiki.openstreetmap.org/wiki/Tag:landuse=harbour) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=healthcare`](https://wiki.openstreetmap.org/wiki/Tag:landuse=healthcare) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=highway`](https://wiki.openstreetmap.org/wiki/Tag:landuse=highway) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -63,27 +63,27 @@ The wiki's keys and tags in its group "landuse", and whether Lane Studio draws t
 | [`landuse=meadow`](https://wiki.openstreetmap.org/wiki/Tag:landuse=meadow) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=orchard`](https://wiki.openstreetmap.org/wiki/Tag:landuse=orchard) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=paddy`](https://wiki.openstreetmap.org/wiki/Tag:landuse=paddy) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=peat_cutting`](https://wiki.openstreetmap.org/wiki/Tag:landuse=peat%20cutting) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=plant_nursery`](https://wiki.openstreetmap.org/wiki/Tag:landuse=plant%20nursery) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=peat_cutting`](https://wiki.openstreetmap.org/wiki/Tag:landuse=peat_cutting) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=plant_nursery`](https://wiki.openstreetmap.org/wiki/Tag:landuse=plant_nursery) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=quarry`](https://wiki.openstreetmap.org/wiki/Tag:landuse=quarry) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=railway`](https://wiki.openstreetmap.org/wiki/Tag:landuse=railway) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=recreation_ground`](https://wiki.openstreetmap.org/wiki/Tag:landuse=recreation%20ground) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=recreation_ground`](https://wiki.openstreetmap.org/wiki/Tag:landuse=recreation_ground) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=religious`](https://wiki.openstreetmap.org/wiki/Tag:landuse=religious) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=reservoir_watershed`](https://wiki.openstreetmap.org/wiki/Tag:landuse=reservoir%20watershed) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=reservoir_watershed`](https://wiki.openstreetmap.org/wiki/Tag:landuse=reservoir_watershed) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=residential`](https://wiki.openstreetmap.org/wiki/Tag:landuse=residential) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=retail`](https://wiki.openstreetmap.org/wiki/Tag:landuse=retail) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=salt_pond`](https://wiki.openstreetmap.org/wiki/Tag:landuse=salt%20pond) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=static_caravan`](https://wiki.openstreetmap.org/wiki/Tag:landuse=static%20caravan) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=traffic_island`](https://wiki.openstreetmap.org/wiki/Tag:landuse=traffic%20island) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=tree_pit`](https://wiki.openstreetmap.org/wiki/Tag:landuse=tree%20pit) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=village_green`](https://wiki.openstreetmap.org/wiki/Tag:landuse=village%20green) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=salt_pond`](https://wiki.openstreetmap.org/wiki/Tag:landuse=salt_pond) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=static_caravan`](https://wiki.openstreetmap.org/wiki/Tag:landuse=static_caravan) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=traffic_island`](https://wiki.openstreetmap.org/wiki/Tag:landuse=traffic_island) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=tree_pit`](https://wiki.openstreetmap.org/wiki/Tag:landuse=tree_pit) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=village_green`](https://wiki.openstreetmap.org/wiki/Tag:landuse=village_green) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`landuse=vineyard`](https://wiki.openstreetmap.org/wiki/Tag:landuse=vineyard) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`landuse=winter_sports`](https://wiki.openstreetmap.org/wiki/Tag:landuse=winter%20sports) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`landuse=winter_sports`](https://wiki.openstreetmap.org/wiki/Tag:landuse=winter_sports) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`meadow=*`](https://wiki.openstreetmap.org/wiki/Key:meadow) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`meadow=meadow_orchard`](https://wiki.openstreetmap.org/wiki/Tag:meadow=meadow%20orchard) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`meadow=meadow_orchard`](https://wiki.openstreetmap.org/wiki/Tag:meadow=meadow_orchard) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`meadow=pasture`](https://wiki.openstreetmap.org/wiki/Tag:meadow=pasture) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`orchard=*`](https://wiki.openstreetmap.org/wiki/Key:orchard) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`orchard=meadow_orchard`](https://wiki.openstreetmap.org/wiki/Tag:orchard=meadow%20orchard) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`orchard=meadow_orchard`](https://wiki.openstreetmap.org/wiki/Tag:orchard=meadow_orchard) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`orchard=plantation`](https://wiki.openstreetmap.org/wiki/Tag:orchard=plantation) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`plant=*`](https://wiki.openstreetmap.org/wiki/Key:plant) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`port=*`](https://wiki.openstreetmap.org/wiki/Key:port) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -103,12 +103,12 @@ The wiki's keys and tags in its group "landuse", and whether Lane Studio draws t
 | [`residential=block`](https://wiki.openstreetmap.org/wiki/Tag:residential=block) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`residential=detached`](https://wiki.openstreetmap.org/wiki/Tag:residential=detached) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`residential=duplex`](https://wiki.openstreetmap.org/wiki/Tag:residential=duplex) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`residential=halting_site`](https://wiki.openstreetmap.org/wiki/Tag:residential=halting%20site) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`residential=irregular_settlement`](https://wiki.openstreetmap.org/wiki/Tag:residential=irregular%20settlement) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`residential=halting_site`](https://wiki.openstreetmap.org/wiki/Tag:residential=halting_site) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`residential=irregular_settlement`](https://wiki.openstreetmap.org/wiki/Tag:residential=irregular_settlement) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`residential=rural`](https://wiki.openstreetmap.org/wiki/Tag:residential=rural) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`residential=single_family`](https://wiki.openstreetmap.org/wiki/Tag:residential=single%20family) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`residential=single_family`](https://wiki.openstreetmap.org/wiki/Tag:residential=single_family) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`residential=terrace`](https://wiki.openstreetmap.org/wiki/Tag:residential=terrace) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`residential=trailer_park`](https://wiki.openstreetmap.org/wiki/Tag:residential=trailer%20park) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`residential=trailer_park`](https://wiki.openstreetmap.org/wiki/Tag:residential=trailer_park) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`residential=university`](https://wiki.openstreetmap.org/wiki/Tag:residential=university) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`residential=urban`](https://wiki.openstreetmap.org/wiki/Tag:residential=urban) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`resource=*`](https://wiki.openstreetmap.org/wiki/Key:resource) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -120,7 +120,7 @@ The wiki's keys and tags in its group "landuse", and whether Lane Studio draws t
 | [`sector=historic`](https://wiki.openstreetmap.org/wiki/Tag:sector=historic) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`sector:name=*`](https://wiki.openstreetmap.org/wiki/Key:sector:name) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`source=RABA-KGZ`](https://wiki.openstreetmap.org/wiki/Tag:source=RABA-KGZ) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`trees=cashew_trees`](https://wiki.openstreetmap.org/wiki/Tag:trees=cashew%20trees) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`trees=durian_trees`](https://wiki.openstreetmap.org/wiki/Tag:trees=durian%20trees) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`trees=mango_trees`](https://wiki.openstreetmap.org/wiki/Tag:trees=mango%20trees) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`trees=rubber_trees`](https://wiki.openstreetmap.org/wiki/Tag:trees=rubber%20trees) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`trees=cashew_trees`](https://wiki.openstreetmap.org/wiki/Tag:trees=cashew_trees) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`trees=durian_trees`](https://wiki.openstreetmap.org/wiki/Tag:trees=durian_trees) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`trees=mango_trees`](https://wiki.openstreetmap.org/wiki/Tag:trees=mango_trees) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`trees=rubber_trees`](https://wiki.openstreetmap.org/wiki/Tag:trees=rubber_trees) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |

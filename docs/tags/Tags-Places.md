@@ -6,15 +6,15 @@ The wiki's keys and tags in its group "places", and whether Lane Studio draws th
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
 | [`abandoned:place=*`](https://wiki.openstreetmap.org/wiki/Key:abandoned:place) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
-| [`boundary=national_park`](https://wiki.openstreetmap.org/wiki/Tag:boundary=national%20park) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`boundary=regional_park`](https://wiki.openstreetmap.org/wiki/Tag:boundary=regional%20park) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`boundary=waste_collection`](https://wiki.openstreetmap.org/wiki/Tag:boundary=waste%20collection) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`boundary=national_park`](https://wiki.openstreetmap.org/wiki/Tag:boundary=national_park) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`boundary=regional_park`](https://wiki.openstreetmap.org/wiki/Tag:boundary=regional_park) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`boundary=waste_collection`](https://wiki.openstreetmap.org/wiki/Tag:boundary=waste_collection) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`capital=*`](https://wiki.openstreetmap.org/wiki/Key:capital) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`capital=4`](https://wiki.openstreetmap.org/wiki/Tag:capital=4) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`capital=5`](https://wiki.openstreetmap.org/wiki/Tag:capital=5) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`capital=6`](https://wiki.openstreetmap.org/wiki/Tag:capital=6) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`capital=yes`](https://wiki.openstreetmap.org/wiki/Tag:capital=yes) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`capital_city=*`](https://wiki.openstreetmap.org/wiki/Key:capital%20city) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`capital_city=*`](https://wiki.openstreetmap.org/wiki/Key:capital_city) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`disused:place=*`](https://wiki.openstreetmap.org/wiki/Key:disused:place) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`locality=*`](https://wiki.openstreetmap.org/wiki/Key:locality) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`locality=subtownland`](https://wiki.openstreetmap.org/wiki/Tag:locality=subtownland) | imported | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -23,10 +23,10 @@ The wiki's keys and tags in its group "places", and whether Lane Studio draws th
 | [`place=allotments`](https://wiki.openstreetmap.org/wiki/Tag:place=allotments) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place=archipelago`](https://wiki.openstreetmap.org/wiki/Tag:place=archipelago) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place=borough`](https://wiki.openstreetmap.org/wiki/Tag:place=borough) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`place=building_complex`](https://wiki.openstreetmap.org/wiki/Tag:place=building%20complex) | undefined | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`place=cadastral_community`](https://wiki.openstreetmap.org/wiki/Tag:place=cadastral%20community) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`place=building_complex`](https://wiki.openstreetmap.org/wiki/Tag:place=building_complex) | undefined | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`place=cadastral_community`](https://wiki.openstreetmap.org/wiki/Tag:place=cadastral_community) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place=city`](https://wiki.openstreetmap.org/wiki/Tag:place=city) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`place=city_block`](https://wiki.openstreetmap.org/wiki/Tag:place=city%20block) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`place=city_block`](https://wiki.openstreetmap.org/wiki/Tag:place=city_block) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place=continent`](https://wiki.openstreetmap.org/wiki/Tag:place=continent) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place=country`](https://wiki.openstreetmap.org/wiki/Tag:place=country) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place=county`](https://wiki.openstreetmap.org/wiki/Tag:place=county) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -35,7 +35,7 @@ The wiki's keys and tags in its group "places", and whether Lane Studio draws th
 | [`place=hamlet`](https://wiki.openstreetmap.org/wiki/Tag:place=hamlet) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place=island`](https://wiki.openstreetmap.org/wiki/Tag:place=island) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place=islet`](https://wiki.openstreetmap.org/wiki/Tag:place=islet) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`place=isolated_dwelling`](https://wiki.openstreetmap.org/wiki/Tag:place=isolated%20dwelling) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`place=isolated_dwelling`](https://wiki.openstreetmap.org/wiki/Tag:place=isolated_dwelling) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place=locality`](https://wiki.openstreetmap.org/wiki/Tag:place=locality) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place=municipality`](https://wiki.openstreetmap.org/wiki/Tag:place=municipality) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place=neighbourhood`](https://wiki.openstreetmap.org/wiki/Tag:place=neighbourhood) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -55,8 +55,8 @@ The wiki's keys and tags in its group "places", and whether Lane Studio draws th
 | [`place=village`](https://wiki.openstreetmap.org/wiki/Tag:place=village) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`place:CN=*`](https://wiki.openstreetmap.org/wiki/Key:place:CN) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`population=*`](https://wiki.openstreetmap.org/wiki/Key:population) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`postal_code=*`](https://wiki.openstreetmap.org/wiki/Key:postal%20code) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`postal_code=*`](https://wiki.openstreetmap.org/wiki/Key:postal_code) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`ref:barnehage=*`](https://wiki.openstreetmap.org/wiki/Key:ref:barnehage) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`ref:ssb_tettsted=*`](https://wiki.openstreetmap.org/wiki/Key:ref:ssb%20tettsted) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`ref:ssb_tettsted=*`](https://wiki.openstreetmap.org/wiki/Key:ref:ssb_tettsted) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`region:type=*`](https://wiki.openstreetmap.org/wiki/Key:region:type) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`turkey_class=*`](https://wiki.openstreetmap.org/wiki/Key:turkey%20class) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`turkey_class=*`](https://wiki.openstreetmap.org/wiki/Key:turkey_class) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |

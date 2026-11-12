@@ -11,7 +11,7 @@ The wiki's keys and tags in its group "agriculture", and whether Lane Studio dra
 | [`crop=cassava`](https://wiki.openstreetmap.org/wiki/Tag:crop=cassava) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`crop=cereal`](https://wiki.openstreetmap.org/wiki/Tag:crop=cereal) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`crop=coffee`](https://wiki.openstreetmap.org/wiki/Tag:crop=coffee) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`crop=fast_growing_wood`](https://wiki.openstreetmap.org/wiki/Tag:crop=fast%20growing%20wood) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`crop=fast_growing_wood`](https://wiki.openstreetmap.org/wiki/Tag:crop=fast_growing_wood) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`crop=flowers`](https://wiki.openstreetmap.org/wiki/Tag:crop=flowers) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`crop=grape`](https://wiki.openstreetmap.org/wiki/Tag:crop=grape) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`crop=grass`](https://wiki.openstreetmap.org/wiki/Tag:crop=grass) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -32,9 +32,9 @@ The wiki's keys and tags in its group "agriculture", and whether Lane Studio dra
 | [`farmland=arable`](https://wiki.openstreetmap.org/wiki/Tag:farmland=arable) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`farmyard=*`](https://wiki.openstreetmap.org/wiki/Key:farmyard) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`farmyard=stockyard`](https://wiki.openstreetmap.org/wiki/Tag:farmyard=stockyard) | imported | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`grape_variety=*`](https://wiki.openstreetmap.org/wiki/Key:grape%20variety) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`grape_variety=*`](https://wiki.openstreetmap.org/wiki/Key:grape_variety) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`irrigated=*`](https://wiki.openstreetmap.org/wiki/Key:irrigated) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`meadow=paddock`](https://wiki.openstreetmap.org/wiki/Tag:meadow=paddock) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`produce=*`](https://wiki.openstreetmap.org/wiki/Key:produce) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`produce=coffee`](https://wiki.openstreetmap.org/wiki/Tag:produce=coffee) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`vine_row_orientation=*`](https://wiki.openstreetmap.org/wiki/Key:vine%20row%20orientation) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`vine_row_orientation=*`](https://wiki.openstreetmap.org/wiki/Key:vine_row_orientation) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |

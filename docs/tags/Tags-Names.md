@@ -7,30 +7,30 @@ The wiki's keys and tags in its group "names", and whether Lane Studio draws the
 | --- | --- | --- | --- |
 | [`*:etymology=*`](https://wiki.openstreetmap.org/wiki/Key:*:etymology) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`*:genitive=*`](https://wiki.openstreetmap.org/wiki/Key:*:genitive) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`abbr_name=*`](https://wiki.openstreetmap.org/wiki/Key:abbr%20name) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`alt_name=*`](https://wiki.openstreetmap.org/wiki/Key:alt%20name) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`alt_name:fr=*`](https://wiki.openstreetmap.org/wiki/Key:alt%20name:fr) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`alt_name:pl=*`](https://wiki.openstreetmap.org/wiki/Key:alt%20name:pl) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`alt_name:signed=yes`](https://wiki.openstreetmap.org/wiki/Tag:alt%20name:signed=yes) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`artist_name=*`](https://wiki.openstreetmap.org/wiki/Key:artist%20name) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`artist_name=Invader`](https://wiki.openstreetmap.org/wiki/Tag:artist%20name=Invader) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`abbr_name=*`](https://wiki.openstreetmap.org/wiki/Key:abbr_name) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`alt_name=*`](https://wiki.openstreetmap.org/wiki/Key:alt_name) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`alt_name:fr=*`](https://wiki.openstreetmap.org/wiki/Key:alt_name:fr) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`alt_name:pl=*`](https://wiki.openstreetmap.org/wiki/Key:alt_name:pl) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`alt_name:signed=yes`](https://wiki.openstreetmap.org/wiki/Tag:alt_name:signed=yes) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`artist_name=*`](https://wiki.openstreetmap.org/wiki/Key:artist_name) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`artist_name=Invader`](https://wiki.openstreetmap.org/wiki/Tag:artist_name=Invader) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`cave:name=*`](https://wiki.openstreetmap.org/wiki/Key:cave:name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`curve:name=*`](https://wiki.openstreetmap.org/wiki/Key:curve:name) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`default_language=*`](https://wiki.openstreetmap.org/wiki/Key:default%20language) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`full_name=*`](https://wiki.openstreetmap.org/wiki/Key:full%20name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`fut_name=*`](https://wiki.openstreetmap.org/wiki/Key:fut%20name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`future_name=*`](https://wiki.openstreetmap.org/wiki/Key:future%20name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`loc_name:signed=yes`](https://wiki.openstreetmap.org/wiki/Tag:loc%20name:signed=yes) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`long_name=*`](https://wiki.openstreetmap.org/wiki/Key:long%20name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`name=*`](https://wiki.openstreetmap.org/wiki/Key:name) | de facto | ✅ Rendered | Road shields and the panels; iD draws the names |
-| [`name=*`](https://wiki.openstreetmap.org/wiki/Tag:name=*) | — | ✅ Rendered | Road shields and the panels; iD draws the names |
+| [`default_language=*`](https://wiki.openstreetmap.org/wiki/Key:default_language) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`full_name=*`](https://wiki.openstreetmap.org/wiki/Key:full_name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`fut_name=*`](https://wiki.openstreetmap.org/wiki/Key:fut_name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`future_name=*`](https://wiki.openstreetmap.org/wiki/Key:future_name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`loc_name:signed=yes`](https://wiki.openstreetmap.org/wiki/Tag:loc_name:signed=yes) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`long_name=*`](https://wiki.openstreetmap.org/wiki/Key:long_name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name=*`](https://wiki.openstreetmap.org/wiki/Key:name) | de facto | ✅ Rendered | Road shields and the panels; iD draws the names; [Signs](../guide/Signs.md) |
+| [`name=*`](https://wiki.openstreetmap.org/wiki/Tag:name=*) | — | ✅ Rendered | Road shields and the panels; iD draws the names; [Signs](../guide/Signs.md) |
 | [`name=7-Eleven`](https://wiki.openstreetmap.org/wiki/Tag:name=7-Eleven) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`name=BMO_Bank_of_Montreal`](https://wiki.openstreetmap.org/wiki/Tag:name=BMO%20Bank%20of%20Montreal) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`name=Burger_King`](https://wiki.openstreetmap.org/wiki/Tag:name=Burger%20King) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`name=CIBC_Banking_Centre`](https://wiki.openstreetmap.org/wiki/Tag:name=CIBC%20Banking%20Centre) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name=BMO_Bank_of_Montreal`](https://wiki.openstreetmap.org/wiki/Tag:name=BMO_Bank_of_Montreal) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name=Burger_King`](https://wiki.openstreetmap.org/wiki/Tag:name=Burger_King) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name=CIBC_Banking_Centre`](https://wiki.openstreetmap.org/wiki/Tag:name=CIBC_Banking_Centre) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name=Costco`](https://wiki.openstreetmap.org/wiki/Tag:name=Costco) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name=Dollarama`](https://wiki.openstreetmap.org/wiki/Tag:name=Dollarama) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`name=Domino's_Pizza`](https://wiki.openstreetmap.org/wiki/Tag:name=Domino's%20Pizza) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name=Domino's_Pizza`](https://wiki.openstreetmap.org/wiki/Tag:name=Domino's_Pizza) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name=Fossil`](https://wiki.openstreetmap.org/wiki/Tag:name=Fossil) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name=Herfy`](https://wiki.openstreetmap.org/wiki/Tag:name=Herfy) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name=Jollibee`](https://wiki.openstreetmap.org/wiki/Tag:name=Jollibee) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -38,8 +38,8 @@ The wiki's keys and tags in its group "names", and whether Lane Studio draws the
 | [`name=McDonald's`](https://wiki.openstreetmap.org/wiki/Tag:name=McDonald's) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name=NHS`](https://wiki.openstreetmap.org/wiki/Tag:name=NHS) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name=Subway`](https://wiki.openstreetmap.org/wiki/Tag:name=Subway) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`name=Thai_Nexus_Point`](https://wiki.openstreetmap.org/wiki/Tag:name=Thai%20Nexus%20Point) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`name=Tim_Hortons`](https://wiki.openstreetmap.org/wiki/Tag:name=Tim%20Hortons) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name=Thai_Nexus_Point`](https://wiki.openstreetmap.org/wiki/Tag:name=Thai_Nexus_Point) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name=Tim_Hortons`](https://wiki.openstreetmap.org/wiki/Tag:name=Tim_Hortons) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name=Walmart`](https://wiki.openstreetmap.org/wiki/Tag:name=Walmart) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name=Wendy's`](https://wiki.openstreetmap.org/wiki/Tag:name=Wendy's) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:*-fonipa=*`](https://wiki.openstreetmap.org/wiki/Key:name:*-fonipa) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -339,7 +339,7 @@ The wiki's keys and tags in its group "names", and whether Lane Studio draws the
 | [`name:oka=*`](https://wiki.openstreetmap.org/wiki/Key:name:oka) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:old=*`](https://wiki.openstreetmap.org/wiki/Key:name:old) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:om=*`](https://wiki.openstreetmap.org/wiki/Key:name:om) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`name:operator:De_Lijn=*`](https://wiki.openstreetmap.org/wiki/Key:name:operator:De%20Lijn) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name:operator:De_Lijn=*`](https://wiki.openstreetmap.org/wiki/Key:name:operator:De_Lijn) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:operator:TEC=*`](https://wiki.openstreetmap.org/wiki/Key:name:operator:TEC) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:or=*`](https://wiki.openstreetmap.org/wiki/Key:name:or) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:os=*`](https://wiki.openstreetmap.org/wiki/Key:name:os) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -376,7 +376,7 @@ The wiki's keys and tags in its group "names", and whether Lane Studio draws the
 | [`name:ro=*`](https://wiki.openstreetmap.org/wiki/Key:name:ro) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:rrm=*`](https://wiki.openstreetmap.org/wiki/Key:name:rrm) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:ru=*`](https://wiki.openstreetmap.org/wiki/Key:name:ru) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`name:ru:word_stress=*`](https://wiki.openstreetmap.org/wiki/Key:name:ru:word%20stress) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name:ru:word_stress=*`](https://wiki.openstreetmap.org/wiki/Key:name:ru:word_stress) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:rue=*`](https://wiki.openstreetmap.org/wiki/Key:name:rue) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:rup=*`](https://wiki.openstreetmap.org/wiki/Key:name:rup) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:rw=*`](https://wiki.openstreetmap.org/wiki/Key:name:rw) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -451,7 +451,7 @@ The wiki's keys and tags in its group "names", and whether Lane Studio draws the
 | [`name:ug=*`](https://wiki.openstreetmap.org/wiki/Key:name:ug) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:uk=*`](https://wiki.openstreetmap.org/wiki/Key:name:uk) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:uk-Latn=*`](https://wiki.openstreetmap.org/wiki/Key:name:uk-Latn) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`name:uk:word_stress=*`](https://wiki.openstreetmap.org/wiki/Key:name:uk:word%20stress) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name:uk:word_stress=*`](https://wiki.openstreetmap.org/wiki/Key:name:uk:word_stress) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:umu=*`](https://wiki.openstreetmap.org/wiki/Key:name:umu) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:unm=*`](https://wiki.openstreetmap.org/wiki/Key:name:unm) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:ur=*`](https://wiki.openstreetmap.org/wiki/Key:name:ur) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -498,24 +498,24 @@ The wiki's keys and tags in its group "names", and whether Lane Studio draws the
 | [`noname=no`](https://wiki.openstreetmap.org/wiki/Tag:noname=no) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`noname=yes`](https://wiki.openstreetmap.org/wiki/Tag:noname=yes) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`not:name=*`](https://wiki.openstreetmap.org/wiki/Key:not:name) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
-| [`official_name=*`](https://wiki.openstreetmap.org/wiki/Key:official%20name) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`official_name:en=*`](https://wiki.openstreetmap.org/wiki/Key:official%20name:en) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`official_name:en-US=*`](https://wiki.openstreetmap.org/wiki/Key:official%20name:en-US) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`official_name:fr=*`](https://wiki.openstreetmap.org/wiki/Key:official%20name:fr) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`official_name:pl=*`](https://wiki.openstreetmap.org/wiki/Key:official%20name:pl) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`official_name:ru=*`](https://wiki.openstreetmap.org/wiki/Key:official%20name:ru) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`official_name:signed=no`](https://wiki.openstreetmap.org/wiki/Tag:official%20name:signed=no) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`official_name:uk=*`](https://wiki.openstreetmap.org/wiki/Key:official%20name:uk) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`old_name=*`](https://wiki.openstreetmap.org/wiki/Key:old%20name) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`old_name:etymology:wikidata=*`](https://wiki.openstreetmap.org/wiki/Key:old%20name:etymology:wikidata) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`official_name=*`](https://wiki.openstreetmap.org/wiki/Key:official_name) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`official_name:en=*`](https://wiki.openstreetmap.org/wiki/Key:official_name:en) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`official_name:en-US=*`](https://wiki.openstreetmap.org/wiki/Key:official_name:en-US) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`official_name:fr=*`](https://wiki.openstreetmap.org/wiki/Key:official_name:fr) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`official_name:pl=*`](https://wiki.openstreetmap.org/wiki/Key:official_name:pl) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`official_name:ru=*`](https://wiki.openstreetmap.org/wiki/Key:official_name:ru) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`official_name:signed=no`](https://wiki.openstreetmap.org/wiki/Tag:official_name:signed=no) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`official_name:uk=*`](https://wiki.openstreetmap.org/wiki/Key:official_name:uk) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`old_name=*`](https://wiki.openstreetmap.org/wiki/Key:old_name) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`old_name:etymology:wikidata=*`](https://wiki.openstreetmap.org/wiki/Key:old_name:etymology:wikidata) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`planned:name=*`](https://wiki.openstreetmap.org/wiki/Key:planned:name) | — | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`proposed:name=*`](https://wiki.openstreetmap.org/wiki/Key:proposed:name) | de facto | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
-| [`ref_name=*`](https://wiki.openstreetmap.org/wiki/Key:ref%20name) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`reg_name=*`](https://wiki.openstreetmap.org/wiki/Key:reg%20name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`short_name=*`](https://wiki.openstreetmap.org/wiki/Key:short%20name) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`short_name:pl=*`](https://wiki.openstreetmap.org/wiki/Key:short%20name:pl) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`sorting_name=*`](https://wiki.openstreetmap.org/wiki/Key:sorting%20name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`ref_name=*`](https://wiki.openstreetmap.org/wiki/Key:ref_name) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`reg_name=*`](https://wiki.openstreetmap.org/wiki/Key:reg_name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`short_name=*`](https://wiki.openstreetmap.org/wiki/Key:short_name) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`short_name:pl=*`](https://wiki.openstreetmap.org/wiki/Key:short_name:pl) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`sorting_name=*`](https://wiki.openstreetmap.org/wiki/Key:sorting_name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`strapline=*`](https://wiki.openstreetmap.org/wiki/Key:strapline) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`thatcher_name=*`](https://wiki.openstreetmap.org/wiki/Key:thatcher%20name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`thatcher_name=*`](https://wiki.openstreetmap.org/wiki/Key:thatcher_name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`unsigned=*`](https://wiki.openstreetmap.org/wiki/Key:unsigned) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`waterbody:name=*`](https://wiki.openstreetmap.org/wiki/Key:waterbody:name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

@@ -8,6 +8,15 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.12r6
+##### 2026-Nov-12
+
+#### Website
+* Tag coverage: about 70 keys and values were wrongly marked rendered and are now marked could be rendered (the
+  `crossing:*`, `railway:signal:*`, `maxspeed:*`, `maxweight*` and `traffic_signals:*` keys Lane Studio does not read,
+  and values such as `highway=proposed`); broad keys say which of their values are drawn (`amenity=parking`), and
+  every rendered row links to the guide page covering it
+
 # 26.11.12r5
 ##### 2026-Nov-12
 

@@ -9,11 +9,11 @@ The wiki's keys and tags in its group "addresses", and whether Lane Studio draws
 | [`addr=main`](https://wiki.openstreetmap.org/wiki/Tag:addr=main) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr=separate`](https://wiki.openstreetmap.org/wiki/Tag:addr=separate) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:*=*`](https://wiki.openstreetmap.org/wiki/Key:addr:*) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`addr:block_number=*`](https://wiki.openstreetmap.org/wiki/Key:addr:block%20number) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`addr:block_number=*`](https://wiki.openstreetmap.org/wiki/Key:addr:block_number) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:city=*`](https://wiki.openstreetmap.org/wiki/Key:addr:city) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:city=Batifa`](https://wiki.openstreetmap.org/wiki/Tag:addr:city=Batifa) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`addr:city=Carouge_GE`](https://wiki.openstreetmap.org/wiki/Tag:addr:city=Carouge%20GE) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`addr:city=Corsier_GE`](https://wiki.openstreetmap.org/wiki/Tag:addr:city=Corsier%20GE) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`addr:city=Carouge_GE`](https://wiki.openstreetmap.org/wiki/Tag:addr:city=Carouge_GE) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`addr:city=Corsier_GE`](https://wiki.openstreetmap.org/wiki/Tag:addr:city=Corsier_GE) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:city=Genève`](https://wiki.openstreetmap.org/wiki/Tag:addr:city=Gen%C3%A8ve) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:city=Grand-Lancy`](https://wiki.openstreetmap.org/wiki/Tag:addr:city=Grand-Lancy) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:city=London`](https://wiki.openstreetmap.org/wiki/Tag:addr:city=London) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -143,8 +143,8 @@ The wiki's keys and tags in its group "addresses", and whether Lane Studio draws
 | [`addr:ghanapostgps=*`](https://wiki.openstreetmap.org/wiki/Key:addr:ghanapostgps) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:hamlet=*`](https://wiki.openstreetmap.org/wiki/Key:addr:hamlet) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:housename=*`](https://wiki.openstreetmap.org/wiki/Key:addr:housename) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`addr:housename=Alte_Post`](https://wiki.openstreetmap.org/wiki/Tag:addr:housename=Alte%20Post) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`addr:housename=Altes_Schulhaus`](https://wiki.openstreetmap.org/wiki/Tag:addr:housename=Altes%20Schulhaus) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`addr:housename=Alte_Post`](https://wiki.openstreetmap.org/wiki/Tag:addr:housename=Alte_Post) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`addr:housename=Altes_Schulhaus`](https://wiki.openstreetmap.org/wiki/Tag:addr:housename=Altes_Schulhaus) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:housename=Bellevue`](https://wiki.openstreetmap.org/wiki/Tag:addr:housename=Bellevue) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:housename=Gemeindehaus`](https://wiki.openstreetmap.org/wiki/Tag:addr:housename=Gemeindehaus) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:housename=Mairie`](https://wiki.openstreetmap.org/wiki/Tag:addr:housename=Mairie) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -195,7 +195,7 @@ The wiki's keys and tags in its group "addresses", and whether Lane Studio draws
 | [`addr:state=VIC`](https://wiki.openstreetmap.org/wiki/Tag:addr:state=VIC) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:state=WA`](https://wiki.openstreetmap.org/wiki/Tag:addr:state=WA) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:street=*`](https://wiki.openstreetmap.org/wiki/Key:addr:street) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`addr:street_official=*`](https://wiki.openstreetmap.org/wiki/Key:addr:street%20official) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`addr:street_official=*`](https://wiki.openstreetmap.org/wiki/Key:addr:street_official) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:street:corner=*`](https://wiki.openstreetmap.org/wiki/Key:addr:street:corner) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:street:type=*`](https://wiki.openstreetmap.org/wiki/Key:addr:street:type) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:streetnumber=*`](https://wiki.openstreetmap.org/wiki/Key:addr:streetnumber) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -212,23 +212,23 @@ The wiki's keys and tags in its group "addresses", and whether Lane Studio draws
 | [`addr:ward=*`](https://wiki.openstreetmap.org/wiki/Key:addr:ward) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr2:*=*`](https://wiki.openstreetmap.org/wiki/Key:addr2:*) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`autoaws=*`](https://wiki.openstreetmap.org/wiki/Key:autoaws) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`delivery_point=*`](https://wiki.openstreetmap.org/wiki/Key:delivery%20point) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`delivery_point:access=*`](https://wiki.openstreetmap.org/wiki/Key:delivery%20point:access) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`delivery_point:type=*`](https://wiki.openstreetmap.org/wiki/Key:delivery%20point:type) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`delivery_point=*`](https://wiki.openstreetmap.org/wiki/Key:delivery_point) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`delivery_point:access=*`](https://wiki.openstreetmap.org/wiki/Key:delivery_point:access) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`delivery_point:type=*`](https://wiki.openstreetmap.org/wiki/Key:delivery_point:type) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`level=-1`](https://wiki.openstreetmap.org/wiki/Tag:level=-1) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`level=0`](https://wiki.openstreetmap.org/wiki/Tag:level=0) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`level=1`](https://wiki.openstreetmap.org/wiki/Tag:level=1) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`noaddress=*`](https://wiki.openstreetmap.org/wiki/Key:noaddress) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`nohousenumber=*`](https://wiki.openstreetmap.org/wiki/Key:nohousenumber) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`object:*=*`](https://wiki.openstreetmap.org/wiki/Key:object:*) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`old_addr:housename=*`](https://wiki.openstreetmap.org/wiki/Key:old%20addr:housename) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`old_addr:housenumber=*`](https://wiki.openstreetmap.org/wiki/Key:old%20addr:housenumber) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`old_addr:place=*`](https://wiki.openstreetmap.org/wiki/Key:old%20addr:place) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`old_addr:street=*`](https://wiki.openstreetmap.org/wiki/Key:old%20addr:street) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`operator:type=haute_école_spécialisée`](https://wiki.openstreetmap.org/wiki/Tag:operator:type=haute%20%C3%A9cole%20sp%C3%A9cialis%C3%A9e) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`old_addr:housename=*`](https://wiki.openstreetmap.org/wiki/Key:old_addr:housename) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`old_addr:housenumber=*`](https://wiki.openstreetmap.org/wiki/Key:old_addr:housenumber) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`old_addr:place=*`](https://wiki.openstreetmap.org/wiki/Key:old_addr:place) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`old_addr:street=*`](https://wiki.openstreetmap.org/wiki/Key:old_addr:street) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`operator:type=haute_école_spécialisée`](https://wiki.openstreetmap.org/wiki/Tag:operator:type=haute_%C3%A9cole_sp%C3%A9cialis%C3%A9e) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`osak:identifier=*`](https://wiki.openstreetmap.org/wiki/Key:osak:identifier) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`pseudo=yes`](https://wiki.openstreetmap.org/wiki/Tag:pseudo=yes) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`ref:gurs:hs_mid=*`](https://wiki.openstreetmap.org/wiki/Key:ref:gurs:hs%20mid) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`ref:gurs:hs_mid=*`](https://wiki.openstreetmap.org/wiki/Key:ref:gurs:hs_mid) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:minvskaddress=*`](https://wiki.openstreetmap.org/wiki/Key:ref:minvskaddress) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:ruian=*`](https://wiki.openstreetmap.org/wiki/Key:ref:ruian) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:ruian:addr=*`](https://wiki.openstreetmap.org/wiki/Key:ref:ruian:addr) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

@@ -5,4 +5,4 @@ The wiki's keys and tags in its group "motorcycles", and whether Lane Studio dra
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
-| [`motorcycle_parking=*`](https://wiki.openstreetmap.org/wiki/Key:motorcycle%20parking) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`motorcycle_parking=*`](https://wiki.openstreetmap.org/wiki/Key:motorcycle_parking) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |

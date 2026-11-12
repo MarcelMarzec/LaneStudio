@@ -1,16 +1,16 @@
 # Tag coverage
 
-Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draws it: 9965 in all, 649 rendered, 791 could be, 8525 cannot be. One page per wiki group.
+Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draws it: 9965 in all, 578 rendered, 847 could be, 8540 cannot be. One page per wiki group.
 
 | Lane Studio | Means |
 | --- | --- |
-| ✅ Rendered | Drawn on the map, or used by the Routing tool (said so beside it) |
+| ✅ Rendered | Drawn on the map, or used by the Routing tool (said so beside it), with the guide page covering it |
 | 🟡 Could be rendered | On or beside the street, where Lane Studio's layer could draw it, but does not yet |
 | ❌ Cannot be rendered | Not a shape Lane Studio's street layer could draw; the reason is given |
 
 | Group | Keys and tags | ✅ | 🟡 | ❌ |
 | --- | --- | --- | --- | --- |
-| [Accessibility](tags/Tags-Accessibility.md) | 41 | 9 | 8 | 24 |
+| [Accessibility](tags/Tags-Accessibility.md) | 41 | 4 | 13 | 24 |
 | [Addresses](tags/Tags-Addresses.md) | 229 | 0 | 0 | 229 |
 | [Advertising](tags/Tags-Advertising.md) | 16 | 0 | 16 | 0 |
 | [Aerialways](tags/Tags-Aerialways.md) | 25 | 0 | 0 | 25 |
@@ -23,7 +23,7 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Bicycles](tags/Tags-Bicycles.md) | 52 | 0 | 52 | 0 |
 | [Boundaries](tags/Tags-Boundaries.md) | 81 | 0 | 0 | 81 |
 | [Bridges](tags/Tags-Bridges.md) | 43 | 4 | 38 | 1 |
-| [Buildings](tags/Tags-Buildings.md) | 300 | 1 | 0 | 299 |
+| [Buildings](tags/Tags-Buildings.md) | 300 | 0 | 0 | 300 |
 | [Buses](tags/Tags-Buses.md) | 1 | 0 | 1 | 0 |
 | [Changeset](tags/Tags-Changeset.md) | 6 | 0 | 0 | 6 |
 | [Children](tags/Tags-Children.md) | 80 | 0 | 0 | 80 |
@@ -31,8 +31,8 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Clubs](tags/Tags-Clubs.md) | 50 | 0 | 0 | 50 |
 | [Communications](tags/Tags-Communications.md) | 49 | 0 | 0 | 49 |
 | [Crafts](tags/Tags-Crafts.md) | 114 | 0 | 0 | 114 |
-| [Crossings](tags/Tags-Crossings.md) | 32 | 28 | 4 | 0 |
-| [Cycleways](tags/Tags-Cycleways.md) | 65 | 45 | 16 | 4 |
+| [Crossings](tags/Tags-Crossings.md) | 32 | 21 | 11 | 0 |
+| [Cycleways](tags/Tags-Cycleways.md) | 65 | 44 | 17 | 4 |
 | [Diplomacy](tags/Tags-Diplomacy.md) | 30 | 0 | 0 | 30 |
 | [Education](tags/Tags-Education.md) | 79 | 0 | 0 | 79 |
 | [Emergencies](tags/Tags-Emergencies.md) | 110 | 2 | 9 | 99 |
@@ -42,7 +42,7 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [GPS](tags/Tags-GPS.md) | 8 | 0 | 0 | 8 |
 | [Hazards](tags/Tags-Hazards.md) | 73 | 0 | 0 | 73 |
 | [Health](tags/Tags-Health.md) | 141 | 0 | 0 | 141 |
-| [Highways](tags/Tags-Highways.md) | 304 | 154 | 135 | 15 |
+| [Highways](tags/Tags-Highways.md) | 304 | 143 | 146 | 15 |
 | [Hiking](tags/Tags-Hiking.md) | 7 | 0 | 0 | 7 |
 | [Historic](tags/Tags-Historic.md) | 250 | 0 | 5 | 245 |
 | [Import](tags/Tags-Import.md) | 19 | 0 | 0 | 19 |
@@ -69,12 +69,12 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Police](tags/Tags-Police.md) | 15 | 0 | 0 | 15 |
 | [Power](tags/Tags-Power.md) | 224 | 11 | 7 | 206 |
 | [Products](tags/Tags-Products.md) | 8 | 0 | 0 | 8 |
-| [Properties](tags/Tags-Properties.md) | 1172 | 85 | 52 | 1035 |
+| [Properties](tags/Tags-Properties.md) | 1172 | 83 | 54 | 1035 |
 | [Public transport](tags/Tags-Public-Transport.md) | 75 | 2 | 68 | 5 |
-| [Railways](tags/Tags-Railways.md) | 270 | 73 | 193 | 4 |
+| [Railways](tags/Tags-Railways.md) | 270 | 45 | 221 | 4 |
 | [References](tags/Tags-References.md) | 485 | 1 | 0 | 484 |
 | [Religion](tags/Tags-Religion.md) | 58 | 0 | 0 | 58 |
-| [Restrictions](tags/Tags-Restrictions.md) | 423 | 113 | 41 | 269 |
+| [Restrictions](tags/Tags-Restrictions.md) | 423 | 99 | 41 | 283 |
 | [Riding](tags/Tags-Riding.md) | 1 | 0 | 0 | 1 |
 | [Routes](tags/Tags-Routes.md) | 152 | 1 | 0 | 151 |
 | [Shops](tags/Tags-Shops.md) | 363 | 0 | 0 | 363 |
@@ -89,7 +89,7 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Water](tags/Tags-Water.md) | 26 | 0 | 0 | 26 |
 | [Water management](tags/Tags-Water-Management.md) | 58 | 0 | 1 | 57 |
 | [Waterways](tags/Tags-Waterways.md) | 83 | 0 | 1 | 82 |
-| [Other](tags/Tags-Other.md) | 423 | 9 | 24 | 390 |
+| [Other](tags/Tags-Other.md) | 423 | 7 | 26 | 390 |
 
 ## How it is made
 

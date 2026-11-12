@@ -9,18 +9,18 @@ The wiki's keys and tags in its group "routes", and whether Lane Studio draws th
 | [`bus=minibus`](https://wiki.openstreetmap.org/wiki/Tag:bus=minibus) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`descent=*`](https://wiki.openstreetmap.org/wiki/Key:descent) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`detour=*`](https://wiki.openstreetmap.org/wiki/Key:detour) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`distance=*`](https://wiki.openstreetmap.org/wiki/Key:distance) | de facto | ✅ Rendered |  |
+| [`distance=*`](https://wiki.openstreetmap.org/wiki/Key:distance) | de facto | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`educational=*`](https://wiki.openstreetmap.org/wiki/Key:educational) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`educational=planet_trail`](https://wiki.openstreetmap.org/wiki/Tag:educational=planet%20trail) | — | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`european_cultural_path=*`](https://wiki.openstreetmap.org/wiki/Key:european%20cultural%20path) | — | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`educational=planet_trail`](https://wiki.openstreetmap.org/wiki/Tag:educational=planet_trail) | — | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`european_cultural_path=*`](https://wiki.openstreetmap.org/wiki/Key:european_cultural_path) | — | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`from=*`](https://wiki.openstreetmap.org/wiki/Key:from) | de facto | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`ignore_for_routing=*`](https://wiki.openstreetmap.org/wiki/Key:ignore%20for%20routing) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`kct_blue=*`](https://wiki.openstreetmap.org/wiki/Key:kct%20blue) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`kct_green=*`](https://wiki.openstreetmap.org/wiki/Key:kct%20green) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`kct_none=*`](https://wiki.openstreetmap.org/wiki/Key:kct%20none) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`kct_red=*`](https://wiki.openstreetmap.org/wiki/Key:kct%20red) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`kct_white=*`](https://wiki.openstreetmap.org/wiki/Key:kct%20white) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`kct_yellow=*`](https://wiki.openstreetmap.org/wiki/Key:kct%20yellow) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`ignore_for_routing=*`](https://wiki.openstreetmap.org/wiki/Key:ignore_for_routing) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`kct_blue=*`](https://wiki.openstreetmap.org/wiki/Key:kct_blue) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`kct_green=*`](https://wiki.openstreetmap.org/wiki/Key:kct_green) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`kct_none=*`](https://wiki.openstreetmap.org/wiki/Key:kct_none) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`kct_red=*`](https://wiki.openstreetmap.org/wiki/Key:kct_red) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`kct_white=*`](https://wiki.openstreetmap.org/wiki/Key:kct_white) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`kct_yellow=*`](https://wiki.openstreetmap.org/wiki/Key:kct_yellow) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`network=BO:fundamental`](https://wiki.openstreetmap.org/wiki/Tag:network=BO:fundamental) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=CN:expressway`](https://wiki.openstreetmap.org/wiki/Tag:network=CN:expressway) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=CN:JS`](https://wiki.openstreetmap.org/wiki/Tag:network=CN:JS) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -35,7 +35,7 @@ The wiki's keys and tags in its group "routes", and whether Lane Studio draws th
 | [`network=MA:RP`](https://wiki.openstreetmap.org/wiki/Tag:network=MA:RP) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=MA:RR`](https://wiki.openstreetmap.org/wiki/Tag:network=MA:RR) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=NL:A`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:A) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`network=NL:binnenstedelijke_ring`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:binnenstedelijke%20ring) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`network=NL:binnenstedelijke_ring`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:binnenstedelijke_ring) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=NL:R:IJmuiden`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:R:IJmuiden) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=NL:R:Ommen`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:R:Ommen) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=NL:R:Schouwen`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:R:Schouwen) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -44,7 +44,7 @@ The wiki's keys and tags in its group "routes", and whether Lane Studio draws th
 | [`network=NL:R:Voorthuizen`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:R:Voorthuizen) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=NL:ring`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:ring) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=NL:S:Amsterdam`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:S:Amsterdam) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`network=NL:S:Den_Haag`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:S:Den%20Haag) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`network=NL:S:Den_Haag`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:S:Den_Haag) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=NL:S:Nijmegen`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:S:Nijmegen) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=NL:S:Parkstad`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:S:Parkstad) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=NL:S:Rotterdam`](https://wiki.openstreetmap.org/wiki/Tag:network=NL:S:Rotterdam) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -111,7 +111,7 @@ The wiki's keys and tags in its group "routes", and whether Lane Studio draws th
 | [`network=US:WV:HARP`](https://wiki.openstreetmap.org/wiki/Tag:network=US:WV:HARP) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network=US:WV:Mason`](https://wiki.openstreetmap.org/wiki/Tag:network=US:WV:Mason) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`network:type=*`](https://wiki.openstreetmap.org/wiki/Key:network:type) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`network:type=node_network`](https://wiki.openstreetmap.org/wiki/Tag:network:type=node%20network) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`network:type=node_network`](https://wiki.openstreetmap.org/wiki/Tag:network:type=node_network) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`pilgrimage=*`](https://wiki.openstreetmap.org/wiki/Key:pilgrimage) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`proposed:route=*`](https://wiki.openstreetmap.org/wiki/Key:proposed:route) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`roundtrip=*`](https://wiki.openstreetmap.org/wiki/Key:roundtrip) | de facto | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
@@ -124,30 +124,30 @@ The wiki's keys and tags in its group "routes", and whether Lane Studio draws th
 | [`route=detour`](https://wiki.openstreetmap.org/wiki/Tag:route=detour) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=evacuation`](https://wiki.openstreetmap.org/wiki/Tag:route=evacuation) | approved | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=ferry`](https://wiki.openstreetmap.org/wiki/Tag:route=ferry) | de facto | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`route=fitness_trail`](https://wiki.openstreetmap.org/wiki/Tag:route=fitness%20trail) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`route=fitness_trail`](https://wiki.openstreetmap.org/wiki/Tag:route=fitness_trail) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=foot`](https://wiki.openstreetmap.org/wiki/Tag:route=foot) | de facto | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=funicular`](https://wiki.openstreetmap.org/wiki/Tag:route=funicular) | de facto | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=historic`](https://wiki.openstreetmap.org/wiki/Tag:route=historic) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=horse`](https://wiki.openstreetmap.org/wiki/Tag:route=horse) | de facto | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`route=inline_skates`](https://wiki.openstreetmap.org/wiki/Tag:route=inline%20skates) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`route=inline_skates`](https://wiki.openstreetmap.org/wiki/Tag:route=inline_skates) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=minibus`](https://wiki.openstreetmap.org/wiki/Tag:route=minibus) | — | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`route=mobility_scooter`](https://wiki.openstreetmap.org/wiki/Tag:route=mobility%20scooter) | — | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`route=mobility_scooter`](https://wiki.openstreetmap.org/wiki/Tag:route=mobility_scooter) | — | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=monorail`](https://wiki.openstreetmap.org/wiki/Tag:route=monorail) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=motorboat`](https://wiki.openstreetmap.org/wiki/Tag:route=motorboat) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=mtb`](https://wiki.openstreetmap.org/wiki/Tag:route=mtb) | de facto | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`route=nordic_walking`](https://wiki.openstreetmap.org/wiki/Tag:route=nordic%20walking) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`route=nordic_walking`](https://wiki.openstreetmap.org/wiki/Tag:route=nordic_walking) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=pipeline`](https://wiki.openstreetmap.org/wiki/Tag:route=pipeline) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=portage`](https://wiki.openstreetmap.org/wiki/Tag:route=portage) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=road`](https://wiki.openstreetmap.org/wiki/Tag:route=road) | de facto | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=running`](https://wiki.openstreetmap.org/wiki/Tag:route=running) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=safari`](https://wiki.openstreetmap.org/wiki/Tag:route=safari) | approved | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`route=share_taxi`](https://wiki.openstreetmap.org/wiki/Tag:route=share%20taxi) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`route=shuttle_train`](https://wiki.openstreetmap.org/wiki/Tag:route=shuttle%20train) | — | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`route=share_taxi`](https://wiki.openstreetmap.org/wiki/Tag:route=share_taxi) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`route=shuttle_train`](https://wiki.openstreetmap.org/wiki/Tag:route=shuttle_train) | — | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=snowmobile`](https://wiki.openstreetmap.org/wiki/Tag:route=snowmobile) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=train`](https://wiki.openstreetmap.org/wiki/Tag:route=train) | de facto | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=transhumance`](https://wiki.openstreetmap.org/wiki/Tag:route=transhumance) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=trolleybus`](https://wiki.openstreetmap.org/wiki/Tag:route=trolleybus) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`route=via_ferrata`](https://wiki.openstreetmap.org/wiki/Tag:route=via%20ferrata) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`route=via_ferrata`](https://wiki.openstreetmap.org/wiki/Tag:route=via_ferrata) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=waterway`](https://wiki.openstreetmap.org/wiki/Tag:route=waterway) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`route=wheelchair`](https://wiki.openstreetmap.org/wiki/Tag:route=wheelchair) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`routing:entrance=*`](https://wiki.openstreetmap.org/wiki/Key:routing:entrance) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |

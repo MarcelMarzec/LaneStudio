@@ -6,17 +6,17 @@ The wiki's keys and tags in its group "education", and whether Lane Studio draws
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
 | [`*:training=*`](https://wiki.openstreetmap.org/wiki/Key:*:training) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`after_school=*`](https://wiki.openstreetmap.org/wiki/Key:after%20school) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`after_school=*`](https://wiki.openstreetmap.org/wiki/Key:after_school) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`amenity=childcare`](https://wiki.openstreetmap.org/wiki/Tag:amenity=childcare) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`amenity=college`](https://wiki.openstreetmap.org/wiki/Tag:amenity=college) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
-| [`amenity=driving_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=driving%20school) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
-| [`amenity=flight_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=flight%20school) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`amenity=driving_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=driving_school) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`amenity=flight_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=flight_school) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`amenity=kindergarten`](https://wiki.openstreetmap.org/wiki/Tag:amenity=kindergarten) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
-| [`amenity=language_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=language%20school) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
-| [`amenity=music_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=music%20school) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
-| [`amenity=prep_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=prep%20school) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`amenity=language_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=language_school) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`amenity=music_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=music_school) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`amenity=prep_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=prep_school) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`amenity=school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=school) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
-| [`amenity=trade_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=trade%20school) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`amenity=trade_school`](https://wiki.openstreetmap.org/wiki/Tag:amenity=trade_school) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`amenity=training`](https://wiki.openstreetmap.org/wiki/Tag:amenity=training) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`amenity=tuition`](https://wiki.openstreetmap.org/wiki/Tag:amenity=tuition) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`amenity=university`](https://wiki.openstreetmap.org/wiki/Tag:amenity=university) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
@@ -26,14 +26,14 @@ The wiki's keys and tags in its group "education", and whether Lane Studio draws
 | [`department=*`](https://wiki.openstreetmap.org/wiki/Key:department) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`education=*`](https://wiki.openstreetmap.org/wiki/Key:education) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`education=college`](https://wiki.openstreetmap.org/wiki/Tag:education=college) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`education=cooking_school`](https://wiki.openstreetmap.org/wiki/Tag:education=cooking%20school) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`education=exercise_area`](https://wiki.openstreetmap.org/wiki/Tag:education=exercise%20area) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`education=folk_high_school`](https://wiki.openstreetmap.org/wiki/Tag:education=folk%20high%20school) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`education=cooking_school`](https://wiki.openstreetmap.org/wiki/Tag:education=cooking_school) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`education=exercise_area`](https://wiki.openstreetmap.org/wiki/Tag:education=exercise_area) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`education=folk_high_school`](https://wiki.openstreetmap.org/wiki/Tag:education=folk_high_school) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`education=kindergarten`](https://wiki.openstreetmap.org/wiki/Tag:education=kindergarten) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`education=nature_school`](https://wiki.openstreetmap.org/wiki/Tag:education=nature%20school) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`education=nature_school`](https://wiki.openstreetmap.org/wiki/Tag:education=nature_school) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`education=school`](https://wiki.openstreetmap.org/wiki/Tag:education=school) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`education=university`](https://wiki.openstreetmap.org/wiki/Tag:education=university) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`education_program=*`](https://wiki.openstreetmap.org/wiki/Key:education%20program) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`education_program=*`](https://wiki.openstreetmap.org/wiki/Key:education_program) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`faculty=*`](https://wiki.openstreetmap.org/wiki/Key:faculty) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`faculty=engineering`](https://wiki.openstreetmap.org/wiki/Tag:faculty=engineering) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`grades=*`](https://wiki.openstreetmap.org/wiki/Key:grades) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -70,12 +70,12 @@ The wiki's keys and tags in its group "education", and whether Lane Studio draws
 | [`school:gender=separated`](https://wiki.openstreetmap.org/wiki/Tag:school:gender=separated) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`school:language=*`](https://wiki.openstreetmap.org/wiki/Key:school:language) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`school:selective=*`](https://wiki.openstreetmap.org/wiki/Key:school:selective) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`school:special_needs=*`](https://wiki.openstreetmap.org/wiki/Key:school:special%20needs) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`school:special_needs=*`](https://wiki.openstreetmap.org/wiki/Key:school:special_needs) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`school:trust=*`](https://wiki.openstreetmap.org/wiki/Key:school:trust) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`school:trust:name=*`](https://wiki.openstreetmap.org/wiki/Key:school:trust:name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`school:trust:type=*`](https://wiki.openstreetmap.org/wiki/Key:school:trust:type) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`school:type=*`](https://wiki.openstreetmap.org/wiki/Key:school:type) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`special_needs:*=*`](https://wiki.openstreetmap.org/wiki/Key:special%20needs:*) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`special_needs:*=*`](https://wiki.openstreetmap.org/wiki/Key:special_needs:*) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`training=art`](https://wiki.openstreetmap.org/wiki/Tag:training=art) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`training=aviation`](https://wiki.openstreetmap.org/wiki/Tag:training=aviation) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`training=bicycle`](https://wiki.openstreetmap.org/wiki/Tag:training=bicycle) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

@@ -7,13 +7,13 @@ The wiki's keys and tags in its group "import", and whether Lane Studio draws th
 | --- | --- | --- | --- |
 | [`fcode=*`](https://wiki.openstreetmap.org/wiki/Key:fcode) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
 | [`GNS:*=*`](https://wiki.openstreetmap.org/wiki/Key:GNS:*) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
-| [`GNS:dsg_code=*`](https://wiki.openstreetmap.org/wiki/Key:GNS:dsg%20code) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
+| [`GNS:dsg_code=*`](https://wiki.openstreetmap.org/wiki/Key:GNS:dsg_code) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
 | [`GNS:id=*`](https://wiki.openstreetmap.org/wiki/Key:GNS:id) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
 | [`IBGE:tipo=*`](https://wiki.openstreetmap.org/wiki/Key:IBGE:tipo) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
-| [`ogr_pkid=*`](https://wiki.openstreetmap.org/wiki/Key:ogr%20pkid) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
+| [`ogr_pkid=*`](https://wiki.openstreetmap.org/wiki/Key:ogr_pkid) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
 | [`pcode=*`](https://wiki.openstreetmap.org/wiki/Key:pcode) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
 | [`ref:AQ:apa=*`](https://wiki.openstreetmap.org/wiki/Key:ref:AQ:apa) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`ref:linz:place_id=*`](https://wiki.openstreetmap.org/wiki/Key:ref:linz:place%20id) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`ref:linz:place_id=*`](https://wiki.openstreetmap.org/wiki/Key:ref:linz:place_id) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`teryt=*`](https://wiki.openstreetmap.org/wiki/Key:teryt) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
 | [`teryt:rm=*`](https://wiki.openstreetmap.org/wiki/Key:teryt:rm) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
 | [`teryt:simc=*`](https://wiki.openstreetmap.org/wiki/Key:teryt:simc) | imported | ❌ Cannot be rendered | Data about the edit (changeset, import, source) |
