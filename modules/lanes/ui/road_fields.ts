@@ -32,6 +32,8 @@ import { parkingSideDetails, roadParkingScope } from './parking_fields';
 import { centreLineIcon } from './section_lanes';
 import { upgradeOldBusway } from '../model/kinds';
 import { cyclewaySideDetails } from './cycleway_fields';
+import { uiFieldLanesAccess } from './access_field';
+import { taggedAccessKeys } from '../model/access';
 import { mphOf, roadSpeedPick, speedChoice, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed } from './speed_roundels';
 
 type Div = d3.Selection<HTMLDivElement>;
@@ -650,7 +652,17 @@ const replacedInPlace: Record<string, string> = { structure: 'lanes/structure', 
  */
 export function laneStudioRoadFields() {
     for (const def of roadFieldDefs) (uiFields as any)[`lanes_${def.id.slice('lanes/'.length)}`] = roadFieldType(def);
+    // iD's Allowed Access field, on every feature it is on, with every transport mode and value the wiki lists
+    (uiFields as any).access = uiFieldLanesAccess;
     presetManager.ensureLoaded().then(() => {
+        const access = presetManager.field('access') as any;
+        if (access) {
+            const keys: string[] = access.keys;
+            // its bin and undo cover every access key tagged, as well as the rows it starts with
+            access.allKeys = (tags: Tags) => [...new Set([...keys, ...taggedAccessKeys(tags ?? {})])];
+            access.terms = () => [...keys, 'access', 'hgv', 'psv', 'bus', 'goods', 'delivery', 'destination', 'customers', 'private'];
+            access.referenceComponent = () => fieldReference('road_access', 'access');
+        }
         presetManager.merge({
             fields: Object.fromEntries(roadFieldDefs.map(def => [def.id, {
                 type: `lanes_${def.id.slice('lanes/'.length)}`, keys: def.keys, geometry: ['line'], label: def.id

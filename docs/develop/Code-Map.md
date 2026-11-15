@@ -7,13 +7,13 @@ Where each part of Lane Studio lives, and the hooks it uses in iD.
 | Part | Where |
 | --- | --- |
 | Entry point and boot | `index.ts`, `core/boot.ts`, `lanes.html` |
-| Lane model: parse, edit and write `*:lanes` tags; lane types; markings; connectivity; street features and the centre line; street parking (`parking.ts`); active traffic management | `model/` |
+| Lane model: parse, edit and write `*:lanes` tags; lane types; markings; connectivity; street features and the centre line; street parking (`parking.ts`); access keys, their hierarchy and values (`access.ts`); active traffic management | `model/` |
 | Actions (lanes, markings, signs, copy, connect), each one undo step | `actions/` |
 | State: selected lanes, tools, keyboard, settings, roadside detection, what's new, links; fields, a preset for every road marking (`markingPresets`) and for the other features iD has none for (`featurePresets`) added to iD's presets (`preset_fields.ts`) | `core/` |
 | Geometry in metres: lane layout, roads and junctions, street features (crossings, UK crossings, tactile paving, advanced stop lines, multipolygon areas), road markings, symbols along lanes, parking, parking spaces, railways, signs, routing | `geometry/` |
 | Look-ahead corridor, roundabouts | `osm/` |
 | Map drawing and click targets | `svg/` |
-| Sidebar sections; road fields in iD's Fields (`road_fields.ts`); shared field parts (`lane_fields.ts`); i button topics (`field_info.ts`); parking (`parking_fields.ts`) and cycle lane (`cycleway_fields.ts`) details; the + menu (`roadside_menu.ts`); the field filter (`field_filter.ts`); panes (settings, Map key `pane_key.ts`); welcome screen, what's new, walkthrough (`intro.ts`), help pages (`help.ts`), logo, speed roundels | `ui/` |
+| Sidebar sections; road fields in iD's Fields (`road_fields.ts`); shared field parts (`lane_fields.ts`); i button topics (`field_info.ts`); parking (`parking_fields.ts`) and cycle lane (`cycleway_fields.ts`) details; the + menu (`roadside_menu.ts`); iD's Allowed Access field as Lane Studio draws it (`access_field.ts`); the field filter (`field_filter.ts`); panes (settings, Map key `pane_key.ts`); welcome screen, what's new, walkthrough (`intro.ts`), help pages (`help.ts`), logo, speed roundels | `ui/` |
 | Lane tags rule | `validations/` |
 | Version | `version.ts` |
 

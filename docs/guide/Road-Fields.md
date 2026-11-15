@@ -24,6 +24,24 @@ Centre line, the speeds, Structure and Active traffic management show only the v
 dropdown lists them all. Type to pick one: its name, a number (`35` for 35 mph) or a short name (`nsl`, `zone`,
 `motorway`, `double`, `tunnel`). Text naming nothing goes back to the value chosen.
 
+## Allowed Access
+
+iD's Allowed Access field (on roads, paths, gates, car parks…) with every land transport mode and value the wiki
+lists ([Key:access](https://wiki.openstreetmap.org/wiki/Key:access)):
+
+- **Rows**: All, Foot, Motor vehicles, Bicycles and Horses, then every other access key tagged (`hgv`, `psv`, `goods`,
+  `hgv:forward`, `motor_vehicle:conditional`…).
+- **An empty row shows what it inherits**: a mode's own key wins over the one above it (`hgv` over `motor_vehicle`
+  over `vehicle` over `access`), else the kind of road (a motorway implies `foot=no`).
+- **Values** with what they mean: `yes`, `no`, `private`, `permissive`, `destination`, `delivery`, `customers`,
+  `designated`, `permit`, `discouraged`, `agricultural`, `forestry`, `military`, `use_sidepath`, `dismount` (cycles,
+  horses), `no_turnaround` (HGVs), `unknown`.
+- **+ Add access type**: any mode in the wiki's hierarchy (HGVs, vans, buses, taxis, emergency, hazardous loads,
+  disabled badge holders…), or one direction (`hgv:forward`) or times and conditions (`hgv:conditional`, as
+  `no @ (Mo-Fr 07:00-19:00)`) of a mode shown.
+
+The [Routing tool](Tools.md) colours roads by what these say for the vehicle picked.
+
 ## Centre line
 
 Dashed (`overtaking=yes`), double white line solid on the forward or backward side (`overtaking:forward=no`,

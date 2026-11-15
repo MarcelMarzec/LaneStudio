@@ -138,7 +138,8 @@ require __DIR__ . '/includes/head.php';
           Number of lanes, centre line, speed limits, structure, pavements, cycleways, hard shoulders and
           parking sit among iD's own fields, in iD's style. Choices show the value chosen with its sign,
           and a dropdown of the rest. Each has an <strong>i</strong> button with a short overview and a
-          link to the wiki; fields a road rarely needs wait under “Add field”.
+          link to the wiki; fields a road rarely needs wait under “Add field”. Allowed Access covers every
+          transport mode and value on the wiki: add HGVs, vans, buses or deliveries, one direction, or times.
         </p>
       </article>
 

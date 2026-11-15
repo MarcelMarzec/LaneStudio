@@ -756,3 +756,21 @@
     justify-content: center;
 }
 .ideditor.lane-studio .combobox-option .lane-compact-option-icon svg { max-height: 24px; width: auto; }
+
+/* the Allowed Access field (iD's, with every mode and value the wiki lists): what each value means, muted after it in
+   the list; the row adding an access type, an input across the field like iD's "Add field" */
+.ideditor.lane-studio .combobox .lanes-access-option-note {
+    color: var(--text-color-muted, #777);
+    font-size: 12px;
+}
+.ideditor.lane-studio .form-field ul.rows li.lanes-access-add {
+    display: flex;
+}
+.ideditor.lane-studio .form-field ul.rows li.lanes-access-add input {
+    border-left-width: 0;
+    border-right-width: 0;
+    font-style: italic;
+}
+.ideditor.lane-studio .form-field ul.rows.lanes-access-rows li.labeled-input > div.preset-label-access {
+    align-content: center;
+}

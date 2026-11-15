@@ -8,6 +8,18 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.15r3
+##### 2026-Nov-15
+
+#### Editing
+* iD's Allowed Access field covers every land transport mode and value the wiki lists (Key:access): a row for every
+  access key tagged (`hgv`, `psv`, `goods`, `hgv:forward`…), each value with what it means (`destination`, `delivery`,
+  `customers`, `permit`, `discouraged`, `use_sidepath`, `no_turnaround`…), and an empty row showing what it inherits
+  from the key above it (`hgv` from `motor_vehicle`, `vehicle`, `access`)
+* **+ Add access type** in the field adds any mode in the wiki's hierarchy (HGVs, vans, buses, taxis, emergency
+  vehicles, hazardous loads, disabled badge holders…), or one direction (`hgv:forward`) or times and conditions
+  (`hgv:conditional`) of a mode shown
+
 # 26.11.15r2
 ##### 2026-Nov-15
 

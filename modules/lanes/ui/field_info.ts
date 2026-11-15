@@ -65,6 +65,7 @@ export const fieldInfoPages = {
     payment: 'Key:payment:*',
     position: 'Lanes',
     priority: 'Key:priority',
+    road_access: 'Key:access',
     road_marking: 'Key:road_marking',
     roundabout: 'Tag:junction=roundabout',
     shoulder: 'Key:shoulder',
