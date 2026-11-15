@@ -10,7 +10,7 @@ browser. To practise, take the walkthrough (Help → Start the walkthrough), or 
 server ([Running locally](develop/Running-Locally.md)).
 
 **Why are lanes not drawn?**
-Lanes appear from zoom 17, lines and arrows from 18. A road without `lanes` is drawn with the usual number for its
+Lanes appear from zoom 17, lines and arrows from 18. A road without [`lanes`](https://wiki.openstreetmap.org/wiki/Key:lanes) is drawn with the usual number for its
 type, so tag it to get it right.
 
 **The lanes at a junction don't line up, or a route goes the wrong way. Is the data wrong?**
@@ -38,7 +38,7 @@ Use the Speed Limit tool ([Tools](guide/Tools.md#speed-limit)), or the road's Sp
 ([Road fields](guide/Road-Fields.md#speed-limits)).
 
 **How do I measure a road's width?**
-Use the Measure tool: click both kerbs on the imagery, then **Road width**. `width` is kerb to kerb, parking and cycle
+Use the Measure tool: click both kerbs on the imagery, then **Road width**. [`width`](https://wiki.openstreetmap.org/wiki/Key:width) is kerb to kerb, parking and cycle
 lanes on the road included.
 
 **Where are iD's Lanes, Speed Limit, Sidewalks and Street Parking fields?**

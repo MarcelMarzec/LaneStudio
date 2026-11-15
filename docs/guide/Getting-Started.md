@@ -12,7 +12,7 @@ New to Lane Studio? Open **Help** (`H`) → **Start the walkthrough**: it shows 
 
 ## The screen
 
-- **Top bar**: Selection (select and edit), [Routing, Speed Limit and Measure](Tools.md), then iD's Point, Line and Area.
+- **Top bar**: Selection (select and edit), [Routing](Routing.md), [Speed Limit and Measure](Tools.md), then iD's Point, Line and Area.
 - **Sidebar**, for a selected road, top to bottom: iD's feature type and issues; the **Lanes** section
   ([Lanes](Lanes.md)); iD's **Fields** with Lane Studio's road fields among them ([Road fields](Road-Fields.md),
   [Roadside](Roadside.md)); **Roundabout** or **Look ahead** ([Junctions](Junctions.md)); iD's tags.
@@ -28,10 +28,10 @@ button (a short overview and a link to the wiki page). Rarely needed fields wait
 | Setting | Does |
 | --- | --- |
 | Lane surface opacity | 35% by default; 100% opaque, 0% invisible |
-| Hide natural features | Hides `natural=*` only |
+| Hide natural features | Hides [`natural=*`](https://wiki.openstreetmap.org/wiki/Key:natural) only |
 | Hide iD's lines and points under lanes | Leaves Lane Studio's drawing alone (still clickable; the selected road keeps its nodes) |
-| Hide land use | Hides `landuse=*` only, keeping car parks |
-| Show brand logos | A shop's or restaurant's logo (Wikidata `brand:wikidata`) in place of iD's marker |
+| Hide land use | Hides [`landuse=*`](https://wiki.openstreetmap.org/wiki/Key:landuse) only, keeping car parks |
+| Show brand logos | A shop's or restaurant's logo in place of iD's marker, from zoom 17: [`brand:wikidata=*`](https://wiki.openstreetmap.org/wiki/Key:brand:wikidata), its Wikidata logo (P8972 or P154) from Wikimedia Commons, on a white tile |
 | Privacy | iD's third-party icons setting (iD's Preferences pane is left out) |
 | About | What's new, and links to the website, privacy policy and contact page |
 
@@ -39,3 +39,5 @@ button (a short overview and a link to the wiki page). Rarely needed fields wait
 
 iD's grey points on ways show only where they matter: tagged nodes, way ends and where ways meet. Below zoom 18,
 fences, hedges and other ways that aren't roads, railways or waterways show none. A selected way shows them all.
+
+On the OpenStreetMap wiki: [iD](https://wiki.openstreetmap.org/wiki/ID), [Tagging for the renderer](https://wiki.openstreetmap.org/wiki/Tagging_for_the_renderer).

@@ -28,7 +28,7 @@
 | Paint | Pick a lane type or a value, then click lanes to apply it (one undo step a click) |
 | Width | Drag lane lines and kerbs; writes `width:lanes` in metres |
 | Markings | Click a road to place a crossing, stop, give way, signals, traffic calming, mini-roundabout, emergency bay |
-| Connect | Click a lane, then the lane on the next road it leads to: a `type=connectivity` relation (again to remove). Lanes it can connect to are outlined, connected ones filled |
+| Connect | Click a lane, then the lane on the next road it leads to: a [`type=connectivity`](https://wiki.openstreetmap.org/wiki/Tag:type=connectivity) relation (again to remove). Lanes it can connect to are outlined, connected ones filled |
 | Signs | Pick a sign or camera, then click a lane to place it beside the road facing that lane's traffic |
 
 Esc, or clicking empty map, returns to Select.
@@ -36,23 +36,23 @@ Esc, or clicking empty map, returns to Select.
 ## Lanes when none are tagged
 
 Two lanes, one each way (a one-way road: one). One lane shared both ways on a track, an escape lane, a driveway,
-alley, drive-through, fuel station lane or emergency access road (`service=*`), or a service road tagged
+alley, drive-through, fuel station lane or emergency access road ([`service=*`](https://wiki.openstreetmap.org/wiki/Key:service)), or a service road tagged
 `narrow=yes` or narrower than 4.5 m.
 
 ## Lane types
 
 | Drawn as | When |
 | --- | --- |
-| Bus, PSV, taxi, HOV, cycle, pedestrian lane | `designated` in `bus:lanes`, `psv:lanes`, `taxi:lanes`, `hov:lanes`, `bicycle:lanes`, `foot:lanes`; or closed to general traffic (`access`, `motor_vehicle` or `vehicle:lanes=no`) and `yes` for that traffic; `cycleway:lanes=lane` |
+| Bus, PSV, taxi, HOV, cycle, pedestrian lane | `designated` in [`bus:lanes`](https://wiki.openstreetmap.org/wiki/Key:bus:lanes), [`psv:lanes`](https://wiki.openstreetmap.org/wiki/Key:psv:lanes), `taxi:lanes`, `hov:lanes`, [`bicycle:lanes`](https://wiki.openstreetmap.org/wiki/Key:bicycle:lanes), `foot:lanes`; or closed to general traffic ([`access`](https://wiki.openstreetmap.org/wiki/Key:access), [`motor_vehicle`](https://wiki.openstreetmap.org/wiki/Key:motor_vehicle) or `vehicle:lanes=no`) and `yes` for that traffic; `cycleway:lanes=lane` |
 | Variable lane (running hard shoulder) | `access:lanes=variable` |
 | No access (hatched) | Closed to general traffic and open to none of the above |
-| Bus lane | Every lane of a busway or guided busway (`highway=busway`, `bus_guideway`) |
+| Bus lane | Every lane of a busway or guided busway ([`highway=busway`](https://wiki.openstreetmap.org/wiki/Tag:highway=busway), `bus_guideway`) |
 
 Making such a lane general traffic again opens its access too.
 
 ## Turn arrows and blank values
 
-- Arrows from `turn:lanes`. A lane with a blank value takes the road's plain key, as the wiki says: `turn`,
+- Arrows from `turn:lanes`. A lane with a blank value takes the road's plain key, as the wiki says: [`turn`](https://wiki.openstreetmap.org/wiki/Key:turn),
   `turn:forward` or `turn:backward` (routing follows them too).
 - `merge_to_left` and `merge_to_right` mark the lane that ends; `slight_*` are not merges.
 - Rare values (under **More turn arrows**): `slide_left|right` (a lane shifting over: straight on, stepping
@@ -61,7 +61,7 @@ Making such a lane general traffic again opens its access too.
 
 ## Widths
 
-- `width` (or `width:carriageway`, or `est_width`) is the carriageway **kerb to kerb** (wiki: Key:width): cycle
+- [`width`](https://wiki.openstreetmap.org/wiki/Key:width) (or [`width:carriageway`](https://wiki.openstreetmap.org/wiki/Key:width:carriageway), or [`est_width`](https://wiki.openstreetmap.org/wiki/Key:est_width)) is the carriageway **kerb to kerb** (wiki: [Key:width](https://wiki.openstreetmap.org/wiki/Key:width)): cycle
   lanes and parking on the road are inside it. The lanes share what is left, after any `width:lanes` they have.
 - Untagged lanes use UK widths: 3.65 m on motorways, trunk and primary roads, 3.5 m secondary, 3.25 m tertiary and
   unclassified, 2.75 m residential and service, 2.4 m living streets. A guessed width draws fainter edges.
@@ -69,20 +69,22 @@ Making such a lane general traffic again opens its access too.
 
 ## Labels (zoom 19)
 
-A lane's label shows its destinations and road numbers (or the road's `destination` on a one-way road and
-`destination:forward|backward`, once per direction), the sign's symbol (`destination:symbol`), its own speed limit,
+A lane's label shows its destinations and road numbers (or the road's [`destination`](https://wiki.openstreetmap.org/wiki/Key:destination) on a one-way road and
+`destination:forward|backward`, once per direction), the sign's symbol ([`destination:symbol`](https://wiki.openstreetmap.org/wiki/Key:destination:symbol)), its own speed limit,
 and restrictions: no HGV (`hgv:lanes=no`), HGV lane (`designated`), height, width and weight limits
-(`maxheight:lanes`, `maxwidth:lanes`, `maxweight:lanes`). Labels take their sign's colour (`destination:colour`).
+(`maxheight:lanes`, `maxwidth:lanes`, `maxweight:lanes`). Labels take their sign's colour ([`destination:colour`](https://wiki.openstreetmap.org/wiki/Key:destination:colour)).
 Also: the sign's arrow, street, European road number and country (`destination:arrow|street|int_ref|country:lanes`);
 toll, cash and cards (`toll:lanes`, `payment:cash|cards:lanes`); values at times (`bus|psv|access|maxspeed:lanes:conditional`,
-bus lanes counted from the kerb by `lanes:bus:conditional`); once per direction, the lorry limit (`maxspeed:hgv`),
-advised speed, `maxspeed:conditional` and no lorry overtaking (`overtaking:hgv=no`).
+bus lanes counted from the kerb by `lanes:bus:conditional`); once per direction, the lorry limit ([`maxspeed:hgv`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:hgv)),
+advised speed, [`maxspeed:conditional`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:conditional) and no lorry overtaking (`overtaking:hgv=no`).
 
 ## Lines between lanes (Highway Code)
 
 - Same direction: dashed, or solid where `change:lanes` says no crossing; untagged lines are fainter. A UK bus lane
   has a wide solid line beside it; a variable lane a solid one.
-- Between directions: a dashed centre line; `overtaking=no` a double solid line; `overtaking=forward|backward` or
+- Between directions: a dashed centre line; `overtaking=no` a double solid line; [`overtaking=forward|backward`](https://wiki.openstreetmap.org/wiki/Key:overtaking) or
   `overtaking:forward|backward=no` a double line solid on the side that may not overtake. Click a side of the centre
   line on the map to ban or allow that side overtaking.
-- `lane_markings=no`: lanes without painted lines.
+- [`lane_markings=no`](https://wiki.openstreetmap.org/wiki/Tag:lane_markings=no): lanes without painted lines.
+
+On the OpenStreetMap wiki: [Lanes](https://wiki.openstreetmap.org/wiki/Lanes), [Key:lanes](https://wiki.openstreetmap.org/wiki/Key:lanes), [Key:turn](https://wiki.openstreetmap.org/wiki/Key:turn), [Forward & backward, left & right](https://wiki.openstreetmap.org/wiki/Forward_%26_backward,_left_%26_right).

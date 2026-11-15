@@ -1,13 +1,13 @@
 # Railways
 
-Edited like any feature in iD; Lane Studio draws them (wiki: Key:railway).
+Edited like any feature in iD; Lane Studio draws them (wiki: [Key:railway](https://wiki.openstreetmap.org/wiki/Key:railway)).
 
 ## Track
 
-- At its gauge: `gauge` (mm), else 1435 mm (main lines, Underground, light rail, trams), 600 mm narrow gauge, 184 mm
+- At its gauge: [`gauge`](https://wiki.openstreetmap.org/wiki/Key:gauge) (mm), else 1435 mm (main lines, Underground, light rail, trams), 600 mm narrow gauge, 184 mm
   miniature.
 - Ballast, concrete sleepers (timber on heritage and narrow gauge lines, `railway:preserved=yes`), steel rails;
-  `tracks=n` side by side; conductor rails for `electrified=rail` and `4th_rail`.
+  `tracks=n` side by side; conductor rails for [`electrified=rail`](https://wiki.openstreetmap.org/wiki/Tag:electrified=rail) and `4th_rail`.
 - Trams run in the road over its lanes unless `embedded=no`.
 - Tunnels faded; disused track rusty; track being built striped; abandoned, razed and proposed lines a dashed bed;
   monorails their beam.
@@ -19,33 +19,35 @@ Laid out as in the Office of Rail and Road's layouts and the Highway Code (rules
 
 | Tag | Drawn |
 | --- | --- |
-| `crossing:surface` | Panels across the road, coloured by surface; `crossing=informal`: rails alone |
+| [`crossing:surface`](https://wiki.openstreetmap.org/wiki/Key:crossing:surface) | Panels across the road, coloured by surface; [`crossing=informal`](https://wiki.openstreetmap.org/wiki/Tag:crossing=informal): rails alone |
 | `crossing:barrier=half` | A boom across the incoming lanes, on the traffic's left |
 | `full`, `double_half`, `yes` | Two booms meeting in the middle |
 | `gates` | White gates with red targets; at a user worked crossing (`crossing:activation=user`), one braced gate a side |
-| `crossing:light` (or barriers that lower themselves) | Road traffic light signals on the nearside verge; miniature red/green lights at a user worked crossing |
-| `crossing:saltire` (or an open crossing) | A St Andrew's cross |
+| [`crossing:light`](https://wiki.openstreetmap.org/wiki/Key:crossing:light) (or barriers that lower themselves) | Road traffic light signals on the nearside verge; miniature red/green lights at a user worked crossing |
+| [`crossing:saltire`](https://wiki.openstreetmap.org/wiki/Key:crossing:saltire) (or an open crossing) | A St Andrew's cross |
 | Barriers, gates or lights | Stop line; an open crossing without lights: give way line |
-| `crossing:whistle` | Whistle boards 40 m out each way |
+| [`crossing:whistle`](https://wiki.openstreetmap.org/wiki/Key:crossing:whistle) | Whistle boards 40 m out each way |
 
-Not drawn: `crossing:bell` and `crossing:on_demand` (nothing to see).
+Not drawn: [`crossing:bell`](https://wiki.openstreetmap.org/wiki/Key:crossing:bell) and [`crossing:on_demand`](https://wiki.openstreetmap.org/wiki/Key:crossing:on_demand) (nothing to see).
 
-Barriers and lights stand outside all the tracks a road crosses. Footpath crossings (`railway=crossing`) and tram
-crossings (`railway=tram_level_crossing`) get panels and rails.
+Barriers and lights stand outside all the tracks a road crosses. Footpath crossings ([`railway=crossing`](https://wiki.openstreetmap.org/wiki/Tag:railway=crossing)) and tram
+crossings ([`railway=tram_level_crossing`](https://wiki.openstreetmap.org/wiki/Tag:railway=tram_level_crossing)) get panels and rails.
 
 ## Platforms, signals and equipment
 
-- Platforms (`railway=platform`, area or a line 3 m wide or `width`): white edge, yellow safety line on the track
+- Platforms ([`railway=platform`](https://wiki.openstreetmap.org/wiki/Tag:railway=platform), area or a line 3 m wide or [`width`](https://wiki.openstreetmap.org/wiki/Key:width)): white edge, yellow safety line on the track
   side.
-- Signals (`railway=signal`) beside the line (`railway:signal:position`, left by default), facing
-  `railway:signal:direction`: colour-light heads with 2–4 aspects (`railway:signal:main:states`, else 3), distant
-  signals yellow, shunt signals as position lights, each over its `ref` plate. Semaphores
+- Signals ([`railway=signal`](https://wiki.openstreetmap.org/wiki/Tag:railway=signal)) beside the line (`railway:signal:position`, left by default), facing
+  `railway:signal:direction`: colour-light heads with 2–4 aspects ([`railway:signal:main:states`](https://wiki.openstreetmap.org/wiki/Key:railway:signal:main:states), else 3), distant
+  signals yellow, shunt signals as position lights, each over its [`ref`](https://wiki.openstreetmap.org/wiki/Key:ref) plate. Semaphores
   (`railway:signal:main:form=semaphore`) as a red arm, distant ones yellow and fishtailed; other countries'
   colour-light signals (`DE-ESO:hp` and the like) red over green. Not drawn yet: other kinds of signal
-  (`railway:signal:speed_limit`, `route`, `crossing`, `whistle` and the rest of the OpenRailwayMap scheme).
-- Electrified track (`electrified=contact_line`): the contact wire along it and masts beside it every 60 m, or the
-  masts mapped (`power=catenary_mast`).
+  ([`railway:signal:speed_limit`](https://wiki.openstreetmap.org/wiki/Key:railway:signal:speed_limit), `route`, `crossing`, `whistle` and the rest of the OpenRailwayMap scheme).
+- Electrified track ([`electrified=contact_line`](https://wiki.openstreetmap.org/wiki/Tag:electrified=contact_line)): the contact wire along it and masts beside it every 60 m, or the
+  masts mapped ([`power=catenary_mast`](https://wiki.openstreetmap.org/wiki/Tag:power=catenary_mast)).
 - Buffer stops, switches (with point motors) and derailers at the track; a stop board at a train's stop position
-  (`railway=stop`); turntables and traversers as pits (Lane Studio's Traverser preset). Proposed lines have a preset (Proposed
+  ([`railway=stop`](https://wiki.openstreetmap.org/wiki/Tag:railway=stop)); turntables and traversers as pits (Lane Studio's Traverser preset). Proposed lines have a preset (Proposed
   railway: `railway=proposed` + `proposed=rail`).
 - Stations, stops, subway entrances and railway buildings are left to iD.
+
+On the OpenStreetMap wiki: [Railways](https://wiki.openstreetmap.org/wiki/Railways), [Key:railway](https://wiki.openstreetmap.org/wiki/Key:railway).

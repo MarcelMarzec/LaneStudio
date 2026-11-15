@@ -6,25 +6,25 @@ Select a sign or camera to edit it in Lane Studio's section (in place of iD's si
 
 - **Which sign**, picked from pictures of UK signs, and its code as tagged (`traffic_sign=GB:670[40]`; several on one
   post);
-- the value on it, and the way it faces (`direction=*`, typed or with **Turn round**);
+- the value on it, and the way it faces ([`direction=*`](https://wiki.openstreetmap.org/wiki/Key:direction), typed or with **Turn round**);
 - for cameras, the enforced speed.
 
 The **Signs** tool places a sign beside the road facing the clicked lane's traffic.
 
 Drawn: UK signs as their pictures beside the road, other codes as a plate with the code; variable message signs on
-their gantry (`man_made=gantry`); an average-speed camera system (`type=enforcement`) along the stretch it covers.
+their gantry ([`man_made=gantry`](https://wiki.openstreetmap.org/wiki/Tag:man_made=gantry)); an average-speed camera system ([`type=enforcement`](https://wiki.openstreetmap.org/wiki/Tag:type=enforcement)) along the stretch it covers.
 
 ## Priority on a narrow stretch, toll gantries
 
-- `priority=forward|backward` on a road: "priority over oncoming vehicles" (GB 811) where the traffic with priority
+- [`priority=forward|backward`](https://wiki.openstreetmap.org/wiki/Key:priority) on a road: "priority over oncoming vehicles" (GB 811) where the traffic with priority
   enters, "give way to oncoming vehicles" (GB 615) at the other end.
-- `highway=toll_gantry` on a road: a gantry across it.
+- [`highway=toll_gantry`](https://wiki.openstreetmap.org/wiki/Tag:highway=toll_gantry) on a road: a gantry across it.
 
 ## Street furniture
 
-Drawn upright where they stand: street lamps (`highway=street_lamp`) with their pool of light, bus stop flags
-(`highway=bus_stop`) and their shelter (`shelter=yes`), traffic mirrors (`highway=traffic_mirror`) and milestones
-(`highway=milestone`, with `distance` or `inscription`).
+Drawn upright where they stand: street lamps ([`highway=street_lamp`](https://wiki.openstreetmap.org/wiki/Tag:highway=street_lamp)) with their pool of light, bus stop flags
+([`highway=bus_stop`](https://wiki.openstreetmap.org/wiki/Tag:highway=bus_stop)) and their shelter (`shelter=yes`), traffic mirrors ([`highway=traffic_mirror`](https://wiki.openstreetmap.org/wiki/Tag:highway=traffic_mirror)) and milestones
+([`highway=milestone`](https://wiki.openstreetmap.org/wiki/Tag:highway=milestone), with [`distance`](https://wiki.openstreetmap.org/wiki/Key:distance) or [`inscription`](https://wiki.openstreetmap.org/wiki/Key:inscription)).
 
 ## Road numbers
 
@@ -33,8 +33,10 @@ junction numbers.
 
 ## Speed roundels painted on the road
 
-- A red roundel where the limit changes between two roads that both have one (a road with only `maxspeed:type` is
+- A red roundel where the limit changes between two roads that both have one (a road with only [`maxspeed:type`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:type) is
   painted with its limit), or where a lane has its own limit.
 - The national limit sign (white disc, black band) where the limit becomes the national limit; the blue motorway sign
   where a motorway starts.
 - Blue roundels where a minimum speed starts or changes.
+
+On the OpenStreetMap wiki: [Key:traffic_sign](https://wiki.openstreetmap.org/wiki/Key:traffic_sign).

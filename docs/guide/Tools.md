@@ -1,62 +1,18 @@
 # Tools
 
-Routing, Speed Limit and Measure are in the top bar. Each turns editing off while it is on; Esc leaves.
-
-## Routing
-
-- Hover a lane to see every route a vehicle in it can take, up to 450 m and four junctions on, in numbered colours,
-  with the lanes traffic comes from and the turns it may not take (red, with the reason). Click to pin; click the map
-  to let go.
-- **Car, Motorcycle, Van, Lorry, Bus, Taxi, Bicycle**: each keeps to the lanes, access tags, height and weight limits
-  and roads open to it, its access keys read down the wiki's hierarchy (`hgv`, then `motor_vehicle`, `vehicle`,
-  `access`; `goods` is vans only).
-- **Roads coloured by access** for the vehicle picked, from its most specific key tagged (the lane's `hgv:lanes`, the
-  road's `hgv:forward` or `hgv:backward` for the lanes going that way, `hgv`, then the keys above it):
-
-  | Colour | Values |
-  | --- | --- |
-  | Green | `yes`, `permissive` |
-  | Teal | `designated` |
-  | Yellow | `discouraged`, `no_turnaround` |
-  | Blue | `destination`, `delivery`, `customers` |
-  | Orange | `private`, `permit`, `agricultural`, `forestry`, `military` |
-  | Pink | `use_sidepath` |
-  | Purple | `dismount` |
-  | Red | `no`, or a lane kept for other traffic (a bus lane, for a car) |
-  | Grey | `unknown` or another value |
-
-  Faded: the value comes from a key above the vehicle's own (`access=private` for a lorry). White dashes: a
-  `:conditional` restriction changes it. Nothing tagged: the usual surface. Road areas take their own tags, else
-  their road's; for a bicycle, paths are coloured too. The panel's key counts the roads in view of each.
-- Routes follow turn arrows, lane connections and turn restrictions (via nodes and via ways), and keep to their lane
-  through short links. On a stretch too short to change lanes, a route enters a lane that leads on, not one whose
-  only way on is banned (a right turn lane whose turn is a banned U-turn).
-- **Roundabouts**: an entry's arrows name exits in order round the ring, not by angle:
-
-  | Entry lane | Leaves by |
-  | --- | --- |
-  | `left` (nearside) | The first exit |
-  | `through` | The exits between, shared in order across the `through` lanes, nearside lane first |
-  | `right` (offside), or the offside lane when none is | The last exit before going back |
-  | `reverse` | Back round to the road it came from (no other lane may) |
-
-  Arrows on the ring's own ways (`through|right|right`, or `left|through`) say which lanes leave at its next exit
-  and which go on round, matched in order the same way.
-- Cycles may ride a one-way road against it with `oneway:bicycle=no` or a contraflow cycle lane
-  (`cycleway=opposite*`, `cycleway:<side>:oneway=-1`), buses with `oneway:bus=no` or `oneway:psv=no`; drawn along
-  the road's line. Cycles keep off `motorroad=yes`.
-- Hover a footway or pavement to see the streets reachable on foot and the crossings used.
+Routing, Speed Limit and Measure are in the top bar. Each turns editing off while it is on; Esc leaves. Routing has
+a page of its own: [Routing](Routing.md).
 
 ## Speed Limit
 
 - Every lane is coloured by its limit (`maxspeed:lanes`, else its direction's `maxspeed:forward|backward`, else
-  `maxspeed`, or the limit `maxspeed:type` sets), in mph; other limits grey; roads with none red with a dashed edge.
+  [`maxspeed`](https://wiki.openstreetmap.org/wiki/Key:maxspeed), or the limit [`maxspeed:type`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:type) sets), in mph; other limits grey; roads with none red with a dashed edge.
 - UK limit types have a pattern too: black bands national limit, blue stripes motorway, white dots 20 zone,
   cross-hatching restricted road.
 - The sidebar shows the colours with counts, and lists roads in view with no limit (click one to go to it).
 - Pick a limit (or press `1`–`7` for 10–70 mph), then click a road to set `maxspeed`, or shift-click a lane to set
   `maxspeed:lanes`. Limit types are set on whole roads only. Esc lets go of the limit, then leaves.
-- **Minimum speed** does the same with `minspeed` and blue roundels.
+- **Minimum speed** does the same with [`minspeed`](https://wiki.openstreetmap.org/wiki/Key:minspeed) and blue roundels.
 
 ## Measure
 
@@ -66,7 +22,7 @@ Routing, Speed Limit and Measure are in the top bar. Each turns editing off whil
 
    | Button | Writes |
    | --- | --- |
-   | Road width | `width` (kerb to kerb) |
+   | Road width | [`width`](https://wiki.openstreetmap.org/wiki/Key:width) (kerb to kerb) |
    | This lane's width | `width:lanes` of the lane under the middle |
    | Pavement, cycle lane, hard shoulder, parking width | `sidewalk:<side>:width`, `cycleway:<side>:width`, `shoulder:<side>:width`, `parking:<side>:width` |
 
@@ -76,3 +32,5 @@ measures a selected feature.
 ## Map key
 
 The Map key pane (`G`) shows every colour, line, symbol and surface on the map beside what it means.
+
+On the OpenStreetMap wiki: [Key:maxspeed](https://wiki.openstreetmap.org/wiki/Key:maxspeed), [Key:width](https://wiki.openstreetmap.org/wiki/Key:width).

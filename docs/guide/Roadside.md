@@ -58,17 +58,19 @@ The old `cycleway=opposite_lane` (and `opposite_track`, `opposite`) on a one-way
 
 ## Hard shoulders
 
-`shoulder=*` (or per side), drawn 2.5 m wide until `shoulder:<side>:width`. Clicking one selects its road and marks
+[`shoulder=*`](https://wiki.openstreetmap.org/wiki/Key:shoulder) (or per side), drawn 2.5 m wide until `shoulder:<side>:width`. Clicking one selects its road and marks
 the field. Motorways have one unless tagged otherwise ([Road fields](Road-Fields.md#active-traffic-management)).
 
 ## Bus lanes and bus bays
 
-- `bus_bay=left|right|both` (on the stretch of road beside it): a layby the kerb goes round, with the yellow
+- [`bus_bay=left|right|both`](https://wiki.openstreetmap.org/wiki/Key:bus_bay) (on the stretch of road beside it): a layby the kerb goes round, with the yellow
   BUS STOP box in the UK.
 - Bus lanes tagged the old way (`busway:<side>=lane`) are drawn beside the lanes; the Number of lanes field offers to
   **Upgrade** them to lanes of their own (`bus:lanes=designated`, on the kerb side).
 
 ## Mapped kerbs and islands
 
-`barrier=kerb` lines on both sides give the kerb-to-kerb width, with **Set width** (Lanes section); traffic islands
+[`barrier=kerb`](https://wiki.openstreetmap.org/wiki/Tag:barrier=kerb) lines on both sides give the kerb-to-kerb width, with **Set width** (Lanes section); traffic islands
 on the road are counted there.
+
+On the OpenStreetMap wiki: [Sidewalks](https://wiki.openstreetmap.org/wiki/Sidewalks), [Key:cycleway](https://wiki.openstreetmap.org/wiki/Key:cycleway), [Key:shoulder](https://wiki.openstreetmap.org/wiki/Key:shoulder), [Key:kerb](https://wiki.openstreetmap.org/wiki/Key:kerb).

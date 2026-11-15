@@ -85,7 +85,7 @@ Before committing, look at what the change touches and check the documents that 
 | --- | --- | --- |
 | [README.md](README.md) | What Lane Studio is and does, getting started, putting it online | A feature users would notice is added or removed, or setup changes |
 | [LANES.md](docs/LANES.md) | The guide's front page: what Lane Studio is, and the guide's pages | A guide page is added, renamed or removed |
-| `docs/guide/` | The user guide, a page per area: getting started, lanes, road fields, roadside, street parking, junctions, crossings and markings, areas and surfaces, signs, railways, tools, checks | Anything users see or do, or any tag Lane Studio reads, changes |
+| `docs/guide/` | The user guide, a page per area: getting started, lanes, road fields, access, roadside, street parking, junctions, crossings and markings, areas and surfaces, signs, railways, routing, tools, checks; tags link to their OSM wiki pages | Anything users see or do, or any tag Lane Studio reads, changes |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the code fits together: modules, how a frame is drawn, editing, tools, caching | The structure, the drawing steps or a module's job changes |
 | `docs/develop/` | Running locally, the code map (where each part lives, iD's hooks), iD's core, customising, iD's accessibility | A file, folder, setup step or iD hook is added, moved or removed |
 | Walkthrough and help (`modules/lanes/ui/intro.ts`, `modules/lanes/ui/help.ts`, `_lanes.intro` and `_lanes.help` in `data/lanes.yaml`) | Lane Studio's walkthrough chapters and Help pane pages | A feature users would notice is added, changed or removed, or a part of the screen they point at moves |

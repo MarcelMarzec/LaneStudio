@@ -1,27 +1,27 @@
 # Crossings and markings
 
 Road features on a road node are set with iD's own presets and fields, plus what Lane Studio's drawing reads: a
-**Traffic signals** check on crossings (`crossing:signals`, also setting `crossing=traffic_signals|uncontrolled`),
+**Traffic signals** check on crossings ([`crossing:signals`](https://wiki.openstreetmap.org/wiki/Key:crossing:signals), also setting [`crossing=traffic_signals|uncontrolled`](https://wiki.openstreetmap.org/wiki/Key:crossing)),
 and **Type** and **Direction Affected** on traffic calming and passing places. The **Markings** tool places them.
 
-Everything on a node follows its direction (`direction=forward|backward|both` or `traffic_signals:direction`). A stop
+Everything on a node follows its direction ([`direction=forward|backward|both`](https://wiki.openstreetmap.org/wiki/Key:direction) or [`traffic_signals:direction`](https://wiki.openstreetmap.org/wiki/Key:traffic_signals:direction)). A stop
 or give way with no direction on a two-way road faces the nearest junction along the road.
 
 ## Crossings
 
-Painted by `crossing:markings` (on a node or a crossing way):
+Painted by [`crossing:markings`](https://wiki.openstreetmap.org/wiki/Key:crossing:markings) (on a node or a crossing way):
 
 | Value | Painted |
 | --- | --- |
-| `zebra`, `zebra:double`, `zebra:paired`, `zebra:bicolour` | Bars; two zebras; paired bars; alternate bars in `crossing:markings:colour` (red untagged) |
+| `zebra`, `zebra:double`, `zebra:paired`, `zebra:bicolour` | Bars; two zebras; paired bars; alternate bars in [`crossing:markings:colour`](https://wiki.openstreetmap.org/wiki/Key:crossing:markings:colour) (red untagged) |
 | `lines`, `lines:paired`, `dashes`, `dots` | Lines along both edges |
 | `ladder`, `ladder:skewed`, `ladder:paired` | Lines with bars |
-| `surface`, `pictograms` | A coloured surface; symbols |
+| [`surface`](https://wiki.openstreetmap.org/wiki/Key:surface), `pictograms` | A coloured surface; symbols |
 | `no`, untagged unmarked | Nothing (a faint outline) |
 | Several (`zebra;dots`) | All of them |
 
-With no markings tagged: `crossing=uncontrolled` or `marked` is a zebra; a crossing with signals has lines, or in
-the UK two rows of studs (pelican, puffin, toucan, pegasus, by `crossing_ref` too); `crossing_ref=tiger` is a zebra
+With no markings tagged: [`crossing=uncontrolled`](https://wiki.openstreetmap.org/wiki/Tag:crossing=uncontrolled) or `marked` is a zebra; a crossing with signals has lines, or in
+the UK two rows of studs (pelican, puffin, toucan, pegasus, by [`crossing_ref`](https://wiki.openstreetmap.org/wiki/Key:crossing_ref) too); `crossing_ref=tiger` is a zebra
 with a cycle crossing beside it. `crossing:island=yes` adds a refuge; signals add a head for each direction.
 
 ### UK crossings (Highway Code rule 191)
@@ -33,20 +33,20 @@ Belisha beacons at a zebra's ends. Drawn along the road the crossing is on.
 
 ### Tactile paving
 
-`tactile_paving=yes` on a crossing (or its way): blister paving at each end, red at signals, buff elsewhere; one end
+[`tactile_paving=yes`](https://wiki.openstreetmap.org/wiki/Tag:tactile_paving=yes) on a crossing (or its way): blister paving at each end, red at signals, buff elsewhere; one end
 for `partial` or `incorrect`.
 
 ## Stop, give way and signals
 
 | Node | Drawn |
 | --- | --- |
-| `highway=stop` | Stop line, STOP painted on each approach lane |
-| `highway=give_way` | Give way line and triangles |
-| `highway=traffic_signals` | Stop line and signal head; on a junction node, a line on every approach |
-| `traffic_signals=blinker`, `lane_control` | Their own heads, no stop line |
-| `traffic_signals=emergency` | Two red lamps |
-| `traffic_signals=ramp_meter`, `tram_priority`, `continuous_green` | As other signals |
-| `cycleway=asl` (with `direction`) | Advanced stop line: the cycles' line, the traffic's 5 m before it, the green box and a cycle symbol |
+| [`highway=stop`](https://wiki.openstreetmap.org/wiki/Tag:highway=stop) | Stop line, STOP painted on each approach lane |
+| [`highway=give_way`](https://wiki.openstreetmap.org/wiki/Tag:highway=give_way) | Give way line and triangles |
+| [`highway=traffic_signals`](https://wiki.openstreetmap.org/wiki/Tag:highway=traffic_signals) | Stop line and signal head; on a junction node, a line on every approach |
+| [`traffic_signals=blinker`](https://wiki.openstreetmap.org/wiki/Tag:traffic_signals=blinker), `lane_control` | Their own heads, no stop line |
+| [`traffic_signals=emergency`](https://wiki.openstreetmap.org/wiki/Tag:traffic_signals=emergency) | Two red lamps |
+| [`traffic_signals=ramp_meter`](https://wiki.openstreetmap.org/wiki/Tag:traffic_signals=ramp_meter), `tram_priority`, `continuous_green` | As other signals |
+| [`cycleway=asl`](https://wiki.openstreetmap.org/wiki/Tag:cycleway=asl) (with [`direction`](https://wiki.openstreetmap.org/wiki/Key:direction)) | Advanced stop line: the cycles' line, the traffic's 5 m before it, the green box and a cycle symbol |
 
 A line on a pedestrian crossing, or up to 10 m past one, stands just before the crossing.
 
@@ -60,16 +60,16 @@ painted table, hump, or hatched for rumble strips and the rest.
 
 ## Other features on roads
 
-- **Passing places** (`highway=passing_place`): a bay on the side `direction` (or `passing_place=left|right|both`)
+- **Passing places** ([`highway=passing_place`](https://wiki.openstreetmap.org/wiki/Tag:highway=passing_place)): a bay on the side `direction` (or `passing_place=left|right|both`)
   gives, both when untagged.
-- **Emergency bays** (`highway=emergency_bay` node): an orange layby 100 m long past any hard shoulder; as its own way,
-  a one-lane orange road. `emergency=phone`: an orange box with a handset.
+- **Emergency bays** ([`highway=emergency_bay`](https://wiki.openstreetmap.org/wiki/Tag:highway=emergency_bay) node): an orange layby 100 m long past any hard shoulder; as its own way,
+  a one-lane orange road. [`emergency=phone`](https://wiki.openstreetmap.org/wiki/Tag:emergency=phone): an orange box with a handset.
 - **Barriers** on roads: gates, bars, steps, wedges and the like across; bollards, blocks, planters, delineators,
   armadillos, tyres and tank traps as posts; cattle grids. On paths, any barrier is a marker. As lines: fences, walls,
   guard rails, jersey barriers, hedges, berms, delineators, bollards and the rest at their width. Not drawn on roads
   yet: `avalanche_protection`, `horse_jump`, `steeplechase_jump`, `floating_boom`, `furrow`, `kent_carriage_gap`,
   `yes`, and values the wiki leaves undescribed (`boom`, `fenced_wall`, `vehicle_arresting`…).
-- **Kerbs** (`barrier=kerb`): styled by `kerb=raised|lowered|flush|rolled|no`, or a height (`kerb=0.12`, `4 cm`):
+- **Kerbs** ([`barrier=kerb`](https://wiki.openstreetmap.org/wiki/Tag:barrier=kerb)): styled by [`kerb=raised|lowered|flush|rolled|no`](https://wiki.openstreetmap.org/wiki/Key:kerb), or a height (`kerb=0.12`, `4 cm`):
   flush up to 1 cm, lowered up to 3 cm.
 - **Fords**: a ford way is water; a ford node a band of water across the road.
 
@@ -80,20 +80,20 @@ armadillos, parking locks and bumpers, and other barriers the wiki documents).
 
 ## Road markings (`road_marking=*`)
 
-Every marking the wiki lists has a preset: search Add Point, Add Line or Add Area for it. Each is drawn from `stroke`
-(or `stroke:left|right`), `pattern`, `width`, `dasharray`, `colour`, `arrow`, `symbol` and `inscription`, edited in
+Every marking the wiki lists has a preset: search Add Point, Add Line or Add Area for it. Each is drawn from [`stroke`](https://wiki.openstreetmap.org/wiki/Key:stroke)
+(or `stroke:left|right`), [`pattern`](https://wiki.openstreetmap.org/wiki/Key:pattern), [`width`](https://wiki.openstreetmap.org/wiki/Key:width), [`dasharray`](https://wiki.openstreetmap.org/wiki/Key:dasharray), [`colour`](https://wiki.openstreetmap.org/wiki/Key:colour), [`arrow`](https://wiki.openstreetmap.org/wiki/Key:arrow), [`symbol`](https://wiki.openstreetmap.org/wiki/Key:symbol) and [`inscription`](https://wiki.openstreetmap.org/wiki/Key:inscription), edited in
 the Painted marking section:
 
 | Preset | Tags | Drawn |
 | --- | --- | --- |
-| Lane line, Edge line, Crossing edge, Stop line (line) | `road_marking=lane_divider\|edge_line\|crossing_edge\|stop_line` | `stroke=solid`, `dashed`, `double_solid`, `double_dashed`, `zigzag` |
-| Shark's teeth | `road_marking=stop_line`, `stroke=sharks_teeth` | Triangles pointing right of the way |
-| Stop line (on a road's node) | `road_marking=stop_line`, `direction=forward\|backward` | Across the lanes it faces |
-| Hatched area, Chevron area, Box junction, Bus stop marking, Crossed-out area, Crossing marking area | `road_marking=restriction\|crossing` on a closed way (`area=yes`) or multipolygon | `pattern=stripes`, `crosshatch`, `x` (corner to corner), `chevron`, `zigzag` (end to end), `chessboard`, `solid`, `none` (outline only); holes (islands) left out |
-| Painted arrow | `road_marking=arrow`, a way from base to tip | Each `arrow=*` value (`through;right`, `merge_to_left`…); banned turns (`no_right_turn`, `no_u_turn`) crossed out |
-| Painted text | `road_marking=text`, `inscription=*` | The words, read along the road or `direction` |
-| Painted symbol | `road_marking=symbol`, `symbol=bicycle\|pedestrian\|wheelchair\|hov\|airport\|motorway` | The pictogram (`hov` a diamond), `length` metres long; other symbols by name |
-| Painted traffic sign | `road_marking=traffic_sign`, `traffic_sign=*` | A speed limit (`GB:670[30]`, or `maxspeed`) as its number in a red ring |
+| Lane line, Edge line, Crossing edge, Stop line (line) | [`road_marking=lane_divider\|edge_line\|crossing_edge\|stop_line`](https://wiki.openstreetmap.org/wiki/Key:road_marking) | `stroke=solid`, `dashed`, `double_solid`, `double_dashed`, `zigzag` |
+| Shark's teeth | [`road_marking=stop_line`](https://wiki.openstreetmap.org/wiki/Tag:road_marking=stop_line), `stroke=sharks_teeth` | Triangles pointing right of the way |
+| Stop line (on a road's node) | `road_marking=stop_line`, [`direction=forward\|backward`](https://wiki.openstreetmap.org/wiki/Key:direction) | Across the lanes it faces |
+| Hatched area, Chevron area, Box junction, Bus stop marking, Crossed-out area, Crossing marking area | [`road_marking=restriction\|crossing`](https://wiki.openstreetmap.org/wiki/Key:road_marking) on a closed way ([`area=yes`](https://wiki.openstreetmap.org/wiki/Tag:area=yes)) or multipolygon | `pattern=stripes`, `crosshatch`, `x` (corner to corner), `chevron`, `zigzag` (end to end), `chessboard`, `solid`, `none` (outline only); holes (islands) left out |
+| Painted arrow | `road_marking=arrow`, a way from base to tip | Each [`arrow=*`](https://wiki.openstreetmap.org/wiki/Key:arrow) value (`through;right`, `merge_to_left`…); banned turns (`no_right_turn`, `no_u_turn`) crossed out |
+| Painted text | `road_marking=text`, [`inscription=*`](https://wiki.openstreetmap.org/wiki/Key:inscription) | The words, read along the road or `direction` |
+| Painted symbol | `road_marking=symbol`, [`symbol=bicycle\|pedestrian\|wheelchair\|hov\|airport\|motorway`](https://wiki.openstreetmap.org/wiki/Key:symbol) | The pictogram ([`hov`](https://wiki.openstreetmap.org/wiki/Key:hov) a diamond), [`length`](https://wiki.openstreetmap.org/wiki/Key:length) metres long; other symbols by name |
+| Painted traffic sign | `road_marking=traffic_sign`, [`traffic_sign=*`](https://wiki.openstreetmap.org/wiki/Key:traffic_sign) | A speed limit (`GB:670[30]`, or [`maxspeed`](https://wiki.openstreetmap.org/wiki/Key:maxspeed)) as its number in a red ring |
 
 The presets add the wiki's example tags (Box junction: `pattern=crosshatch`, `reason=junction`, `colour=yellow`; Bus stop
 marking: `pattern=zigzag`, `reason=bus_stop`). `reason=*` says why a restriction is painted. An area's outline takes
@@ -111,12 +111,12 @@ drawn round its outline at whatever width it has:
 | --- | --- |
 | Hatched area between lanes (ghost island) | `road_marking=restriction`, `pattern=stripes`, `stroke=solid` (or `dashed` for a broken edge line) |
 | Chevrons (between a motorway and a slip road) | `road_marking=restriction`, `pattern=chevron`, `stroke=solid` |
-| Lane lines beside it | `change:lanes` on the road ([Lanes](Lanes.md)), or `road_marking=lane_divider` + `stroke=*` as a way |
+| Lane lines beside it | `change:lanes` on the road ([Lanes](Lanes.md)), or `road_marking=lane_divider` + [`stroke=*`](https://wiki.openstreetmap.org/wiki/Key:stroke) as a way |
 
-`area:highway=prohibited` and `road_marking=hatched|gore_chevron` are read too (the wiki prefers the tags above).
+[`area:highway=prohibited`](https://wiki.openstreetmap.org/wiki/Tag:area:highway=prohibited) and [`road_marking=hatched|gore_chevron`](https://wiki.openstreetmap.org/wiki/Key:road_marking) are read too (the wiki prefers the tags above).
 
 - Stripes run at 45° to the area; chevrons point back at the traffic coming towards them on the nearest road, as UK
-  chevrons do (`direction=*`, the way the points face, overrides).
+  chevrons do ([`direction=*`](https://wiki.openstreetmap.org/wiki/Key:direction), the way the points face, overrides).
 - **Lanes fit round it**: lanes either side of an area between them part as wide as it is mapped. A road beside an
   area that reaches towards another road (chevrons at a slip road) meets its edge: moved away where it would run over
   it, pulled in (up to 4 m) where it stands off, its hard shoulder giving way. Lanes never move sideways more than 1 m
@@ -125,3 +125,5 @@ drawn round its outline at whatever width it has:
   (keep-clear marking); a roundabout's ring beside the hatching round its middle or chevrons outside it; a road with
   another road between it and the area. At a junction (three arms or more) the move eases to nothing, so lanes meet
   the roads there. Where two areas overlap, lanes move once, for the larger.
+
+On the OpenStreetMap wiki: [Key:crossing](https://wiki.openstreetmap.org/wiki/Key:crossing), [Key:traffic_calming](https://wiki.openstreetmap.org/wiki/Key:traffic_calming), [Key:road_marking](https://wiki.openstreetmap.org/wiki/Key:road_marking).

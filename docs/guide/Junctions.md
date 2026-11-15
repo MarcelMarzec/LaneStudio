@@ -6,8 +6,8 @@ Junctions are drawing only: nothing here writes tags.
 
 - **The main road runs through** (the roundabout ring, or the road that carries on by ref, name or class); side
   roads stop at its kerb.
-- **Lanes that carry on line up.** The road with fewer lanes is shifted (unless it has `placement`), for 30 m then
-  fading over 50 m, by at most one lane. Which lanes carry on: a `type=connectivity` relation, else `turn:lanes`.
+- **Lanes that carry on line up.** The road with fewer lanes is shifted (unless it has [`placement`](https://wiki.openstreetmap.org/wiki/Key:placement)), for 30 m then
+  fading over 50 m, by at most one lane. Which lanes carry on: a [`type=connectivity`](https://wiki.openstreetmap.org/wiki/Tag:type=connectivity) relation, else `turn:lanes`.
 - **Added and dropped lanes taper** over 25 m. A `merge_to_left|right` lane is the one that ends; a one-way slip
   road starts where the lane leading into it ends.
 - **Short links** (40 m or less, no arrows of their own, as between the halves of a dual carriageway) take the
@@ -20,7 +20,7 @@ Junctions are drawing only: nothing here writes tags.
 - **Centre turn lanes**: a two-way road joining one with centre turn lanes parts its directions over 40 m round a
   hatched ghost island; a centre lane changing direction gets a diagonal white line.
 - **Junctions closer than 25 m** are one junction: one box, the short link drawn as guide lines, or as whole lanes
-  between traffic islands (`area:highway=traffic_island`) where there are any.
+  between traffic islands ([`area:highway=traffic_island`](https://wiki.openstreetmap.org/wiki/Tag:area:highway=traffic_island)) where there are any.
 - **A two-way road dividing round an island** into one-way branches is no junction: the space between is road. Two
   branches that meet again (round a pair of bollards) are drawn side by side all the way, however sharply they part.
 - **A two-way road splitting into a pair of one-way roads** (one leaving, one coming back, even where a side road
@@ -39,15 +39,15 @@ Junctions are drawing only: nothing here writes tags.
 
 ## Roundabouts
 
-Selecting a ring segment shows the whole ring, a **turbo** toggle for that segment (`roundabout=turbo`,
+Selecting a ring segment shows the whole ring, a **turbo** toggle for that segment ([`roundabout=turbo`](https://wiki.openstreetmap.org/wiki/Tag:roundabout=turbo),
 `change:lanes=no|no`), the segments still untagged, and the turn restrictions against the six a standard turbo
 roundabout needs. Routes leave a roundabout only by the exits the entry lane's arrows point to.
 
 ## Mini-roundabouts and turning heads
 
-- `highway=mini_roundabout`: a circular carriageway (`diameter=*` or from the roads), the white disc, and a give way
+- [`highway=mini_roundabout`](https://wiki.openstreetmap.org/wiki/Tag:highway=mini_roundabout): a circular carriageway ([`diameter=*`](https://wiki.openstreetmap.org/wiki/Key:diameter) or from the roads), the white disc, and a give way
   line on each approach unless one is mapped.
-- `highway=turning_circle|turning_loop`: the road flares into the head (`turning_circle=circle|oval|square|hammer|knuckle`,
+- [`highway=turning_circle|turning_loop`](https://wiki.openstreetmap.org/wiki/Key:highway): the road flares into the head ([`turning_circle=circle|oval|square|hammer|knuckle`](https://wiki.openstreetmap.org/wiki/Key:turning_circle),
   sized by `diameter=*` or twice the road's width), kerb and pavement carried round.
 - Mapped areas (`area:highway=turning_circle`, a junction area) replace the drawn head or box, with no kerb or
   pavement of the drawn head inside; the road leading in is drawn up to the area's edge.
@@ -58,3 +58,5 @@ The roads the selected road leads on to (1 to 10, highlighted on the map), each 
 exits at its end (a roundabout's numbered) with a suggested turn and the exit's sign text, written to the selected
 lanes only when you click **Turn** or **Destination**; and **Copy lanes to the next road** (lane counts and lane
 tags, not turns or destinations).
+
+On the OpenStreetMap wiki: [Junctions](https://wiki.openstreetmap.org/wiki/Junctions), [Tag:junction=roundabout](https://wiki.openstreetmap.org/wiki/Tag:junction=roundabout), [Relation:connectivity](https://wiki.openstreetmap.org/wiki/Relation:connectivity), [Key:destination](https://wiki.openstreetmap.org/wiki/Key:destination).

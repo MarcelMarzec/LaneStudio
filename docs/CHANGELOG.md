@@ -8,6 +8,16 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.15r7
+##### 2026-Nov-15
+
+#### Website
+* Wiki: every guide page links the keys and tags it names to their OpenStreetMap wiki pages (only pages the wiki
+  has), and ends with the wiki's pages on its topic
+* Wiki: new pages Access (how access is read, the Allowed Access field, the Routing tool's colours) and Routing (from
+  Tools, in sections: using it, vehicles, how routes are found, roundabouts); Tools keeps Speed Limit, Measure and the
+  Map key; Brand logos moved to Getting started beside its setting; Tag coverage links access keys to Access
+
 # 26.11.15r6
 ##### 2026-Nov-15
 
