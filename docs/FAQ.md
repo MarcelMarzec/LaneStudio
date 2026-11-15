@@ -51,6 +51,10 @@ Use the + at the kerb: **No-waiting lines** or **Parking** ([Street parking](gui
 **How do I hide land use without hiding car parks?**
 Lane Studio pane (`K`) → **Hide land use** (Map Data's filter hides car parks too).
 
+**A road area or traffic island lies over the roads. Can I hide it?**
+Lane Studio pane (`K`) → **Hide road areas and traffic islands**: the areas are left out and the roads in them
+drawn whole from their lines.
+
 **Why are there no roads when I zoom out?**
 Data loads from zoom 16, and Mapbox serves iD's Locator Overlay only to iD's own sites. A site sets its own roads
 overlay with `locatorOverlay` or the `ID_LOCATOR_OVERLAY_URL` build setting ([API](API.md#build-settings)); the

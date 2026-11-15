@@ -23,6 +23,9 @@ Junctions are drawing only: nothing here writes tags.
   between traffic islands (`area:highway=traffic_island`) where there are any.
 - **A two-way road dividing round an island** into one-way branches is no junction: the space between is road. Two
   branches that meet again (round a pair of bollards) are drawn side by side all the way, however sharply they part.
+- **A two-way road splitting into a pair of one-way roads** (one leaving, one coming back, even where a side road
+  joins at the same node) has no through road: each one-way road is drawn where it is mapped, not shifted onto a lane
+  of the two-way road.
 - **Junction boxes** are a shade lighter than the road, with curved kerbs from road to road. Where no traffic crosses
   the main road (roundabouts, slip roads) the box is only the widening mouth. At a bend, both halves meet on the
   bisector.
@@ -46,7 +49,8 @@ roundabout needs. Routes leave a roundabout only by the exits the entry lane's a
   line on each approach unless one is mapped.
 - `highway=turning_circle|turning_loop`: the road flares into the head (`turning_circle=circle|oval|square|hammer|knuckle`,
   sized by `diameter=*` or twice the road's width), kerb and pavement carried round.
-- Mapped areas (`area:highway=turning_circle`, a junction area) replace the drawn head or box.
+- Mapped areas (`area:highway=turning_circle`, a junction area) replace the drawn head or box, with no kerb or
+  pavement of the drawn head inside; the road leading in is drawn up to the area's edge.
 
 ## Look ahead
 

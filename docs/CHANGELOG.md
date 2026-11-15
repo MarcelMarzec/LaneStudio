@@ -8,6 +8,20 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.15
+##### 2026-Nov-15
+
+#### Lanes and junctions
+* A two-way road splitting into a pair of one-way roads is no longer shifted onto one of them: each one-way road is
+  drawn where it is mapped, even with a side road at the same node (the service roads by the turning circle at
+  Carriden Industrial Estate, Bo'ness)
+* A road running into a turning circle mapped as an area (`area:highway=turning_circle`) is drawn from the junction up
+  to the area's edge, and the drawn turning head's kerb no longer shows inside the area
+
+#### Roads and signs
+* New setting **Hide road areas and traffic islands** (Lane Studio pane, `K`): leaves out `area:highway=*` road,
+  junction and turning circle areas and traffic islands, and draws the roads in them whole from their lines
+
 # 26.11.12r6
 ##### 2026-Nov-12
 

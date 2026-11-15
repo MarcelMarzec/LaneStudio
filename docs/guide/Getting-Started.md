@@ -31,6 +31,7 @@ button (a short overview and a link to the wiki page). Rarely needed fields wait
 | Hide natural features | Hides `natural=*` only |
 | Hide iD's lines and points under lanes | Leaves Lane Studio's drawing alone (still clickable; the selected road keeps its nodes) |
 | Hide land use | Hides `landuse=*` only, keeping car parks |
+| Hide road areas and traffic islands | Hides `area:highway=*` carriageways, junctions and turning circles and traffic islands; the roads in them are drawn whole |
 | Show brand logos | A shop's or restaurant's logo (Wikidata `brand:wikidata`) in place of iD's marker |
 | Privacy | iD's third-party icons setting (iD's Preferences pane is left out) |
 | About | What's new, and links to the website, privacy policy and contact page |

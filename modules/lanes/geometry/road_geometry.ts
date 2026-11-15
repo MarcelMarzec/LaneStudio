@@ -747,6 +747,7 @@ function angleBetween(a: Vec2, b: Vec2): number {
  * only the side roads stop at its kerb.
  */
 function throughPair(arms: Arm[]): [number, number] | null {
+    const pair = oneWayPair(arms);
     let best: { pair: [number, number]; score: number } | null = null;
     for (let i = 0; i < arms.length; i++) {
         for (let j = i + 1; j < arms.length; j++) {
@@ -757,6 +758,8 @@ function throughPair(arms: Arm[]): [number, number] | null {
             const ring = isRing(a.way) && isRing(b.way);
             const ta = a.way.tags;
             const tb = b.way.tags;
+            // a two-way road splitting into a pair of one-way roads carries on along neither of them alone
+            if (pair && (pair.includes(i) !== pair.includes(j))) continue;
             if (!ring && deviation > 35 * Math.PI / 180) continue;
             if (ring && deviation > 80 * Math.PI / 180) continue;
             // a fork (a dual carriageway splitting): nothing runs straight through, so every arm stops where it meets
@@ -782,6 +785,32 @@ function throughPair(arms: Arm[]): [number, number] | null {
         }
     }
     return best?.pair ?? null;
+}
+
+
+/**
+ * Where a two-way road splits into a pair of one-way roads, one taking traffic away and the other bringing it back
+ * (the two carriageways of a dual carriageway, or a road round an island, as at the turning circle of Carriden
+ * Industrial Estate, Bo'ness, w1579904688 and w1579904690), the two one-way arms, or null. Each one-way road is drawn
+ * where it is mapped: neither is shifted to line its lane up with a lane of the two-way road.
+ */
+function oneWayPair(arms: Arm[]): [number, number] | null {
+    if (!arms.every(arm => arm.layout?.model)) return null;
+    const travels = (arm: Arm, approach: boolean) => arm.layout.model.lanes[armLaneDirection(arm, approach)].length > 0;
+    const inOnly = (arm: Arm) => travels(arm, true) && !travels(arm, false);
+    const outOnly = (arm: Arm) => travels(arm, false) && !travels(arm, true);
+    for (let i = 0; i < arms.length; i++) {
+        for (let j = 0; j < arms.length; j++) {
+            if (i === j || !inOnly(arms[i]) || !outOnly(arms[j]) || isRing(arms[i].way) || isRing(arms[j].way)) continue;
+            if (angleBetween(arms[i].direction, arms[j].direction) > 80) continue;
+            // the two-way road they split from, roughly opposite them
+            const middle = unit(add(arms[i].direction, arms[j].direction));
+            const stem = arms.some((arm, k) => k !== i && k !== j && !arm.layout.model.oneway &&
+                angleBetween(scale(arm.direction, -1), middle) < 60);
+            if (stem) return [i, j];
+        }
+    }
+    return null;
 }
 
 

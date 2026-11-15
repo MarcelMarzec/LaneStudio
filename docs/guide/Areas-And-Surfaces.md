@@ -21,7 +21,7 @@ ones split in two. A free path end is rounded. Steps with a ramp (`ramp`, `ramp:
 | --- | --- |
 | Road areas (`primary`, `residential`, `service`, `passing_place`, `escape`…) | The road's surface, the road fitted inside |
 | Junction areas (`junction=yes`, `roundabout`, `y_junction`) | The junction's surface, in place of the box |
-| `turning_circle`, `turning_loop` | In place of the drawn turning head |
+| `turning_circle`, `turning_loop` | In place of the drawn turning head; the road leading in drawn up to its edge |
 | Footway, pedestrian, path, steps, bridleway, corridor | Pavement |
 | Cycleway | Cycleway; with `cycleway=crossing`, a dashed edge |
 | Verge | Grass |
@@ -34,6 +34,8 @@ ones split in two. A free path end is rounded. Steps with a ramp (`ramp`, `ramp:
 Add Area finds each: iD's Road Area, Footway Area and Traffic Island, and Lane Studio's Cycleway, Path, Pedestrian
 street, Steps and Prohibited road areas. `emergency` is read but not offered: the wiki maps such hatching as
 `road_marking=restriction`.
+
+To see the roads under the areas, turn on **Hide road areas and traffic islands** in the Lane Studio pane (`K`).
 
 A road mapped as a routable area (`area=yes` + `highway=*`) is a plaza or service area: ways inside it draw only
 their lines, arrows and special lanes. Roads are fitted into way and multipolygon areas alike (a multipolygon by its
