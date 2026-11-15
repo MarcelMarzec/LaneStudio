@@ -1,6 +1,6 @@
 # Tag coverage
 
-Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draws it: 9965 in all, 578 rendered, 847 could be, 8540 cannot be. One page per wiki group.
+Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draws it: 9975 in all, 597 rendered, 846 could be, 8532 cannot be. One page per wiki group.
 
 | Lane Studio | Means |
 | --- | --- |
@@ -23,7 +23,7 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Bicycles](tags/Tags-Bicycles.md) | 52 | 0 | 52 | 0 |
 | [Boundaries](tags/Tags-Boundaries.md) | 81 | 0 | 0 | 81 |
 | [Bridges](tags/Tags-Bridges.md) | 43 | 4 | 38 | 1 |
-| [Buildings](tags/Tags-Buildings.md) | 300 | 0 | 0 | 300 |
+| [Buildings](tags/Tags-Buildings.md) | 304 | 0 | 0 | 304 |
 | [Buses](tags/Tags-Buses.md) | 1 | 0 | 1 | 0 |
 | [Changeset](tags/Tags-Changeset.md) | 6 | 0 | 0 | 6 |
 | [Children](tags/Tags-Children.md) | 80 | 0 | 0 | 80 |
@@ -42,7 +42,7 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [GPS](tags/Tags-GPS.md) | 8 | 0 | 0 | 8 |
 | [Hazards](tags/Tags-Hazards.md) | 73 | 0 | 0 | 73 |
 | [Health](tags/Tags-Health.md) | 141 | 0 | 0 | 141 |
-| [Highways](tags/Tags-Highways.md) | 304 | 143 | 146 | 15 |
+| [Highways](tags/Tags-Highways.md) | 304 | 144 | 145 | 15 |
 | [Hiking](tags/Tags-Hiking.md) | 7 | 0 | 0 | 7 |
 | [Historic](tags/Tags-Historic.md) | 250 | 0 | 5 | 245 |
 | [Import](tags/Tags-Import.md) | 19 | 0 | 0 | 19 |
@@ -52,7 +52,7 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Landuse](tags/Tags-Landuse.md) | 119 | 2 | 0 | 117 |
 | [Leisure](tags/Tags-Leisure.md) | 133 | 0 | 1 | 132 |
 | [Lifecycle](tags/Tags-Lifecycle.md) | 57 | 3 | 0 | 54 |
-| [Man made](tags/Tags-Man-Made.md) | 352 | 2 | 12 | 338 |
+| [Man made](tags/Tags-Man-Made.md) | 355 | 2 | 12 | 341 |
 | [Marine](tags/Tags-Marine.md) | 14 | 0 | 0 | 14 |
 | [Marine navigation](tags/Tags-Marine-Navigation.md) | 410 | 0 | 0 | 410 |
 | [Maritime](tags/Tags-Maritime.md) | 52 | 0 | 0 | 52 |
@@ -74,10 +74,10 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Railways](tags/Tags-Railways.md) | 270 | 45 | 221 | 4 |
 | [References](tags/Tags-References.md) | 485 | 1 | 0 | 484 |
 | [Religion](tags/Tags-Religion.md) | 58 | 0 | 0 | 58 |
-| [Restrictions](tags/Tags-Restrictions.md) | 423 | 99 | 41 | 283 |
+| [Restrictions](tags/Tags-Restrictions.md) | 423 | 116 | 41 | 266 |
 | [Riding](tags/Tags-Riding.md) | 1 | 0 | 0 | 1 |
-| [Routes](tags/Tags-Routes.md) | 152 | 1 | 0 | 151 |
-| [Shops](tags/Tags-Shops.md) | 363 | 0 | 0 | 363 |
+| [Routes](tags/Tags-Routes.md) | 152 | 2 | 0 | 150 |
+| [Shops](tags/Tags-Shops.md) | 362 | 0 | 0 | 362 |
 | [Social facilities](tags/Tags-Social-Facilities.md) | 20 | 0 | 0 | 20 |
 | [Social networks](tags/Tags-Social-Networks.md) | 4 | 0 | 0 | 4 |
 | [Sports](tags/Tags-Sports.md) | 286 | 0 | 0 | 286 |
@@ -87,16 +87,16 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Vending machines](tags/Tags-Vending-Machines.md) | 65 | 0 | 1 | 64 |
 | [Waste processing](tags/Tags-Waste-Processing.md) | 36 | 0 | 2 | 34 |
 | [Water](tags/Tags-Water.md) | 26 | 0 | 0 | 26 |
-| [Water management](tags/Tags-Water-Management.md) | 58 | 0 | 1 | 57 |
+| [Water management](tags/Tags-Water-Management.md) | 59 | 0 | 1 | 58 |
 | [Waterways](tags/Tags-Waterways.md) | 83 | 0 | 1 | 82 |
-| [Other](tags/Tags-Other.md) | 423 | 7 | 26 | 390 |
+| [Other](tags/Tags-Other.md) | 426 | 7 | 26 | 393 |
 
 ## How it is made
 
-- Read from the wiki on 2026-11-12: every English `Key:` and `Tag:` page in the trees of
+- Read from the wiki on 2026-11-15: every English `Key:` and `Tag:` page in the trees of
   [Category:Tags](https://wiki.openstreetmap.org/wiki/Category:Tags) (845 categories,
   5 levels deep) and [Category:Features](https://wiki.openstreetmap.org/wiki/Category:Features)
-  (6544 categories, 5 levels), translations left out, going
+  (6545 categories, 5 levels), translations left out, going
   deeper until a level adds no more keys or tags; and every one [Map features](https://wiki.openstreetmap.org/wiki/Map_features)
   links to.
 - Kept: the statuses approved, de facto, in use, imported, undefined and none given. Left out: proposed and voting

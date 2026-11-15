@@ -10,6 +10,7 @@ import { actionAddMarking } from '../actions/add_marking';
 import { actionAddSign } from '../actions/add_sign';
 import { laneState } from '../core/lane_state';
 import { laneRouting } from '../core/lane_routing';
+import { accessClassNames, laneAccess } from '../core/route_access';
 import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind } from '../core/lane_speed';
 import { drawRoutes, laneUnder } from './routing';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
@@ -896,6 +897,13 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         // turning circle), the colour of the roads that run into it
         group('areas').selectAll<SVGPathElement, { id: string; kind: string; polygon: Vec2[] }>('path.street-area-carriageway')
             .each(function(d) {
+                // the Routing tool colours a road area by its own access tags, else its road's
+                for (const name of [...this.classList].filter(c => c.startsWith('access-'))) this.classList.remove(name);
+                if (routing.active()) {
+                    const roadID = areaRoads.get(d.id);
+                    const access = laneAccess(tagsOf(d.id), routing.profile()) ?? (roadID ? laneAccess(tagsOf(roadID), routing.profile()) : null);
+                    for (const name of accessClassNames(access).trim().split(' ').filter(Boolean)) this.classList.add(name);
+                }
                 for (const name of [...this.classList].filter(c => c.startsWith('speed-'))) this.classList.remove(name);
                 if (!speed.active()) return;
                 const roadID = areaRoads.get(d.id);
@@ -928,20 +936,23 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const kind = measure === 'maxspeed' && cls !== 'missing' ? speedTypeKind(lane.values['maxspeed:lanes'], road, lane.values['maxspeed:type:lanes']) : null;
             return ` speed-${cls}` + (kind ? ` speed-kind-${kind}` : '');
         };
+        // (the Routing tool colours each lane by the access the vehicle picked has there; untagged lanes as usual)
+        const routeAccessClass = (piece: RoadPiece, lane: LaneInfo) => !routing.active() ? ''
+            : accessClassNames(laneAccess(tagsOf(piece.wayID), routing.profile(), { values: lane.values, kind: lane.kind, direction: lane.ref.direction }));
         const laneClass = (piece: RoadPiece, lane: LaneInfo) => {
             const surface = surfaceGroup(lane.values['surface:lanes']) ?? surfaceOf(piece);
             // (a coloured surface, `surface:colour` or `surface:colour:lanes`, such as a red bus lane)
             const colour = lane.values['surface:colour:lanes'] || tagsOf(piece.wayID)['surface:colour'];
             return `lane lane-${lane.kind} lane-${lane.ref.direction}` + (surface ? ` surface-${surface}` : '') + coveredTag(piece.wayID) +
                 (colour ? ` surface-colour-${markingColour({ colour })}` : '') +
-                (building(piece) ? ' lanes-construction' : '') + speedClass(piece, lane);
+                (building(piece) ? ' lanes-construction' : '') + speedClass(piece, lane) + routeAccessClass(piece, lane);
         };
         const laneShapes = new Map<string, { key: string; cls: string; polygons: Vec2[][] }>();
         for (const piece of shown) {
             piece.layout.lanes.forEach((lane, i) => {
                 // (inside a road mapped as an area, its surface stands for the general lanes, except in the Speed Limit tool)
                 // (but for its stretch outside the area)
-                const polygons = inArea.has(piece) && lane.kind === 'general' && !speed.active() ? outsidePolygons(piece.lanes[i], ownAreas(piece))
+                const polygons = inArea.has(piece) && lane.kind === 'general' && !speed.active() && !routing.active() ? outsidePolygons(piece.lanes[i], ownAreas(piece))
                     : [piece.lanes[i]];
                 if (!polygons.length) return;
                 const cls = laneClass(piece, lane);
@@ -1092,7 +1103,13 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         joinPaths(group('structures'), structures, d => d.key,
             d => `structure structure-${d.kind}` + (d.variant ? ` ${d.variant}` : ''), d => path(d.points, d.closed));
         _layer.selectAll<SVGPathElement, { key: string }>('g.lanes-paths path.street-path, g.lanes-paths-over path.street-path')
-            .each(classChanged('lanes-covered', d => !!d && isCovered(tagsOf(d.key))));
+            .each(classChanged('lanes-covered', d => !!d && isCovered(tagsOf(d.key))))
+            // (and paths, for a bicycle, by their access in the Routing tool)
+            .each(function(d) {
+                const names = d && routing.active() ? accessClassNames(laneAccess(tagsOf(d.key), routing.profile())).trim().split(' ').filter(Boolean) : [];
+                for (const name of [...this.classList].filter(c => c.startsWith('access-') && !names.includes(c))) this.classList.remove(name);
+                for (const name of names) this.classList.add(name);
+            });
 
 
         /* turn arrows */
@@ -1806,7 +1823,15 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     // the Routing tool finds the lane under the pointer from the pieces drawn
     routing.setLaneLocator((point, wayID) => laneUnder(_pieces, context.graph(), loc => projection(loc) as Vec2, point, wayID ? Infinity : 8, wayID));
     // the routes follow the pointer: only they are redrawn
+    // (the roads are coloured by access for the vehicle picked: turning the tool on or off, or picking another vehicle,
+    // redraws them; the pointer moving redraws only the routes)
+    let _routeColours = '';
     routing.on('change.layer', () => {
+        const colours = routing.active() ? routing.profile() : '';
+        if (colours !== _routeColours) {
+            _routeColours = colours;
+            draw();
+        }
         if (!_layer.empty()) drawRoutes(_layer.select<SVGGElement>('g.lanes-routes'), context, _pieces, loc => projection(loc) as Vec2);
     });
 

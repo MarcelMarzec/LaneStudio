@@ -299,3 +299,71 @@
     display: flex;
     justify-content: space-between;
 }
+
+
+/* the Routing tool: lanes (and paths) coloured by the access the vehicle picked has there (wiki: Key:access), from its
+   own key in full, faded where it comes from a key above it (motor_vehicle, vehicle, access), edged with white dashes
+   where a conditional restriction changes it; lanes nothing is tagged for keep their surface */
+.ideditor.lane-studio {
+    --access-yes: #2ecc71;
+    --access-designated: #00897b;
+    --access-discouraged: #f1c40f;
+    --access-destination: #3498db;
+    --access-permission: #e67e22;
+    --access-sidepath: #ff79c6;
+    --access-dismount: #9b59b6;
+    --access-no: #e74c3c;
+    --access-unknown: #95a5a6;
+}
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path[class*=' access-'] {
+    fill-opacity: 0.85;
+    stroke: rgba(0, 0, 0, 0.35);
+    stroke-width: 0.5;
+}
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path.access-inherited { fill-opacity: 0.5; }
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path.access-conditional {
+    stroke: #fff;
+    stroke-width: 1.5;
+    stroke-dasharray: 5 3;
+}
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path.access-yes, .ideditor.lane-studio .access-swatch.access-yes { fill: var(--access-yes); background: var(--access-yes); }
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path.access-designated, .ideditor.lane-studio .access-swatch.access-designated { fill: var(--access-designated); background: var(--access-designated); }
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path.access-discouraged, .ideditor.lane-studio .access-swatch.access-discouraged { fill: var(--access-discouraged); background: var(--access-discouraged); }
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path.access-destination, .ideditor.lane-studio .access-swatch.access-destination { fill: var(--access-destination); background: var(--access-destination); }
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path.access-permission, .ideditor.lane-studio .access-swatch.access-permission { fill: var(--access-permission); background: var(--access-permission); }
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path.access-sidepath, .ideditor.lane-studio .access-swatch.access-sidepath { fill: var(--access-sidepath); background: var(--access-sidepath); }
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path.access-dismount, .ideditor.lane-studio .access-swatch.access-dismount { fill: var(--access-dismount); background: var(--access-dismount); }
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path.access-no, .ideditor.lane-studio .access-swatch.access-no { fill: var(--access-no); background: var(--access-no); }
+.ideditor.lane-studio.lanes-routing .lanes-layer .lanes-group path.access-unknown, .ideditor.lane-studio .access-swatch.access-unknown { fill: var(--access-unknown); background: var(--access-unknown); }
+/* in the key */
+.ideditor.lane-studio .access-key {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.ideditor.lane-studio .access-key li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+}
+.ideditor.lane-studio .access-key li.none-in-view { opacity: 0.5; }
+.ideditor.lane-studio .access-swatch {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 12px;
+    border-radius: 3px;
+}
+.ideditor.lane-studio .access-swatch.access-inherited-sample { opacity: 0.55; }
+.ideditor.lane-studio .access-swatch.access-conditional-sample { outline: 1.5px dashed var(--text-color, #333); outline-offset: -1px; background: transparent; }
+.ideditor.lane-studio .access-key-label { flex: 1 1 auto; }
+.ideditor.lane-studio .access-key-values {
+    color: var(--text-color-muted, #777);
+    font-size: 12px;
+}
+.ideditor.lane-studio .access-key-count {
+    flex: 0 0 auto;
+    color: var(--text-color-muted, #777);
+    font-size: 12px;
+    white-space: nowrap;
+}

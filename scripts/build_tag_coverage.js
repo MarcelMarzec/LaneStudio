@@ -230,8 +230,9 @@ const hidden = /(^location$|underground|^pipeline|^cable|^substance|^culvert|=cu
 const height = /^(height|min_height|building:|roof:|building_levels|min_level|max_level|levels)/;
 
 // keys the Routing tool reads from its vehicle profiles (lists in geometry/routing.ts, not `tags.key`)
-const routingKeys = new Set(['access', 'motor_vehicle', 'motorcar', 'vehicle', 'bus', 'psv', 'hgv', 'goods', 'bicycle', 'foot', 'except',
-    'restriction', 'maxheight', 'maxweight']);
+// (and colours the roads by, for each vehicle, down the wiki's hierarchy: model/access.ts)
+const routingKeys = new Set(['access', 'motor_vehicle', 'motorcar', 'motorcycle', 'vehicle', 'bus', 'psv', 'taxi', 'hgv', 'goods', 'bicycle', 'foot',
+    'except', 'restriction', 'maxheight', 'maxweight']);
 // keys Lane Studio builds from parts (`cycleway:${side}:width`, `parking:${side}:…`, `*:lanes`)
 // (keys with fixed names, `crossing:*`, `railway:signal:*`, `maxspeed:*`, are found in the code as they are written)
 const families = ['cycleway:', 'sidewalk:', 'parking:', 'shoulder:', 'busway:', 'turn:lanes', 'destination:', 'overtaking:', 'change:',

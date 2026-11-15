@@ -8,6 +8,20 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.15r4
+##### 2026-Nov-15
+
+#### Routing tool
+* Roads turn the colour of their access for the vehicle picked: red where it may not go (`hgv=no`, or a bus lane for
+  a car), green where it may (`yes`), teal where it is designated, yellow where discouraged, blue for destination,
+  delivery or customers only, orange for private or permit; faded where the value comes from a key above the
+  vehicle's own (`access=private` for a lorry), edged with white dashes where a `:conditional` restriction changes
+  it, and the usual surface where nothing is tagged. Road areas take their own tags (the `hgv=yes` turning circle at
+  Carriden Industrial Estate, Bo'ness); the panel's key counts the roads in view of each colour
+* New vehicles: Motorcycle, Van (`goods`) and Taxi
+* Access keys are read down the wiki's hierarchy for each vehicle: a lorry no longer takes `goods=*`, which is vans
+  only
+
 # 26.11.15r3
 ##### 2026-Nov-15
 

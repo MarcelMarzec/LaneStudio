@@ -188,8 +188,10 @@ require __DIR__ . '/includes/head.php';
         <div class="feature-icon"><?php icon_route(); ?></div>
         <h3>See where a lane goes</h3>
         <p>
-          Hover a lane to see every route a car, bus, bicycle or lorry can take from it, following turn
-          arrows, lane connections and turn restrictions — a quick way to catch a wrong arrow.
+          Hover a lane to see every route a car, van, lorry, bus, taxi or bicycle can take from it, following
+          turn arrows, lane connections and turn restrictions — a quick way to catch a wrong arrow. The roads
+          turn the colour of their access for that vehicle: red where it may not go, green where it may,
+          yellow where it is discouraged, blue for deliveries or destination only.
         </p>
       </article>
 

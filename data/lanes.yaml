@@ -37,7 +37,7 @@ en:
       drawn: "What you tag is drawn at once: pavements, cycle lanes with their symbols, parking bays, yellow lines, bus lanes. Open the Map key (G) to see what every colour means."
     tools:
       title: Tools
-      routing: "Routing shows every route a car, bus, bicycle or lorry can take from the lane under the pointer, following turn arrows, lane connections and turn restrictions."
+      routing: "Routing shows every route a car, van, lorry, bus, bicycle and more can take from the lane under the pointer, following turn arrows, lane connections and turn restrictions. The roads turn the colour of their access for the vehicle picked."
       speed: "Speed Limit colours every lane by its limit, with roads missing one in red. Pick a limit and click roads to set it."
       measure: "Measure measures a distance on the imagery and sets it as a road, lane, pavement or cycle lane width."
       key: "The Map key (G) explains every colour, line and symbol on the map."
@@ -82,7 +82,7 @@ en:
     tools:
       title: Tools
       text: |
-        - **Routing**: hover a lane to see every route from it for a car, bus, bicycle or lorry; click to pin. Hover a footway for routes on foot.
+        - **Routing**: hover a lane to see every route from it for a car, motorcycle, van, lorry, bus, taxi or bicycle; click to pin. Hover a footway for routes on foot. Roads are coloured by their access for the vehicle picked (red no, green yes, yellow discouraged, blue destination, orange private), keyed in the panel.
         - **Speed Limit**: lanes coloured by their limit, roads without one in red. Pick a limit (`1` to `7`), click a road to set it, shift-click a lane.
         - **Measure**: click two points on the imagery, then set the distance as a road, lane, pavement, cycle lane, hard shoulder or parking width.
         - **Map key** (`G`): what every colour, line and symbol means.
@@ -1065,11 +1065,29 @@ en:
     title: Routing
     close: Back to Selection
     vehicle: Vehicle
+    access:
+      title: "Access ({vehicle})"
+      classes:
+        "yes": "Open"
+        designated: "Signed or built for it"
+        discouraged: "Discouraged"
+        destination: "To a destination only"
+        permission: "With permission only"
+        sidepath: "Use the path beside it"
+        dismount: "Dismount and walk"
+        "no": "Not allowed"
+        unknown: "Not known"
+      untagged: "Nothing tagged: the usual surface"
+      inherited: "Faded: from a key above its own (motor_vehicle, vehicle, access)"
+      conditional: "White dashes: changes at times or with conditions (:conditional)"
     profiles:
       car: Car
-      bus: Bus
-      bicycle: Bicycle
+      motorcycle: Motorcycle
+      van: Van
       hgv: Lorry
+      bus: Bus
+      taxi: Taxi
+      bicycle: Bicycle
     hint: Hover over a lane to see where traffic in it can go and where it comes from, or over a footway or pavement to see where people can walk. Click to keep the routes on screen.
     pinned: "Pinned: click the map to let go."
     from: "{road}, lane {lane}"

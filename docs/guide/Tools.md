@@ -7,7 +7,27 @@ Routing, Speed Limit and Measure are in the top bar. Each turns editing off whil
 - Hover a lane to see every route a vehicle in it can take, up to 450 m and four junctions on, in numbered colours,
   with the lanes traffic comes from and the turns it may not take (red, with the reason). Click to pin; click the map
   to let go.
-- **Car, Bus, Bicycle, Lorry**: each keeps to the lanes, access tags, height and weight limits and roads open to it.
+- **Car, Motorcycle, Van, Lorry, Bus, Taxi, Bicycle**: each keeps to the lanes, access tags, height and weight limits
+  and roads open to it, its access keys read down the wiki's hierarchy (`hgv`, then `motor_vehicle`, `vehicle`,
+  `access`; `goods` is vans only).
+- **Roads coloured by access** for the vehicle picked, from its most specific key tagged (the lane's `hgv:lanes`, the
+  road's `hgv:forward` or `hgv:backward` for the lanes going that way, `hgv`, then the keys above it):
+
+  | Colour | Values |
+  | --- | --- |
+  | Green | `yes`, `permissive` |
+  | Teal | `designated` |
+  | Yellow | `discouraged`, `no_turnaround` |
+  | Blue | `destination`, `delivery`, `customers` |
+  | Orange | `private`, `permit`, `agricultural`, `forestry`, `military` |
+  | Pink | `use_sidepath` |
+  | Purple | `dismount` |
+  | Red | `no`, or a lane kept for other traffic (a bus lane, for a car) |
+  | Grey | `unknown` or another value |
+
+  Faded: the value comes from a key above the vehicle's own (`access=private` for a lorry). White dashes: a
+  `:conditional` restriction changes it. Nothing tagged: the usual surface. Road areas take their own tags, else
+  their road's; for a bicycle, paths are coloured too. The panel's key counts the roads in view of each.
 - Routes follow turn arrows, lane connections and turn restrictions (via nodes and via ways), and keep to their lane
   through short links. On a stretch too short to change lanes, a route enters a lane that leads on, not one whose
   only way on is banned (a right turn lane whose turn is a banned U-turn).

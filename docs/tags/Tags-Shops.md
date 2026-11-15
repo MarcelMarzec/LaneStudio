@@ -1,7 +1,7 @@
 # Tags: Shops
 
 The wiki's keys and tags in its group "shops", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-363 keys and tags: 0 rendered, 0 could be, 363 cannot be.
+362 keys and tags: 0 rendered, 0 could be, 362 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -336,7 +336,6 @@ The wiki's keys and tags in its group "shops", and whether Lane Studio draws the
 | [`shop=tyres`](https://wiki.openstreetmap.org/wiki/Tag:shop=tyres) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`shop=vacuum_cleaner`](https://wiki.openstreetmap.org/wiki/Tag:shop=vacuum_cleaner) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`shop=variety_store`](https://wiki.openstreetmap.org/wiki/Tag:shop=variety_store) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`shop=vending_machine`](https://wiki.openstreetmap.org/wiki/Tag:shop=vending_machine) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`shop=video`](https://wiki.openstreetmap.org/wiki/Tag:shop=video) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`shop=video_games`](https://wiki.openstreetmap.org/wiki/Tag:shop=video_games) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`shop=video_restore`](https://wiki.openstreetmap.org/wiki/Tag:shop=video_restore) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

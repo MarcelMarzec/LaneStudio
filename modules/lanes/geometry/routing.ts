@@ -6,6 +6,7 @@ import type { osmRelation } from '../../osm/relation';
 import type { osmWay } from '../../osm/way';
 import { isLaneRoad } from '../core/roads';
 import { parseTurn, type LaneDirection, type LaneRef } from '../model';
+import { accessChain } from '../model/access';
 import { cumulativeLengths, metricFrame, pointAlong, polylineLength, scale, unit } from './frame';
 import { parseWidth, type LaneLayout } from './layout';
 import { cachedLayout, junctionRules, type Arm } from './road_geometry';
@@ -16,10 +17,12 @@ import { cachedLayout, junctionRules, type Arm } from './road_geometry';
  * someone walking from a footway can get to.
  */
 
-export type RoutingProfile = 'car' | 'bus' | 'bicycle' | 'hgv';
+export type RoutingProfile = 'car' | 'motorcycle' | 'van' | 'hgv' | 'bus' | 'taxi' | 'bicycle';
 
 interface Profile {
-    /** access keys, most specific first (wiki: Key:access) */
+    /** the vehicle's own access key (wiki: Key:access#Land-based transportation) */
+    mode: string;
+    /** its access keys, most specific first, down the wiki's hierarchy (`hgv`, `motor_vehicle`, `vehicle`, `access`) */
     access: string[];
     /** the `except=*` values that lift a turn restriction, and the `restriction:*` suffix that adds one */
     except: string[];
@@ -34,19 +37,33 @@ interface Profile {
 
 export const routingProfiles: Record<RoutingProfile, Profile> = {
     car: {
-        access: ['motorcar', 'motor_vehicle', 'vehicle', 'access'], except: ['motorcar', 'motor_vehicle'],
+        mode: 'motorcar', access: accessChain('motorcar'), except: ['motorcar', 'motor_vehicle'],
         kinds: new Set(['general', 'hov', 'variable']), height: 1.6, weight: 2, banned: new Set()
     },
-    bus: {
-        access: ['bus', 'psv', 'motor_vehicle', 'vehicle', 'access'], except: ['psv', 'bus'],
-        kinds: new Set(['general', 'bus', 'psv', 'hov', 'variable']), height: 4.4, weight: 18, banned: new Set()
+    motorcycle: {
+        mode: 'motorcycle', access: accessChain('motorcycle'), except: ['motorcycle', 'motor_vehicle'],
+        kinds: new Set(['general', 'hov', 'variable']), height: 1.5, weight: 0.5, banned: new Set()
     },
+    // a light goods vehicle (wiki: Key:goods), up to 3.5 t
+    van: {
+        mode: 'goods', access: accessChain('goods'), except: ['goods', 'motor_vehicle'],
+        kinds: new Set(['general', 'hov', 'variable']), height: 2.8, weight: 3.5, banned: new Set()
+    },
+    // (goods and hgv are siblings in the wiki's hierarchy: `goods=*` says nothing of lorries)
     hgv: {
-        access: ['hgv', 'goods', 'motor_vehicle', 'vehicle', 'access'], except: ['hgv', 'goods'],
+        mode: 'hgv', access: accessChain('hgv'), except: ['hgv', 'goods'],
         kinds: new Set(['general', 'variable']), height: 4.2, weight: 38, banned: new Set()
     },
+    bus: {
+        mode: 'bus', access: accessChain('bus'), except: ['psv', 'bus'],
+        kinds: new Set(['general', 'bus', 'psv', 'hov', 'variable']), height: 4.4, weight: 18, banned: new Set()
+    },
+    taxi: {
+        mode: 'taxi', access: accessChain('taxi'), except: ['psv', 'taxi'],
+        kinds: new Set(['general', 'taxi', 'psv', 'hov', 'variable']), height: 1.8, weight: 2.5, banned: new Set()
+    },
     bicycle: {
-        access: ['bicycle', 'vehicle', 'access'], except: ['bicycle'],
+        mode: 'bicycle', access: accessChain('bicycle'), except: ['bicycle'],
         // UK bus lanes are open to cycles unless signed otherwise
         kinds: new Set(['general', 'bicycle', 'bus', 'psv']), height: 0, weight: 0, banned: new Set(['motorway', 'motorway_link'])
     }

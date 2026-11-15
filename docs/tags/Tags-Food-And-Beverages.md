@@ -152,7 +152,7 @@ The wiki's keys and tags in its group "food and beverages", and whether Lane Stu
 | [`drink:iced_coffee=*`](https://wiki.openstreetmap.org/wiki/Key:drink:iced_coffee) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`drink:milk=*`](https://wiki.openstreetmap.org/wiki/Key:drink:milk) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`drink:raw_milk=*`](https://wiki.openstreetmap.org/wiki/Key:drink:raw_milk) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`drink:sparkling_wine=*`](https://wiki.openstreetmap.org/wiki/Key:drink:sparkling_wine) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`drink:sparkling_wine=*`](https://wiki.openstreetmap.org/wiki/Key:drink:sparkling_wine) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`drink:tea=*`](https://wiki.openstreetmap.org/wiki/Key:drink:tea) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`drink:viez=*`](https://wiki.openstreetmap.org/wiki/Key:drink:viez) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`drink:viez=bottled`](https://wiki.openstreetmap.org/wiki/Tag:drink:viez=bottled) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

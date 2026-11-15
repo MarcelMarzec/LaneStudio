@@ -62,7 +62,7 @@ The wiki's keys and tags in its group "offices", and whether Lane Studio draws t
 | [`office=*`](https://wiki.openstreetmap.org/wiki/Key:office) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`office=accountant`](https://wiki.openstreetmap.org/wiki/Tag:office=accountant) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`office=adoption_agency`](https://wiki.openstreetmap.org/wiki/Tag:office=adoption_agency) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`office=advertising_agency`](https://wiki.openstreetmap.org/wiki/Tag:office=advertising_agency) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`office=advertising_agency`](https://wiki.openstreetmap.org/wiki/Tag:office=advertising_agency) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`office=airline`](https://wiki.openstreetmap.org/wiki/Tag:office=airline) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`office=architect`](https://wiki.openstreetmap.org/wiki/Tag:office=architect) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`office=archive`](https://wiki.openstreetmap.org/wiki/Tag:office=archive) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

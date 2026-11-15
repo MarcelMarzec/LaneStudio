@@ -1,7 +1,7 @@
 # Tags: Other
 
 The wiki's keys and tags in its group "other", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-423 keys and tags: 7 rendered, 26 could be, 390 cannot be.
+426 keys and tags: 7 rendered, 26 could be, 393 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -393,6 +393,9 @@ The wiki's keys and tags in its group "other", and whether Lane Studio draws the
 | [`trough:count=*`](https://wiki.openstreetmap.org/wiki/Key:trough:count) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough:format=*`](https://wiki.openstreetmap.org/wiki/Key:trough:format) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough:format=half-round`](https://wiki.openstreetmap.org/wiki/Tag:trough:format=half-round) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`trough:format=octagon`](https://wiki.openstreetmap.org/wiki/Tag:trough:format=octagon) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`trough:format=oval`](https://wiki.openstreetmap.org/wiki/Tag:trough:format=oval) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`trough:format=rectangle`](https://wiki.openstreetmap.org/wiki/Tag:trough:format=rectangle) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough:format=round`](https://wiki.openstreetmap.org/wiki/Tag:trough:format=round) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough:material=*`](https://wiki.openstreetmap.org/wiki/Key:trough:material) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`truck_wash=*`](https://wiki.openstreetmap.org/wiki/Key:truck_wash) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

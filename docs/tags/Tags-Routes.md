@@ -1,12 +1,12 @@
 # Tags: Routes
 
 The wiki's keys and tags in its group "routes", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-152 keys and tags: 1 rendered, 0 could be, 151 cannot be.
+152 keys and tags: 2 rendered, 0 could be, 150 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
 | [`ascent=*`](https://wiki.openstreetmap.org/wiki/Key:ascent) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
-| [`bus=minibus`](https://wiki.openstreetmap.org/wiki/Tag:bus=minibus) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
+| [`bus=minibus`](https://wiki.openstreetmap.org/wiki/Tag:bus=minibus) | in use | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`descent=*`](https://wiki.openstreetmap.org/wiki/Key:descent) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`detour=*`](https://wiki.openstreetmap.org/wiki/Key:detour) | in use | ❌ Cannot be rendered | A route or relation grouping other features, with no shape of its own |
 | [`distance=*`](https://wiki.openstreetmap.org/wiki/Key:distance) | de facto | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |

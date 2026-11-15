@@ -1,7 +1,7 @@
 # Tags: Highways
 
 The wiki's keys and tags in its group "highways", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-304 keys and tags: 143 rendered, 146 could be, 15 cannot be.
+304 keys and tags: 144 rendered, 145 could be, 15 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -166,7 +166,7 @@ The wiki's keys and tags in its group "highways", and whether Lane Studio draws 
 | [`path=climbing_access`](https://wiki.openstreetmap.org/wiki/Tag:path=climbing_access) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`path=desire`](https://wiki.openstreetmap.org/wiki/Tag:path=desire) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`path=link`](https://wiki.openstreetmap.org/wiki/Tag:path=link) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
-| [`path=mtb`](https://wiki.openstreetmap.org/wiki/Tag:path=mtb) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`path=mtb`](https://wiki.openstreetmap.org/wiki/Tag:path=mtb) | in use | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`path=sidewalk`](https://wiki.openstreetmap.org/wiki/Tag:path=sidewalk) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`path=trail`](https://wiki.openstreetmap.org/wiki/Tag:path=trail) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`paved:date=*`](https://wiki.openstreetmap.org/wiki/Key:paved:date) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |

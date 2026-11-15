@@ -88,7 +88,7 @@ describe('Lane Studio routing tool', () => {
         expect(sidebarNode.select('.routing-swatch').text()).toBe('1');
 
         // the vehicle buttons choose the vehicle
-        const bus = sidebarNode.selectAll<HTMLButtonElement, unknown>('.routing-vehicles button').nodes()[1];
+        const bus = sidebarNode.selectAll<HTMLButtonElement, unknown>('.routing-vehicles button').nodes().find(b => b.textContent === 'Bus')!;
         bus.click();
         expect(routing.profile()).toBe('bus');
         expect(sidebarNode.selectAll('.routing-vehicles button.active').text()).toBe('Bus');

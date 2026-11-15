@@ -19,7 +19,7 @@ Where each part of Lane Studio lives, and the hooks it uses in iD.
 
 | Feature | Files |
 | --- | --- |
-| Routing | `geometry/routing.ts`, `core/lane_routing.ts`, `core/mode_routing.ts`, `ui/routing_panel.ts`, `svg/routing.ts` |
+| Routing | `geometry/routing.ts`, `core/lane_routing.ts`, `core/mode_routing.ts`, `core/route_access.ts` (roads coloured by access), `ui/routing_panel.ts`, `svg/routing.ts` |
 | Speed Limit tool | `core/lane_speed.ts`, `core/mode_speed.ts`, `ui/speed_panel.ts`, `ui/speed_roundels.ts`, `model/speed_limits.ts` |
 | Measure tool | `core/mode_measure.ts`, `ui/measure_panel.ts` |
 | Railways | `geometry/railway.ts`, `geometry/rail_features.ts`, `svg/railway.ts` |

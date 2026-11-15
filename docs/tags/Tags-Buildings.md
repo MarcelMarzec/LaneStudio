@@ -1,7 +1,7 @@
 # Tags: Buildings
 
 The wiki's keys and tags in its group "buildings", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-300 keys and tags: 0 rendered, 0 could be, 300 cannot be.
+304 keys and tags: 0 rendered, 0 could be, 304 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -38,6 +38,7 @@ The wiki's keys and tags in its group "buildings", and whether Lane Studio draws
 | [`building=cinema`](https://wiki.openstreetmap.org/wiki/Tag:building=cinema) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=civic`](https://wiki.openstreetmap.org/wiki/Tag:building=civic) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=clinic`](https://wiki.openstreetmap.org/wiki/Tag:building=clinic) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`building=clubhouse`](https://wiki.openstreetmap.org/wiki/Tag:building=clubhouse) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=coach_house`](https://wiki.openstreetmap.org/wiki/Tag:building=coach_house) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=college`](https://wiki.openstreetmap.org/wiki/Tag:building=college) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=commercial`](https://wiki.openstreetmap.org/wiki/Tag:building=commercial) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -58,6 +59,7 @@ The wiki's keys and tags in its group "buildings", and whether Lane Studio draws
 | [`building=farm_auxiliary`](https://wiki.openstreetmap.org/wiki/Tag:building=farm_auxiliary) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=fire_lookout`](https://wiki.openstreetmap.org/wiki/Tag:building=fire_lookout) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=fire_station`](https://wiki.openstreetmap.org/wiki/Tag:building=fire_station) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`building=folly`](https://wiki.openstreetmap.org/wiki/Tag:building=folly) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=font`](https://wiki.openstreetmap.org/wiki/Tag:building=font) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=fort`](https://wiki.openstreetmap.org/wiki/Tag:building=fort) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=funeral_hall`](https://wiki.openstreetmap.org/wiki/Tag:building=funeral_hall) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -95,6 +97,7 @@ The wiki's keys and tags in its group "buildings", and whether Lane Studio draws
 | [`building=lighthouse`](https://wiki.openstreetmap.org/wiki/Tag:building=lighthouse) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=livestock`](https://wiki.openstreetmap.org/wiki/Tag:building=livestock) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=mall`](https://wiki.openstreetmap.org/wiki/Tag:building=mall) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`building=manor`](https://wiki.openstreetmap.org/wiki/Tag:building=manor) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=manufacture`](https://wiki.openstreetmap.org/wiki/Tag:building=manufacture) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=marketplace`](https://wiki.openstreetmap.org/wiki/Tag:building=marketplace) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=marquee`](https://wiki.openstreetmap.org/wiki/Tag:building=marquee) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -159,6 +162,7 @@ The wiki's keys and tags in its group "buildings", and whether Lane Studio draws
 | [`building=tent`](https://wiki.openstreetmap.org/wiki/Tag:building=tent) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=terrace`](https://wiki.openstreetmap.org/wiki/Tag:building=terrace) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=terraced_house`](https://wiki.openstreetmap.org/wiki/Tag:building=terraced_house) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`building=theatre`](https://wiki.openstreetmap.org/wiki/Tag:building=theatre) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=toilets`](https://wiki.openstreetmap.org/wiki/Tag:building=toilets) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=tower`](https://wiki.openstreetmap.org/wiki/Tag:building=tower) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=townhall`](https://wiki.openstreetmap.org/wiki/Tag:building=townhall) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |

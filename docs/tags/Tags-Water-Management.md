@@ -1,7 +1,7 @@
 # Tags: Water management
 
 The wiki's keys and tags in its group "water management", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-58 keys and tags: 0 rendered, 1 could be, 57 cannot be.
+59 keys and tags: 0 rendered, 1 could be, 58 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -28,6 +28,7 @@ The wiki's keys and tags in its group "water management", and whether Lane Studi
 | [`fountain=floating_tap`](https://wiki.openstreetmap.org/wiki/Tag:fountain=floating_tap) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`fountain=grotto`](https://wiki.openstreetmap.org/wiki/Tag:fountain=grotto) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`fountain=jet_water`](https://wiki.openstreetmap.org/wiki/Tag:fountain=jet_water) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`fountain=kugel`](https://wiki.openstreetmap.org/wiki/Tag:fountain=kugel) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`fountain=Muhr-Brunnen`](https://wiki.openstreetmap.org/wiki/Tag:fountain=Muhr-Brunnen) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`fountain=nasone`](https://wiki.openstreetmap.org/wiki/Tag:fountain=nasone) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`fountain=Neptune_fountain`](https://wiki.openstreetmap.org/wiki/Tag:fountain=Neptune_fountain) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |

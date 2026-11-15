@@ -3,6 +3,9 @@ import { modeBrowse } from '../../modes/browse';
 import type { osmWay } from '../../osm/way';
 import { svgIcon } from '../../svg/icon';
 import { laneRouting, routeColours, routesFor } from '../core/lane_routing';
+import { isLaneRoad } from '../core/roads';
+import { accessClasses, accessClassValues, laneAccess } from '../core/route_access';
+import type { AccessClass } from '../model/access';
 import { describeMove, routingProfiles, type Route, type RoutingProfile } from '../geometry/routing';
 import { parseTurn } from '../model';
 
@@ -71,6 +74,8 @@ export function routingPanel(context: iD.Context) {
                 .on('click', () => routing.setProfile(profile));
         }
 
+        accessKey(body);
+
         const found = routesFor(graph, routing.focus(), routing.profile());
         if (!found) {
             body.append('p').attr('class', 'routing-hint').text(t('_lanes.routing.hint'));
@@ -120,6 +125,46 @@ export function routingPanel(context: iD.Context) {
         }
     }
 
+    /** What the roads' colours mean for the vehicle picked, with how many roads in view have each */
+    function accessKey(body: Div) {
+        const profile = routing.profile();
+        const roads = context.history().intersects(context.map().extent()).filter(isLaneRoad) as osmWay[];
+        const counts = new Map<AccessClass | 'untagged', number>();
+        for (const road of roads) {
+            const cls = laneAccess(road.tags, profile)?.cls ?? 'untagged';
+            counts.set(cls, (counts.get(cls) ?? 0) + 1);
+        }
+        const section = body.append('div').attr('class', 'routing-section routing-access');
+        section.append('h4').text(t('_lanes.routing.access.title', { vehicle: t(`_lanes.routing.profiles.${profile}`) }));
+        const list = section.append('ul').attr('class', 'access-key');
+        for (const cls of accessClasses) {
+            const item = list.append('li').classed('none-in-view', !counts.get(cls));
+            item.append('span').attr('class', `access-swatch access-${cls}`);
+            const label = item.append('span').attr('class', 'access-key-label');
+            label.append('span').text(t(`_lanes.routing.access.classes.${cls}`));
+            label.append('span').attr('class', 'access-key-values').text(` ${accessClassValues[cls].join(', ')}`);
+            item.append('span').attr('class', 'access-key-count').text(t('_lanes.speed_tool.roads', { n: counts.get(cls) ?? 0 }));
+        }
+        const untagged = list.append('li').classed('none-in-view', !counts.get('untagged'));
+        untagged.append('span').attr('class', 'access-swatch').style('background', 'var(--lanes-road-fill, #555)');
+        untagged.append('span').attr('class', 'access-key-label').text(t('_lanes.routing.access.untagged'));
+        untagged.append('span').attr('class', 'access-key-count').text(t('_lanes.speed_tool.roads', { n: counts.get('untagged') ?? 0 }));
+        const marks = section.append('ul').attr('class', 'access-key access-key-marks');
+        const inherited = marks.append('li');
+        inherited.append('span').attr('class', 'access-swatch access-yes access-inherited-sample');
+        inherited.append('span').attr('class', 'access-key-label').text(t('_lanes.routing.access.inherited'));
+        const conditional = marks.append('li');
+        conditional.append('span').attr('class', 'access-swatch access-conditional-sample');
+        conditional.append('span').attr('class', 'access-key-label').text(t('_lanes.routing.access.conditional'));
+    }
+
+    // the counts follow the map as it moves (at most once a frame)
+    let _frame = 0;
+    const later = () => {
+        cancelAnimationFrame(_frame);
+        _frame = requestAnimationFrame(render);
+    };
+
     return {
         /** the component for iD's sidebar, rendered into the selection given */
         panel,
@@ -130,11 +175,14 @@ export function routingPanel(context: iD.Context) {
             sidebar.expand?.();
             routing.on('change.routing-panel', render);
             context.history().on('change.routing-panel', render);
+            context.map().on('move.routing-panel', later);
         },
         /** gives the sidebar back to the feature search */
         hide() {
+            cancelAnimationFrame(_frame);
             routing.on('change.routing-panel', null);
             context.history().on('change.routing-panel', null);
+            context.map().on('move.routing-panel', null);
             (context.ui() as any).sidebar.hide();
             _body = null;
         }

@@ -64,9 +64,10 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   barriers, light signals and road markings; Network Rail colour-light, shunt and semaphore signals
   and other countries' light signals; overhead line masts; buffer stops, switches, turntables and old
   trackbeds.
-* **Routing**: hover a lane to see every route a car, bus, bicycle or lorry can take from it,
-  following turn arrows, lane connections and turn restrictions; hover a footway to see where people
-  can walk.
+* **Routing**: hover a lane to see every route a car, motorcycle, van, lorry, bus, taxi or bicycle can
+  take from it, following turn arrows, lane connections and turn restrictions; hover a footway to see
+  where people can walk. The roads turn the colour of their access for the vehicle picked (no,
+  yes, discouraged, destination or delivery only, private), with a key in the panel.
 * **Speed limits**: the Speed Limit tool colours every lane by its limit, with roads missing one in
   red; pick a limit (UK roundels, in mph) and click roads or lanes to set it. Minimum speeds work the
   same way, and the UK's national, motorway and restricted road limit types are set with their limit.

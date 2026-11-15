@@ -59,7 +59,8 @@ and view are the same, layouts cached per way version (`cachedLayout`), and attr
 - **Speed Limit** (`lanes-speed` mode): `laneSpeed` holds the measure and pick; the layer colours lanes by
   `speedClassOf`; clicks write `maxspeed` or `maxspeed:lanes`.
 - **Routing** (`lanes-routing` mode): `vehicleRoutes` explores junction by junction with the drawing's junction rules,
-  per vehicle profile, blocked by restrictions and limits.
+  per vehicle profile, blocked by restrictions and limits; the lanes layer colours each lane by `laneAccess`
+  (`core/route_access.ts`) for the vehicle picked, from `model/access.ts`.
 - **Measure** (`lanes-measure` mode): two clicks, `geoSphericalDistance`, and the road nearest the middle
   (`roadAt`) to set a width on.
 

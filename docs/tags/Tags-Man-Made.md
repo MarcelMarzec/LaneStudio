@@ -1,7 +1,7 @@
 # Tags: Man made
 
 The wiki's keys and tags in its group "man made", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-352 keys and tags: 2 rendered, 12 could be, 338 cannot be.
+355 keys and tags: 2 rendered, 12 could be, 341 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -132,6 +132,7 @@ The wiki's keys and tags in its group "man made", and whether Lane Studio draws 
 | [`man_made=flare`](https://wiki.openstreetmap.org/wiki/Tag:man_made=flare) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=floating_storage`](https://wiki.openstreetmap.org/wiki/Tag:man_made=floating_storage) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=flowerbed`](https://wiki.openstreetmap.org/wiki/Tag:man_made=flowerbed) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`man_made=folly`](https://wiki.openstreetmap.org/wiki/Tag:man_made=folly) | — | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=footwear_decontamination`](https://wiki.openstreetmap.org/wiki/Tag:man_made=footwear_decontamination) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=foundation`](https://wiki.openstreetmap.org/wiki/Tag:man_made=foundation) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=frost_fan`](https://wiki.openstreetmap.org/wiki/Tag:man_made=frost_fan) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
@@ -199,6 +200,7 @@ The wiki's keys and tags in its group "man made", and whether Lane Studio draws 
 | [`man_made=summit_board`](https://wiki.openstreetmap.org/wiki/Tag:man_made=summit_board) | imported | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=surveillance`](https://wiki.openstreetmap.org/wiki/Tag:man_made=surveillance) | approved | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`man_made=survey_point`](https://wiki.openstreetmap.org/wiki/Tag:man_made=survey_point) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`man_made=tailings_dam`](https://wiki.openstreetmap.org/wiki/Tag:man_made=tailings_dam) | — | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=tailings_pond`](https://wiki.openstreetmap.org/wiki/Tag:man_made=tailings_pond) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=telephone_box`](https://wiki.openstreetmap.org/wiki/Tag:man_made=telephone_box) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=telescope`](https://wiki.openstreetmap.org/wiki/Tag:man_made=telescope) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
@@ -207,6 +209,7 @@ The wiki's keys and tags in its group "man made", and whether Lane Studio draws 
 | [`man_made=tomb`](https://wiki.openstreetmap.org/wiki/Tag:man_made=tomb) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=totem_pole`](https://wiki.openstreetmap.org/wiki/Tag:man_made=totem_pole) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=tower`](https://wiki.openstreetmap.org/wiki/Tag:man_made=tower) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`man_made=traffic_information_display`](https://wiki.openstreetmap.org/wiki/Tag:man_made=traffic_information_display) | — | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=tunnel`](https://wiki.openstreetmap.org/wiki/Tag:man_made=tunnel) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`man_made=urine_deflector`](https://wiki.openstreetmap.org/wiki/Tag:man_made=urine_deflector) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=ventilation_shaft`](https://wiki.openstreetmap.org/wiki/Tag:man_made=ventilation_shaft) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |

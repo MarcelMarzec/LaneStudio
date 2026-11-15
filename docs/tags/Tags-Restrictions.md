@@ -1,25 +1,25 @@
 # Tags: Restrictions
 
 The wiki's keys and tags in its group "restrictions", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-423 keys and tags: 99 rendered, 41 could be, 283 cannot be.
+423 keys and tags: 116 rendered, 41 could be, 266 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
 | [`*:conditional=*`](https://wiki.openstreetmap.org/wiki/Key:*:conditional) | approved | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`*:min_payment=*`](https://wiki.openstreetmap.org/wiki/Key:*:min_payment) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`access=*`](https://wiki.openstreetmap.org/wiki/Key:access) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
-| [`access=agricultural`](https://wiki.openstreetmap.org/wiki/Tag:access=agricultural) | approved | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`access=agricultural`](https://wiki.openstreetmap.org/wiki/Tag:access=agricultural) | approved | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access=customers`](https://wiki.openstreetmap.org/wiki/Tag:access=customers) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access=delivery`](https://wiki.openstreetmap.org/wiki/Tag:access=delivery) | approved | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access=designated`](https://wiki.openstreetmap.org/wiki/Tag:access=designated) | approved | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access=destination`](https://wiki.openstreetmap.org/wiki/Tag:access=destination) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
-| [`access=discouraged`](https://wiki.openstreetmap.org/wiki/Tag:access=discouraged) | — | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
-| [`access=dismount`](https://wiki.openstreetmap.org/wiki/Tag:access=dismount) | — | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`access=discouraged`](https://wiki.openstreetmap.org/wiki/Tag:access=discouraged) | — | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
+| [`access=dismount`](https://wiki.openstreetmap.org/wiki/Tag:access=dismount) | — | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access=employees`](https://wiki.openstreetmap.org/wiki/Tag:access=employees) | in use | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
-| [`access=forestry`](https://wiki.openstreetmap.org/wiki/Tag:access=forestry) | approved | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`access=forestry`](https://wiki.openstreetmap.org/wiki/Tag:access=forestry) | approved | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access=license`](https://wiki.openstreetmap.org/wiki/Tag:access=license) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`access=members`](https://wiki.openstreetmap.org/wiki/Tag:access=members) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
-| [`access=military`](https://wiki.openstreetmap.org/wiki/Tag:access=military) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`access=military`](https://wiki.openstreetmap.org/wiki/Tag:access=military) | in use | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access=no`](https://wiki.openstreetmap.org/wiki/Tag:access=no) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access=optional_sidepath`](https://wiki.openstreetmap.org/wiki/Tag:access=optional_sidepath) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`access=permissive`](https://wiki.openstreetmap.org/wiki/Tag:access=permissive) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
@@ -27,7 +27,7 @@ The wiki's keys and tags in its group "restrictions", and whether Lane Studio dr
 | [`access=private`](https://wiki.openstreetmap.org/wiki/Tag:access=private) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access=residents`](https://wiki.openstreetmap.org/wiki/Tag:access=residents) | in use | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access=students`](https://wiki.openstreetmap.org/wiki/Tag:access=students) | in use | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
-| [`access=unknown`](https://wiki.openstreetmap.org/wiki/Tag:access=unknown) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`access=unknown`](https://wiki.openstreetmap.org/wiki/Tag:access=unknown) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access=yes`](https://wiki.openstreetmap.org/wiki/Tag:access=yes) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`access:conditional=*`](https://wiki.openstreetmap.org/wiki/Key:access:conditional) | de facto | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`access:covid19=*`](https://wiki.openstreetmap.org/wiki/Key:access:covid19) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
@@ -50,12 +50,12 @@ The wiki's keys and tags in its group "restrictions", and whether Lane Studio dr
 | [`bicycle=customers`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=customers) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`bicycle=designated`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=designated) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`bicycle=discouraged`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=discouraged) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
-| [`bicycle=dismount`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=dismount) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`bicycle=dismount`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=dismount) | in use | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`bicycle=no`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=no) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`bicycle=optional_sidepath`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=optional_sidepath) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`bicycle=permissive`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=permissive) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`bicycle=private`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=private) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
-| [`bicycle=use_sidepath`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=use_sidepath) | approved | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`bicycle=use_sidepath`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=use_sidepath) | approved | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`bicycle=yes`](https://wiki.openstreetmap.org/wiki/Tag:bicycle=yes) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`bicycle:lanes=*`](https://wiki.openstreetmap.org/wiki/Key:bicycle:lanes) | in use | ✅ Rendered | [Lanes](../guide/Lanes.md) |
 | [`bicycle:pushing=*`](https://wiki.openstreetmap.org/wiki/Key:bicycle:pushing) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
@@ -137,12 +137,12 @@ The wiki's keys and tags in its group "restrictions", and whether Lane Studio dr
 | [`goods=*`](https://wiki.openstreetmap.org/wiki/Key:goods) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`hand_cart=*`](https://wiki.openstreetmap.org/wiki/Key:hand_cart) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`hazmat=*`](https://wiki.openstreetmap.org/wiki/Key:hazmat) | approved | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
-| [`hazmat:water=permissive`](https://wiki.openstreetmap.org/wiki/Tag:hazmat:water=permissive) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`hazmat:water=permissive`](https://wiki.openstreetmap.org/wiki/Tag:hazmat:water=permissive) | in use | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`headlight=*`](https://wiki.openstreetmap.org/wiki/Key:headlight) | approved | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`headlight=required`](https://wiki.openstreetmap.org/wiki/Tag:headlight=required) | approved | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`hgv=*`](https://wiki.openstreetmap.org/wiki/Key:hgv) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
-| [`hgv=discouraged`](https://wiki.openstreetmap.org/wiki/Tag:hgv=discouraged) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
-| [`hgv=no_turnaround`](https://wiki.openstreetmap.org/wiki/Tag:hgv=no_turnaround) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`hgv=discouraged`](https://wiki.openstreetmap.org/wiki/Tag:hgv=discouraged) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
+| [`hgv=no_turnaround`](https://wiki.openstreetmap.org/wiki/Tag:hgv=no_turnaround) | in use | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`hgv=yes`](https://wiki.openstreetmap.org/wiki/Tag:hgv=yes) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`hgv_articulated=*`](https://wiki.openstreetmap.org/wiki/Key:hgv_articulated) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`hgv:conditional=*`](https://wiki.openstreetmap.org/wiki/Key:hgv:conditional) | approved | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
@@ -247,8 +247,8 @@ The wiki's keys and tags in its group "restrictions", and whether Lane Studio dr
 | [`motor_vehicle=*`](https://wiki.openstreetmap.org/wiki/Key:motor_vehicle) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`motor_vehicle=agricultural`](https://wiki.openstreetmap.org/wiki/Tag:motor_vehicle=agricultural) | approved | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`motor_vehicle=agricultural;forestry`](https://wiki.openstreetmap.org/wiki/Tag:motor_vehicle=agricultural;forestry) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
-| [`motor_vehicle=delivery`](https://wiki.openstreetmap.org/wiki/Tag:motor_vehicle=delivery) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
-| [`motor_vehicle=designated`](https://wiki.openstreetmap.org/wiki/Tag:motor_vehicle=designated) | — | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`motor_vehicle=delivery`](https://wiki.openstreetmap.org/wiki/Tag:motor_vehicle=delivery) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
+| [`motor_vehicle=designated`](https://wiki.openstreetmap.org/wiki/Tag:motor_vehicle=designated) | — | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`motor_vehicle=destination`](https://wiki.openstreetmap.org/wiki/Tag:motor_vehicle=destination) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`motor_vehicle=forestry`](https://wiki.openstreetmap.org/wiki/Tag:motor_vehicle=forestry) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`motor_vehicle=no`](https://wiki.openstreetmap.org/wiki/Tag:motor_vehicle=no) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
@@ -257,9 +257,9 @@ The wiki's keys and tags in its group "restrictions", and whether Lane Studio dr
 | [`motor_vehicle:conditional=*`](https://wiki.openstreetmap.org/wiki/Key:motor_vehicle:conditional) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`motorboat=*`](https://wiki.openstreetmap.org/wiki/Key:motorboat) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`motorcar=*`](https://wiki.openstreetmap.org/wiki/Key:motorcar) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
-| [`motorcycle=*`](https://wiki.openstreetmap.org/wiki/Key:motorcycle) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
-| [`motorcycle=no`](https://wiki.openstreetmap.org/wiki/Tag:motorcycle=no) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
-| [`motorcycle=yes`](https://wiki.openstreetmap.org/wiki/Tag:motorcycle=yes) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`motorcycle=*`](https://wiki.openstreetmap.org/wiki/Key:motorcycle) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
+| [`motorcycle=no`](https://wiki.openstreetmap.org/wiki/Tag:motorcycle=no) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
+| [`motorcycle=yes`](https://wiki.openstreetmap.org/wiki/Tag:motorcycle=yes) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`motorcycle:scale=*`](https://wiki.openstreetmap.org/wiki/Key:motorcycle:scale) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`motorhome=*`](https://wiki.openstreetmap.org/wiki/Key:motorhome) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`motorroad=*`](https://wiki.openstreetmap.org/wiki/Key:motorroad) | de facto | ✅ Rendered | [Road Fields](../guide/Road-Fields.md) |
@@ -365,7 +365,7 @@ The wiki's keys and tags in its group "restrictions", and whether Lane Studio dr
 | [`surface:lanes=*`](https://wiki.openstreetmap.org/wiki/Key:surface:lanes) | in use | ✅ Rendered | [Lanes](../guide/Lanes.md) |
 | [`swimming=*`](https://wiki.openstreetmap.org/wiki/Key:swimming) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`tank=*`](https://wiki.openstreetmap.org/wiki/Key:tank) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
-| [`taxi=*`](https://wiki.openstreetmap.org/wiki/Key:taxi) | de facto | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`taxi=*`](https://wiki.openstreetmap.org/wiki/Key:taxi) | de facto | ✅ Rendered | Routing tool: which vehicles may use the road or lane; [Tools](../guide/Tools.md) |
 | [`toll:designated=yes`](https://wiki.openstreetmap.org/wiki/Tag:toll:designated=yes) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`toll:hov=*`](https://wiki.openstreetmap.org/wiki/Key:toll:hov) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`tourist_bus=*`](https://wiki.openstreetmap.org/wiki/Key:tourist_bus) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
