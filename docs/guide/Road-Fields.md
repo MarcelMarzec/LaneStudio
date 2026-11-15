@@ -42,12 +42,9 @@ lists ([Key:access](https://wiki.openstreetmap.org/wiki/Key:access)):
 
   | Picked | Writes | Means |
   | --- | --- | --- |
-  | HGVs heading north (the way's direction) | `hgv:forward` | Only traffic going the way the line is drawn, along its arrows |
-  | HGVs heading south (against it) | `hgv:backward` | Only traffic going the other way |
-  | HGVs, at times or with conditions | `hgv:conditional` | `no @ (Mo-Fr 07:00-19:00)`, `destination @ (weight>7.5)` |
-
-  The compass point is the way's, from its first node to its last; with several ways selected, rows say "in the way's
-  direction" or "against" it.
+  | HGVs: Forward | `hgv:forward` | Only traffic going the way the line is drawn, along its direction arrows |
+  | HGVs: Backward | `hgv:backward` | Only traffic going against the way the line is drawn |
+  | HGVs: Conditional | `hgv:conditional` | At times or for some vehicles: `no @ (Mo-Fr 07:00-19:00)`, `destination @ (weight>7.5)` |
 
 The [Routing tool](Tools.md) colours roads by what these say for the vehicle picked.
 

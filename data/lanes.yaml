@@ -867,26 +867,15 @@ en:
     conditional_placeholder: "value @ (condition), e.g. no @ (Mo-Fr 07:00-19:00)"
     conditional_example: "An example: the value, then when or for what it applies"
     suffix:
-      forward: "{mode}, in the way's direction"
-      backward: "{mode}, against the way's direction"
-      heading: "{mode} heading {heading}"
-      heading_conditional: "{mode} heading {heading}, at times"
-      conditional: "{mode}, at times or with conditions"
-      forward_conditional: "{mode}, in the way's direction, at times"
-      backward_conditional: "{mode}, against the way's direction, at times"
+      forward: "{mode}: Forward"
+      backward: "{mode}: Backward"
+      conditional: "{mode}: Conditional"
+      forward_conditional: "{mode}: Forward, conditional"
+      backward_conditional: "{mode}: Backward, conditional"
     suffix_help:
-      forward: "Only traffic going the way the line is drawn, along its direction arrows"
-      backward: "Only traffic going against the way the line is drawn"
+      forward: "Only traffic going the way the line is drawn (along its direction arrows)"
+      backward: "Only traffic going against the way the line is drawn (against its direction arrows)"
       conditional: "At certain times, or for some vehicles: no @ (Mo-Fr 07:00-19:00)"
-    compass:
-      north: north
-      north_east: north-east
-      east: east
-      south_east: south-east
-      south: south
-      south_west: south-west
-      west: west
-      north_west: north-west
     values:
       "yes": "Public right of way"
       "no": "Not allowed"

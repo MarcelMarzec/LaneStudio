@@ -8,6 +8,14 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.15r6
+##### 2026-Nov-15
+
+#### Editing
+* Allowed Access names a direction row as its tag does, **HGVs: Forward** (`hgv:forward`) and **HGVs: Backward**
+  (`hgv:backward`), in place of the compass point; the list says forward is the way the line is drawn. Conditional
+  rows are **HGVs: Conditional**
+
 # 26.11.15r5
 ##### 2026-Nov-15
 

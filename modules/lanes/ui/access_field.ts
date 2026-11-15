@@ -27,38 +27,12 @@ const suffixName: Record<Exclude<AccessSuffix, ''>, string> = {
 /** A mode's name (`hgv` → Heavy goods vehicles) */
 export const accessModeName = (mode: string) => t(`_lanes.access_field.modes.${mode.replace(/:/g, '_')}`);
 
-/**
- * The compass point a way heads towards, from its first node to its last (`north_east`), or null when not one way: the
- * direction `:forward` keys are for (`:backward`, the opposite one)
- */
-export function wayHeading(loc: (id: string) => [number, number] | undefined, nodes: string[] | undefined): string | null {
-    const [a, b] = nodes?.length ? [loc(nodes[0]), loc(nodes[nodes.length - 1])] : [undefined, undefined];
-    if (!a || !b || (a[0] === b[0] && a[1] === b[1])) return null;
-    const east = (b[0] - a[0]) * Math.cos(a[1] * Math.PI / 180);
-    const angle = (Math.atan2(east, b[1] - a[1]) * 180 / Math.PI + 360) % 360;
-    return ['north', 'north_east', 'east', 'south_east', 'south', 'south_west', 'west', 'north_west'][Math.round(angle / 45) % 8];
-}
-
-const opposite = (heading: string) => {
-    const points = ['north', 'north_east', 'east', 'south_east', 'south', 'south_west', 'west', 'north_west'];
-    return points[(points.indexOf(heading) + 4) % 8];
-};
-
-/**
- * An access key's name: its mode's, with the direction or condition it is for; a direction by the compass point it
- * heads to when the way is known (`hgv:forward` on a way drawn north-east: HGVs heading north-east)
- */
-export function accessKeyName(key: string, heading: string | null = null): string {
+/** An access key's name: its mode's, with the direction or condition it is for (`hgv:forward`: HGVs: Forward) */
+export function accessKeyName(key: string): string {
     const parts = accessParts(key);
     if (!parts) return key;
     const mode = accessModeName(parts.mode);
-    if (!parts.suffix) return mode;
-    const direction = parts.suffix.startsWith(':forward') ? heading : parts.suffix.startsWith(':backward') && heading ? opposite(heading) : null;
-    if (direction) {
-        return t(`_lanes.access_field.suffix.${parts.suffix.endsWith(':conditional') ? 'heading_conditional' : 'heading'}`,
-            { mode, heading: t(`_lanes.access_field.compass.${direction}`) });
-    }
-    return t(`_lanes.access_field.suffix.${suffixName[parts.suffix]}`, { mode });
+    return parts.suffix ? t(`_lanes.access_field.suffix.${suffixName[parts.suffix]}`, { mode }) : mode;
 }
 
 /** What a direction or condition row is for, in words (shown under it in "Add access type") */
@@ -102,12 +76,6 @@ export function uiFieldLanesAccess(field: any, context: iD.Context) {
         return keys.sort((a, b) => sizeRank(a) - sizeRank(b));
     }
 
-    /** The way the field is for, when one way is selected: the compass point it heads to */
-    function heading(): string | null {
-        const way = _entityIDs.length === 1 ? context.hasEntity(_entityIDs[0] as any) as any : undefined;
-        if (way?.type !== 'way') return null;
-        return wayHeading(id => (context.hasEntity(id as any) as any)?.loc, way.nodes);
-    }
 
     function valueOptions(key: string) {
         const parts = accessParts(key);
@@ -142,13 +110,13 @@ export function uiFieldLanesAccess(field: any, context: iD.Context) {
         enter.append('div')
             .attr('class', 'label preset-label-access')
             .attr('title', d => d)
-            .text(d => accessKeyName(d, heading()));
+            .text(d => accessKeyName(d));
         enter.append('div')
             .attr('class', 'preset-input-access-wrap')
             .append('input')
             .attr('type', 'text')
             .attr('class', d => `preset-input-access preset-input-access-${d.replace(/:/g, '-')}`)
-            .attr('aria-label', d => accessKeyName(d, heading()))
+            .attr('aria-label', d => accessKeyName(d))
             .call(utilNoAuto as any)
             .each(function(this: HTMLInputElement, d) {
                 // (the combobox stops the browser's change event on Return, and says so with accept)
@@ -211,12 +179,11 @@ export function uiFieldLanesAccess(field: any, context: iD.Context) {
 
     /** What "Add access type" offers, biggest first: each mode not shown; a direction or condition of each shown */
     function addOptions(shown: string[]) {
-        const towards = heading();
         const modes = accessModes.map(mode => mode.key).filter(key => !shown.includes(key));
         const variants = shown.filter(key => accessParts(key)?.suffix === '').flatMap(key =>
             ([':forward', ':backward', ':conditional'] as const).map(suffix => `${key}${suffix}`).filter(variant => !shown.includes(variant)));
         return [...modes, ...variants].sort((a, b) => sizeRank(a) - sizeRank(b)).map(key => {
-            const name = accessKeyName(key, towards);
+            const name = accessKeyName(key);
             const description = accessKeyDescription(key);
             return {
                 // (not `key`: iD's combobox would complete typed text to it)
