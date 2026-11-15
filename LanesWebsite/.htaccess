@@ -2,7 +2,7 @@
 # lanestudio.marcelmarzec.com. There is no build step, so this ships with the
 # site. The editor lives in /editor/ with its own .htaccess.
 
-DirectoryIndex index.php
+DirectoryIndex index.php, index.html
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
