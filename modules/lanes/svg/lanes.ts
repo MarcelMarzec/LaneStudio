@@ -77,20 +77,6 @@ function byWay(pieces: RoadPiece[], shapes: (piece: RoadPiece) => Vec2[][]): { k
     return [...groups.values()];
 }
 
-/** The road areas and traffic islands in view, or none when the "hide road areas and traffic islands" setting is on */
-function mappedAreas(visible: OsmEntity[], hide: boolean): { carriagewayAreas: CarriagewayArea[]; islands: osmWay[] } {
-    if (hide) return { carriagewayAreas: [], islands: [] };
-    return {
-        carriagewayAreas: visible.filter(isCarriagewayArea) as CarriagewayArea[],
-        islands: visible.filter(entity => entity.type === 'way' && (entity as osmWay).isClosed() && isTrafficIsland(entity.tags)) as osmWay[]
-    };
-}
-
-/** The street features, without the road areas and traffic islands when they are hidden */
-function withoutRoadAreas(street: StreetGeometry, hide: boolean): StreetGeometry {
-    return hide ? { ...street, areas: street.areas.filter(area => area.kind !== 'carriageway' && area.kind !== 'island') } : street;
-}
-
 const closedRing = (ring: Vec2[]): [number, number][] => [...ring, ring[0]].map(p => [p[0], p[1]]);
 
 /**
@@ -694,18 +680,17 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .filter(entity => !features.isHidden(entity, graph, entity.geometry(graph)));
         const ways = visible.filter(isLaneRoad);
         // (multipolygon relations too: a road area with holes, such as round a traffic island)
-        // (the "hide road areas and traffic islands" setting leaves them out: the roads are drawn whole, as unmapped)
-        const hideAreas = settings.hideRoadAreas();
-        const { carriagewayAreas, islands } = mappedAreas(visible, hideAreas);
+        const carriagewayAreas = visible.filter(isCarriagewayArea) as CarriagewayArea[];
+        const islands = visible.filter(entity => entity.type === 'way' && (entity as osmWay).isClosed() && isTrafficIsland(entity.tags)) as osmWay[];
         // (closed ways, or multipolygons: hatching or chevrons round a traffic island)
         const partAreas = visible.filter(entity => isLanePartArea(entity.tags) && (entity.type === 'way' ? (entity as osmWay).isClosed()
             : entity.type === 'relation' && entity.tags.type === 'multipolygon')) as PartArea[];
         // the geometry is in map coordinates, so it holds while the graph and the features in view are the same (a new
         // selection, tool or mode redraws without working it out again)
-        const visibleIDs = visible.map(entity => entity.id).join(',') + (hideAreas ? '|no-areas' : '');
+        const visibleIDs = visible.map(entity => entity.id).join(',');
         if (!_geometry || _geometry.graph !== graph || _geometry.ids !== visibleIDs) {
             const roads = roadGeometry(ways, graph, carriagewayAreas, islands, partAreas);
-            _geometry = { graph, ids: visibleIDs, roads, street: withoutRoadAreas(streetGeometry(visible, graph, roads.visuals), hideAreas) };
+            _geometry = { graph, ids: visibleIDs, roads, street: streetGeometry(visible, graph, roads.visuals) };
         }
         const { pieces, innerPieces, channelled, junctions, connections, heads, areaRoads, swaps } = _geometry.roads;
         // short links inside a junction cluster are drawn only as lane guide lines (still clickable), except in a

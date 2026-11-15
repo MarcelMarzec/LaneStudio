@@ -103,17 +103,6 @@ function uiSectionLaneDisplay(context: iD.Context) {
                 settings.setHideNatural(this.checked);
             });
         naturalLabel.append('span').text(t('_lanes.settings.hide_natural'));
-        // road areas and traffic islands, which can lie over the roads drawn from their lines
-        const roadAreas = list.append('li')
-            .attr('class', 'lanes-hide-road-areas-option')
-            .call((uiTooltip() as any).title(() => t.append('_lanes.settings.hide_road_areas_tip')).placement('top'));
-        const roadAreasLabel = roadAreas.append('label');
-        roadAreasLabel.append('input')
-            .attr('type', 'checkbox')
-            .on('change', function(this: HTMLInputElement) {
-                settings.setHideRoadAreas(this.checked);
-            });
-        roadAreasLabel.append('span').text(t('_lanes.settings.hide_road_areas'));
         // brand logos from Wikidata in place of iD's markers
         const logos = list.append('li')
             .attr('class', 'lanes-brand-logos-option')
@@ -154,10 +143,6 @@ function uiSectionLaneDisplay(context: iD.Context) {
             .classed('active', settings.hideNatural())
             .select('input')
             .property('checked', settings.hideNatural());
-        container.select('.lanes-hide-road-areas-option')
-            .classed('active', settings.hideRoadAreas())
-            .select('input')
-            .property('checked', settings.hideRoadAreas());
     }
 
     return section;

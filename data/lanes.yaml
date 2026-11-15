@@ -838,8 +838,6 @@ en:
     hide_landuse: Hide land use
     hide_natural: Hide natural features
     hide_natural_tip: "Hides natural features (natural=*) alone: woods, water, scrub, trees and so on."
-    hide_road_areas: Hide road areas and traffic islands
-    hide_road_areas_tip: "Hides road areas (area:highway=*: carriageways, junctions, turning circles) and traffic islands, and draws the roads in them whole from their lines, for when an area lies over the roads."
     brand_logos: Show brand logos
     brand_logos_tip: "Shows the logo of a shop, restaurant or other brand (brand:wikidata=*) in place of its marker, looked up on Wikidata and Wikimedia Commons."
     renderer_note: "Lane Studio draws what the tags say. Don't tag for the renderer: tag what is on the ground, even where the drawing looks wrong, and report the drawing instead."

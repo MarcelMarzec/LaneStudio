@@ -21,9 +21,6 @@ export interface LaneSettings {
     /** hide natural features (`natural=*`) alone, iD's and Lane Studio's */
     hideNatural(): boolean;
     setHideNatural(value: boolean): void;
-    /** hide road areas (`area:highway=*` carriageways, junctions and turning circles) and traffic islands: roads are drawn whole */
-    hideRoadAreas(): boolean;
-    setHideRoadAreas(value: boolean): void;
     /** show brands' logos from Wikidata in place of iD's markers (on unless turned off) */
     showLogos(): boolean;
     setShowLogos(value: boolean): void;
@@ -43,7 +40,6 @@ export function laneSettings(context: iD.Context): LaneSettings {
     let _hide = prefs('lanes-hide-originals') === 'true';
     let _hideLanduse = prefs('lanes-hide-landuse') === 'true';
     let _hideNatural = prefs('lanes-hide-natural') === 'true';
-    let _hideRoadAreas = prefs('lanes-hide-road-areas') === 'true';
     let _showLogos = prefs('lanes-brand-logos') !== 'false';
 
     function apply() {
@@ -74,7 +70,6 @@ export function laneSettings(context: iD.Context): LaneSettings {
         container.classed('lanes-hide-originals', _hide);
         container.classed('lanes-hide-landuse', _hideLanduse);
         container.classed('lanes-hide-natural', _hideNatural);
-        container.classed('lanes-hide-road-areas', _hideRoadAreas);
     }
 
     const settings: LaneSettings = {
@@ -108,14 +103,6 @@ export function laneSettings(context: iD.Context): LaneSettings {
             if (value === _hideNatural) return;
             _hideNatural = value;
             prefs('lanes-hide-natural', value ? 'true' : null);
-            apply();
-            dispatch.call('change', settings);
-        },
-        hideRoadAreas: () => _hideRoadAreas,
-        setHideRoadAreas(value) {
-            if (value === _hideRoadAreas) return;
-            _hideRoadAreas = value;
-            prefs('lanes-hide-road-areas', value ? 'true' : null);
             apply();
             dispatch.call('change', settings);
         },

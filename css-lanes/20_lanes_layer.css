@@ -475,6 +475,14 @@
 .ideditor.lane-studio.lanes-hide-natural .lanes-layer .lanes-natural {
     display: none;
 }
+/* places mapped as areas (place=island, islet, suburb…) name a place, they are no surface: iD's fill is left out, so
+   an island only partly loaded (Great Britain, r6038068, clipped to the screen) does not wash over the map. Their outline
+   is kept, to select them by */
+.ideditor.lane-studio .layer-osm path.area.fill.tag-place {
+    fill: none;
+    stroke: none;
+    pointer-events: none;
+}
 /* street-side parking points on a road are shown by the road's parking strip, and iD's icon on a parking
    space by the bay's own colour and symbol */
 .ideditor.lane-studio .surface.lanes-visible .layer-osm .lanes-redundant {

@@ -8,6 +8,15 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.15r2
+##### 2026-Nov-15
+
+#### Roads and signs
+* Places mapped as areas (`place=island`, `islet`, `suburb`…) are no longer filled: Great Britain (`place=island`),
+  only partly loaded, washed over the roads and everything else on the map with iD's full fill; its outline is kept
+* The **Hide road areas and traffic islands** setting from 26.11.15 is taken out again: road areas and traffic
+  islands are always drawn
+
 # 26.11.15
 ##### 2026-Nov-15
 

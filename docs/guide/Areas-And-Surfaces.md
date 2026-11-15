@@ -35,7 +35,8 @@ Add Area finds each: iD's Road Area, Footway Area and Traffic Island, and Lane S
 street, Steps and Prohibited road areas. `emergency` is read but not offered: the wiki maps such hatching as
 `road_marking=restriction`.
 
-To see the roads under the areas, turn on **Hide road areas and traffic islands** in the Lane Studio pane (`K`).
+Places mapped as areas (`place=island`, `islet`, `suburb`…) name a place and are no surface: iD's fill is left out (an
+island only partly loaded, such as Great Britain, would otherwise wash over the map), and their outline kept.
 
 A road mapped as a routable area (`area=yes` + `highway=*`) is a plaza or service area: ways inside it draw only
 their lines, arrows and special lanes. Roads are fitted into way and multipolygon areas alike (a multipolygon by its
