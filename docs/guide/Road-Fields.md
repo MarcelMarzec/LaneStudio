@@ -29,16 +29,25 @@ dropdown lists them all. Type to pick one: its name, a number (`35` for 35 mph) 
 iD's Allowed Access field (on roads, paths, gates, car parks…) with every land transport mode and value the wiki
 lists ([Key:access](https://wiki.openstreetmap.org/wiki/Key:access)):
 
-- **Rows**: All, Foot, Motor vehicles, Bicycles and Horses, then every other access key tagged (`hgv`, `psv`, `goods`,
-  `hgv:forward`, `motor_vehicle:conditional`…).
+- **Rows**: All, HGVs, Cars, Bicycles and Pedestrians, and every other access key tagged (`psv`, `goods`, `horse`,
+  `hgv:forward`, `motor_vehicle:conditional`…): All first, then the groups (all vehicles, motor vehicles), then the
+  biggest vehicle down to people on foot, each mode's directions and times under it.
 - **An empty row shows what it inherits**: a mode's own key wins over the one above it (`hgv` over `motor_vehicle`
   over `vehicle` over `access`), else the kind of road (a motorway implies `foot=no`).
 - **Values** with what they mean: `yes`, `no`, `private`, `permissive`, `destination`, `delivery`, `customers`,
   `designated`, `permit`, `discouraged`, `agricultural`, `forestry`, `military`, `use_sidepath`, `dismount` (cycles,
   horses), `no_turnaround` (HGVs), `unknown`.
-- **+ Add access type**: any mode in the wiki's hierarchy (HGVs, vans, buses, taxis, emergency, hazardous loads,
-  disabled badge holders…), or one direction (`hgv:forward`) or times and conditions (`hgv:conditional`, as
-  `no @ (Mo-Fr 07:00-19:00)`) of a mode shown.
+- **+ Add access type**: any mode in the wiki's hierarchy, biggest first (HGVs, buses, vans, horses, emergency,
+  hazardous loads, disabled badge holders…), or for a mode shown, one direction or times and conditions:
+
+  | Picked | Writes | Means |
+  | --- | --- | --- |
+  | HGVs heading north (the way's direction) | `hgv:forward` | Only traffic going the way the line is drawn, along its arrows |
+  | HGVs heading south (against it) | `hgv:backward` | Only traffic going the other way |
+  | HGVs, at times or with conditions | `hgv:conditional` | `no @ (Mo-Fr 07:00-19:00)`, `destination @ (weight>7.5)` |
+
+  The compass point is the way's, from its first node to its last; with several ways selected, rows say "in the way's
+  direction" or "against" it.
 
 The [Routing tool](Tools.md) colours roads by what these say for the vehicle picked.
 

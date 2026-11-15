@@ -5,7 +5,8 @@ import { t } from '../../core/localizer';
 import { uiCombobox } from '../../ui/combobox';
 import { utilGetSetValue, utilNoAuto } from '../../util';
 import {
-    accessDepth, accessFor, accessModes, accessParts, accessValuesFor, impliedAccess, taggedAccessKeys, type AccessSuffix
+    accessDefaultRows, accessFor, accessModes, accessParts, accessSizeOrder, accessValuesFor, impliedAccess, taggedAccessKeys,
+    type AccessSuffix
 } from '../model/access';
 
 type Selection = d3.Selection<any>;
@@ -26,12 +27,55 @@ const suffixName: Record<Exclude<AccessSuffix, ''>, string> = {
 /** A mode's name (`hgv` → Heavy goods vehicles) */
 export const accessModeName = (mode: string) => t(`_lanes.access_field.modes.${mode.replace(/:/g, '_')}`);
 
-/** An access key's name: its mode's, with the direction or condition it is for */
-export function accessKeyName(key: string): string {
+/**
+ * The compass point a way heads towards, from its first node to its last (`north_east`), or null when not one way: the
+ * direction `:forward` keys are for (`:backward`, the opposite one)
+ */
+export function wayHeading(loc: (id: string) => [number, number] | undefined, nodes: string[] | undefined): string | null {
+    const [a, b] = nodes?.length ? [loc(nodes[0]), loc(nodes[nodes.length - 1])] : [undefined, undefined];
+    if (!a || !b || (a[0] === b[0] && a[1] === b[1])) return null;
+    const east = (b[0] - a[0]) * Math.cos(a[1] * Math.PI / 180);
+    const angle = (Math.atan2(east, b[1] - a[1]) * 180 / Math.PI + 360) % 360;
+    return ['north', 'north_east', 'east', 'south_east', 'south', 'south_west', 'west', 'north_west'][Math.round(angle / 45) % 8];
+}
+
+const opposite = (heading: string) => {
+    const points = ['north', 'north_east', 'east', 'south_east', 'south', 'south_west', 'west', 'north_west'];
+    return points[(points.indexOf(heading) + 4) % 8];
+};
+
+/**
+ * An access key's name: its mode's, with the direction or condition it is for; a direction by the compass point it
+ * heads to when the way is known (`hgv:forward` on a way drawn north-east: HGVs heading north-east)
+ */
+export function accessKeyName(key: string, heading: string | null = null): string {
     const parts = accessParts(key);
     if (!parts) return key;
     const mode = accessModeName(parts.mode);
-    return parts.suffix ? t(`_lanes.access_field.suffix.${suffixName[parts.suffix]}`, { mode }) : mode;
+    if (!parts.suffix) return mode;
+    const direction = parts.suffix.startsWith(':forward') ? heading : parts.suffix.startsWith(':backward') && heading ? opposite(heading) : null;
+    if (direction) {
+        return t(`_lanes.access_field.suffix.${parts.suffix.endsWith(':conditional') ? 'heading_conditional' : 'heading'}`,
+            { mode, heading: t(`_lanes.access_field.compass.${direction}`) });
+    }
+    return t(`_lanes.access_field.suffix.${suffixName[parts.suffix]}`, { mode });
+}
+
+/** What a direction or condition row is for, in words (shown under it in "Add access type") */
+function accessKeyDescription(key: string): string | undefined {
+    const parts = accessParts(key);
+    if (!parts?.suffix) return undefined;
+    const kind = parts.suffix.startsWith(':forward') ? 'forward' : parts.suffix.startsWith(':backward') ? 'backward' : 'conditional';
+    return t(`_lanes.access_field.suffix_help.${kind}`, { key });
+}
+
+/** Where a key sorts: everyone first, then the biggest vehicles down to people on foot; a mode's directions and conditions after it */
+function sizeRank(key: string): number {
+    const parts = accessParts(key);
+    if (!parts) return 1e6;
+    const at = accessSizeOrder.indexOf(parts.mode);
+    const order: AccessSuffix[] = ['', ':forward', ':backward', ':conditional', ':forward:conditional', ':backward:conditional'];
+    return (at < 0 ? accessSizeOrder.length : at) * 10 + order.indexOf(parts.suffix);
 }
 
 /** Examples of conditional values offered (wiki: Conditional restrictions) */
@@ -51,19 +95,18 @@ export function uiFieldLanesAccess(field: any, context: iD.Context) {
     /** All the tags of the selection: one feature's, or each of several */
     const allTags = (): Tags[] => (_tags[Symbol.for('allTags')] as Tags[] | undefined) ?? [_tags as Tags];
 
-    /** The rows: the preset's modes, every access key tagged on any selected feature, and those added */
+    /** The rows: everyone, HGVs, cars, bicycles and pedestrians, every access key tagged on any selected feature, and those added */
     function rowKeys(): string[] {
         const tagged = new Set(allTags().flatMap(taggedAccessKeys));
-        const keys = [...new Set<string>([...(field.keys as string[]), ...tagged, ..._added])];
-        const order = (key: string) => {
-            const parts = accessParts(key);
-            if (!parts) return 1e6;
-            const preset = (field.keys as string[]).indexOf(key);
-            // the preset's own rows first, as iD lists them; then the rest in the wiki's order, directions after their mode
-            if (preset >= 0) return preset;
-            return 100 + accessModes.findIndex(mode => mode.key === parts.mode) * 10 + (parts.suffix.length ? 1 + parts.suffix.length / 100 : 0);
-        };
-        return keys.sort((a, b) => order(a) - order(b));
+        const keys = [...new Set<string>([...accessDefaultRows, ...tagged, ..._added])];
+        return keys.sort((a, b) => sizeRank(a) - sizeRank(b));
+    }
+
+    /** The way the field is for, when one way is selected: the compass point it heads to */
+    function heading(): string | null {
+        const way = _entityIDs.length === 1 ? context.hasEntity(_entityIDs[0] as any) as any : undefined;
+        if (way?.type !== 'way') return null;
+        return wayHeading(id => (context.hasEntity(id as any) as any)?.loc, way.nodes);
     }
 
     function valueOptions(key: string) {
@@ -99,13 +142,13 @@ export function uiFieldLanesAccess(field: any, context: iD.Context) {
         enter.append('div')
             .attr('class', 'label preset-label-access')
             .attr('title', d => d)
-            .text(d => accessKeyName(d));
+            .text(d => accessKeyName(d, heading()));
         enter.append('div')
             .attr('class', 'preset-input-access-wrap')
             .append('input')
             .attr('type', 'text')
             .attr('class', d => `preset-input-access preset-input-access-${d.replace(/:/g, '-')}`)
-            .attr('aria-label', d => accessKeyName(d))
+            .attr('aria-label', d => accessKeyName(d, heading()))
             .call(utilNoAuto as any)
             .each(function(this: HTMLInputElement, d) {
                 // (the combobox stops the browser's change event on Return, and says so with accept)
@@ -138,7 +181,11 @@ export function uiFieldLanesAccess(field: any, context: iD.Context) {
             const combobox = (uiCombobox(context, 'access-add') as any)
                 .fetcher((typed: string, done: (results: typeof _addOptions) => void) => {
                     const lower = typed.trim().toLowerCase();
-                    done(lower ? _addOptions.filter(o => o.words.some(word => word.includes(lower))) : _addOptions);
+                    if (!lower) return done(_addOptions);
+                    // the mode typed exactly first (`horse`: Horses before Horse-drawn carriages), then names starting with it
+                    const rank = (o: typeof _addOptions[number]) => (o.accessKey === lower || o.value.toLowerCase() === lower ? 0
+                        : o.words.some(word => word.startsWith(lower)) ? 1 : 2);
+                    done(_addOptions.filter(o => o.words.some(word => word.includes(lower))).sort((a, b) => rank(a) - rank(b)));
                 })
                 .caseSensitive(false)
                 .minItems(1);
@@ -162,24 +209,26 @@ export function uiFieldLanesAccess(field: any, context: iD.Context) {
         });
     }
 
-    /** What "Add access type" offers: each mode not shown, indented as the wiki nests them; a direction or condition of each shown */
+    /** What "Add access type" offers, biggest first: each mode not shown; a direction or condition of each shown */
     function addOptions(shown: string[]) {
-        const modes = accessModes.filter(mode => !shown.includes(mode.key)).map(mode => ({ key: mode.key, depth: accessDepth(mode.key) }));
+        const towards = heading();
+        const modes = accessModes.map(mode => mode.key).filter(key => !shown.includes(key));
         const variants = shown.filter(key => accessParts(key)?.suffix === '').flatMap(key =>
-            ([':forward', ':backward', ':conditional'] as const).map(suffix => `${key}${suffix}`).filter(variant => !shown.includes(variant))
-                .map(variant => ({ key: variant, depth: 0 })));
-        return [...modes, ...variants].map(({ key, depth }) => {
-            const name = accessKeyName(key);
+            ([':forward', ':backward', ':conditional'] as const).map(suffix => `${key}${suffix}`).filter(variant => !shown.includes(variant)));
+        return [...modes, ...variants].sort((a, b) => sizeRank(a) - sizeRank(b)).map(key => {
+            const name = accessKeyName(key, towards);
+            const description = accessKeyDescription(key);
             return {
                 // (not `key`: iD's combobox would complete typed text to it)
                 accessKey: key,
                 value: name,
                 title: key,
-                words: [name.toLowerCase(), key, key.replace(/[_:]/g, ' ')],
+                words: [name.toLowerCase(), key, key.replace(/[_:]/g, ' '), ...(description ? [description.toLowerCase()] : [])],
                 display: (selection: Selection) => {
-                    selection.append('span').style('padding-inline-start', `${depth * 10}px`).text(name);
+                    selection.append('span').text(name);
                     selection.append('span').attr('class', 'lanes-access-option-note').text(` ${key}`);
-                }
+                },
+                description
             };
         });
     }

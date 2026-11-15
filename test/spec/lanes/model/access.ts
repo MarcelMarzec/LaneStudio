@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import { load } from 'js-yaml';
 
 import {
-    accessChain, accessClass, accessConditional, accessFor, accessModes, accessParts, accessValues, accessValuesFor, impliedAccess,
+    accessChain, accessClass, accessConditional, accessDefaultRows, accessFor, accessModes, accessParts, accessSizeOrder, accessValues,
+    accessValuesFor, impliedAccess,
     taggedAccessKeys
 } from '../../../../modules/lanes/model/access';
 
@@ -84,5 +85,21 @@ describe('access tags (wiki: Key:access)', () => {
         const field = strings.en.access_field;
         for (const mode of accessModes) expect(field.modes[mode.key.replace(/:/g, '_')], mode.key).toBeTruthy();
         for (const value of accessValues) expect(field.values[value], value).toBeTruthy();
+    });
+});
+
+describe('the Allowed Access field\'s order', () => {
+    it('ranks every mode by size, everyone first and people on foot last of the vehicles', () => {
+        expect(new Set(accessSizeOrder)).toEqual(new Set(accessModes.map(mode => mode.key)));
+        expect(accessSizeOrder.length).toBe(accessModes.length);
+        expect(accessSizeOrder[0]).toBe('access');
+        const at = (key: string) => accessSizeOrder.indexOf(key);
+        expect(at('hgv')).toBeLessThan(at('bus'));
+        expect(at('bus')).toBeLessThan(at('goods'));
+        expect(at('goods')).toBeLessThan(at('motorcar'));
+        expect(at('motorcar')).toBeLessThan(at('motorcycle'));
+        expect(at('motorcycle')).toBeLessThan(at('bicycle'));
+        expect(at('bicycle')).toBeLessThan(at('foot'));
+        expect(accessDefaultRows).toEqual(['access', 'hgv', 'motorcar', 'bicycle', 'foot']);
     });
 });

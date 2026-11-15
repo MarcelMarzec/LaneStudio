@@ -70,7 +70,7 @@ en:
         - **Lane tools**: Paint a value onto lanes, Width (drag lane lines), Markings (crossings, stop and give way, signals, calming), Connect (lane connections across a junction), Signs.
         - **Lines between lanes**: click one to cycle it (dashed, solid, crossable one way); click a side of the centre line to ban or allow overtaking.
         - **Road fields** in iD's Fields: Number of lanes, Centre line, Speed limit (UK roundels and limit types, or type a number or nsl), Minimum speed, Advisory speed, Structure, Active traffic management.
-        - **Allowed Access**: a row per transport mode tagged; **+ Add access type** adds any mode the wiki lists (HGVs, vans, buses…), one direction of it, or times and conditions.
+        - **Allowed Access**: All, HGVs, Cars, Bicycles and Pedestrians, biggest first, and a row per other mode tagged; **+ Add access type** adds any mode the wiki lists (HGVs, vans, buses…), one direction of it, or times and conditions.
         - `width` is kerb to kerb: parking and cycle lanes on the road are part of it.
     roadside:
       title: Roadside and parking
@@ -867,11 +867,26 @@ en:
     conditional_placeholder: "value @ (condition), e.g. no @ (Mo-Fr 07:00-19:00)"
     conditional_example: "An example: the value, then when or for what it applies"
     suffix:
-      forward: "{mode}, forward only"
-      backward: "{mode}, backward only"
+      forward: "{mode}, in the way's direction"
+      backward: "{mode}, against the way's direction"
+      heading: "{mode} heading {heading}"
+      heading_conditional: "{mode} heading {heading}, at times"
       conditional: "{mode}, at times or with conditions"
-      forward_conditional: "{mode}, forward, at times or with conditions"
-      backward_conditional: "{mode}, backward, at times or with conditions"
+      forward_conditional: "{mode}, in the way's direction, at times"
+      backward_conditional: "{mode}, against the way's direction, at times"
+    suffix_help:
+      forward: "Only traffic going the way the line is drawn, along its direction arrows"
+      backward: "Only traffic going against the way the line is drawn"
+      conditional: "At certain times, or for some vehicles: no @ (Mo-Fr 07:00-19:00)"
+    compass:
+      north: north
+      north_east: north-east
+      east: east
+      south_east: south-east
+      south: south
+      south_west: south-west
+      west: west
+      north_west: north-west
     values:
       "yes": "Public right of way"
       "no": "Not allowed"
@@ -892,7 +907,7 @@ en:
       unknown: "Not known: needs a survey"
     modes:
       access: All
-      foot: Foot
+      foot: Pedestrians
       dog: Dogs
       ski: Skiers
       ski_nordic: Cross-country skiers

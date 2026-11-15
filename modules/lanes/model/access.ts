@@ -247,3 +247,20 @@ export function impliedAccess(tags: Tags, mode: string): string | undefined {
     }
     return mode === 'access' && !tags.barrier ? 'yes' : undefined;
 }
+
+/**
+ * The modes biggest first, as the Allowed Access field lists them: everyone, then the groups (all vehicles, motor
+ * vehicles), then each vehicle by its size, down to people on foot
+ */
+export const accessSizeOrder: string[] = [
+    'access', 'vehicle', 'motor_vehicle',
+    'bdouble', 'hgv_articulated', 'hgv', 'hazmat', 'hazmat:water', 'coach', 'tourist_bus', 'bus', 'school_bus', 'psv', 'agricultural',
+    'motorhome', 'emergency', 'goods', 'minibus', 'caravan', 'trailer', 'motorcar', 'taxi', 'share_taxi', 'rideshare', 'car_sharing',
+    'hov', 'carpool', 'disabled', 'carriage', 'microcar', 'nev', 'atv', 'ohv', 'snowmobile', 'golf_cart', 'auto_rickshaw',
+    'motorcycle', 'moped', 'speed_pedelec', 'mofa', 'small_electric_vehicle', 'horse', 'cycle_rickshaw', 'cargo_bike', 'bicycle',
+    'electric_bicycle', 'mtb', 'kick_scooter', 'hand_cart', 'portage', 'foot', 'dog', 'ski', 'ski:nordic', 'ski:alpine', 'ski:telemark',
+    'inline_skates', 'ice_skates'
+];
+
+/** The rows the Allowed Access field starts with, whatever is tagged: everyone, HGVs, cars, bicycles and pedestrians */
+export const accessDefaultRows = ['access', 'hgv', 'motorcar', 'bicycle', 'foot'];

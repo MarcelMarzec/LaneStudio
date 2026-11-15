@@ -8,6 +8,16 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.15r5
+##### 2026-Nov-15
+
+#### Editing
+* Allowed Access starts with All, HGVs, Cars, Bicycles and Pedestrians (every other mode, Horses and Motor vehicles
+  among them, is in **+ Add access type**, or shown once tagged), and lists them All first, then the biggest vehicle
+  down to people on foot
+* A direction of a mode says which way it is by the compass: **HGVs heading north** (`hgv:forward`, going the way the
+  line is drawn) and **HGVs heading south** (`hgv:backward`), each explained in the list
+
 # 26.11.15r4
 ##### 2026-Nov-15
 
