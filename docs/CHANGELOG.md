@@ -8,6 +8,16 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.21r4
+##### 2026-Nov-21
+
+#### Lanes and junctions
+* Where a road divides into one-way roads, its lanes near the fork are as wide as the lanes they lead into, and the
+  rest of its width is a hatched gore between the lanes for each branch, carrying on between the branches. At Hitchin
+  Road, Luton (w1379219397, `width=24`, five lanes), the lanes were 4.8 m wide, too wide to meet the 3.65 m lanes of
+  the roads they lead into, and the branches were shifted out of line to make up for it; now they line up lane for
+  lane, with the hatched V between the through and right-turn lanes as painted
+
 # 26.11.21r3
 ##### 2026-Nov-21
 

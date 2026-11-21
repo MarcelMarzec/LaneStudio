@@ -54,8 +54,16 @@ describe('a road dividing into one-way roads (a fork)', () => {
     it('draws the branches carrying on from the lanes that lead into them, unbroken', () => {
         const graph = hitchinRoad();
         const ways = Object.keys(fixture().ways).map(id => graph.entity(id as `w${number}`) as InstanceType<typeof iD.osmWay>);
-        const { pieces, junctions } = roadGeometry(ways, graph);
+        const { pieces, junctions, visuals, gores } = roadGeometry(ways, graph);
         expect(junctions.find(j => j.nodeID === node)?.kind).toBe('flare');
+        // its width (width=24, no width:lanes) is not shared out over its five lanes: they are as wide as the lanes they
+        // lead into, and the rest is a hatched gore between the through lanes and the right-turn lanes, carrying on
+        // between the two branches
+        const gore = visuals.get('w1379219397')?.gore;
+        expect(gore?.widths.every(w => Math.abs(w - 3.65) < 0.01)).toBe(true);
+        expect(gore?.gaps).toHaveLength(1);
+        expect(gore!.gaps[0].width).toBeCloseTo(24 - 5 * 3.65, 1);
+        expect(gores).toHaveLength(1);
         const frame = metricFrame((graph.entity(node as `n${number}`) as InstanceType<typeof iD.osmNode>).loc);
         const gaps = new Map<string, number>();
         for (const link of laneLinksAt(graph, node)) {
