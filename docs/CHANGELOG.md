@@ -8,6 +8,40 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.21
+##### 2026-Nov-21
+
+#### Connectivity tool
+* New **Connectivity** tool in the top bar, in place of Measure: every lane connection through junctions is drawn as a
+  line with an arrowhead, blue where Lane Studio works it out from the turn arrows and lane counts, orange where a
+  `type=connectivity` relation declares it, dashed where a lane change is needed (`(n)` in the tag). Turns a
+  restriction bans have no line; either colour can be hidden from the panel
+* Point at a lane to see its connections; click it to pick it. The lanes it can lead into are outlined and numbered
+  as the `connectivity` tag counts them, filled where it already leads; click one to connect or disconnect it,
+  shift-click for a connection needing a lane change. Each click is one undo step
+* The panel lists the lane's connections road by road with **Lane change** and a bin for each, and **Declare as a
+  relation**, **Select the relation** and **Back to the default**; it shows a relation's `connectivity` and
+  `connectivity:conditional`, notes a relation that says no more than the turn arrows, and lists the connectivity
+  relations in view with problems
+* The Measure tool is gone; iD's Measurement panel (Ctrl+Shift+M) still measures a selected line
+
+#### Lanes and junctions
+* Lane connections follow the wiki (Relation:connectivity): a new relation starts from the connections worked out
+  between its two roads, so the other lanes keep theirs (it used to list only the lane clicked); the both_ways lane is
+  written `bw` (it was written as lane 1); a road running through the junction is split there, as the relation's
+  roads must end at its via node; and relations over via ways are read and drawn
+* Disconnecting the last lane from one road into another writes nothing and points to a turn restriction instead
+* Connect has left the Lanes section's tools: lane connections have their own tool in the top bar
+
+#### Editing
+* The Lane tags check in the Issues pane finds connectivity relations without one from way, one to way and a via,
+  with roads not joined at the via, with a `connectivity` value against the wiki's syntax (two from lanes in one
+  statement, `1,2:1`, is fixed to `1:1|2:1` with one click) or naming a lane its road does not have
+
+#### Website
+* The website and wiki describe the Connectivity tool (a new guide page, Connectivity) in place of Measure; Tag
+  coverage links `connectivity=*` and `type=connectivity` to it
+
 # 26.11.15r7
 ##### 2026-Nov-15
 

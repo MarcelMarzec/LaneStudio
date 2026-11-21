@@ -71,6 +71,10 @@ function icon_route(): void { ?>
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/></svg>
 <?php }
 
+function icon_connectivity(): void { ?>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 21v-5.5c0-3-2-5-4-7"/><path d="M7 15.5c0-3 2.5-5.5 5-7"/><path d="M17 21v-5.5c0-3 2-5 4-7"/><path d="m2 4 1 4.5 4-1.5"/><path d="m11 4 1 4.5 4-1.5"/><path d="m21 4-1 4.5-4-1.5"/></svg>
+<?php }
+
 function icon_code(): void { ?>
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 18-6-6 6-6"/><path d="m16 6 6 6-6 6"/></svg>
 <?php }

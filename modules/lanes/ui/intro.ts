@@ -168,7 +168,7 @@ export function lanesIntroTools(context: iD.Context, reveal: Reveal): Chapter {
     return chapterOf(context, reveal, 'tools', [
         { at: () => target('.lanes-mode-routing'), key: 'tools.routing', before: () => context.enter(modeBrowse(context) as any) },
         { at: () => target('.lanes-mode-speed'), key: 'tools.speed' },
-        { at: () => target('.lanes-mode-measure'), key: 'tools.measure' },
+        { at: () => target('.lanes-mode-connectivity'), key: 'tools.connectivity' },
         { at: () => target('.map-pane-control.lanes-key-control'), key: 'tools.key' },
         { at: () => target('.map-pane-control.lane-studio-control'), key: 'tools.settings' },
         { at: () => target('.map-control.issues-control'), key: 'tools.checks' }

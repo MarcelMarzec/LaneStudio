@@ -1,0 +1,133 @@
+/*
+ * The Connectivity tool: every lane connection through junctions as a line, Lane Studio's own (worked out from turn
+ * arrows and lane counts) in blue and those a type=connectivity relation declares in orange, dashed where a lane change
+ * is needed (`(n)` in the tag). Blue and orange stay apart for colour-blind eyes, and both show on dark imagery.
+ */
+.ideditor.lane-studio {
+    --link-default: #4dabf7;
+    --link-declared: #ff922b;
+}
+.ideditor.lane-studio .lanes-layer .lanes-lane-links { pointer-events: none; }
+.ideditor.lane-studio .lanes-layer .lane-link,
+.ideditor.lane-studio .lanes-layer .lane-link-casing {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ideditor.lane-studio .lanes-layer .lane-link-casing { stroke: rgba(0, 0, 0, 0.55); stroke-width: 4.5; }
+.ideditor.lane-studio .lanes-layer .lane-link { stroke-width: 2.5; }
+.ideditor.lane-studio .lanes-layer .lane-link.default { stroke: var(--link-default); }
+.ideditor.lane-studio .lanes-layer .lane-link.declared { stroke: var(--link-declared); }
+.ideditor.lane-studio .lanes-layer .lane-link.optional,
+.ideditor.lane-studio .lanes-layer .lane-link-casing.optional { stroke-dasharray: 6, 5; }
+.ideditor.lane-studio .lanes-layer .lane-link-head { stroke: rgba(0, 0, 0, 0.55); stroke-width: 1; stroke-linejoin: round; }
+.ideditor.lane-studio .lanes-layer .lane-link-head.default { fill: var(--link-default); }
+.ideditor.lane-studio .lanes-layer .lane-link-head.declared { fill: var(--link-declared); }
+/* the lane in focus: its connections stand out, the rest fade */
+.ideditor.lane-studio .lanes-layer .lane-link.focus { stroke-width: 4; }
+.ideditor.lane-studio .lanes-layer .lane-link-casing.focus { stroke-width: 6.5; }
+.ideditor.lane-studio .lanes-layer .lane-link.dim,
+.ideditor.lane-studio .lanes-layer .lane-link-head.dim { opacity: 0.35; }
+.ideditor.lane-studio .lanes-layer .lane-link-casing.dim { opacity: 0.15; }
+.ideditor.lane-studio .lanes-layer .lane-link-picked {
+    fill: rgba(255, 212, 59, 0.45);
+    stroke: #ffd43b;
+    stroke-width: 2.5;
+}
+.ideditor.lane-studio .lanes-layer .lane-link-hovered {
+    fill: rgba(255, 255, 255, 0.14);
+    stroke: rgba(255, 255, 255, 0.8);
+    stroke-width: 1.5;
+}
+/* the lanes the picked lane can lead into, filled in the connection's colour where it does */
+.ideditor.lane-studio .lanes-layer .lane-link-target {
+    fill: rgba(255, 255, 255, 0.16);
+    stroke: #fff;
+    stroke-width: 2;
+    stroke-dasharray: 6, 4;
+}
+.ideditor.lane-studio .lanes-layer .lane-link-target.connected { stroke-dasharray: none; stroke-width: 2; }
+.ideditor.lane-studio .lanes-layer .lane-link-target.connected.default { fill: rgba(77, 171, 247, 0.35); stroke: var(--link-default); }
+.ideditor.lane-studio .lanes-layer .lane-link-target.connected.declared { fill: rgba(255, 146, 43, 0.35); stroke: var(--link-declared); }
+.ideditor.lane-studio .lanes-layer .lane-link-target.connected.optional { stroke-dasharray: 6, 5; }
+/* lane numbers as the connectivity tag counts them, from the driver's left */
+.ideditor.lane-studio .lanes-layer .lane-link-number {
+    fill: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    paint-order: stroke;
+    stroke: rgba(0, 0, 0, 0.85);
+    stroke-width: 3px;
+}
+.ideditor.lane-studio .lanes-layer .lane-link-number.from { font-size: 14px; }
+/* iD's own road lines fade, so its orange primary roads and blue cycleways are not taken for connections */
+.ideditor.lane-studio.lanes-connectivity .layer-osm path.line.lanes-drawn { opacity: 0.25; }
+/* while connecting, clicks are the tool's: iD's points and vertices do not take them */
+.ideditor.lane-studio.lanes-connectivity .lanes-layer .lanes-divider-targets,
+.ideditor.lane-studio.lanes-connectivity .lanes-layer .lanes-node-targets,
+.ideditor.lane-studio.lanes-connectivity .layer-osm .layer-points,
+.ideditor.lane-studio.lanes-connectivity .layer-osm .vertices {
+    pointer-events: none;
+}
+.ideditor.lane-studio.lanes-connectivity .lanes-layer .lane-target { cursor: alias; }
+
+/* the panel */
+.ideditor.lane-studio .connectivity-key-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+.ideditor.lane-studio span.connectivity-key-row { cursor: default; }
+.ideditor.lane-studio .connectivity-key-row input { margin: 0; }
+.ideditor.lane-studio .connectivity-swatch {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 0;
+    border-top: 3px solid var(--link-default);
+}
+.ideditor.lane-studio .connectivity-swatch.declared { border-top-color: var(--link-declared); }
+.ideditor.lane-studio .connectivity-swatch.optional { border-top: 3px dashed var(--text-color); }
+.ideditor.lane-studio .connectivity-group {
+    margin: 10px 0 14px;
+}
+.ideditor.lane-studio .connectivity-group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+}
+.ideditor.lane-studio .lanes-routing-sidebar .connectivity-source { margin: 2px 0 6px; font-size: 12px; overflow-wrap: anywhere; }
+.ideditor.lane-studio .lanes-routing-sidebar .connectivity-list li { align-items: center; }
+.ideditor.lane-studio .lanes-routing-sidebar .connectivity-list li.optional .connectivity-pair { font-style: italic; }
+.ideditor.lane-studio .connectivity-pair { flex: 1 1 auto; }
+.ideditor.lane-studio .connectivity-change {
+    flex: 0 0 auto;
+    height: 24px;
+    padding: 0 8px;
+    font-size: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+.ideditor.lane-studio .connectivity-change.active {
+    background: var(--link-color);
+    border-color: var(--link-color);
+    color: var(--bg-color);
+}
+.ideditor.lane-studio .connectivity-remove {
+    flex: 0 0 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    color: var(--text-color);
+}
+.ideditor.lane-studio .connectivity-remove:hover { color: var(--error-color, #e06e5f); }
+.ideditor.lane-studio .connectivity-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.ideditor.lane-studio .connectivity-actions button { height: auto; padding: 4px 10px; }
+.ideditor.lane-studio .connectivity-problem span:first-child { flex: none; white-space: nowrap; margin-right: 8px; }
+.ideditor.lane-studio .connectivity-problem .speed-key-count { text-align: right; }

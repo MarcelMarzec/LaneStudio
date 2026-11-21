@@ -50,6 +50,8 @@ export const mapKeyGroups: { id: string; entries: KeyEntry[] }[] = [
             { id: 'single_yellow', swatch: { line: 'kerb-marking single yellow' } },
             { id: 'red', swatch: { line: 'kerb-marking double red' } },
             { id: 'connection', swatch: { line: 'connectivity-curve' } },
+            { id: 'link_default', swatch: { line: 'lane-link default' } },
+            { id: 'link_declared', swatch: { line: 'lane-link declared' } },
             { id: 'guide', swatch: { line: 'junction-guide' } }
         ]
     },

@@ -21,7 +21,7 @@ Where each part of Lane Studio lives, and the hooks it uses in iD.
 | --- | --- |
 | Routing | `geometry/routing.ts`, `core/lane_routing.ts`, `core/mode_routing.ts`, `core/route_access.ts` (roads coloured by access), `ui/routing_panel.ts`, `svg/routing.ts` |
 | Speed Limit tool | `core/lane_speed.ts`, `core/mode_speed.ts`, `ui/speed_panel.ts`, `ui/speed_roundels.ts`, `model/speed_limits.ts` |
-| Measure tool | `core/mode_measure.ts`, `ui/measure_panel.ts` |
+| Connectivity tool | `geometry/connectivity.ts` (connections at a node, relations read and checked), `actions/connect_lanes.ts`, `core/lane_connectivity.ts`, `core/mode_connectivity.ts`, `ui/connectivity_panel.ts`, `svg/connectivity.ts`, `css-lanes/45_connectivity.css` |
 | Railways | `geometry/railway.ts`, `geometry/rail_features.ts`, `svg/railway.ts` |
 | Parking spaces and car parks | `geometry/parking_spaces.ts`, `svg/parking_spaces.ts` |
 | Brand logos | `core/brand_logos.ts` (Wikidata), `svg/brand_logos.ts` |

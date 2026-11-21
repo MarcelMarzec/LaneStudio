@@ -13,6 +13,8 @@ import { laneRouting } from '../core/lane_routing';
 import { accessClassNames, laneAccess } from '../core/route_access';
 import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind } from '../core/lane_speed';
 import { drawRoutes, laneUnder } from './routing';
+import { drawConnectivity } from './connectivity';
+import { laneConnectivity } from '../core/lane_connectivity';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
 import { isLanePartArea, roadGeometry, type CarriagewayArea, type PartArea, type LaneSwap, type LineTrim, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
 import type { CycleDetail, LaneInfo, ParkingLayout } from '../geometry/layout';
@@ -22,16 +24,15 @@ import { drawLaneSymbols, drawMarkingSymbols } from './lane_symbols';
 import { ukMarkings } from '../core/drive_side';
 import { t } from '../../core/localizer';
 import {
-    parseLanes, parseTurn, formatTurn, dividerAt, setDivider, nextDivider, setLaneValue, setLaneKind, parseConnectivity,
+    parseLanes, parseTurn, formatTurn, dividerAt, setDivider, nextDivider, setLaneValue, setLaneKind,
     conditionalSlot, parseLaneConditional,
     type LaneDirection, type LaneModel, type LaneRef
 } from '../model';
 import { laneTools } from '../core/lane_tools';
 import { laneLayout } from '../geometry/layout';
-import { offsetFromWay } from '../geometry/measure';
+import { offsetFromWay } from '../geometry/way_offset';
 import { svgLaneDefs, turnArrowSymbol } from './defs';
 import { drawStreet, drawParking, drawRoadMarkings, joinPaths, pathFor, classChanged, withIdState, attrChanged } from './street';
-import { actionConnectLanes, connectionNode, findConnectivity } from '../actions/connect_lanes';
 import { streetGeometry, carriagewayAreaEdges, isCarriagewayArea, type StreetGeometry } from '../geometry/street';
 import { parkingGeometry, type ParkingShape } from '../geometry/parking';
 import { roadMarkingGeometry, roadMarkingIDs } from '../geometry/road_marking';
@@ -557,6 +558,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     const tools = laneTools(context);
     const routing = laneRouting(context);
     const speed = laneSpeed(context);
+    const connectivity = laneConnectivity(context);
     const settings = laneSettings(context);
     // the pieces last drawn, for redrawing routes alone as the pointer moves
     let _pieces: RoadPiece[] = [];
@@ -629,7 +631,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .data([
                 'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'calming-ways', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs', 'kerb-markings', 'managed-edges',
                 'paths-over', 'rail-over-road', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'lane-boxes', 'arrows', 'lane-symbols', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols',
-                'shields', 'managed-badges', 'parking-badges', 'junction-labels', 'short', 'selection', 'connect-from', 'routes',
+                'shields', 'managed-badges', 'parking-badges', 'junction-labels', 'short', 'selection', 'routes', 'lane-links',
                 'surface-targets', 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
             ])
             .enter()
@@ -1211,11 +1213,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             return [{ key: `${pieceKey(piece)}-through-${i}`, nodeID: piece.fromNode, kind: 'guide' as const, optional: false, line }];
         }));
         // lanes connected by a connectivity relation get guide lines along their edges like any others; the
-        // blue editing line from lane centre to lane centre shows only while connecting lanes or with one of
-        // their roads selected
-        const editing = tools.tool() === 'connect';
+        // blue line from lane centre to lane centre shows with one of their roads selected (the Connectivity tool
+        // draws every connection itself)
         const connectionLines = connections.filter(c => c.kind !== 'relation' ||
-            editing || (c.ways ?? []).some(id => selected.has(id as osmWay['id'])));
+            (!connectivity.active() && (c.ways ?? []).some(id => selected.has(id as osmWay['id']))));
         const guideLines = [...connectionLines, ...innerGuides, ...stoppedGuides].filter(d => d.kind === 'relation' || clearOfIslands(d.line));
         joinPaths(group('connectivity'), markings ? guideLines : [], d => d.key,
             d => (d.kind === 'relation' ? 'connectivity-curve' : 'junction-guide') + (d.optional ? ' optional' : '') +
@@ -1229,16 +1230,6 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         joinPaths(group('short'), shortData, pieceKey,
             d => 'short-way' + (selected.has(d.wayID) ? ' selected' : ''), d => path(d.carriageway, true));
         drawShortTargets(group('short-targets'), shortData, selected);
-
-        /* the lane picked first with the Connect tool */
-        const from = tools.tool() === 'connect' ? tools.connectFrom() : null;
-        const fromData = !from ? [] : pieces.filter(piece => piece.wayID === from.wayID).flatMap(piece =>
-            piece.layout.lanes.map((lane, i) => ({ lane, key: `${pieceKey(piece)}-${i}`, polygon: piece.lanes[i] }))
-                .filter(x => x.lane.ref.direction === from.ref.direction && x.lane.ref.index === from.ref.index));
-        const toData = connectTargets(from, pieces, graph);
-        joinPaths(group('connect-from'), [...fromData.map(d => ({ ...d, kind: 'from' })), ...toData.map(d => ({ ...d, kind: d.connected ? 'connected' : 'to' }))],
-            d => `${d.kind}-${d.key}`, d => `lane-connect-${d.kind}`, d => path(d.polygon, true));
-
 
         /* selected lanes */
         const chosen = state.selected();
@@ -1258,6 +1249,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         /* the Routing tool's routes */
         _pieces = pieces;
         drawRoutes(group('routes'), context, pieces, loc => projection(loc) as Vec2);
+        drawConnectivity(group('lane-links'), context, pieces, loc => projection(loc) as Vec2);
 
         /* click targets: lanes and shoulders wherever lanes are drawn, dividers of the selected road from the editing zoom */
         drawTargets(group('targets'), group('divider-targets'), [...pieces.filter(piece => !replaced.has(piece)), ...channelled], markings, selected);
@@ -1404,33 +1396,6 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     }
 
 
-    /** Connect tool: the first click picks a lane, the second a lane on a road it leads to */
-    function connectLane(d: LaneTarget) {
-        const from = tools.connectFrom();
-        if (!from) {
-            tools.setConnectFrom({ wayID: d.wayID, ref: d.ref });
-            return;
-        }
-        const graph = context.graph();
-        const fromWay = graph.entity(from.wayID) as osmWay;
-        const toWay = graph.entity(d.wayID) as osmWay;
-        const result = connectionNode(fromWay, from.ref, toWay, d.ref);
-        if ('problem' in result) {
-            if (result.problem === 'same_road') {
-                tools.setConnectFrom({ wayID: d.wayID, ref: d.ref });   // pick again
-                return;
-            }
-            // uiFlash is plain JavaScript with getter/setter overloads
-            const flash = context.ui().flash as any;
-            flash.iconName('#iD-icon-no').label(t(`_lanes.connect.${result.problem}`))();
-            tools.setConnectFrom(null);
-            return;
-        }
-        context.perform(actionConnectLanes(fromWay.id, from.ref, result.nodeID, toWay.id, d.ref), t('_lanes.annotation.connect'));
-        tools.setConnectFrom(null);
-    }
-
-
     /** Marking tool: puts a crossing, stop sign, … on the road where it was clicked, then selects it */
     function placeMarking(event: MouseEvent, d: LaneTarget) {
         const type = tools.marking();
@@ -1539,8 +1504,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             .each(attrChanged('class', 'lane-target'))
             .on('click.lanes', (event: MouseEvent, d: LaneTarget) => {
                 // the Routing tool edits nothing: it pins the routes itself
-                // (nor does the Speed Limit tool: it sets limits itself)
-                if (routing.active() || speed.active()) return;
+                // (nor do the Speed Limit and Connectivity tools: they set limits and connect lanes themselves)
+                if (routing.active() || speed.active() || connectivity.active()) return;
                 if (tools.tool() === 'paint') {
                     paintLane(d);
                     return;
@@ -1551,10 +1516,6 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 }
                 if (tools.tool() === 'sign') {
                     placeSign(event, d);
-                    return;
-                }
-                if (tools.tool() === 'connect') {
-                    connectLane(d);
                     return;
                 }
                 // while drawing a line or area (or in any other mode), the click is iD's: it adds a point
@@ -1820,6 +1781,17 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     state.on('corridor.layer', draw);
     tools.on('change.layer', draw);
     speed.on('change.layer', draw);
+    // the Connectivity tool's lines: turning it on or off redraws the lanes (relation lines give way to its own),
+    // picking or pointing at a lane only its lines
+    let _connecting = false;
+    connectivity.on('change.layer', () => {
+        if (connectivity.active() !== _connecting) {
+            _connecting = connectivity.active();
+            draw();
+        } else if (!_layer.empty()) {
+            drawConnectivity(_layer.select<SVGGElement>('g.lanes-lane-links'), context, _pieces, loc => projection(loc) as Vec2);
+        }
+    });
     // the Routing tool finds the lane under the pointer from the pieces drawn
     routing.setLaneLocator((point, wayID) => laneUnder(_pieces, context.graph(), loc => projection(loc) as Vec2, point, wayID ? Infinity : 8, wayID));
     // the routes follow the pointer: only they are redrawn
@@ -1845,27 +1817,4 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     drawLanes.redraw = draw;
 
     return drawLanes;
-}
-
-/**
- * Connect tool: the lanes the lane picked first can be connected to (the lanes leaving the junctions at its
- * road's ends), and whether it already is
- */
-function connectTargets(from: { wayID: osmWay['id']; ref: LaneRef } | null, pieces: RoadPiece[], graph: iD.Graph) {
-    const fromWay = from ? graph.hasEntity(from.wayID) as osmWay | undefined : undefined;
-    if (!from || !fromWay) return [];
-    return pieces.filter(piece => piece.wayID !== from.wayID).flatMap(piece => {
-        const toWay = graph.entity(piece.wayID) as osmWay;
-        return piece.layout.lanes.flatMap((lane, i) => {
-            const result = connectionNode(fromWay, from.ref, toWay, lane.ref);
-            if ('problem' in result) return [];
-            // (only the stretch of the next road at the junction)
-            const atJunction = (piece.atWayStart && piece.fromNode === result.nodeID) || (piece.atWayEnd && piece.toNode === result.nodeID);
-            if (!atJunction) return [];
-            const relation = findConnectivity(graph, fromWay.id, result.nodeID, toWay.id);
-            const connected = !!relation && parseConnectivity(relation.tags.connectivity ?? '')
-                .some(g => g.from === `${from.ref.index + 1}` && g.to.some(c => c.to === `${lane.ref.index + 1}`));
-            return [{ key: `${piece.wayID}-${piece.index}-${i}`, polygon: piece.lanes[i], connected }];
-        });
-    });
 }

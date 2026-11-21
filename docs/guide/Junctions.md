@@ -29,8 +29,8 @@ Junctions are drawing only: nothing here writes tags.
 - **Junction boxes** are a shade lighter than the road, with curved kerbs from road to road. Where no traffic crosses
   the main road (roundabouts, slip roads) the box is only the widening mouth. At a bend, both halves meet on the
   bisector.
-- **Guide lines** (dashed) carry each lane through the box to the lanes it leads to; connectivity relations are
-  solid blue curves. Side roads without arrows get fainter guides to every road they may turn into, leaving out
+- **Guide lines** (dashed) carry each lane through the box to the lanes it leads to; with a road selected, its
+  connectivity relations are solid blue curves. The [Connectivity](Connectivity.md) tool shows and edits them all. Side roads without arrows get fainter guides to every road they may turn into, leaving out
   turns a restriction bans. None at mini-roundabouts.
 - **Mapped carriageway areas** belong to the road lying mostly inside them: the road is shifted into the middle
   (by at most half its width) and the area drawn as its surface.

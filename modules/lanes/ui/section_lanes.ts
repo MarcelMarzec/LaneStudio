@@ -539,12 +539,12 @@ export function uiSectionLanes(context: iD.Context) {
     }
 
 
-    /** Select, Paint, Width, Markings, Signs and Connect, and what the tool picked needs */
+    /** Select, Paint, Width, Markings and Signs, and what the tool picked needs */
     function renderTools(wrap: Div) {
         const tool = tools.tool();
         const { wrap: body } = fieldShell(wrap, { id: 'tools', label: t('_lanes.tools.title'), info: 'tools', wrapClass: 'lane-field-body' });
         const bar = body.append('div').attr('class', 'lane-buttons lanes-tools');
-        for (const id of ['select', 'paint', 'width', 'marking', 'sign', 'connect'] as const) {
+        for (const id of ['select', 'paint', 'width', 'marking', 'sign'] as const) {
             bar.append('button')
                 .attr('type', 'button')
                 .attr('class', `lanes-tool-${id}` + (tool === id ? ' active' : ''))
@@ -554,7 +554,6 @@ export function uiSectionLanes(context: iD.Context) {
                 .on('click', () => tools.setTool(id));
         }
         if (tool === 'width') fieldNote(body, t('_lanes.tools.width_hint'));
-        if (tool === 'connect') fieldNote(body, t(tools.connectFrom() ? '_lanes.connect.pick_to' : '_lanes.connect.pick_from'));
         if (tool === 'marking') {
             laneField(context, wrap, {
                 id: 'tool-marking',

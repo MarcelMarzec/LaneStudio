@@ -12,7 +12,7 @@ New to Lane Studio? Open **Help** (`H`) → **Start the walkthrough**: it shows 
 
 ## The screen
 
-- **Top bar**: Selection (select and edit), [Routing](Routing.md), [Speed Limit and Measure](Tools.md), then iD's Point, Line and Area.
+- **Top bar**: Selection (select and edit), [Routing](Routing.md), [Speed Limit](Tools.md), [Connectivity](Connectivity.md), then iD's Point, Line and Area.
 - **Sidebar**, for a selected road, top to bottom: iD's feature type and issues; the **Lanes** section
   ([Lanes](Lanes.md)); iD's **Fields** with Lane Studio's road fields among them ([Road fields](Road-Fields.md),
   [Roadside](Roadside.md)); **Roundabout** or **Look ahead** ([Junctions](Junctions.md)); iD's tags.

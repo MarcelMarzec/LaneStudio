@@ -6,14 +6,16 @@ import type { OsmEntity } from '../../osm';
 import { services } from '../../services';
 import { utilDisplayLabel } from '../../util/utilDisplayLabel';
 import type { coreGraph } from '../../core/graph';
+import type { osmRelation } from '../../osm/relation';
 import type { osmWay } from '../../osm/way';
+import { connectivityProblems } from '../geometry/connectivity';
 import { laneDriveSide } from '../core/drive_side';
 import { busValue, contraflowSide, hasOldCycleways, upgradeOldCycleways } from '../core/roadside';
 import { laneRoadHighways } from '../core/roads';
 import { parseWidth } from '../geometry/layout';
 import { laneKindFromValues, setLaneKind, upgradeOldBusway } from '../model/kinds';
 import {
-    parseLanes, parseLaneTagKey, splitLaneValue, turnValues, laneOneway, laneRefsInWayOrder, parseTurn, serialiseLanes,
+    parseLanes, parseLaneTagKey, splitLaneValue, turnValues, laneOneway, laneRefsInWayOrder, parseTurn, serialiseLanes, fixConnectivitySyntax,
     type LaneDirection, type LaneModel
 } from '../model';
 
@@ -160,7 +162,27 @@ export const validationLaneTags: CreateValidator = () => {
             })]
         });
 
+    /** A connectivity relation's problems: its members (once they are loaded), its tag's syntax and its lane numbers */
+    function connectivityIssues(relation: osmRelation, graph: coreGraph): validationIssue[] {
+        const loaded = relation.members.every(m => graph.hasEntity(m.id));
+        const problems = connectivityProblems(graph, relation).filter(code => loaded || !['members', 'not_joined', 'from_lane', 'to_lane'].includes(code));
+        const issues: validationIssue[] = [];
+        const syntax = problems.filter(code => !['members', 'not_joined', 'from_lane', 'to_lane'].includes(code));
+        if (problems.includes('members')) issues.push(issue(relation, 'connectivity_members', {}));
+        if (problems.includes('not_joined')) issues.push(issue(relation, 'connectivity_not_joined', {}));
+        if (syntax.length) {
+            const value = relation.tags.connectivity ?? '';
+            const fixable = syntax.every(code => code === 'several_from' || code === 'repeated_from');
+            issues.push(issue(relation, 'connectivity_syntax', { problems: syntax.map(code => t(`_lanes.connectivity.problems.${code}`)).join('; ') },
+                fixable ? () => ({ ...relation.tags, connectivity: fixConnectivitySyntax(value) }) : undefined, syntax.join()));
+        }
+        if (problems.includes('from_lane')) issues.push(issue(relation, 'connectivity_lanes', { road: 'from' }, undefined, 'from'));
+        if (problems.includes('to_lane')) issues.push(issue(relation, 'connectivity_lanes', { road: 'to' }, undefined, 'to'));
+        return issues;
+    }
+
     const validation: Validator = function checkLaneTags(entity, graph) {
+        if (entity.type === 'relation' && entity.tags.type === 'connectivity' && graph) return connectivityIssues(entity as osmRelation, graph);
         if (entity.type !== 'way' || !laneRoadHighways.has(entity.tags.highway ?? '')) return [];
         const tags = entity.tags;
         const issues: validationIssue[] = [];

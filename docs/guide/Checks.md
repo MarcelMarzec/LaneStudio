@@ -1,6 +1,6 @@
 # Checks
 
-The **Lane tags** rule in iD's Issues pane checks roads everywhere on the map. A fix is offered only where the answer
+The **Lane tags** rule in iD's Issues pane checks roads and lane connections everywhere on the map. A fix is offered only where the answer
 is certain.
 
 | Check | Fix |
@@ -20,7 +20,12 @@ is certain.
 | The old `busway=lane` | Make them lanes of their own |
 | Lanes turning off at a dead end | — |
 | A merging lane whose road carries on with as many lanes | — |
+| A [`type=connectivity`](https://wiki.openstreetmap.org/wiki/Relation:connectivity) relation without one `from` way, one `to` way and a `via` node or via ways, or with roads not joined at the via | — |
+| A `connectivity` value against the wiki's syntax | One statement per from lane, for `1,2:1` (to `1:1\|2:1`) or a from lane listed twice |
+| A `connectivity` lane the from or to road does not have | — |
 
-The last two need the roads around, so they run only where the map data at the road's ends is loaded.
+The dead end and merge checks need the roads around, so they run only where the map data at the road's ends is loaded.
 
-On the OpenStreetMap wiki: [Lanes](https://wiki.openstreetmap.org/wiki/Lanes).
+More on lane connections: [Connectivity](Connectivity.md).
+
+On the OpenStreetMap wiki: [Lanes](https://wiki.openstreetmap.org/wiki/Lanes), [Relation:connectivity](https://wiki.openstreetmap.org/wiki/Relation:connectivity).

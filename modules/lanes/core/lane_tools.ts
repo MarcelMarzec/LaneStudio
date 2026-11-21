@@ -1,12 +1,13 @@
 import { dispatch as d3_dispatch } from 'd3-dispatch';
 
-import type { WayId } from '../../osm';
-import type { LaneRef } from '../model';
 import type { MarkingType } from '../model/markings';
 import type { SignChoice } from '../model/signs';
 
-/** The map tool: select lanes, paint a value onto lanes, drag lane widths, place road markings or signs */
-export type LaneTool = 'select' | 'paint' | 'width' | 'marking' | 'connect' | 'sign';
+/**
+ * The map tool: select lanes, paint a value onto lanes, drag lane widths, place road markings or signs (lane
+ * connections have their own tool in the top bar, Connectivity)
+ */
+export type LaneTool = 'select' | 'paint' | 'width' | 'marking' | 'sign';
 
 /** What the Paint tool writes: a lane key and value, or a lane type */
 export interface PaintValue {
@@ -26,9 +27,6 @@ export interface LaneTools {
     /** what the sign tool places: a traffic sign, message sign or camera */
     sign(): SignChoice;
     setSign(choice: SignChoice): void;
-    /** the lane picked first with the Connect tool */
-    connectFrom(): { wayID: WayId; ref: LaneRef } | null;
-    setConnectFrom(from: { wayID: WayId; ref: LaneRef } | null): void;
     on(type: `change${string}`, listener: (() => void) | null): LaneTools;
 }
 
@@ -43,29 +41,21 @@ export function laneTools(context: iD.Context): LaneTools {
     let _paint: PaintValue = { key: 'kind', value: 'bus' };
     let _marking: MarkingType = 'crossing';
     let _sign: SignChoice = 'GB:670';
-    let _connectFrom: { wayID: WayId; ref: LaneRef } | null = null;
 
     const tools: LaneTools = {
         tool: () => _tool,
         setTool(tool) {
             _tool = tool;
-            _connectFrom = null;
             context.container()
                 .classed('lanes-tool-paint', tool === 'paint')
                 .classed('lanes-tool-width', tool === 'width')
                 .classed('lanes-tool-marking', tool === 'marking')
-                .classed('lanes-tool-connect', tool === 'connect')
                 .classed('lanes-tool-sign', tool === 'sign');
             dispatch.call('change', tools);
         },
         paint: () => _paint,
         setPaint(paint) {
             _paint = paint;
-            dispatch.call('change', tools);
-        },
-        connectFrom: () => _connectFrom,
-        setConnectFrom(from) {
-            _connectFrom = from;
             dispatch.call('change', tools);
         },
         marking: () => _marking,

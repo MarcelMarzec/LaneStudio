@@ -8,7 +8,7 @@ en:
     steps:
       zoom: Zoom in to street level. Lanes appear from zoom 17 and can be edited from zoom 18.
       click: Click a lane to edit it in the Lanes section of the sidebar; shift-click to pick more lanes.
-      tools: Use Paint to apply one value to many lanes, Width to drag lane widths, and Connect to link lanes across a junction.
+      tools: Use Paint to apply one value to many lanes and Width to drag lane widths. Connectivity, in the top bar, shows and sets how lanes connect through junctions.
       markings: Use Markings to place crossings, stop and give way signs, signals and traffic calming.
       save: Every change can be undone. Save uploads your changes with a changeset comment.
     rules: "Map what is on the ground: use your own survey, the aerial imagery offered here and street-level photos you are allowed to use. Never copy from Google or other maps. Change one road at a time and check it before saving. Don't tag for the renderer: tag what is there, not what makes Lane Studio draw it the way you would like. If a road looks wrong but its tags match what is there, report it rather than changing the tags."
@@ -27,7 +27,7 @@ en:
       select: "Main Street runs down the middle of the map, drawn lane by lane. **Click Main Street to select it.**"
       section: "The Lanes section is new: the road's lanes, the lane tools and the selected lanes' fields. It sits above iD's fields."
       strip: "Lanes along the road shows the lanes left to right. Click one here or on the map to edit it; shift-click to pick more."
-      tools: "The lane tools: Paint a value onto lanes, drag lane Widths, place Markings and Signs, and Connect lanes across a junction. Esc returns to Select."
+      tools: "The lane tools: Paint a value onto lanes, drag lane Widths, and place Markings and Signs. Esc returns to Select."
       fields: "Lane Studio's road fields sit among iD's in Fields: the Number of lanes each way, the centre line and more. Every field has an i button with a short overview and a wiki link."
       speed: "Speed limit shows the limit chosen with its sign; its dropdown lists UK limits and limit types. Type a number or nsl, zone or motorway. A lane can have its own limit in the Lanes section."
     roadside:
@@ -39,7 +39,7 @@ en:
       title: Tools
       routing: "Routing shows every route a car, van, lorry, bus, bicycle and more can take from the lane under the pointer, following turn arrows, lane connections and turn restrictions. The roads turn the colour of their access for the vehicle picked."
       speed: "Speed Limit colours every lane by its limit, with roads missing one in red. Pick a limit and click roads to set it."
-      measure: "Measure measures a distance on the imagery and sets it as a road, lane, pavement or cycle lane width."
+      connectivity: "Connectivity draws every lane connection through junctions: blue where Lane Studio works it out, orange where a relation declares it. Click a lane, then the lanes it leads into."
       key: "The Map key (G) explains every colour, line and symbol on the map."
       settings: "The Lane Studio pane (K) sets lane opacity, hides iD's lines under lanes, land use and brand logos, holds the privacy setting and shows what's new."
       checks: "The Issues pane checks lane tags as you edit: lane counts, widths, unmarked bus lanes, old values, turns into dead ends."
@@ -57,7 +57,7 @@ en:
 
         - **Roads drawn lane by lane** at their real width over the imagery (from zoom 17; editing from zoom 18).
         - The **Lanes** section in the sidebar, and road fields among iD's (number of lanes, centre line, speed limits, pavements, cycleways, hard shoulders, parking).
-        - **Tools** in the top bar: Routing, Speed Limit and Measure.
+        - **Tools** in the top bar: Routing, Speed Limit and Connectivity.
         - The **Lane Studio** pane (`K`) for settings and the **Map key** pane (`G`).
         - **Checks** of lane tags in the Issues pane.
 
@@ -67,7 +67,7 @@ en:
       text: |
         - **Select lanes**: click a lane on the map or in *Lanes along the road*; shift-click adds lanes. `[` and `]` step left and right; Delete removes the selected lanes.
         - **Edit them** in the Lanes section: direction, turn arrows, lane change, speed limit, lane type, destination, access, width and any other `*:lanes` tag.
-        - **Lane tools**: Paint a value onto lanes, Width (drag lane lines), Markings (crossings, stop and give way, signals, calming), Connect (lane connections across a junction), Signs.
+        - **Lane tools**: Paint a value onto lanes, Width (drag lane lines), Markings (crossings, stop and give way, signals, calming), Signs.
         - **Lines between lanes**: click one to cycle it (dashed, solid, crossable one way); click a side of the centre line to ban or allow overtaking.
         - **Road fields** in iD's Fields: Number of lanes, Centre line, Speed limit (UK roundels and limit types, or type a number or nsl), Minimum speed, Advisory speed, Structure, Active traffic management.
         - **Allowed Access**: All, HGVs, Cars, Bicycles and Pedestrians, biggest first, and a row per other mode tagged; **+ Add access type** adds any mode the wiki lists (HGVs, vans, buses…), one direction of it, or times and conditions.
@@ -84,7 +84,7 @@ en:
       text: |
         - **Routing**: hover a lane to see every route from it for a car, motorcycle, van, lorry, bus, taxi or bicycle; click to pin. Hover a footway for routes on foot. Roads are coloured by their access for the vehicle picked (red no, green yes, yellow discouraged, blue destination, orange private), keyed in the panel.
         - **Speed Limit**: lanes coloured by their limit, roads without one in red. Pick a limit (`1` to `7`), click a road to set it, shift-click a lane.
-        - **Measure**: click two points on the imagery, then set the distance as a road, lane, pavement, cycle lane, hard shoulder or parking width.
+        - **Connectivity**: every lane connection through junctions, blue where Lane Studio works it out, orange where a `type=connectivity` relation declares it, dashed where a lane change is needed. Click a lane, then click the lanes it leads into to connect or disconnect them; shift-click for a lane change. The panel lists the lane's connections and checks the relations in view.
         - **Map key** (`G`): what every colour, line and symbol means.
         - Esc leaves a tool.
     drawing:
@@ -155,8 +155,6 @@ en:
     width_tip: Drag lane lines and kerbs of the selected road to set lane widths
     width_hint: Drag a lane line or kerb of the selected road. Widths are written to width:lanes in metres.
     marking: Markings
-    connect: Connect
-    connect_tip: Connect a lane to a lane on the next road, for junctions where lanes do not simply carry on
     marking_tip: Place crossings, stop and give way signs, signals and traffic calming by clicking a road
     sign: Signs
     sign_tip: Place traffic signs, message signs and cameras beside a road by clicking a lane
@@ -526,12 +524,51 @@ en:
       message: Variable message sign
       camera_speed: Speed camera
       camera_red_light: Red light camera
-  connect:
-    pick_from: Click the lane traffic comes from, near the junction.
-    pick_to: Now click the lane on the next road it leads to. The lanes it can lead to are outlined in blue, and those it is already connected to are filled. Clicking the same pair again removes the connection.
-    same_road: Pick a lane on another road.
-    not_joined: These roads do not meet at an end node. Split the roads at the junction first.
-    wrong_direction: Traffic in the first lane cannot drive into the second lane here.
+  connectivity:
+    title: Connectivity
+    hint: Point at a lane to see where it leads. Click a lane to pick it.
+    hint_picked: "Click an outlined lane to connect the picked lane into it, or a filled one to disconnect it; shift-click for a connection needing a lane change. Esc lets go."
+    key: On the map
+    default: Worked out by Lane Studio
+    declared: Declared by a relation (type=connectivity)
+    optional: Needs a lane change, (n) in the tag
+    lane: "lane {n}"
+    lane_bw: both-ways lane (bw)
+    from: "From {lane} of {road}"
+    none: This lane leads nowhere here.
+    into: "Into {road}"
+    into_via: "Into {road}, past the via ways"
+    worked_out: Worked out from the turn arrows and lane counts. Connecting or disconnecting a lane writes a relation.
+    declared_by: "Declared by relation r{id}: connectivity={value}"
+    conditional: "At times it changes: connectivity:conditional={value}"
+    pair: "{from} → {to}"
+    lane_change: Lane change
+    lane_change_tip: "Needs a lane change to reach: written as (n) in the tag"
+    remove: Remove this connection
+    same_as_default: This relation says no more than Lane Studio works out from the turn arrows and lane counts. The wiki keeps relations for junctions where the connections are not the default.
+    select_relation: Select the relation
+    reset: Back to the default
+    reset_tip: Deletes the relation, leaving the connections Lane Studio works out
+    declare: Declare as a relation
+    declare_tip: Writes these connections as a type=connectivity relation, to change from there
+    in_view: "Connectivity relations in view: {n}"
+    all_fine: None of them has a problem.
+    no_relations: There are none here.
+    relation: "r{id}"
+    relation_roads: "{from} → {to}"
+    problems:
+      members: members
+      not_joined: roads not joined at the via
+      empty: no connectivity value
+      no_colon: a statement without a colon
+      several_from: two from lanes in one statement
+      bad_lane: a lane that is not a number or bw
+      repeated_from: a from lane listed twice
+      no_to: a statement leading to no lane
+      from_lane: a lane the from road does not have
+      to_lane: a lane the to road does not have
+    use_restriction: "That is the last lane from this road into that one. To ban the turn, add a turn restriction on the junction node."
+    cannot_split: "This road can't be split at the junction, so its lanes can't be connected here."
   roundabout:
     title: Roundabout
     summary: "This ring has {segments} segments and {approaches} roads joining it."
@@ -620,25 +657,6 @@ en:
         green: Green
         red: Red
         blue: Blue
-  measure:
-    title: Measure
-    hint: Click two points on the map, such as the kerbs either side of a road, to measure between them.
-    hint_second: Click the second point.
-    metres: "{m} m"
-    no_road: No road is near the middle of this line. Measure across a road to set one of its widths.
-    set_on: "Set it on {road} as"
-    sides:
-      left: left
-      right: right
-    targets:
-      road: "Road width, kerb to kerb (width={width})"
-      lane: "This lane's width (width:lanes)"
-      sidewalk: "Pavement width, {side} side"
-      cycleway: "Cycle lane width, {side} side"
-      shoulder: "Hard shoulder width, {side} side"
-      parking: "Parking width, {side} side"
-    annotation: Set a measured width.
-    done: Width set
   key:
     title: Map key
     description: What the colours, lines and symbols on the map mean
@@ -674,7 +692,9 @@ en:
       double_yellow: No waiting at any time
       single_yellow: No waiting at times
       red: No stopping (red route)
-      connection: Lane connection (type=connectivity)
+      connection: Lane connection (type=connectivity), with its road selected
+      link_default: "Connectivity tool: a connection Lane Studio works out"
+      link_declared: "Connectivity tool: a connection a relation declares"
       guide: Guide line through a junction
       sidewalk: Pavement
       sidewalk_unknown: Pavement not tagged
@@ -826,6 +846,15 @@ en:
     turn_dead_end_reference: "turn:lanes describes the turns at the end of the road, where it meets the roads it turns into. Check the arrows, or whether the road is joined to the next one."
     merge_never_ends: "{feature} has a merging lane, but the road it leads on to has as many lanes."
     merge_never_ends_reference: "merge_to_left and merge_to_right mark a lane that ends: the road after it has one lane fewer, or carries on merging."
+    connectivity_members: "{feature} needs one from way, one to way, and one via node or via ways."
+    connectivity_members_reference: "A type=connectivity relation has a from way, a via node (or one or more via ways where the lanes between are not marked) and a to way."
+    connectivity_not_joined: "{feature}: its from and to ways do not end at its via node or via ways."
+    connectivity_not_joined_reference: "The from way must end where the via member is, and the to way start there. Split the roads at the junction."
+    connectivity_syntax: "{feature} has a connectivity value that does not follow the wiki's syntax: {problems}."
+    connectivity_syntax_reference: "connectivity=* lists one statement per from lane, separated by |: the lane, a colon, and the lanes it leads to separated by commas, as 1:1|2:2,(3). Lanes count from 1 at the driver's left; bw is the both_ways lane; (n) needs a lane change."
+    connectivity_lanes: "{feature} names a lane its {road} road does not have."
+    fix_connectivity_syntax: Write one statement per from lane
+    connectivity_lanes_reference: "Lanes are counted from 1 at the driver's left among the lanes travelling the relation's way, from the lanes tags of the road. A road without lanes tags has lane 1."
 
   settings:
     title: Lane Studio
@@ -1033,9 +1062,9 @@ en:
     speed:
       title: Speed Limit
       tooltip: "Colour lanes by their speed limit and set limits by clicking roads. Keys 1 to 7 pick 10 to 70 mph; Esc leaves."
-    measure:
-      title: Measure
-      tooltip: "Measure a distance on the imagery, then set it as a road, lane, pavement, cycle lane, hard shoulder or parking width. Esc leaves."
+    connectivity:
+      title: Connectivity
+      tooltip: "See how lanes connect through junctions and connect them: click a lane, then the lanes it leads into. Esc leaves."
   brand:
     tooltip: Lane Studio, a lane editor for OpenStreetMap
   speed_tool:
@@ -1356,7 +1385,7 @@ en:
     sign_value: "The number on the sign, written in its code's brackets or, for a speed limit, as the node's maxspeed."
     street_parking: "Parking mapped as an area of its own (amenity=parking with parking=street_side, lane, layby, on_kerb, half_on_kerb or shoulder), joined to the road beside it."
     surface: "The lane's own surface (surface:lanes), where it differs from the road's."
-    tools: "Select edits lanes; Paint applies one value to many lanes; Width drags lane widths; Markings and Signs place features on the road; Connect links a lane to the lanes it leads to across a junction."
+    tools: "Select edits lanes; Paint applies one value to many lanes; Width drags lane widths; Markings and Signs place features on the road. Lane connections have their own tool in the top bar, Connectivity."
     turbo: "A turbo roundabout (roundabout=turbo with change:lanes=no) keeps traffic in its lane round the ring. Tag every ring segment."
     turn: "The arrows painted on the lane (turn:lanes): left, through, right, slight and sharp turns, U-turn and merges, several per lane separated by semicolons."
     variable_speed: "Signs can lower the speed limit (maxspeed:variable=*); the limit tagged is the highest it can be. The reasons, if known, are listed in the value."

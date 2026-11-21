@@ -295,11 +295,12 @@ function sorter(code, groupOf) {
 }
 
 
-/** The guide page covering a key or tag Lane Studio draws (access keys: Access; the Routing tool's other keys: Routing) */
+/** The guide page covering a key or tag Lane Studio draws (access keys: Access; the Routing tool's other keys: Routing; lane connections: Connectivity) */
 function guidePage(key, value) {
     const top = key.split(':')[0];
     const is = (k, values) => key === k && (!values || values.includes(value));
     if (top === 'restriction' || ['except', 'maxheight', 'maxweight'].includes(key)) return 'Routing';
+    if (top === 'connectivity' || is('type', ['connectivity'])) return 'Connectivity';
     if (routingKeys.has(key)) return 'Access';
     if (top === 'railway' || /:railway$/.test(key) || ['electrified', 'gauge', 'tracks', 'usage'].includes(key) || is('power', ['catenary_mast'])) {
         return 'Railways';

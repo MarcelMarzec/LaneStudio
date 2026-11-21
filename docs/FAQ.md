@@ -37,9 +37,18 @@ Open the Map key pane (`G`).
 Use the Speed Limit tool ([Tools](guide/Tools.md#speed-limit)), or the road's Speed limit field
 ([Road fields](guide/Road-Fields.md#speed-limits)).
 
-**How do I measure a road's width?**
-Use the Measure tool: click both kerbs on the imagery, then **Road width**. [`width`](https://wiki.openstreetmap.org/wiki/Key:width) is kerb to kerb, parking and cycle
-lanes on the road included.
+**How do I set a road's width?**
+Type it in iD's Width field, or drag the lane lines and kerbs with the Width lane tool ([Lanes](guide/Lanes.md#lane-tools-lanes-section)).
+[`width`](https://wiki.openstreetmap.org/wiki/Key:width) is kerb to kerb, parking and cycle lanes on the road included. iD's Measurement panel
+(Ctrl+Shift+M) measures a selected line.
+
+**Where did the Measure tool go?**
+It was taken out; its place in the top bar is the Connectivity tool.
+
+**Which lane leads where at a junction, and how do I change it?**
+Use the Connectivity tool ([Connectivity](guide/Connectivity.md)): blue lines are worked out from the turn arrows,
+orange ones come from `type=connectivity` relations. Click a lane, then the lanes it leads into. Add a relation only
+where the arrows and lane counts don't already say it.
 
 **Where are iD's Lanes, Speed Limit, Sidewalks and Street Parking fields?**
 Replaced by Lane Studio's for one selected road ([Road fields](guide/Road-Fields.md)). Select several roads and iD's

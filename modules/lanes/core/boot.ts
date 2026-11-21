@@ -93,7 +93,7 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
     // Lane Studio's name and mark, top left above the sidebar
     uiInitSetSidebarHeader(uiLaneStudioLogo);
 
-    // Selection, Routing, Speed Limit and Measure, in the top bar before iD's Point, Line and Area
+    // Selection, Routing, Speed Limit and Connectivity, in the top bar before iD's Point, Line and Area
     uiTopToolbarAddTool(uiToolLaneModes);
 
     // the footer names Lane Studio's version, linking to its repository and changelog

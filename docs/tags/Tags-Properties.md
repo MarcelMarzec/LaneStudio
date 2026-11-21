@@ -128,7 +128,7 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`computer:repair=*`](https://wiki.openstreetmap.org/wiki/Key:computer:repair) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`computer:sales=*`](https://wiki.openstreetmap.org/wiki/Key:computer:sales) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`condition=*`](https://wiki.openstreetmap.org/wiki/Key:condition) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`connectivity=*`](https://wiki.openstreetmap.org/wiki/Key:connectivity) | approved | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
+| [`connectivity=*`](https://wiki.openstreetmap.org/wiki/Key:connectivity) | approved | ✅ Rendered | [Connectivity](../guide/Connectivity.md) |
 | [`content=*`](https://wiki.openstreetmap.org/wiki/Key:content) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`content=beer`](https://wiki.openstreetmap.org/wiki/Tag:content=beer) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`content=cement`](https://wiki.openstreetmap.org/wiki/Tag:content=cement) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -1118,7 +1118,7 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`two_sided=yes`](https://wiki.openstreetmap.org/wiki/Tag:two_sided=yes) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`type=*`](https://wiki.openstreetmap.org/wiki/Key:type) | de facto | ✅ Rendered | Only `type=multipolygon`, `type=restriction`, `type=connectivity`, `type=enforcement`; iD draws the rest; [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`type=boundary`](https://wiki.openstreetmap.org/wiki/Tag:type=boundary) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`type=connectivity`](https://wiki.openstreetmap.org/wiki/Tag:type=connectivity) | approved | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
+| [`type=connectivity`](https://wiki.openstreetmap.org/wiki/Tag:type=connectivity) | approved | ✅ Rendered | [Connectivity](../guide/Connectivity.md) |
 | [`type=destination_sign`](https://wiki.openstreetmap.org/wiki/Tag:type=destination_sign) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`type=enforcement`](https://wiki.openstreetmap.org/wiki/Tag:type=enforcement) | approved | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`type=multipolygon`](https://wiki.openstreetmap.org/wiki/Tag:type=multipolygon) | de facto | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |

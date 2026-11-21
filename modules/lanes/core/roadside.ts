@@ -4,7 +4,7 @@ import type { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
 import type { Vec2 } from '../../geo/vector';
 import { metricFrame, pointAlong, polylineLength } from '../geometry/frame';
-import { offsetFromWay } from '../geometry/measure';
+import { offsetFromWay } from '../geometry/way_offset';
 import { builtHighway } from './roads';
 import { laneDriveSide } from './drive_side';
 import { laneOneway } from '../model/parse';

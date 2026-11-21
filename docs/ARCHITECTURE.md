@@ -19,7 +19,7 @@ Two rules:
 | `actions/` | iD actions for lane edits, markings, signs, copying and connecting lanes |
 | `geometry/` | Everything drawn, in metres: `laneLayout`, `roadGeometry`, `streetGeometry`, `laneSymbols`, `parkingGeometry`, `parkingSpaceGeometry`, `railGeometry`, `railFeatures`, `signGeometry`, `routing.ts` |
 | `svg/` | The `lanes` layer (`svgLanes`) that runs the geometry and draws it, with click targets; `vertices.ts` |
-| `core/` | State with d3 dispatch: selected lanes, tools, settings, the tools' modes (Routing, Speed Limit, Measure), brand logos, what's new, boot (`laneStudioInit`) |
+| `core/` | State with d3 dispatch: selected lanes, tools, settings, the tools' modes (Routing, Speed Limit, Connectivity), brand logos, what's new, boot (`laneStudioInit`) |
 | `osm/` | Looking along roads: the corridor ahead, roundabouts |
 | `ui/` | Sidebar sections and fields, panes, panels, welcome screen, what's new, walkthrough, help pages |
 | `validations/` | The Lane tags rule |
@@ -61,8 +61,12 @@ and view are the same, layouts cached per way version (`cachedLayout`), and attr
 - **Routing** (`lanes-routing` mode): `vehicleRoutes` explores junction by junction with the drawing's junction rules,
   per vehicle profile, blocked by restrictions and limits; the lanes layer colours each lane by `laneAccess`
   (`core/route_access.ts`) for the vehicle picked, from `model/access.ts`.
-- **Measure** (`lanes-measure` mode): two clicks, `geoSphericalDistance`, and the road nearest the middle
-  (`roadAt`) to set a width on.
+- **Connectivity** (`lanes-connectivity` mode): `laneLinksAt` (`geometry/connectivity.ts`) lists every connection
+  from the lanes arriving at a node: those a `type=connectivity` relation declares (`resolveConnectivity` reads its
+  members, via node or via ways), and between roads no relation covers, those routing works out (`junctionLaneMoves`),
+  less banned turns. `svg/connectivity.ts` draws them lane centre to lane centre; `laneConnectivity` holds the lane
+  picked; `actionConnectLanes` splits a road running through the junction, starts a new relation from the connections
+  worked out, and deletes it when empty. The Lane tags rule checks relations with `connectivityProblems`.
 
 ## Walkthrough and help
 

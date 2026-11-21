@@ -7,7 +7,7 @@ import type { NodeId } from '../../osm';
 import { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
 import { metricFrame, cumulativeLengths, pointAlong } from '../geometry/frame';
-import { offsetFromWay } from '../geometry/measure';
+import { offsetFromWay } from '../geometry/way_offset';
 import { markingType, withMarkingType, type MarkingType } from '../model/markings';
 
 /**

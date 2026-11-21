@@ -24,7 +24,8 @@ features) works as in iD.
 | [Signs](guide/Signs.md) | Traffic signs, cameras, road numbers, speed roundels |
 | [Railways](guide/Railways.md) | Track, level crossings, platforms, signals |
 | [Routing](guide/Routing.md) | Where traffic in a lane can go, for each vehicle |
-| [Tools](guide/Tools.md) | Speed Limit, Measure and the Map key |
+| [Connectivity](guide/Connectivity.md) | How lanes connect through junctions, and `type=connectivity` relations |
+| [Tools](guide/Tools.md) | Speed Limit and the Map key |
 | [Checks](guide/Checks.md) | The Lane tags rule in the Issues pane |
 
 Questions: [FAQ](FAQ.md). Which of the wiki's keys and tags Lane Studio draws: [Tag coverage](TAGS.md). Developers: [Architecture](ARCHITECTURE.md), [Running locally](develop/Running-Locally.md),

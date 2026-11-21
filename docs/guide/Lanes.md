@@ -28,10 +28,10 @@
 | Paint | Pick a lane type or a value, then click lanes to apply it (one undo step a click) |
 | Width | Drag lane lines and kerbs; writes `width:lanes` in metres |
 | Markings | Click a road to place a crossing, stop, give way, signals, traffic calming, mini-roundabout, emergency bay |
-| Connect | Click a lane, then the lane on the next road it leads to: a [`type=connectivity`](https://wiki.openstreetmap.org/wiki/Tag:type=connectivity) relation (again to remove). Lanes it can connect to are outlined, connected ones filled |
 | Signs | Pick a sign or camera, then click a lane to place it beside the road facing that lane's traffic |
 
-Esc, or clicking empty map, returns to Select.
+Esc, or clicking empty map, returns to Select. Lane connections across junctions have their own tool in the top
+bar: [Connectivity](Connectivity.md).
 
 ## Lanes when none are tagged
 
@@ -65,7 +65,6 @@ Making such a lane general traffic again opens its access too.
   lanes and parking on the road are inside it. The lanes share what is left, after any `width:lanes` they have.
 - Untagged lanes use UK widths: 3.65 m on motorways, trunk and primary roads, 3.5 m secondary, 3.25 m tertiary and
   unclassified, 2.75 m residential and service, 2.4 m living streets. A guessed width draws fainter edges.
-- Measure a width on the imagery with the [Measure tool](Tools.md#measure).
 
 ## Labels (zoom 19)
 

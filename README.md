@@ -28,7 +28,7 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   widths.
 * **Lane editing**: click a lane to select it; add, remove and move lanes; set turn arrows, lane
   changes, lane types, speeds, destinations, access, widths and limits; drag lane widths; paint
-  values onto lanes; connect lanes across junctions; set the centre line (dashed, or a double white line
+  values onto lanes; set the centre line (dashed, or a double white line
   where overtaking is banned) from the sidebar, from a lane beside it, or by clicking it on the map.
 * **One sidebar with iD's**: Lane Studio's road fields (number of lanes, centre line, speed limits,
   advisory speeds, structure, pavements, cycleways, hard shoulders, street parking, active traffic
@@ -73,8 +73,10 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   same way, and the UK's national, motorway and restricted road limit types are set with their limit.
 * **Look ahead**: the roads a selected road leads on to, its exits and their destinations, and
   copying lanes to the next road.
-* **Measure**: measure a distance on the imagery and set it as a road, lane, pavement, cycle lane, hard
-  shoulder or parking width with one click.
+* **Connectivity**: every lane connection through junctions drawn as a line, those Lane Studio works out
+  from the turn arrows in one colour and those a `type=connectivity` relation declares in another, dashed where a
+  lane change is needed. Click a lane, then the lanes it leads into, to connect them; the relation is written as the
+  OpenStreetMap wiki defines it, and relations with problems are listed and checked.
 * **Map key**: a pane explaining every colour, line, symbol and surface on the map.
 * **Walkthrough and help**: Lane Studio's own walkthrough chapters and Help pages, showing what it adds to iD.
 * **Checks**: a lane tags rule in iD's Issues pane (lane counts, widths, unmarked bus lanes, old values, turn

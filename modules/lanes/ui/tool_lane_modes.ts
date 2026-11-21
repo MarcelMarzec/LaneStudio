@@ -5,12 +5,13 @@ import { laneRouting } from '../core/lane_routing';
 import { modeLaneRouting } from '../core/mode_routing';
 import { laneSpeed } from '../core/lane_speed';
 import { modeLaneSpeed } from '../core/mode_speed';
-import { modeLaneMeasure } from '../core/mode_measure';
+import { laneConnectivity } from '../core/lane_connectivity';
+import { modeLaneConnectivity } from '../core/mode_connectivity';
 
 type Div = d3.Selection<HTMLDivElement>;
 
 interface ModeButton {
-    id: 'select' | 'routing' | 'speed' | 'measure';
+    id: 'select' | 'routing' | 'speed' | 'connectivity';
     /** an icon drawn in a 20 unit box */
     icon: string;
     active: () => boolean;
@@ -18,25 +19,25 @@ interface ModeButton {
 }
 
 /**
- * The Selection, Routing, Speed Limit and Measure buttons in the top bar, before iD's Point, Line and Area: Selection
- * (the default) selects and edits as iD does; Routing turns editing off and shows the routes through lanes and
- * footways; Speed Limit colours the lanes by their limit and sets limits with a click; Measure measures a distance on
- * the imagery and sets it as a width.
+ * The Selection, Routing, Speed Limit and Connectivity buttons in the top bar, before iD's Point, Line and Area:
+ * Selection (the default) selects and edits as iD does; Routing turns editing off and shows the routes through lanes
+ * and footways; Speed Limit colours the lanes by their limit and sets limits with a click; Connectivity shows how lanes
+ * connect through junctions and connects them with clicks (type=connectivity relations).
  */
 export function uiToolLaneModes(context: iD.Context) {
     const routing = laneRouting(context);
     const speed = laneSpeed(context);
     const drawing = () => /^(add|draw)/.test(context.mode()?.id ?? '');
-    const measuring = () => context.mode()?.id === 'lanes-measure';
+    const connectivity = laneConnectivity(context);
 
     const buttons: ModeButton[] = [
         {
             id: 'select',
             // a pointer
             icon: '<path d="M5 2.5v14l3.6-3.4 2.6 5.6 2.4-1.1-2.6-5.5h5z" fill="currentColor"/>',
-            active: () => !routing.active() && !speed.active() && !drawing() && !measuring(),
+            active: () => !routing.active() && !speed.active() && !drawing() && !connectivity.active(),
             click: () => {
-                if (routing.active() || speed.active() || drawing() || measuring()) context.enter(modeBrowse(context) as any);
+                if (routing.active() || speed.active() || drawing() || connectivity.active()) context.enter(modeBrowse(context) as any);
             }
         },
         {
@@ -62,14 +63,14 @@ export function uiToolLaneModes(context: iD.Context) {
             }
         },
         {
-            id: 'measure',
-            // a ruler
-            icon: '<path d="M2.5 13.5 13.5 2.5l4 4-11 11z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>' +
-                '<path d="M6 10l1.6 1.6M8.5 7.5l2.3 2.3M11 5l1.6 1.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
-            active: measuring,
+            id: 'connectivity',
+            // two lanes leading through a junction into three: lines from two dots fanning out to three arrowheads
+            icon: '<path d="M6 17V12.5Q6 9 3.5 6.5M6 12.5Q6 9 10 6.5M14 17v-4.5Q14 9 16.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' +
+                '<path d="M1.6 3.6 6.2 4.6 3.2 8zM8 3.6l4.4 1-2.8 3.6zM18.4 3.6l-4.6 1 3 3.4z" fill="currentColor"/>',
+            active: () => connectivity.active(),
             click: () => {
-                if (measuring()) context.enter(modeBrowse(context) as any);
-                else context.enter(modeLaneMeasure(context) as any);
+                if (connectivity.active()) context.enter(modeBrowse(context) as any);
+                else context.enter(modeLaneConnectivity(context) as any);
             }
         }
     ];
@@ -101,6 +102,7 @@ export function uiToolLaneModes(context: iD.Context) {
             context.on('enter.lane-modes', update);
             routing.on('change.lane-modes', update);
             speed.on('change.lane-modes', update);
+            connectivity.on('change.lane-modes', update);
             update();
         }
     };

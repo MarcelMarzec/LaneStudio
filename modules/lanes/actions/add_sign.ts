@@ -8,7 +8,7 @@ import type { osmWay } from '../../osm/way';
 import { laneDriveSide } from '../core/drive_side';
 import { add, metricFrame, pointAlong, rightNormal, scale } from '../geometry/frame';
 import { laneLayout } from '../geometry/layout';
-import { offsetFromWay } from '../geometry/measure';
+import { offsetFromWay } from '../geometry/way_offset';
 import { signTags, type SignChoice } from '../model/signs';
 
 /**

@@ -402,6 +402,17 @@ function lanesOn(junction: Junction, i: number, graph: coreGraph, profileID: Rou
 }
 
 /**
+ * For the Connectivity tool: the roads meeting at a node, and for each arm, where each lane arriving on it leads
+ * (`moves[arm][lane]`: the arm and lane of the road it leads into), worked out as routes for cars are
+ */
+export function junctionLaneMoves(graph: coreGraph, nodeID: string): { arms: Arm[]; moves: { j: number; toLane: number }[][][] } {
+    const junction = junctionOf(graph, nodeID);
+    const moves = junction.arms.map((_, i) => lanesOn(junction, i, graph, 'car').map(byArm => [...byArm.values()].flat()
+        .map(move => ({ j: move.j, toLane: move.toLane }))));
+    return { arms: junction.arms, moves };
+}
+
+/**
  * Round a roundabout, where its ways' own arrows (`turn:lanes` on the ring) say which lanes leave and which go on
  * round: each arrow to a way on, matched by order (the leftmost arrow to the leftmost way, the rightmost to the
  * rightmost), as the ring bends only slightly and its exits leave almost straight ahead, so a `right` or `through`
