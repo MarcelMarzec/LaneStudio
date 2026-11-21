@@ -114,6 +114,17 @@ function uiSectionLaneDisplay(context: iD.Context) {
                 settings.setShowLogos(this.checked);
             });
         logosLabel.append('span').text(t('_lanes.settings.brand_logos'));
+        // the OpenStreetMap map when zoomed out too far to edit
+        const zoomedOut = list.append('li')
+            .attr('class', 'lanes-zoomed-out-map-option')
+            .call((uiTooltip() as any).title(() => t.append('_lanes.settings.zoomed_out_map_tip')).placement('top'));
+        const zoomedOutLabel = zoomedOut.append('label');
+        zoomedOutLabel.append('input')
+            .attr('type', 'checkbox')
+            .on('change', function(this: HTMLInputElement) {
+                settings.setShowZoomedOutMap(this.checked);
+            });
+        zoomedOutLabel.append('span').text(t('_lanes.settings.zoomed_out_map'));
 
         // OSM's guidance: the tags describe what is there, whatever the drawing makes of them
         const note = enter.append('p').attr('class', 'lanes-settings-note');
@@ -135,6 +146,10 @@ function uiSectionLaneDisplay(context: iD.Context) {
             .classed('active', settings.showLogos())
             .select('input')
             .property('checked', settings.showLogos());
+        container.select('.lanes-zoomed-out-map-option')
+            .classed('active', settings.showZoomedOutMap())
+            .select('input')
+            .property('checked', settings.showZoomedOutMap());
         container.select('.lanes-hide-landuse-option')
             .classed('active', settings.hideLanduse())
             .select('input')

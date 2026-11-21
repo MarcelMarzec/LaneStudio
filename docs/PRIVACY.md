@@ -27,7 +27,7 @@ use the [contact form](https://marcelmarzec.com/contact). If you interact with t
 Lane Studio does not set tracking cookies and does not collect analytics. It stores some information
 in your browser's local storage so you don't have to re-enter it: your settings (such as lane opacity,
 the map layers shown, whether the what's new menu is shown, whether Lane Studio's sections (Look ahead,
-Roundabout, the Map key's sections) and each side's parking and cycle lane details are folded away, and whether land use and brand logos are shown), the Lane Studio version you last used
+Roundabout, the Map key's sections) and each side's parking and cycle lane details are folded away, and whether land use, brand logos and the OpenStreetMap map when zoomed out are shown), the Lane Studio version you last used
 (so the what's new menu shows only what changed since) and edits you have not saved yet, under keys
 starting with `lanes_`, and
 your OpenStreetMap login token, under a key named after the OpenStreetMap server. This stays on your
@@ -62,8 +62,10 @@ use [taginfo](https://taginfo.openstreetmap.org/). After you save edits, your br
 decimal places (about a kilometre). If you do not wish to interact with these third
 parties, do not use these features.
 
-A site running Lane Studio can set a roads overlay for when zoomed out (`locatorOverlay`); your browser then asks
-that host for the map tiles in view.
+Zoomed out too far to edit (below zoom 16), your browser loads the standard OpenStreetMap map's tiles from
+tile.openstreetmap.org, under the [OpenStreetMap Foundation's privacy policy](https://osmfoundation.org/wiki/Privacy_Policy);
+this can be turned off in the Lane Studio pane. A site running Lane Studio can set a roads overlay for when zoomed out
+(`locatorOverlay`); your browser then asks that host for the map tiles in view.
 
 Lane Studio's changelog, for the what's new menu, is fetched from the site Lane Studio is served from.
 
@@ -96,6 +98,7 @@ law, or want to ask about it, open an issue at
 
 ### Changelog
 
+* _2026-Nov-21_ - Below zoom 16, the standard OpenStreetMap map's tiles are loaded from tile.openstreetmap.org; whether this is turned off is stored with your settings.
 * _2026-Nov-15_ - The hide road areas and traffic islands setting, added and taken out the same day, is no longer stored.
 * _2026-Nov-10_ - The website's statistics keep public changeset data from OpenStreetMap (number, username, time, comment, area and what changed) for changesets made with Lane Studio, and show them on a map and leaderboard; their pages load MapLibre from jsDelivr and map tiles from OpenFreeMap.
 * _2026-Nov-08_ - The roads overlay shown when zoomed out can also be set when the site is built. The third-party icons setting moved from iD's Preferences pane to the Lane Studio pane.

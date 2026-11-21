@@ -25,6 +25,7 @@ Where each part of Lane Studio lives, and the hooks it uses in iD.
 | Railways | `geometry/railway.ts`, `geometry/rail_features.ts`, `svg/railway.ts` |
 | Parking spaces and car parks | `geometry/parking_spaces.ts`, `svg/parking_spaces.ts` |
 | Brand logos | `core/brand_logos.ts` (Wikidata), `svg/brand_logos.ts` |
+| The OpenStreetMap map when zoomed out | `core/zoomed_out_map.ts` (an overlay of iD's background, its opacity following the zoom) |
 | What's new | `core/whats_new.ts`, `ui/whats_new.ts` (the build copies `docs/CHANGELOG.md` to `dist/lanes-changelog.md`) |
 
 Elsewhere: styles `css-lanes/` (built into `dist/lanes.css`), strings `data/lanes.yaml` (read as `t('_lanes.…')`),

@@ -77,6 +77,8 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   from the turn arrows in one colour and those a `type=connectivity` relation declares in another, dashed where a
   lane change is needed. Click a lane, then the lanes it leads into, to connect them; the relation is written as the
   OpenStreetMap wiki defines it, and relations with problems are listed and checked.
+* **Zoomed out**: below zoom 16, where nothing can be edited, the standard OpenStreetMap map fades in over the
+  imagery, and the imagery fades back as you zoom in (can be turned off).
 * **Map key**: a pane explaining every colour, line, symbol and surface on the map.
 * **Walkthrough and help**: Lane Studio's own walkthrough chapters and Help pages, showing what it adds to iD.
 * **Checks**: a lane tags rule in iD's Issues pane (lane counts, widths, unmarked bus lanes, old values, turn

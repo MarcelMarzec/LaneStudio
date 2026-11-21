@@ -8,6 +8,15 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.21r2
+##### 2026-Nov-21
+
+#### Editing
+* Zoomed out too far to edit (below zoom 16), the standard OpenStreetMap map fades in over the imagery, fully shown
+  by zoom 15, and the imagery fades back as you zoom in; the roads overlay gives way to it. Turn it off in the Lane
+  Studio pane (**Show the OpenStreetMap map when zoomed out**); it is not added over a background that is already
+  an OpenStreetMap map, and its tiles are only loaded below zoom 16
+
 # 26.11.21
 ##### 2026-Nov-21
 

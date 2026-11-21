@@ -24,6 +24,9 @@ export interface LaneSettings {
     /** show brands' logos from Wikidata in place of iD's markers (on unless turned off) */
     showLogos(): boolean;
     setShowLogos(value: boolean): void;
+    /** show the standard OpenStreetMap map, fading in over the imagery, when zoomed out too far to edit (on unless turned off) */
+    showZoomedOutMap(): boolean;
+    setShowZoomedOutMap(value: boolean): void;
     on(type: `change${string}`, listener: (() => void) | null): LaneSettings;
 }
 
@@ -41,6 +44,7 @@ export function laneSettings(context: iD.Context): LaneSettings {
     let _hideLanduse = prefs('lanes-hide-landuse') === 'true';
     let _hideNatural = prefs('lanes-hide-natural') === 'true';
     let _showLogos = prefs('lanes-brand-logos') !== 'false';
+    let _showZoomedOutMap = prefs('lanes-zoomed-out-map') !== 'false';
 
     function apply() {
         const container = context.container();
@@ -111,6 +115,13 @@ export function laneSettings(context: iD.Context): LaneSettings {
             if (value === _showLogos) return;
             _showLogos = value;
             prefs('lanes-brand-logos', value ? null : 'false');
+            dispatch.call('change', settings);
+        },
+        showZoomedOutMap: () => _showZoomedOutMap,
+        setShowZoomedOutMap(value) {
+            if (value === _showZoomedOutMap) return;
+            _showZoomedOutMap = value;
+            prefs('lanes-zoomed-out-map', value ? null : 'false');
             dispatch.call('change', settings);
         },
         on(type, listener) {

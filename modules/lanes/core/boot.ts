@@ -34,6 +34,7 @@ import { uiToolLaneModes } from '../ui/tool_lane_modes';
 import { uiLaneStudioLogo } from '../ui/logo';
 import { laneStudioWhatsNew } from '../ui/whats_new';
 import { laneSettings } from './lane_settings';
+import { laneStudioZoomedOutMap } from './zoomed_out_map';
 import { laneStudioRepository, laneStudioVersion } from '../version';
 
 export interface LaneStudioOptions {
@@ -149,6 +150,9 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
             }));
         }).catch(() => { /* without imagery there is nothing to lay it over */ });
     }
+
+    // zoomed out too far to edit, the OpenStreetMap map fades in over the imagery
+    laneStudioZoomedOutMap(context);
 
     // the lanes layer, drawn under iD's own data
     context.layers().add([{ id: 'lanes', layer: svgLanes(context.projection, context) }]);

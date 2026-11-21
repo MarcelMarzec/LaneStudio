@@ -68,3 +68,12 @@
     padding-top: 48px;
     box-sizing: border-box;
 }
+
+/*
+ * Zoomed out too far to edit, the OpenStreetMap map fades in over the imagery (its opacity follows the zoom, set by
+ * core/zoomed_out_map.ts; the transition smooths a jump of a whole zoom level), and the locator overlay fades out
+ */
+.ideditor.lane-studio .layer-overlay.lanes-zoomed-out-map,
+.ideditor.lane-studio .layer-overlay.lanes-zoomed-out-locator {
+    transition: opacity 0.25s linear;
+}

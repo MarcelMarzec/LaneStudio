@@ -222,7 +222,8 @@ require __DIR__ . '/includes/head.php';
         <h3>Read the map</h3>
         <p>
           The Map key explains every colour, line and symbol on the map, and the walkthrough and Help pages
-          show what Lane Studio adds to iD.
+          show what Lane Studio adds to iD. Zoomed out too far to edit, the OpenStreetMap map fades in over
+          the imagery, so you can find your way to the next road.
         </p>
       </article>
     </div>

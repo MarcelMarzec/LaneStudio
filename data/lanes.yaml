@@ -41,7 +41,7 @@ en:
       speed: "Speed Limit colours every lane by its limit, with roads missing one in red. Pick a limit and click roads to set it."
       connectivity: "Connectivity draws every lane connection through junctions: blue where Lane Studio works it out, orange where a relation declares it. Click a lane, then the lanes it leads into."
       key: "The Map key (G) explains every colour, line and symbol on the map."
-      settings: "The Lane Studio pane (K) sets lane opacity, hides iD's lines under lanes, land use and brand logos, holds the privacy setting and shows what's new."
+      settings: "The Lane Studio pane (K) sets lane opacity, hides iD's lines under lanes, land use and brand logos, turns off the OpenStreetMap map shown when zoomed out, holds the privacy setting and shows what's new."
       checks: "The Issues pane checks lane tags as you edit: lane counts, widths, unmarked bus lanes, old values, turns into dead ends."
     start:
       title: Start editing
@@ -59,6 +59,7 @@ en:
         - The **Lanes** section in the sidebar, and road fields among iD's (number of lanes, centre line, speed limits, pavements, cycleways, hard shoulders, parking).
         - **Tools** in the top bar: Routing, Speed Limit and Connectivity.
         - The **Lane Studio** pane (`K`) for settings and the **Map key** pane (`G`).
+        - **Zoomed out** too far to edit (below zoom 16), the OpenStreetMap map fades in over the imagery.
         - **Checks** of lane tags in the Issues pane.
 
         Tag what is on the ground, not what makes the drawing look right. The walkthrough (below) shows it all in a few minutes; the full guide is on the [wiki](https://github.com/MarcelMarzec/LaneStudio/wiki).
@@ -870,6 +871,10 @@ en:
     hide_natural_tip: "Hides natural features (natural=*) alone: woods, water, scrub, trees and so on."
     brand_logos: Show brand logos
     brand_logos_tip: "Shows the logo of a shop, restaurant or other brand (brand:wikidata=*) in place of its marker, looked up on Wikidata and Wikimedia Commons."
+    zoomed_out_map: Show the OpenStreetMap map when zoomed out
+    zoomed_out_map_tip: "Below zoom 16, where nothing can be edited, the standard OpenStreetMap map fades in over the imagery; zooming back in fades the imagery back."
+  zoomed_out:
+    name: OpenStreetMap (zoomed out)
     renderer_note: "Lane Studio draws what the tags say. Don't tag for the renderer: tag what is on the ground, even where the drawing looks wrong, and report the drawing instead."
     renderer_link: Tagging for the renderer
     hide_landuse_tip: "Hides land use areas (landuse=*) alone. Map Data's Land Use also hides car parks and other surfaces; this keeps them."
