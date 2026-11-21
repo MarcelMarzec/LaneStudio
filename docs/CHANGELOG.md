@@ -8,6 +8,21 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.21r3
+##### 2026-Nov-21
+
+#### Lanes and junctions
+* A two-way road dividing into several one-way roads (a fork) leads each lane into its own branch, by the branches'
+  own arrows (`turn`, `turn:lanes`) or else in order, left lanes to the left branch. At Hitchin Road, Luton
+  (w1379219397), the left two `through` lanes now carry straight on into w1255054313 (`turn=through`), the right two
+  into the right-turn road; all four used to lead into the right-turn road and none straight on
+* At a fork each branch starts level with the end of the road it leaves, shifted so its lanes run on from the lanes
+  leading into it and easing back to its way, with no junction box or guide lines in between: the lanes run on
+  unbroken (Hitchin Road and Vauxhall Way, Luton). Roads joining there line up with the lanes they merge into
+
+#### Routing tool
+* Routes and the Connectivity tool follow the lanes through a fork the same way
+
 # 26.11.21r2
 ##### 2026-Nov-21
 

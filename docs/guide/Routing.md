@@ -24,6 +24,8 @@ The Routing tool (top bar) shows where traffic in a lane can go. Editing is off 
 
 - Routes follow turn arrows (`turn:lanes`), lane connections ([`type=connectivity`](https://wiki.openstreetmap.org/wiki/Tag:type=connectivity)) and turn restrictions
   ([`type=restriction`](https://wiki.openstreetmap.org/wiki/Tag:type=restriction), via nodes and via ways, lifted by [`except=*`](https://wiki.openstreetmap.org/wiki/Key:except)), and keep to their lane through short links.
+- Where a road divides into one-way roads (a fork, see [Junctions](Junctions.md)), each lane leads into its own
+  branch, by the branches' own arrows or else in order.
 - On a stretch too short to change lanes, a route enters a lane that leads on, not one whose only way on is banned
   (a right turn lane whose turn is a banned U-turn).
 

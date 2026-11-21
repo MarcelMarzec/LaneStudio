@@ -306,6 +306,23 @@ function lanesOn(junction: Junction, i: number, graph: coreGraph, profileID: Rou
     const onRing = (k: number) => ring && !!through && through.includes(k);
     const nearsideLeft = up.layout.model.driveSide === 'left';
 
+    // where a road divides into roads carrying on from it (or they join it), each lane leads into its own branch
+    // (a lane connection still says exactly)
+    const fork = junctionRules.forkPairs(arms, i);
+    if (fork) {
+        const result: Map<number, Move[]>[] = upLanes.map(() => new Map());
+        for (const x of exits) {
+            const relation = up.isEnd && x.down.isEnd ? junctionRules.connectivityRelation(graph, up.way.id, node.id, x.down.way.id) : undefined;
+            const pairs = relation ? junctionRules.relationPairs(relation) : fork.get(x.j) ?? [];
+            const downCount = x.down.layout.model.lanes[junctionRules.armLaneDirection(x.down, false)].length;
+            for (const p of pairs) {
+                if (p.from < 0 || p.from >= upLanes.length || p.to < 0 || p.to >= downCount) continue;
+                result[p.from].set(x.j, [...(result[p.from].get(x.j) ?? []), { j: x.j, toLane: p.to, angle: x.angle }]);
+            }
+        }
+        return result;
+    }
+
     // which roads each lane may turn into
     const turns = up.arrows;
     const anyTagged = turns.some(t => t.length);

@@ -34,7 +34,8 @@ Files by feature: [Code map](develop/Code-Map.md).
 2. `roadGeometry` works out the roads: fitted into their carriageway areas; parted round painted areas between lanes
    (`partsFromAreas`, `road_marking=restriction` ways and multipolygons; rings, areas beyond another road and
    junction ends stay put); shifted and tapered at each join so lanes
-   that carry on line up (`alignAt`, `alignBranches`, `alignMerges`, from connectivity relations or `turn:lanes`);
+   that carry on line up (`alignAt`, `alignBranches`, `alignMerges`, from connectivity relations or `turn:lanes`;
+   `alignFork` where a road divides into one-way roads, `forkPairs` saying which lane leads into which branch);
    junctions (`junctionAt`: through road, side roads, the box, flares, splits); road pieces (`buildPieces`: lanes,
    lines, arrows, labels, roadside strips); guide lines (`junctionConnections`); lanes channelled between islands.
 3. `streetGeometry`, `signGeometry`, `laneSymbols`, the railway and parking geometry use the same shifts.

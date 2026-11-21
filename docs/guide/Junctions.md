@@ -26,6 +26,12 @@ Junctions are drawing only: nothing here writes tags.
 - **A two-way road splitting into a pair of one-way roads** (one leaving, one coming back, even where a side road
   joins at the same node) has no through road: each one-way road is drawn where it is mapped, not shifted onto a lane
   of the two-way road.
+- **A two-way road dividing into several one-way roads** (or several joining it), all within 50° of straight on, is
+  a fork: each lane leads into the branch whose own arrows ([`turn`](https://wiki.openstreetmap.org/wiki/Key:turn) or `turn:lanes`) hold its arrows (`through|through|right|right`
+  into a `turn=through` road and a `turn=right` one), else the lanes are shared out in order, left lanes to the left
+  branch. Each branch starts level with the end of the road it leaves, shifted so its lanes carry on from the lanes
+  leading into it, then eases back to its way: the lanes run on unbroken. Roads joining there merge into the lanes on
+  their side. A [`placement`](https://wiki.openstreetmap.org/wiki/Key:placement) other than `transition` keeps a branch where it is mapped.
 - **Junction boxes** are a shade lighter than the road, with curved kerbs from road to road. Where no traffic crosses
   the main road (roundabouts, slip roads) the box is only the widening mouth. At a bend, both halves meet on the
   bisector.
