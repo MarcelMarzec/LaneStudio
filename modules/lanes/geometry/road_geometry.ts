@@ -32,6 +32,11 @@ const stopReach = 60;
 /** One drawable stretch of a road between junctions, everything in lon/lat */
 export interface RoadPiece {
     wayID: WayId;
+    /**
+     * where a lane of the road joined ends (or starts) in a V on boundary `k` (see ForkRun.gaps): the V's far side,
+     * and the V itself, lane surface
+     */
+    runLines?: { k: number; line: Vec2[]; area?: Vec2[] }[];
     /** index of this piece along the way */
     index: number;
     layout: LaneLayout;
@@ -159,24 +164,44 @@ export interface WayVisual {
     bends?: [number, number][];
     /** stretches of road where a side's roadside strips give way (the main road's hard shoulder beside a slip lane) */
     squeeze?: { side: 'left' | 'right'; from: number; to: number }[];
-    /** a branch of a fork running on out of the lanes of the road it divides from (see ForkRun) */
-    fork?: ForkRun;
+    /**
+     * at a fork, or where it meets a wider road end to end, the way's lanes running on out of the other road's (see
+     * ForkRun): at most one at each end
+     */
+    runs?: ForkRun[];
 }
 
 /**
- * A branch of a fork (see alignFork) starting where the lanes it carries on from end (or ending where the lanes it
- * becomes start): at the fork its lane boundaries are where theirs are, and they run in straight lines to its own
- * lanes `length` metres on. Its end at the fork is cut along the end of the road it divides from (`cut`, the
- * direction the way carries on in beyond it), so its lanes meet theirs edge to edge.
+ * A way's lanes running on out of another road's lanes (or into them) at one of its ends: there its lane boundaries
+ * are where the other road's are, and they run in straight lines to its own lanes `length` metres on, so the lanes
+ * and kerbs flow on unbroken. A branch of a fork (see alignFork) starts on the end of the lanes it carries on from;
+ * the narrower of two roads meeting end to end (see joinRun) takes the wider one's kerbs and lane lines.
  */
 export interface ForkRun {
     atStart: boolean;
     length: number;
-    /** the lane boundaries at the fork, as offsets from the way's line (right positive, in way order); null: its own */
+    /** the lane boundaries at the end, as offsets from the way's line (right positive, in way order); null: its own */
     edges: (number | null)[];
-    /** the direction the way's line carries on in beyond its end at the fork, in metres (see offsetPolyline) */
-    cut: Vec2;
+    /**
+     * lanes of the other road with none here, ending (or starting) on a boundary: at the end its two sides are this far
+     * apart, either side of its offset in `edges`, closing in a V to nothing `length` metres on
+     */
+    gaps?: { edge: number; width: number }[];
+    /** at a fork, the direction the way's line carries on in beyond its end there, its end cut along the stem's end */
+    cut?: Vec2;
+    /**
+     * the other road's lane lines that end (or begin) inside one of this road's lanes: each runs from where it is at
+     * the end (`at`, an offset from the way's line) to the middle of that lane (two lanes merging into it, or one
+     * splitting in two) or to one of its boundaries (a lane added beside it), `length` metres on
+     */
+    lines?: { at: number; lane?: number; edge?: number }[];
 }
+
+/** How far a run still holds at distance `s` along a way: 1 at the end it is at, nothing `length` metres on */
+const runWeight = (run: ForkRun, s: number, total: number) => Math.max(0, 1 - (run.atStart ? s : total - s) / run.length);
+
+/** The run at a way's end at a node, if any */
+const runAt = (visual: WayVisual | undefined, atStart: boolean) => visual?.runs?.find(r => r.atStart === atStart);
 
 /**
  * A painted area the lanes may not drive on, lying between lanes or beside the road (wiki: Key:road_marking,
@@ -421,7 +446,7 @@ export function edgesAt(layout: LaneLayout, visual: WayVisual, s: number, total:
  * ends at `left`, the lane right of it starts at `right` (offsets from the way line)
  */
 export function edgesAndGapsAt(layout: LaneLayout, visual: WayVisual, s: number, total: number):
-    { edges: number[]; gaps: { edge: number; left: number; right: number }[]; room: { left?: number; right?: number } } {
+    { edges: number[]; gaps: { edge: number; left: number; right: number; run?: boolean }[]; room: { left?: number; right?: number } } {
     const t = total > 0 ? s / total : 0;
     const shift = layout.shiftStart + (layout.shiftEnd - layout.shiftStart) * t + visualShift(visual, s, total);
     const edges = layout.edges.slice();
@@ -461,7 +486,7 @@ export function edgesAndGapsAt(layout: LaneLayout, visual: WayVisual, s: number,
         for (let e = c + 1; e <= n; e++) edges[e] += gap / 2;
     }
     // painted areas: the lanes either side part round one between them; a road moves away from one beside it
-    const gaps: { edge: number; left: number; right: number }[] = [];
+    const gaps: { edge: number; left: number; right: number; run?: boolean }[] = [];
     // the room beside a kerb before a painted area there, which the roadside (a hard shoulder) squeezes into; and
     // beside a slip lane, none (the strips come back over 16 m either side)
     const room: { left?: number; right?: number } = {};
@@ -508,11 +533,15 @@ export function edgesAndGapsAt(layout: LaneLayout, visual: WayVisual, s: number,
         room[roomSide] = Math.min(room[roomSide] ?? Infinity, Math.max(0, free) + (1 - fade) * 10);
     }
     const placed = edges.map(e => e + shift);
-    // a fork's branch runs on straight out of the lanes it carries on from
-    if (visual.fork) {
-        const run = visual.fork;
-        const f = Math.max(0, 1 - (run.atStart ? s : total - s) / run.length);
-        if (f > 0) run.edges.forEach((at, k) => { if (at !== null && k <= n) placed[k] += (at - placed[k]) * f; });
+    // running on out of another road's lanes: straight from where its boundaries are, with the V of a lane ending
+    for (const run of visual.runs ?? []) {
+        const f = runWeight(run, s, total);
+        if (f <= 0) continue;
+        run.edges.forEach((at, k) => { if (at !== null && k <= n) placed[k] += (at - placed[k]) * f; });
+        for (const g of run.gaps ?? []) {
+            const half = g.width * f / 2;
+            if (half > 0.005 && !gaps.some(x => x.edge === g.edge)) gaps.push({ edge: g.edge, left: placed[g.edge] - half, right: placed[g.edge] + half, run: true });
+        }
     }
     return { edges: placed, gaps, room };
 }
@@ -975,11 +1004,149 @@ function continuationPairs(graph: coreGraph, up: Arm, down: Arm, nodeID: string,
 
 
 /**
+ * Where one road carries on into another with a different number of lanes and both have arrows on every lane, the
+ * lanes each leads into by its arrows: every lane of the road with more goes to the one lane of the other whose arrows
+ * hold its arrows (or the reverse), in order. Null where the arrows do not say.
+ */
+function arrowPairs(up: Arm, down: Arm): LanePair[] | null {
+    const upArrows = armArrows(up, armLaneDirection(up, true));
+    const downArrows = armArrows(down, armLaneDirection(down, false));
+    if (upArrows.length === downArrows.length || !upArrows.length || !downArrows.length) return null;
+    if (upArrows.some(a => !a.length) || downArrows.some(a => !a.length)) return null;
+    const holds = (outer: string[], inner: string[]) => inner.every(v => outer.includes(v));
+    // the side with more lanes: each of them to the one lane of the other side whose arrows hold its own
+    const [many, few] = upArrows.length > downArrows.length ? [upArrows, downArrows] : [downArrows, upArrows];
+    const partner = many.map(values => {
+        const fits = few.flatMap((other, k) => (holds(other, values) ? [k] : []));
+        return fits.length === 1 ? fits[0] : -1;
+    });
+    if (partner.some(k => k < 0) || partner.some((k, i) => i > 0 && k < partner[i - 1]) || new Set(partner).size !== few.length) return null;
+    return partner.map((k, i) => (many === upArrows ? { from: i, to: k, optional: false } : { from: k, to: i, optional: false }));
+}
+
+/**
+ * Where two roads meet end to end with lanes of different widths (a road widening or narrowing, perhaps with lanes
+ * added, dropped or changing direction too, as Hitchin Road, Luton, w1379219396, 18 m wide with three lanes, between
+ * a 24 m road with five and an 11 m road with three), the narrower one (with as wide, the
+ * one with fewer lanes) runs on out of the wider one's lanes (see ForkRun): at the join its kerbs are the wider road's
+ * and each of its lanes spans the lanes it carries on from or into (`continuationPairs`); a lane of the wider road
+ * with none here closes in a V between the lanes either side, and a lane of its own with none there opens from
+ * nothing. Its lines then run straight to its own. Returns whether it did (else the roads are lined up by shifting).
+ */
+function joinRun(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>, arms: Arm[]): boolean {
+    const [a, b] = arms;
+    if (a.way.id === b.way.id || !a.isEnd || !b.isEnd || isRing(a.way) || isRing(b.way)) return false;
+    if (visuals.get(a.way.id)?.fit || visuals.get(b.way.id)?.fit) return false;
+    const width = (arm: Arm) => arm.right - arm.left;
+    // only where the lanes change width: lanes added or dropped at the same width taper (alignAt), centre lanes open a
+    // ghost island, and back-to-back turn lanes meet on a diagonal, as painted
+    const laneWidth = (arm: Arm) => width(arm) / Math.max(1, arm.layout.lanes.length);
+    if (Math.abs(laneWidth(a) - laneWidth(b)) < 0.4) return false;
+    const [t, r] = width(a) < width(b) - 0.3 ? [a, b] : width(b) < width(a) - 0.3 ? [b, a]
+        : a.layout.lanes.length <= b.layout.lanes.length ? [a, b] : [b, a];
+    if (runAt(visuals.get(t.way.id), t.nodeIndex === 0) || fixedPlacement(t.way)) return false;
+    // the two meet on the bisector of their bend: a point on it for the wider road's boundary at an offset from its line
+    const nT = rightNormal(t.firstSegment);
+    const nR = rightNormal(r.firstSegment);
+    if (len(sub(nR, nT)) < 0.5) return false;
+    const m = unit(sub(nR, nT));
+    const tRight = wayRight(t);
+    // (in the narrower road's terms: its offset from its own line, right positive)
+    const onT = (wayOffset: number) => dot(scale(m, (r.alongWay ? wayOffset : -wayOffset) / dot(m, nR)), tRight);
+    const rEdges = r.edges.map(onT);
+
+    // which of the wider road's lanes each of the narrower road's lanes carries on from or into
+    const tIn = armLaneDirection(t, true);
+    const tOut = armLaneDirection(t, false);
+    const rIn = armLaneDirection(r, true);
+    const rOut = armLaneDirection(r, false);
+    const indexOf = (arm: Arm, direction: LaneDirection, index: number) =>
+        arm.layout.lanes.findIndex(l => l.ref.direction === direction && l.ref.index === index);
+    // (by the lanes' arrows where they say: a `through|right` road widening into `through|through|right|right` splits
+    // each lane in two; else as routes go)
+    const pairsOf = (up: Arm, down: Arm) => arrowPairs(up, down) ?? continuationPairs(graph, up, down, node.id, true);
+    const links = [
+        ...pairsOf(t, r).map(p => ({ t: indexOf(t, tIn, p.from), r: indexOf(r, rOut, p.to) })),
+        ...pairsOf(r, t).map(p => ({ t: indexOf(t, tOut, p.to), r: indexOf(r, rIn, p.from) }))
+    ].filter(l => l.t >= 0 && l.r >= 0);
+    if (!links.length) return false;
+    // each wider-road lane is shared out, in order, among the lanes here it carries on from or into
+    const n = t.layout.lanes.length;
+    const spans: ([number, number] | null)[] = t.layout.lanes.map(() => null);
+    for (const k of new Set(links.map(l => l.r))) {
+        const lo = Math.min(rEdges[k], rEdges[k + 1]);
+        const hi = Math.max(rEdges[k], rEdges[k + 1]);
+        const lanes = [...new Set(links.filter(l => l.r === k).map(l => l.t))].sort((x, y) => x - y);
+        lanes.forEach((lane, q) => {
+            const from = lo + (hi - lo) * q / lanes.length;
+            const to = lo + (hi - lo) * (q + 1) / lanes.length;
+            const had = spans[lane];
+            spans[lane] = had ? [Math.min(had[0], from), Math.max(had[1], to)] : [from, to];
+        });
+    }
+    // a lane of its own with none there opens from nothing beside its neighbour
+    for (let pass = 0; pass < n; pass++) {
+        spans.forEach((span, k) => {
+            if (span) return;
+            const at = spans[k - 1]?.[1] ?? spans[k + 1]?.[0];
+            if (at !== undefined) spans[k] = [at, at];
+        });
+    }
+    if (spans.some(span => !span)) return false;
+    // the boundaries: the kerbs on the wider road's, and between lanes, a V where a lane of the wider road ends
+    const edges: number[] = [];
+    const gaps: { edge: number; width: number }[] = [];
+    edges[0] = Math.min(rEdges[0], rEdges[rEdges.length - 1], spans[0]![0]);
+    edges[n] = Math.max(rEdges[0], rEdges[rEdges.length - 1], spans[n - 1]![1]);
+    for (let k = 1; k < n; k++) {
+        const left = spans[k - 1]![1];
+        const right = spans[k]![0];
+        edges[k] = Math.max(edges[k - 1], (left + right) / 2);
+        if (right - left > 0.05) gaps.push({ edge: k, width: right - left });
+    }
+    // the wider road's lane lines ending inside one of these lanes: two of its lanes from one here (merging into it
+    // or splitting from it) close to the lane's middle; a lane of its own beside them, to the lane's side
+    const linked = new Set(links.map(l => l.r));
+    const sides = new Set([...edges, ...gaps.flatMap(g => [edges[g.edge] - g.width / 2, edges[g.edge] + g.width / 2])]);
+    const lines: { at: number; lane?: number; edge?: number }[] = [];
+    for (let kr = 1; kr < rEdges.length - 1; kr++) {
+        const at = rEdges[kr];
+        if ([...sides].some(x => Math.abs(x - at) < 0.05)) continue;
+        const lane = edges.findIndex((e, k) => k < n && e < at && at < edges[k + 1]);
+        if (lane < 0) continue;
+        const [before, after] = [kr - 1, kr];
+        if (linked.has(before) && linked.has(after)) lines.push({ at, lane });
+        else {
+            // (towards the side the lane with no counterpart lies on)
+            const loose = linked.has(before) ? after : before;
+            const middle = (rEdges[loose] + rEdges[loose + 1]) / 2;
+            lines.push({ at, edge: middle < at ? lane : lane + 1 });
+        }
+    }
+    const moved = Math.max(...edges.map((e, k) => Math.abs(e - t.edges[k])), ...gaps.map(g => g.width));
+    if (moved < 0.3) return false;
+    // straight to its own lanes over 15 m, longer the further they move, on no more than half the road
+    const total = polylineLength(lineLocs(t.way, graph).map(metricFrame((graph.entity(t.way.first()) as osmNode).loc).toMetres));
+    const length = Math.max(Math.min(total * 0.5, Math.max(15, moved * 4)), Math.min(total * 0.5, 2));
+    const visual = visuals.get(t.way.id) ?? noVisual;
+    const run: ForkRun = { atStart: t.nodeIndex === 0, length, edges, ...(gaps.length ? { gaps } : {}), ...(lines.length ? { lines } : {}) };
+    visuals.set(t.way.id, { ...visual, runs: [...(visual.runs ?? []), run] });
+    return true;
+}
+
+/**
  * Works out, for a node where one road continues another, how the second is shifted (drawing only)
  * so the lanes that carry on line up, and which lane tapers where lanes are added or dropped.
  */
 function alignAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>) {
     const arms = armsAt(node, graph, visuals);
+    // two roads end to end: the narrower runs on out of the wider one's lanes
+    if (arms.length === 2 && joinRun(node, graph, visuals, arms)) return;
+    // a fork's branches run on out of the stem's lanes instead (see alignFork)
+    if (arms.length >= 3 && !miniRoundaboutRadius(node, graph)) {
+        const fork = splitAt(arms);
+        if (fork && forkLinesUp(fork)) return;
+    }
     const pair = arms.length === 2 ? [0, 1] : throughPair(arms);
     if (!pair) return;
     const a = arms[pair[0]];
@@ -1749,7 +1916,9 @@ function visualSignature(ways: osmWay[], visuals: Map<string, WayVisual>): strin
             `:${v.parts ? v.parts.map(p => `${p.edge}/${p.samples.map(q => q.map(x => x.toFixed(1)).join('/')).join(',')}`).join(';') : ''}` +
             `:${v.bends ? v.bends.map(p => p.map(x => x.toFixed(1)).join('/')).join(',') : ''}` +
             `:${v.squeeze ? v.squeeze.map(q => `${q.side}${q.from.toFixed(0)}-${q.to.toFixed(0)}`).join(',') : ''}` +
-            `:${v.fork ? v.fork.edges.map(e => (e === null ? '-' : e.toFixed(2))).join('/') : ''}` : '';
+            `:${(v.runs ?? []).map(r => `${r.atStart}/${r.length.toFixed(1)}/${r.edges.map(e => (e === null ? '-' : e.toFixed(2))).join('/')}` +
+                `/${(r.gaps ?? []).map(g => `${g.edge}:${g.width.toFixed(2)}`).join(',')}` +
+                `/${(r.lines ?? []).map(l => `${l.at.toFixed(2)}>${l.lane ?? 'e' + l.edge}`).join(',')}`).join(';')}` : '';
     }).join('|');
 }
 
@@ -1908,7 +2077,7 @@ function alignFork(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisu
     arms.forEach((branch, j) => {
         if (j === s || !branch.isEnd || fixedPlacement(branch.way)) return;
         const visual = visuals.get(branch.way.id) ?? noVisual;
-        if ((branch.nodeIndex === 0 ? visual.start : visual.end) !== 0 || visual.bends || visual.fork) return;
+        if ((branch.nodeIndex === 0 ? visual.start : visual.end) !== 0 || visual.bends || runAt(visual, branch.nodeIndex === 0)) return;
         // which of the stem's lanes each of the branch's lanes carries on from (or into)
         const links: { stem: [LaneDirection, number]; lane: [LaneDirection, number] }[] = [
             ...(fromStem.get(j) ?? []).map(p => ({ stem: [armLaneDirection(stem, true), p.from] as [LaneDirection, number],
@@ -1958,7 +2127,8 @@ function alignFork(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisu
         const beyond = reflect(rightNormal(along));
         // (a direction whose right is `beyond`: into the start, or out of the end, of the way)
         const cutDirection: Vec2 = [-beyond[1], beyond[0]];
-        visuals.set(branch.way.id, { ...visual, fork: { atStart: branch.nodeIndex === 0, length, edges, cut: cutDirection } });
+        const run: ForkRun = { atStart: branch.nodeIndex === 0, length, edges, cut: cutDirection };
+        visuals.set(branch.way.id, { ...visual, runs: [...(visual.runs ?? []), run] });
     });
     return true;
 }
@@ -1992,8 +2162,8 @@ function splitJunction(node: osmNode, arms: Arm[], split: { stem: Arm; branches:
         // its branches run on out of the stem's lanes (see alignFork): they start at the node, cut along the stem's
         // end, with nothing between them and the stem to fill
         for (const arm of split.branches) {
-            const run = visuals.get(arm.way.id)?.fork;
-            if (!run || !arm.isEnd) continue;
+            const run = runAt(visuals.get(arm.way.id), arm.nodeIndex === 0);
+            if (!run?.cut || !arm.isEnd) continue;
             trims.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), 0);
             // (a partner is the direction the way carries on in leaving the node: into its start is the reverse)
             partners.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), arm.nodeIndex === 0 ? scale(run.cut, -1) : run.cut);
@@ -2896,6 +3066,7 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
                 return part.moves.map(m => m[0] - startAt);
             }),
             ...visual.taperStart.map(t => t.length - startAt),
+            ...(visual.runs ?? []).map(run => (run.atStart ? run.length : total - run.length) - startAt),
             ...visual.taperEnd.map(t => total - t.length - startAt),
             ...(visual.gapStart || visual.gapEnd ? [Math.min(gapLength, total * 0.45) - startAt, total - Math.min(gapLength, total * 0.45) - startAt] : [])
         ];
@@ -2916,6 +3087,29 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
         const column = (k: number, plus = 0) => rows.map(r => r[k] + plus);
 
         const boundaries = layout.edges.map((_, k) => offset(column(k)));
+        // the far side of each V where a lane of the road joined ends (or starts) on a boundary
+        const runEdges = [...new Set(placed.flatMap(({ gaps }) => gaps.filter(g => g.run).map(g => g.edge)))];
+        const runLines: { k: number; line: Vec2[]; area?: Vec2[] }[] = runEdges.map(k => {
+            const left = offset(placed.map(({ edges, gaps }) => gaps.find(g => g.edge === k)?.left ?? edges[k]));
+            const right = offset(placed.map(({ edges, gaps }) => gaps.find(g => g.edge === k)?.right ?? edges[k]));
+            return { k, line: right, area: ring(left, right) };
+        });
+        // the other road's lane lines closing into a lane (or opening out of one), as far as they reach
+        for (const run of visual.runs ?? []) {
+            for (const l of run.lines ?? []) {
+                const weights = local.map(x => runWeight(run, startAt + x, total));
+                const reach = weights.findIndex(w => w <= 0);
+                const upTo = reach < 0 ? weights.length : reach + 1;
+                const from = run.atStart ? 0 : Math.max(0, weights.findIndex(w => w > 0) - 1);
+                const to = run.atStart ? upTo : weights.length;
+                if (to - from < 2) continue;
+                const offsets = placed.map(({ edges }, i) => {
+                    const target = l.lane !== undefined ? (edges[l.lane] + edges[l.lane + 1]) / 2 : edges[l.edge!];
+                    return target + (l.at - target) * weights[i];
+                });
+                runLines.push({ k: l.lane ?? l.edge!, line: offset(offsets).slice(from, to) });
+            }
+        }
         // the ghost island, either side of the centre edge, as wide as the gap there
         const centre = centreEdge(layout);
         const gaps = local.map(s => gapAt(visual, startAt + s, total));
@@ -3072,6 +3266,7 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
             dividerSides: dividerSides.map(([l, r]) => [toLocs(frame, l), toLocs(frame, r)]),
             lines: lines.map(l => toLocs(frame, l)),
             lineSides: lineSides.map(([l, r]) => [toLocs(frame, l), toLocs(frame, r)]),
+            ...(runLines.length ? { runLines: runLines.map(({ k, line, area }) => ({ k, line: toLocs(frame, line), ...(area ? { area: toLocs(frame, area) } : {}) })) } : {}),
             arrows,
             travel,
             labels,
@@ -3210,7 +3405,7 @@ export interface LaneSwap {
  * the centre line on one side, 3 m before the node, to the centre line on the other, 3 m after it, with the lines along
  * those edges trimmed or carried on so each meets the diagonal's end
  */
-function laneSwaps(pieces: RoadPiece[], graph: coreGraph): RoadGeometry['swaps'] {
+function laneSwaps(pieces: RoadPiece[], graph: coreGraph, visuals: Map<string, WayVisual>): RoadGeometry['swaps'] {
     const out: RoadGeometry['swaps'] = [];
     const ends = new Map<string, { piece: RoadPiece; atStart: boolean }[]>();
     for (const piece of pieces) {
@@ -3221,6 +3416,8 @@ function laneSwaps(pieces: RoadPiece[], graph: coreGraph): RoadGeometry['swaps']
         if (list.length !== 2) continue;
         const node = graph.hasEntity(nodeID as NodeId) as osmNode | undefined;
         if (!node || (graph.parentWays(node) as osmWay[]).filter(isLaneRoad).length !== 2) continue;
+        // (a lane running on out of the other road's, or ending in a V between them, changes no direction on a diagonal)
+        if (list.some(end => runAt(visuals.get(end.piece.wayID), end.atStart))) continue;
         const frame = metricFrame(node.loc as Vec2);
         // each lane's middle at the node, and whether its traffic heads into the node
         const at = ({ piece, atStart }: { piece: RoadPiece; atStart: boolean }) => piece.layout.lanes.map((lane, i) => {
@@ -3486,7 +3683,7 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         junctions: [...junctions.values()], connections: [...connections.values()].flat(),
         heads: [...heads.values()].map(h => h.head),
         areaRoads: new Map([...owners].map(([areaID, way]) => [areaID, way.id])),
-        swaps: laneSwaps(pieces, graph)
+        swaps: laneSwaps(pieces, graph, visuals)
     };
 }
 

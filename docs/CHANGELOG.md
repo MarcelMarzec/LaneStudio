@@ -8,6 +8,24 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.22r2
+##### 2026-Nov-22
+
+#### Lanes and junctions
+* Where two roads meet end to end with lanes of different widths (a road widening or narrowing, perhaps with lanes
+  added, dropped or changing direction), the lanes blend smoothly: the narrower road takes the wider one's kerbs and
+  lane lines at the join and runs in straight lines to its own, with no step. A lane that ends closes in a V, a new
+  lane opens from nothing, and where two lanes come from one, the line between them opens out of that lane's middle
+* At Hitchin Road, Luton (w1379219396, between the 24 m road at the fork and the narrower road south), the kerbs now
+  flare into each other, the `through|right` lanes open into the `through|through|right|right` ones, and the
+  right-turn lane ends in a V where the road narrows, in place of the square steps and the diagonal across the lane
+  changing direction
+* Roads whose lanes keep their width still taper an added or dropped lane as before
+
+#### Behind the scenes
+* Tests on made-up roads (widening, gaining a lane, lanes changing direction, merging, head to head, round a bend, and
+  forks at many angles either side of traffic) check the lanes meet edge to edge at every join and fork
+
 # 26.11.22
 ##### 2026-Nov-22
 

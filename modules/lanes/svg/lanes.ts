@@ -964,6 +964,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 // a rounded end in the colour of the road's general lanes (the first lane's, if it has none)
                 const general = piece.layout.lanes.findIndex(l => l.kind === 'general');
                 if (piece.caps?.length && !inArea.has(piece) && i === (general >= 0 ? general : 0)) shape.polygons.push(...piece.caps);
+                // the V where a lane of the road joined ends beside this one (on its right), in this lane's colour
+                for (const run of piece.runLines ?? []) if (run.k === i + 1 && run.area) shape.polygons.push(run.area);
                 laneShapes.set(key, shape);
             });
         }
@@ -1021,7 +1023,15 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 } else {
                     result.push({ key, style, line: path(trimmed(piece, k, piece.lines[k]), false), piece, k });
                 }
+                // the far side of the V where a lane of the road joined ends (or starts) on this boundary
+                for (const run of piece.runLines?.filter(r => r.k === k && r.area) ?? []) {
+                    result.push({ key: key + 'v', style: style.startsWith('solid') || style === 'double-solid' ? 'solid' : style, line: path(run.line, false), piece, k });
+                }
             }
+            // the road joined's lane lines closing into a lane or opening out of one, dashed
+            (piece.runLines ?? []).filter(r => !r.area).forEach((run, i) => {
+                result.push({ key: `${pieceKey(piece)}-run-${i}`, style: 'dashed', line: path(run.line, false), piece, k: run.k });
+            });
             return result;
         });
         const dividers = group('dividers').selectAll<SVGPathElement, typeof dividerData[number]>('path')

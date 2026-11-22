@@ -8,7 +8,12 @@ Junctions are drawing only: nothing here writes tags.
   roads stop at its kerb.
 - **Lanes that carry on line up.** The road with fewer lanes is shifted (unless it has [`placement`](https://wiki.openstreetmap.org/wiki/Key:placement)), for 30 m then
   fading over 50 m, by at most one lane. Which lanes carry on: a [`type=connectivity`](https://wiki.openstreetmap.org/wiki/Tag:type=connectivity) relation, else `turn:lanes`.
-- **Added and dropped lanes taper** over 25 m. A `merge_to_left|right` lane is the one that ends; a one-way slip
+- **Lanes of different widths** where two roads meet end to end (a road widening or narrowing, perhaps with lanes
+  added, dropped or changing direction): the narrower road takes the wider one's kerbs and lane lines at the join and
+  runs in straight lines to its own lanes (over 15 m or more, at most half its length). A lane of the wider road that
+  ends closes in a V; a new lane opens from nothing; where two lanes come from one (`through|right` into
+  `through|through|right|right`, by the arrows), the line between them opens out of the middle of that lane.
+- **Added and dropped lanes taper** over 25 m (lanes of the same width). A `merge_to_left|right` lane is the one that ends; a one-way slip
   road starts where the lane leading into it ends.
 - **Short links** (40 m or less, no arrows of their own, as between the halves of a dual carriageway) take the
   arrows of the road leading in, less the turns already taken.
