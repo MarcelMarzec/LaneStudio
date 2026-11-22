@@ -11,7 +11,7 @@ import {
     metricFrame, sub, add, scale, rightNormal, len, unit,
     dot, pointAlong, slicePolyline, offsetPolyline, cumulativeLengths, polylineLength, pointInPolygon, type MetricFrame
 } from './frame';
-import { defaultLaneWidth, laneLayout, parseWidth, type LaneLayout, type ParkingLayout, type RoadsideKind, type CycleDetail } from './layout';
+import { laneLayout, parseWidth, type LaneLayout, type ParkingLayout, type RoadsideKind, type CycleDetail } from './layout';
 import type { SurfaceGroup } from '../model/street_features';
 import { hull, turningHead } from './turning_head';
 import { parseTurn, parseConnectivity, type LaneDirection } from '../model';
@@ -159,22 +159,23 @@ export interface WayVisual {
     bends?: [number, number][];
     /** stretches of road where a side's roadside strips give way (the main road's hard shoulder beside a slip lane) */
     squeeze?: { side: 'left' | 'right'; from: number; to: number }[];
-    /** where a road divides into one-way roads, its lanes approaching the fork and the gore between them (see `ForkGore`) */
-    gore?: ForkGore;
+    /** a branch of a fork running on out of the lanes of the road it divides from (see ForkRun) */
+    fork?: ForkRun;
 }
 
 /**
- * A road's lanes near a fork at one of its ends (see alignFork): they take the widths of the lanes they lead into (or
- * come from), and the width left over opens between the lanes for different branches as a hatched gore, from nothing
- * `length` metres out to its full width at the fork. Drawing only: its lane widths are not tagged.
+ * A branch of a fork (see alignFork) starting where the lanes it carries on from end (or ending where the lanes it
+ * becomes start): at the fork its lane boundaries are where theirs are, and they run in straight lines to its own
+ * lanes `length` metres on. Its end at the fork is cut along the end of the road it divides from (`cut`, the
+ * direction the way carries on in beyond it), so its lanes meet theirs edge to edge.
  */
-export interface ForkGore {
+export interface ForkRun {
     atStart: boolean;
     length: number;
-    /** each lane's width at the fork, in way order */
-    widths: number[];
-    /** the gores at the fork: lane boundary (in way order) and width */
-    gaps: { edge: number; width: number }[];
+    /** the lane boundaries at the fork, as offsets from the way's line (right positive, in way order); null: its own */
+    edges: (number | null)[];
+    /** the direction the way's line carries on in beyond its end at the fork, in metres (see offsetPolyline) */
+    cut: Vec2;
 }
 
 /**
@@ -416,32 +417,6 @@ export function edgesAt(layout: LaneLayout, visual: WayVisual, s: number, total:
 }
 
 /**
- * Near a fork (see ForkGore), moves `edges` (in place) so the lanes take their widths there and the gores open between
- * them, each boundary with a gore in the gore's middle. Returns each gore's width at `s`, by boundary.
- */
-function applyGore(gore: ForkGore, edges: number[], s: number, total: number): Map<number, number> {
-    const gores = new Map<number, number>();
-    const f = 1 - smooth((gore.atStart ? s : total - s) / gore.length);
-    if (f <= 0) return gores;
-    const n = edges.length - 1;
-    const widths = edges.slice(1).map((e, k) => {
-        const now = e - edges[k];
-        return now + ((gore.widths[k] ?? now) - now) * f;
-    });
-    for (const g of gore.gaps) gores.set(g.edge, g.width * f);
-    const width = widths.reduce((a, b) => a + b, 0) + [...gores.values()].reduce((a, b) => a + b, 0);
-    let at = (edges[0] + edges[n]) / 2 - width / 2;
-    edges[0] = at;
-    for (let k = 0; k < n; k++) {
-        at += widths[k];
-        const open = gores.get(k + 1) ?? 0;
-        edges[k + 1] = k + 1 < n ? at + open / 2 : at;
-        at += open;
-    }
-    return gores;
-}
-
-/**
  * `edgesAt`, and the gaps the lanes leave round painted areas between them: the lane left of boundary `edge`
  * ends at `left`, the lane right of it starts at `right` (offsets from the way line)
  */
@@ -463,10 +438,6 @@ export function edgesAndGapsAt(layout: LaneLayout, visual: WayVisual, s: number,
             if (e < n) before += deltas[e];
         }
     }
-
-    // near a fork: the lanes take the widths of the lanes they lead into, and the gores open between them (edges[k] in
-    // the middle of a gore; the lanes either side end and start at its sides, see the gaps below)
-    const gores = visual.gore ? applyGore(visual.gore, edges, s, total) : new Map<number, number>();
 
     // each tapering lane loses (1 - f) of its width, its moving side and every edge beyond it coming in
     const factors = new Map<number, { f: number; side: 'left' | 'right' }>();
@@ -530,16 +501,20 @@ export function edgesAndGapsAt(layout: LaneLayout, visual: WayVisual, s: number,
         for (let e = k + 1; e <= n; e++) edges[e] += pushRight;
         gaps.push({ edge: k, left: edges[k] - pushLeft + shift, right: edges[k] + pushRight + shift });
     }
-    for (const [k, open] of gores) {
-        if (open > 0.01 && !gaps.some(g => g.edge === k)) gaps.push({ edge: k, left: edges[k] - open / 2 + shift, right: edges[k] + open / 2 + shift });
-    }
     // (past its ends the roadside comes back as the road eases out)
     for (const { left, at, fade } of areaEdges) {
         const free = left ? edges[0] - at : at - edges[n];
         const roomSide = left ? 'left' : 'right';
         room[roomSide] = Math.min(room[roomSide] ?? Infinity, Math.max(0, free) + (1 - fade) * 10);
     }
-    return { edges: edges.map(e => e + shift), gaps, room };
+    const placed = edges.map(e => e + shift);
+    // a fork's branch runs on straight out of the lanes it carries on from
+    if (visual.fork) {
+        const run = visual.fork;
+        const f = Math.max(0, 1 - (run.atStart ? s : total - s) / run.length);
+        if (f > 0) run.edges.forEach((at, k) => { if (at !== null && k <= n) placed[k] += (at - placed[k]) * f; });
+    }
+    return { edges: placed, gaps, room };
 }
 
 
@@ -575,8 +550,6 @@ export interface Arm {
     angle: number;
     /** lane boundary offsets at the node in the way's frame (right of its drawing direction positive) */
     edges: number[];
-    /** each lane's sides at the node in the way's frame (apart where a gore or painted area lies between lanes) */
-    sides: [number, number][];
     /** carriageway edges relative to the arm's direction (right positive) */
     left: number;
     right: number;
@@ -611,12 +584,7 @@ function armsAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>
 
         way.nodes.forEach((id, i) => {
             if (id !== node.id) return;
-            const placed = edgesAndGapsAt(layout, visual, cumulative[i], total);
-            const edges = placed.edges;
-            const sides = layout.lanes.map((_, k): [number, number] => [
-                placed.gaps.find(g => g.edge === k)?.right ?? edges[k],
-                placed.gaps.find(g => g.edge === k + 1)?.left ?? edges[k + 1]
-            ]);
+            const edges = edgesAt(layout, visual, cumulative[i], total);
             const wayLeft = edges[0];
             const wayRight = edges[edges.length - 1];
             const isEnd = i === 0 || i === way.nodes.length - 1;
@@ -632,7 +600,7 @@ function armsAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>
                     return alongWay ? [e[0], e[e.length - 1]] : [-e[e.length - 1], -e[0]];
                 };
                 arms.push({
-                    way, layout, nodeIndex: i, alongWay, isEnd, line, direction, edges, sides,
+                    way, layout, nodeIndex: i, alongWay, isEnd, line, direction, edges,
                     angle: Math.atan2(direction[1], direction[0]),
                     left: alongWay ? wayLeft : -wayRight,
                     right: alongWay ? wayRight : -wayLeft,
@@ -776,7 +744,7 @@ function armLaneDirection(arm: Arm, approach: boolean): LaneDirection {
 function travelOffset(arm: Arm, direction: LaneDirection, index: number): number | null {
     const k = arm.layout.lanes.findIndex(l => l.ref.direction === direction && l.ref.index === index);
     if (k === -1) return null;
-    const offset = (arm.sides[k][0] + arm.sides[k][1]) / 2;
+    const offset = (arm.edges[k] + arm.edges[k + 1]) / 2;
     return direction === 'backward' ? -offset : offset;
 }
 
@@ -1203,8 +1171,6 @@ interface Junction {
     partners: Map<string, Vec2>;
     area?: JunctionArea;
     connections: JunctionConnection[];
-    /** where a road divides, the hatched gore between two branches, running on from the gore on the road (lon/lat) */
-    gores?: Vec2[][];
 }
 
 const idealAngle: Record<string, number> = {
@@ -1227,11 +1193,11 @@ function signedAngle(from: Vec2, to: Vec2): number {
 function laneEnd(arm: Arm, trim: number, direction: LaneDirection, index: number, approach: boolean, edge?: 'left' | 'right') {
     const k = arm.layout.lanes.findIndex(l => l.ref.direction === direction && l.ref.index === index);
     if (k === -1) return null;
-    let wayOffset = (arm.sides[k][0] + arm.sides[k][1]) / 2;
+    let wayOffset = (arm.edges[k] + arm.edges[k + 1]) / 2;
     if (edge) {
         // offsets to the driver's right: along the arm when leaving the node, against it when approaching
         const driverRight = (w: number) => (arm.alongWay ? w : -w) * (approach ? -1 : 1);
-        const [a, b] = arm.sides[k];
+        const [a, b] = [arm.edges[k], arm.edges[k + 1]];
         const leftFirst = driverRight(a) < driverRight(b);
         wayOffset = edge === 'left' ? (leftFirst ? a : b) : (leftFirst ? b : a);
     }
@@ -1783,7 +1749,7 @@ function visualSignature(ways: osmWay[], visuals: Map<string, WayVisual>): strin
             `:${v.parts ? v.parts.map(p => `${p.edge}/${p.samples.map(q => q.map(x => x.toFixed(1)).join('/')).join(',')}`).join(';') : ''}` +
             `:${v.bends ? v.bends.map(p => p.map(x => x.toFixed(1)).join('/')).join(',') : ''}` +
             `:${v.squeeze ? v.squeeze.map(q => `${q.side}${q.from.toFixed(0)}-${q.to.toFixed(0)}`).join(',') : ''}` +
-            `:${v.gore ? JSON.stringify(v.gore) : ''}` : '';
+            `:${v.fork ? v.fork.edges.map(e => (e === null ? '-' : e.toFixed(2))).join('/') : ''}` : '';
     }).join('|');
 }
 
@@ -1906,174 +1872,151 @@ function forkLinesUp(fork: { branches: Arm[] }): boolean {
         fork.branches.filter(arm => arriving(arm) && !leaving(arm)).length >= 2;
 }
 
-/**
- * Where a road divides into one-way roads, its lanes near the fork are drawn as wide as the lanes they lead into (or
- * come from), and what is left of the road's width opens between the lanes for different branches as a hatched gore,
- * as painted where a wide road (`width=24`, five lanes, at Hitchin Road, Luton) parts into a road carrying on and one
- * for a right turn. Only where the road's lanes have no `width:lanes` of their own: tagged widths are drawn as tagged.
- */
-function forkGore(arms: Arm[], stem: Arm, graph: coreGraph, visuals: Map<string, WayVisual>) {
-    const layout = stem.layout;
-    if (layout.lanes.some(lane => lane.values['width:lanes'])) return;
-    const s = arms.indexOf(stem);
-    const upDirection = armLaneDirection(stem, true);
-    const downDirection = armLaneDirection(stem, false);
-    // for each of the stem's lanes, the branch it leads into or comes from, and that lane's width
-    const fed = new Map<string, { branch: number; width: number }>();
-    const widthOf = (arm: Arm, direction: LaneDirection, index: number) =>
-        arm.layout.lanes.find(l => l.ref.direction === direction && l.ref.index === index)?.width;
-    for (const [j, pairs] of forkPairs(arms, s) ?? []) {
-        for (const p of pairs.filter(p => !p.merges)) {
-            const width = widthOf(arms[j], armLaneDirection(arms[j], false), p.to);
-            if (width) fed.set(`${upDirection}:${p.from}`, { branch: j, width });
-        }
-    }
-    arms.forEach((branch, j) => {
-        if (j === s) return;
-        for (const p of (forkPairs(arms, j)?.get(s) ?? []).filter(p => !p.merges)) {
-            const width = widthOf(branch, armLaneDirection(branch, true), p.from);
-            if (width) fed.set(`${downDirection}:${p.to}`, { branch: j, width });
-        }
-    });
-    const fallback = defaultLaneWidth(stem.way);
-    const widths = layout.lanes.map(lane => fed.get(`${lane.ref.direction}:${lane.ref.index}`)?.width ?? fallback);
-    // between neighbouring lanes into different branches (the way's own lanes, in its order)
-    const branchOf = layout.lanes.map(lane => (lane.ref.direction === upDirection ? fed.get(`${upDirection}:${lane.ref.index}`)?.branch : undefined));
-    const edges: number[] = [];
-    for (let k = 1; k < layout.lanes.length; k++) {
-        if (branchOf[k - 1] !== undefined && branchOf[k] !== undefined && branchOf[k - 1] !== branchOf[k]) edges.push(k);
-    }
-    const spare = layout.total - widths.reduce((a, b) => a + b, 0);
-    const gaps = spare > 0.5 && edges.length ? edges.map(edge => ({ edge, width: spare / edges.length })) : [];
-    if (!gaps.length && widths.every((w, k) => Math.abs(w - layout.lanes[k].width) < 0.05)) return;
-    // over most of a short road, else 60 m
-    const frame = metricFrame((graph.entity(stem.way.first()) as osmNode).loc);
-    const total = polylineLength(lineLocs(stem.way, graph).map(frame.toMetres));
-    const visual = visuals.get(stem.way.id) ?? noVisual;
-    visuals.set(stem.way.id, { ...visual, gore: { atStart: stem.nodeIndex === 0, length: Math.max(5, Math.min(60, total * 0.9)), widths, gaps } });
-}
-
-/**
- * Beyond a fork whose road has a gore (see forkGore), the hatching carries on between the two branches either side of
- * it, along their facing edges, until they are a lane's width or so apart (or for 20 m): the painted V up to the nose
- * of the island between them. In metres in the node's frame.
- */
-function forkNoses(split: { stem: Arm; branches: Arm[] }, ordered: Arm[], trims: Map<Arm, number>, visuals: Map<string, WayVisual>): Vec2[][] {
-    const gore = visuals.get(split.stem.way.id)?.gore;
-    if (!gore?.gaps.length) return [];
-    const leavingOnly = (arm: Arm) => arm.layout.model.lanes[armLaneDirection(arm, false)].length > 0 &&
-        !arm.layout.model.lanes[armLaneDirection(arm, true)].length;
-    const edgeAt = (arm: Arm, t: number, side: 0 | 1): Vec2 => {
-        const at = pointAlong(arm.line, Math.min(t, polylineLength(arm.line)));
-        return add(at.point, scale(rightNormal(at.direction), arm.sidesAt(t)[side]));
-    };
-    const result: Vec2[][] = [];
-    for (let k = 0; k + 1 < ordered.length; k++) {
-        const [a, b] = [ordered[k], ordered[k + 1]];
-        if (!leavingOnly(a) || !leavingOnly(b)) continue;
-        const ta = trims.get(a) ?? 0;
-        const tb = trims.get(b) ?? 0;
-        // (only where the two branches start side by side, lined up with the road's lanes)
-        if (len(sub(edgeAt(a, ta, 0), edgeAt(b, tb, 1))) > 8) continue;
-        const reach = Math.min(20, polylineLength(a.line) * 0.6, polylineLength(b.line) * 0.6);
-        const steps = 8;
-        const aSide: Vec2[] = [];
-        const bSide: Vec2[] = [];
-        for (let i = 0; i <= steps; i++) {
-            aSide.push(edgeAt(a, ta + reach * i / steps, 0));
-            bSide.push(edgeAt(b, tb + reach * i / steps, 1));
-        }
-        result.push([...aSide, ...bSide.reverse()]);
-    }
-    return result;
-}
-
-/** A lane's centre at the node, across the arm (right of the arm's direction positive) */
-function armOffset(arm: Arm, direction: LaneDirection, index: number): number | null {
-    const k = arm.layout.lanes.findIndex(l => l.ref.direction === direction && l.ref.index === index);
-    if (k === -1) return null;
-    const offset = (arm.sides[k][0] + arm.sides[k][1]) / 2;
-    return arm.alongWay ? offset : -offset;
-}
-
-/**
- * How far along a fork's branch its middle (moved `shift` to the right) crosses the line the stem ends on, square
- * across the stem at the node: where a branch leaving a wide road at an angle starts, so its lanes start level with the
- * stem lanes they carry on from rather than behind them
- */
-function stemEndCrossing(stem: Arm, branch: Arm, shift = 0): number {
-    const along = dot(branch.direction, stem.direction);
-    if (along > -0.2) return 0;
-    const middle = scale(rightNormal(branch.direction), (branch.left + branch.right) / 2 + shift);
-    return Math.max(0, Math.min(maxClearance, -dot(middle, stem.direction) / along));
-}
-
 // a `placement` that pins a way where it is drawn (a transition only joins the placements either side)
 const fixedPlacement = (way: osmWay) => hasPlacement(way) && way.tags.placement !== 'transition';
 
+/** The way's right, at an arm's end at the node (the arm's right where it runs along the way) */
+const wayRight = (arm: Arm): Vec2 => scale(rightNormal(arm.firstSegment), arm.alongWay ? 1 : -1);
+
 /**
- * Where a road divides into several roads, or several join it (see splitAt; not a road simply parting into its two
- * carriageways, each drawn where it is mapped), shifts each branch at the fork so its lanes start where the lanes
- * that lead into it end (or end where the lanes they become start), easing back to its way: the lanes run on
- * unbroken. Returns whether the node is a fork.
+ * Where a road divides into several one-way roads, or several join it (see splitAt; not a road simply parting into
+ * its two carriageways, each drawn where it is mapped), each branch runs on out of the stem's lanes it carries on from
+ * (see ForkRun): its lanes start (or end) exactly where those lanes end (or start), at the stem's square end, and run
+ * in straight lines to its own lanes, so the lanes flow on unbroken, as painted. Returns whether the node is a fork.
  */
 function alignFork(node: osmNode, graph: coreGraph, visuals: Map<string, WayVisual>): boolean {
     if (miniRoundaboutRadius(node, graph)) return false;
-    const before = armsAt(node, graph, visuals);
-    const forked = splitAt(before);
-    if (!forked) return false;
-    if (!forkLinesUp(forked)) return true;
-    // the stem's lanes take their branches' widths first, so the branches line up with lanes of their own width
-    forkGore(before, forked.stem, graph, visuals);
     const arms = armsAt(node, graph, visuals);
-    const fork = splitAt(arms)!;
+    const fork = splitAt(arms);
+    if (!fork) return false;
+    if (!forkLinesUp(fork)) return true;
     const stem = fork.stem;
     const s = arms.indexOf(stem);
+    // the stem ends square across itself at the node: a point on its end, by its offset from its line
+    const stemRight = wayRight(stem);
+    const stemPoint = (offset: number) => scale(stemRight, offset);
+    // the sides of each of the stem's lanes at the node, from its travelling left to its right
+    const stemSides = (direction: LaneDirection, index: number): [Vec2, Vec2] | null => {
+        const k = stem.layout.lanes.findIndex(l => l.ref.direction === direction && l.ref.index === index);
+        if (k < 0) return null;
+        const [a, b] = [stem.edges[k], stem.edges[k + 1]].map(stemPoint);
+        // (lanes travel along the way forward, so the way's left is their left; backward, its right)
+        return direction === 'backward' ? [b, a] : [a, b];
+    };
     const fromStem = forkPairs(arms, s) ?? new Map<number, LanePair[]>();
+
     arms.forEach((branch, j) => {
         if (j === s || !branch.isEnd || fixedPlacement(branch.way)) return;
         const visual = visuals.get(branch.way.id) ?? noVisual;
-        if ((branch.nodeIndex === 0 ? visual.start : visual.end) !== 0 || visual.bends) return;
-        // the shift (to the right of the arm) that brings each lane, run along the branch to the line the stem ends on
-        // (square across it at the node), to the end of the stem lane it carries on from (or into)
-        const s0 = stem.direction;
-        const along = dot(branch.direction, s0);
-        if (along > -0.2) return;
-        const n = rightNormal(branch.direction);
-        // a point on the branch's lane line at offset 1 lands here on the stem's end line
-        const k = sub(n, scale(branch.direction, dot(n, s0) / along));
-        const shifts: number[] = [];
-        const add = (stemLane: number | null, branchLane: number | null) => {
-            if (stemLane === null || branchLane === null) return;
-            const target = scale(rightNormal(s0), stemLane);
-            shifts.push(dot(target, k) / dot(k, k) - branchLane);
-        };
-        const out = armLaneDirection(branch, false);
-        for (const p of (fromStem.get(j) ?? []).filter(p => !p.merges)) {
-            add(armOffset(stem, armLaneDirection(stem, true), p.from), armOffset(branch, out, p.to));
+        if ((branch.nodeIndex === 0 ? visual.start : visual.end) !== 0 || visual.bends || visual.fork) return;
+        // which of the stem's lanes each of the branch's lanes carries on from (or into)
+        const links: { stem: [LaneDirection, number]; lane: [LaneDirection, number] }[] = [
+            ...(fromStem.get(j) ?? []).map(p => ({ stem: [armLaneDirection(stem, true), p.from] as [LaneDirection, number],
+                lane: [armLaneDirection(branch, false), p.to] as [LaneDirection, number] })),
+            ...(forkPairs(arms, j)?.get(s) ?? []).map(p => ({ stem: [armLaneDirection(stem, false), p.to] as [LaneDirection, number],
+                lane: [armLaneDirection(branch, true), p.from] as [LaneDirection, number] }))
+        ];
+        if (!links.length) return;
+        // each stem lane is shared out, left to right, among the branch's lanes it carries on into (or from)
+        const spans = new Map<string, [Vec2, Vec2]>();
+        const byStem = new Map<string, typeof links>();
+        for (const link of links) byStem.set(link.stem.join(':'), [...(byStem.get(link.stem.join(':')) ?? []), link]);
+        for (const group of byStem.values()) {
+            const sides = stemSides(...group[0].stem);
+            if (!sides) continue;
+            const lanes = [...group].sort((a, b) => a.lane[1] - b.lane[1]);
+            lanes.forEach((link, q) => {
+                const from = add(sides[0], scale(sub(sides[1], sides[0]), q / lanes.length));
+                const to = add(sides[0], scale(sub(sides[1], sides[0]), (q + 1) / lanes.length));
+                const key = link.lane.join(':');
+                const had = spans.get(key);
+                spans.set(key, had ? [had[0], to] : [from, to]);
+            });
         }
-        const into = armLaneDirection(branch, true);
-        for (const p of (forkPairs(arms, j)?.get(s) ?? []).filter(p => !p.merges)) {
-            add(armOffset(stem, armLaneDirection(stem, false), p.to), armOffset(branch, into, p.from));
-        }
-        if (!shifts.length) return;
-        const shift = shifts.reduce((a, b) => a + b, 0) / shifts.length;
-        // (the way's right is the arm's where the arm runs along the way)
-        const delta = branch.alongWay ? shift : -shift;
-        if (Math.abs(delta) < 0.05 || Math.abs(delta) > branchShiftLimit(stem)) return;
-        // the shift holds to where the branch starts (level with the stem's end), then eases off over a few lanes'
-        // widths of road, and is gone well before the branch's other end
+        // the branch's lane boundaries there, as offsets from its line (its way's right positive)
+        const right = wayRight(branch);
+        const edges: (number | null)[] = branch.edges.map(() => null);
+        const votes: number[][] = branch.edges.map(() => []);
+        branch.layout.lanes.forEach((lane, k) => {
+            const span = spans.get(`${lane.ref.direction}:${lane.ref.index}`);
+            if (!span) return;
+            const [travelLeft, travelRight] = span;
+            const [wayLeft, wayRightSide] = lane.ref.direction === 'backward' ? [travelRight, travelLeft] : [travelLeft, travelRight];
+            votes[k].push(dot(wayLeft, right));
+            votes[k + 1].push(dot(wayRightSide, right));
+        });
+        votes.forEach((v, k) => { if (v.length) edges[k] = v.reduce((a, b) => a + b, 0) / v.length; });
+        if (edges.every(e => e === null)) return;
+        // the lanes run straight to the branch's own: over at least 15 m, longer the further they move, and no further
+        // than its other end
+        const moved = Math.max(...edges.map((e, k) => (e === null ? 0 : Math.abs(e - branch.edges[k]))));
         const total = polylineLength(lineLocs(branch.way, graph).map(metricFrame((graph.entity(branch.way.first()) as osmNode).loc).toMetres));
-        const hold = Math.min(stemEndCrossing(stem, branch, branch.alongWay ? delta : -delta), total * 0.4);
-        const length = Math.max(5, Math.min(Math.max(25, Math.abs(delta) * 10), 80, total * 0.8 - hold));
-        // (a metre past the node, as lengths measured from either end can differ by a hair)
-        const bends: [number, number][] = [[branch.nodeIndex === 0 ? -1 : total + 1, delta]];
-        for (let d = 0; d <= length + 0.01; d += Math.max(1, length / 24)) {
-            bends.push([branch.nodeIndex === 0 ? hold + d : total - hold - d, delta * (1 - smooth(d / length))]);
-        }
-        visuals.set(branch.way.id, { ...visual, bends: bends.sort((a, b) => a[0] - b[0]) });
+        const length = Math.min(total, Math.max(15, moved * 4));
+        // its end is cut along the stem's end: the way's line carries on beyond it so that the cut lies along it
+        const along = scale(branch.firstSegment, branch.alongWay ? 1 : -1);    // the way's direction at the node
+        const reflect = (n: Vec2) => sub(scale(stemRight, 2 * dot(n, stemRight)), n);
+        const beyond = reflect(rightNormal(along));
+        // (a direction whose right is `beyond`: into the start, or out of the end, of the way)
+        const cutDirection: Vec2 = [-beyond[1], beyond[0]];
+        visuals.set(branch.way.id, { ...visual, fork: { atStart: branch.nodeIndex === 0, length, edges, cut: cutDirection } });
     });
     return true;
+}
+
+/**
+ * A fork (see splitAt) is no junction: the roads meet at the node. Where its branches run on out of the stem's lanes
+ * (see alignFork), they start at the node, cut along the stem's end, with nothing between to fill. Otherwise the stem
+ * runs up to the node, each branch starts where it clears its neighbours (the nose of the island between them), and
+ * the wedges between are road surface, not a junction box.
+ */
+function splitJunction(node: osmNode, arms: Arm[], split: { stem: Arm; branches: Arm[] }, visuals: Map<string, WayVisual>, result: Junction) {
+    const { trims, partners } = result;
+    // the roads run up to the node; the wedges between their square ends are road surface, not a junction box
+    // the stem runs up to the node; each branch starts where it clears the other (the nose of the island
+    // between them), and the road between is filled
+    const frame = metricFrame(node.loc);
+    const s = arms.indexOf(split.stem);
+    // the branches in order round the node, each starting where it clears its neighbours
+    const ordered = arms.map((_, k) => arms[(s + 1 + k) % arms.length]).slice(0, arms.length - 1);
+    const apart = new Map<Arm, number>();
+    for (let k = 0; k + 1 < ordered.length; k++) {
+        const [a, b] = [ordered[k], ordered[k + 1]];
+        let meet = Math.min(maxClearance, Math.max(edgeMeeting(a, a.left, b, b.right) ?? 0, edgeMeeting(b, b.right, a, a.left) ?? 0));
+        // round an island too small for the branches to clear each other (a pair of bollards), they would be trimmed
+        // away: they start nearly at the node instead, side by side
+        const ends = (arm: Arm) => [arm.way.first(), arm.way.last()].sort().join();
+        if (ordered.length === 2 && ends(a) === ends(b)) meet = Math.min(meet, Math.min(polylineLength(a.line), polylineLength(b.line)) * 0.2);
+        for (const arm of [a, b]) apart.set(arm, Math.max(apart.get(arm) ?? 0, meet));
+    }
+    if (forkLinesUp(split)) {
+        // its branches run on out of the stem's lanes (see alignFork): they start at the node, cut along the stem's
+        // end, with nothing between them and the stem to fill
+        for (const arm of split.branches) {
+            const run = visuals.get(arm.way.id)?.fork;
+            if (!run || !arm.isEnd) continue;
+            trims.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), 0);
+            // (a partner is the direction the way carries on in leaving the node: into its start is the reverse)
+            partners.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), arm.nodeIndex === 0 ? scale(run.cut, -1) : run.cut);
+        }
+        for (const arm of arms) if (!trims.has(armKey(arm.way.id, arm.nodeIndex, arm.alongWay))) trims.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), 0);
+        return;
+    }
+    const [a, b] = [ordered[0], ordered[ordered.length - 1]];
+    const corners = arms.flatMap(arm => {
+        const t = Math.min(arm === split.stem ? 0 : apart.get(arm) ?? 0, polylineLength(arm.line));
+        trims.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), t);
+        const at = pointAlong(arm.line, t);
+        const normal = rightNormal(at.direction);
+        const [left, right] = arm.sidesAt(t);
+        return [add(at.point, scale(normal, left)), add(at.point, scale(normal, right))];
+    });
+    // the kerbs run on from the stem's edges to the branches' outer edges
+    const corner = (arm: Arm, side: 0 | 1) => corners[arms.indexOf(arm) * 2 + side];
+    const assumed = split.stem.layout.assumed || a.layout.assumed || b.layout.assumed;
+    const kerbs = [[corner(split.stem, 0), corner(a, 1)], [corner(b, 0), corner(split.stem, 1)]]
+        .filter(([p, q]) => len(sub(p, q)) > 0.3)
+        .map(line => ({ line: line.map(frame.toLoc), assumed }));
+    result.area = { nodeID: node.id, polygons: [wound(hull(corners).map(frame.toLoc))], kerbs, kind: 'flare' };
 }
 
 /** How far each road is pulled back at a node, the junction area that fills the gap, and the lane connections */
@@ -2094,43 +2037,7 @@ function junctionAt(node: osmNode, graph: coreGraph, visuals: Map<string, WayVis
 
     const split = miniRoundaboutRadius(node, graph) ? null : splitAt(arms);
     if (split) {
-        // the roads run up to the node; the wedges between their square ends are road surface, not a junction box
-        // the stem runs up to the node; each branch starts where it clears the other (the nose of the island
-        // between them), and the road between is filled
-        const frame = metricFrame(node.loc);
-        const s = arms.indexOf(split.stem);
-        // the branches in order round the node, each starting where it clears its neighbours
-        const ordered = arms.map((_, k) => arms[(s + 1 + k) % arms.length]).slice(0, arms.length - 1);
-        const apart = new Map<Arm, number>();
-        for (let k = 0; k + 1 < ordered.length; k++) {
-            const [a, b] = [ordered[k], ordered[k + 1]];
-            let meet = Math.min(maxClearance, Math.max(edgeMeeting(a, a.left, b, b.right) ?? 0, edgeMeeting(b, b.right, a, a.left) ?? 0));
-            // round an island too small for the branches to clear each other (a pair of bollards), they would be trimmed
-            // away: they start nearly at the node instead, side by side
-            const ends = (arm: Arm) => [arm.way.first(), arm.way.last()].sort().join();
-            if (ordered.length === 2 && ends(a) === ends(b)) meet = Math.min(meet, Math.min(polylineLength(a.line), polylineLength(b.line)) * 0.2);
-            for (const arm of [a, b]) apart.set(arm, Math.max(apart.get(arm) ?? 0, meet));
-        }
-        // branches lined up with the stem's lanes (see alignFork) sit side by side at the node: they start level with
-        // the stem's end, so their lanes run on from the stem's unbroken
-        if (forkLinesUp(split)) for (const arm of split.branches) if (!fixedPlacement(arm.way)) apart.set(arm, stemEndCrossing(split.stem, arm));
-        const [a, b] = [ordered[0], ordered[ordered.length - 1]];
-        const corners = arms.flatMap(arm => {
-            const t = Math.min(arm === split.stem ? 0 : apart.get(arm) ?? 0, polylineLength(arm.line));
-            trims.set(armKey(arm.way.id, arm.nodeIndex, arm.alongWay), t);
-            const at = pointAlong(arm.line, t);
-            const normal = rightNormal(at.direction);
-            const [left, right] = arm.sidesAt(t);
-            return [add(at.point, scale(normal, left)), add(at.point, scale(normal, right))];
-        });
-        // the kerbs run on from the stem's edges to the branches' outer edges
-        const corner = (arm: Arm, side: 0 | 1) => corners[arms.indexOf(arm) * 2 + side];
-        const assumed = split.stem.layout.assumed || a.layout.assumed || b.layout.assumed;
-        const kerbs = [[corner(split.stem, 0), corner(a, 1)], [corner(b, 0), corner(split.stem, 1)]]
-            .filter(([p, q]) => len(sub(p, q)) > 0.3)
-            .map(line => ({ line: line.map(frame.toLoc), assumed }));
-        result.area = { nodeID: node.id, polygons: [wound(hull(corners).map(frame.toLoc))], kerbs, kind: 'flare' };
-        result.gores = forkNoses(split, ordered, apart, visuals).map(polygon => polygon.map(frame.toLoc));
+        splitJunction(node, arms, split, visuals, result);
         junctionCache.set(node, { deps, signature, result });
         return result;
     }
@@ -3012,17 +2919,9 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
         // the ghost island, either side of the centre edge, as wide as the gap there
         const centre = centreEdge(layout);
         const gaps = local.map(s => gapAt(visual, startAt + s, total));
-        // or the gore where the road divides, hatched as a ghost island is
-        const goreEdge = visual.gore?.gaps[0]?.edge;
-        const goreSides = goreEdge === undefined ? null : placed.map(({ edges, gaps }) => {
-            const g = gaps.find(x => x.edge === goreEdge);
-            return g ? [g.left, g.right] : [edges[goreEdge], edges[goreEdge]];
-        });
         const ghost = centre > 0 && gaps.some(g => g > 0.05)
             ? ring(offset(rows.map((r, i) => r[centre] - gaps[i] / 2)), offset(rows.map((r, i) => r[centre] + gaps[i] / 2)))
-            : goreSides && goreSides.some(([l, r]) => r - l > 0.05)
-                ? ring(offset(goreSides.map(g => g[0])), offset(goreSides.map(g => g[1])))
-                : undefined;
+            : undefined;
         const lanes = layout.lanes.map((_, i) => anyGap ? ring(offset(laneSide(i, 'left')), offset(laneSide(i, 'right')))
             : ring(boundaries[i], boundaries[i + 1]));
         const centres = layout.lanes.map((_, i) => {
@@ -3276,8 +3175,6 @@ export interface RoadGeometry {
     channelled: RoadPiece[];
     junctions: JunctionArea[];
     connections: JunctionConnection[];
-    /** where a road divides into one-way roads, the hatched gores between the branches beyond the fork (lon/lat) */
-    gores: Vec2[][];
     /** turning circles, loops and hammerheads at road ends */
     heads: TurningHead[];
     /** the road each mapped carriageway area is the surface of, by area id */
@@ -3587,7 +3484,6 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
     return {
         visuals, pieces, innerPieces, channelled,
         junctions: [...junctions.values()], connections: [...connections.values()].flat(),
-        gores: [...byNode.values()].flatMap(j => j.gores ?? []),
         heads: [...heads.values()].map(h => h.head),
         areaRoads: new Map([...owners].map(([areaID, way]) => [areaID, way.id])),
         swaps: laneSwaps(pieces, graph)

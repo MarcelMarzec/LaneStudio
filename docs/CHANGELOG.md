@@ -8,6 +8,18 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.22
+##### 2026-Nov-22
+
+#### Lanes and junctions
+* Where a road divides into one-way roads (a fork), the lanes now flow on unbroken: each branch starts exactly on the
+  end of the lanes it carries on from, edge to edge, and its lane lines and kerbs run in straight lines to its own
+  lanes, with no junction box in between. At Hitchin Road, Luton, the lines of the two through lanes run straight on
+  into w1255054313, those of the right-turn lanes into w1255054311, the two edges between them fanning out from one
+  point, and the southbound carriageway's kerb runs into the road's
+* The gore drawn at a fork in 26.11.21r4 is gone: the road's lanes keep their width as tagged, and the branches no
+  longer shift sideways and ease back (26.11.21r3)
+
 # 26.11.21r4
 ##### 2026-Nov-21
 

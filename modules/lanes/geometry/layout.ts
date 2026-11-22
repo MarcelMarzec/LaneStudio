@@ -130,7 +130,7 @@ export const defaultLaneWidths: Record<string, number> = {
 };
 
 /** Per-lane width for a road with none tagged: the UK defaults above, else iD's own highway defaults */
-export function defaultLaneWidth(way: osmWay): number {
+function defaultLaneWidth(way: osmWay): number {
     // a road being built is as wide as the road it will be
     const highway = builtHighway(way.tags);
     if (highway && defaultLaneWidths[highway]) return defaultLaneWidths[highway];

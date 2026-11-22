@@ -29,11 +29,9 @@ Junctions are drawing only: nothing here writes tags.
 - **A two-way road dividing into several one-way roads** (or several joining it), all within 50° of straight on, is
   a fork: each lane leads into the branch whose own arrows ([`turn`](https://wiki.openstreetmap.org/wiki/Key:turn) or `turn:lanes`) hold its arrows (`through|through|right|right`
   into a `turn=through` road and a `turn=right` one), else the lanes are shared out in order, left lanes to the left
-  branch. Each branch starts level with the end of the road it leaves, shifted so its lanes carry on from the lanes
-  leading into it, then eases back to its way: the lanes run on unbroken. Where the road's lanes have no
-  `width:lanes`, they narrow to the width of the lanes they lead into over the last 60 m, and the rest of its `width`
-  is a hatched gore between the lanes for each branch, carrying on between the branches for up to 20 m. Roads joining there merge into the lanes on
-  their side. A [`placement`](https://wiki.openstreetmap.org/wiki/Key:placement) other than `transition` keeps a branch where it is mapped.
+  branch. There is no junction box: each branch starts on the end of the lanes it carries on from, edge to edge, and
+  its lane lines and kerbs run in straight lines to its own lanes (over 15 m, or more the further they move, at most
+  the branch's length). Roads joining there end on the lanes they merge into the same way. A [`placement`](https://wiki.openstreetmap.org/wiki/Key:placement) other than `transition` keeps a branch where it is mapped.
 - **Junction boxes** are a shade lighter than the road, with curved kerbs from road to road. Where no traffic crosses
   the main road (roundabouts, slip roads) the box is only the widening mouth. At a bend, both halves meet on the
   bisector.

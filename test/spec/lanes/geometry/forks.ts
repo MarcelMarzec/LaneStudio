@@ -51,30 +51,33 @@ describe('a road dividing into one-way roads (a fork)', () => {
         expect(firstWays(3)).toEqual(['w1255054311']);
     });
 
-    it('draws the branches carrying on from the lanes that lead into them, unbroken', () => {
+    it('draws the branches running on out of the lanes that lead into them, edge to edge', () => {
         const graph = hitchinRoad();
         const ways = Object.keys(fixture().ways).map(id => graph.entity(id as `w${number}`) as InstanceType<typeof iD.osmWay>);
-        const { pieces, junctions, visuals, gores } = roadGeometry(ways, graph);
-        expect(junctions.find(j => j.nodeID === node)?.kind).toBe('flare');
-        // its width (width=24, no width:lanes) is not shared out over its five lanes: they are as wide as the lanes they
-        // lead into, and the rest is a hatched gore between the through lanes and the right-turn lanes, carrying on
-        // between the two branches
-        const gore = visuals.get('w1379219397')?.gore;
-        expect(gore?.widths.every(w => Math.abs(w - 3.65) < 0.01)).toBe(true);
-        expect(gore?.gaps).toHaveLength(1);
-        expect(gore!.gaps[0].width).toBeCloseTo(24 - 5 * 3.65, 1);
-        expect(gores).toHaveLength(1);
+        const { pieces, junctions } = roadGeometry(ways, graph);
+        // no junction box: the lanes run on
+        expect(junctions.find(j => j.nodeID === node)).toBeUndefined();
         const frame = metricFrame((graph.entity(node as `n${number}`) as InstanceType<typeof iD.osmNode>).loc);
-        const gaps = new Map<string, number>();
-        for (const link of laneLinksAt(graph, node)) {
+        // each road's lane boundaries at the fork, in metres, from the way's left
+        const at = (wayID: string) => {
+            const piece = pieces.find(p => p.wayID === wayID && (p.fromNode === node || p.toNode === node))!;
+            return piece.boundaries.map(b => frame.toMetres(piece.fromNode === node ? b[0] : b[b.length - 1]));
+        };
+        const stem = at('w1379219397');
+        const near = (a: number[][], b: number[][]) => a.forEach((p, k) => expect(Math.hypot(p[0] - b[k][0], p[1] - b[k][1])).toBeLessThan(0.05));
+        // the approach runs south from the fork: its boundaries from the east kerb (its southbound lane) to the west
+        // kerb; the left branch starts on its lanes 1 and 2 (the west ones), the right-turn road on lanes 3 and 4
+        near(at('w1255054313'), [stem[5], stem[4], stem[3]]);
+        near(at('w1255054311'), [stem[3], stem[2], stem[1]]);
+        // and the southbound carriageway's two lanes end on the approach's one southbound lane, as they merge into it
+        const south = at('w1255054312');
+        near([south[0], south[2]], [stem[0], stem[1]]);
+        // the connections there are no longer than a few centimetres
+        for (const link of laneLinksAt(graph, node).filter(l => l.from.wayID !== 'w1255054312')) {
             const line = laneLinkLine(link, pieces, graph)!;
             const [a, b] = [frame.toMetres(line[0]), frame.toMetres(line[line.length - 1])];
-            const key = `${link.from.wayID} > ${link.to.wayID}:${link.to.ref.index}`;
-            gaps.set(key, Math.min(gaps.get(key) ?? Infinity, Math.hypot(b[0] - a[0], b[1] - a[1])));
+            expect(Math.hypot(b[0] - a[0], b[1] - a[1])).toBeLessThan(0.1);
         }
-        // each lane starts within a couple of metres of where the lane before it ends (they were up to 12 m apart);
-        // of the joining road's two lanes, the one carrying on (the other merges into it)
-        for (const [key, gap] of gaps) expect(gap, key).toBeLessThan(2.5);
     });
 });
 
