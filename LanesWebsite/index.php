@@ -12,7 +12,7 @@ $path        = '/';
 $navLinks = [
     ['label' => 'The problem', 'href' => '#problem'],
     ['label' => 'Features', 'href' => '#features'],
-    ['label' => 'How it works', 'href' => '#how'],
+    ['label' => 'Screenshots', 'href' => '#screens'],
     ['label' => 'Statistics', 'href' => '/statistics'],
     ['label' => 'Changelog', 'href' => '/changelog'],
     ['label' => 'Contact', 'href' => $site['contact']],
@@ -58,12 +58,12 @@ require __DIR__ . '/includes/head.php';
     </div>
 
     <figure class="hero-wide-visual">
-      <img src="/assets/img/lanestudio-editor.svg"
+      <img src="/assets/img/lanestudio-editor.webp"
            alt="The Lane Studio editor: a selected carriageway on a dark map with a turn arrow on
                 each lane, beside a panel listing the lanes and the OpenStreetMap tags they produce"
            width="720" height="480" fetchpriority="high">
       <figcaption>
-        An illustration of the editor rather than a screenshot — open it to see the real thing.
+        A screenshot of Lane Studio's Editor, Based on iD, v26.11.22
       </figcaption>
     </figure>
   </div>
@@ -114,117 +114,123 @@ require __DIR__ . '/includes/head.php';
       <article class="feature-card">
         <div class="feature-icon"><?php icon_lanes(); ?></div>
         <h3>Lay out the carriageway</h3>
-        <p>
-          Every lane is drawn at its real width over the imagery. Add, remove and reorder lanes, set
-          their direction, turn arrows, bus and cycle lanes, widths and limits — in the order you'd see
-          them from the driver's seat.
-        </p>
+        <ul>
+          <li>Lanes drawn at real width over the imagery</li>
+          <li>Add, remove and reorder lanes</li>
+          <li>Set direction, turn arrows, widths and limits</li>
+          <li>Bus and cycle lanes</li>
+        </ul>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon"><?php icon_tag(); ?></div>
         <h3>Correct tags, written for you</h3>
-        <p>
-          Lane Studio writes the <code>lanes</code>, <code>turn:lanes</code> and
-          <code>:forward</code>/<code>:backward</code> keys from what you drew, touching only the keys
-          that changed. Every edit is one undo step, and the raw tags stay in view.
-        </p>
+        <ul>
+          <li>Writes <code>lanes</code>, <code>turn:lanes</code> and <code>:forward</code>/<code>:backward</code> keys</li>
+          <li>Only changed keys are touched</li>
+          <li>Every edit is one undo step</li>
+          <li>Raw tags stay in view</li>
+        </ul>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon"><?php icon_sidebar(); ?></div>
         <h3>One sidebar with iD's</h3>
-        <p>
-          Number of lanes, centre line, speed limits, structure, pavements, cycleways, hard shoulders and
-          parking sit among iD's own fields, in iD's style. Choices show the value chosen with its sign,
-          and a dropdown of the rest. Each has an <strong>i</strong> button with a short overview and a
-          link to the wiki; fields a road rarely needs wait under “Add field”. Allowed Access covers every
-          transport mode and value on the wiki: add HGVs, vans, buses or deliveries, one direction, or times.
-        </p>
+        <ul>
+          <li>Lane fields sit among iD's own, in iD's style</li>
+          <li>Choices shown with their road sign</li>
+          <li><strong>i</strong> button: short overview and wiki link</li>
+          <li>Rarely needed fields wait under “Add field”</li>
+          <li>Access for every transport mode, direction and time</li>
+        </ul>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon"><?php icon_parking(); ?></div>
         <h3>Roadside and street parking</h3>
-        <p>
-          A <strong>+</strong> at each kerb adds a lane, hard shoulder, pavement, cycleway, parking or
-          no-waiting lines. Street parking follows the wiki's scheme in full — bays, restrictions and
-          times, fees, time limits, zones and permits — drawn with UK yellow and red lines.
-        </p>
+        <ul>
+          <li><strong>+</strong> at each kerb: lanes, pavements, cycleways, parking</li>
+          <li>Full wiki parking scheme: bays, fees, zones, permits</li>
+          <li>Restrictions, times and time limits</li>
+          <li>UK yellow and red lines</li>
+        </ul>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon"><?php icon_centre_line(); ?></div>
         <h3>Centre lines and overtaking</h3>
-        <p>
-          A dashed centre line, or a double white line solid on the side that may not overtake. Set it in
-          the sidebar, from the lane beside it, or by clicking the side of the line on the map.
-        </p>
+        <ul>
+          <li>Dashed or double white centre lines</li>
+          <li>Solid on the side that may not overtake</li>
+          <li>Set from the sidebar, a lane, or the map</li>
+        </ul>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon"><?php icon_junction(); ?></div>
         <h3>Junctions drawn as they are</h3>
-        <p>
-          The main road runs through, lanes that carry on line up, added lanes taper, lanes part round
-          hatched areas and chevrons, and guide lines carry each lane to where it leads. Roundabouts,
-          traffic islands, crossings, stop lines, traffic calming, barriers, signs, solar panels and railways are drawn too — with UK markings: zig-zags and Belisha beacons at crossings, BUS LANE,
-          cycle symbols, bus stop boxes and advanced stop lines — and painted road markings: lines, shark's teeth, hatching
-          and chevrons (multipolygons too), arrows, symbols and text. Every one is found by name in Add Feature and tagged
-          as the OpenStreetMap wiki documents it.
-        </p>
+        <ul>
+          <li>Lanes line up, taper and part round islands</li>
+          <li>Guide lines show where each lane leads</li>
+          <li>Roundabouts, crossings, stop lines, signs and railways</li>
+          <li>UK markings: zig-zags, BUS LANE, advanced stop lines</li>
+          <li>Painted markings found in Add Feature, tagged per the wiki</li>
+        </ul>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon"><?php icon_speed(); ?></div>
         <h3>Speed limits at a glance</h3>
-        <p>
-          The Speed Limit tool colours every lane by its limit, with roads missing one in red. Pick a UK
-          roundel, the national limit or a 20 zone, and click roads or lanes to set it.
-        </p>
+        <ul>
+          <li>Every lane coloured by its limit</li>
+          <li>Roads missing a limit shown in red</li>
+          <li>Pick a UK roundel, national limit or 20 zone</li>
+          <li>Click roads or lanes to set it</li>
+        </ul>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon"><?php icon_route(); ?></div>
         <h3>See where a lane goes</h3>
-        <p>
-          Hover a lane to see every route a car, van, lorry, bus, taxi or bicycle can take from it, following
-          turn arrows, lane connections and turn restrictions — a quick way to catch a wrong arrow. The roads
-          turn the colour of their access for that vehicle: red where it may not go, green where it may,
-          yellow where it is discouraged, blue for deliveries or destination only.
-        </p>
+        <ul>
+          <li>Hover a lane to see every route from it</li>
+          <li>For cars, vans, lorries, buses, taxis and bicycles</li>
+          <li>Follows turn arrows, connections and restrictions</li>
+          <li>Roads coloured by access for that vehicle</li>
+        </ul>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon"><?php icon_checks(); ?></div>
         <h3>Checks before upload</h3>
-        <p>
-          Lane values that don't match the lane count, widths narrower than their lanes, unmarked bus
-          lanes, old values, turn arrows at dead ends, merges that never end and connectivity relations
-          that break the wiki's rules are flagged while you're still editing, with a fix where the answer
-          is certain.
-        </p>
+        <ul>
+          <li>Lane values that don't match the lane count</li>
+          <li>Widths too narrow, unmarked bus lanes, old values</li>
+          <li>Turn arrows at dead ends, endless merges</li>
+          <li>Broken connectivity relations</li>
+          <li>One-click fixes where the answer is certain</li>
+        </ul>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon"><?php icon_connectivity(); ?></div>
         <h3>Which lane leads where</h3>
-        <p>
-          The Connectivity tool draws every lane connection through junctions: blue where Lane Studio works it out
-          from the turn arrows, orange where a connectivity relation says so, dashed where a lane change is needed.
-          Click a lane, then the lanes it leads into, and the relation is written as the OpenStreetMap wiki
-          defines it; relations with mistakes are listed and checked.
-        </p>
+        <ul>
+          <li>Every lane connection drawn through junctions</li>
+          <li>Blue from turn arrows, orange from relations</li>
+          <li>Dashed where a lane change is needed</li>
+          <li>Click lanes to write a connectivity relation</li>
+        </ul>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon"><?php icon_lanes(); ?></div>
         <h3>Read the map</h3>
-        <p>
-          The Map key explains every colour, line and symbol on the map, and the walkthrough and Help pages
-          show what Lane Studio adds to iD. Zoomed out too far to edit, the OpenStreetMap map fades in over
-          the imagery, so you can find your way to the next road.
-        </p>
+        <ul>
+          <li>Map key explains every colour and symbol</li>
+          <li>Walkthrough and Help show what's new over iD</li>
+          <li>OpenStreetMap map fades in when zoomed out</li>
+        </ul>
       </article>
     </div>
   </div>
@@ -299,33 +305,38 @@ require __DIR__ . '/includes/head.php';
   <div class="section-inner">
     <div class="section-head">
       <h2>What it looks like</h2>
-      <p>Illustrations of what the editor does. The editor itself is open to use.</p>
+      <p>Some screenshots of the editor in action! Its constantly imrpoving and getting more features!</p>
     </div>
 
     <div class="showcase-row">
       <figure class="showcase-card">
         <div class="frame">
-          <img src="/assets/img/ls-junction.svg"
-               alt="A junction approach with three lanes, each carrying its own turn arrow"
-               width="400" height="260" loading="lazy">
+          <img src="/assets/img/ls-junction.webp"
+               alt="A junction approach with two lanes, each carrying its own turn arrow" loading="lazy">
         </div>
-        <figcaption>Turn lanes on a junction approach, with the tags they produce.</figcaption>
+        <figcaption>Lanes, pedestrian crossings, level crossings, traffic calming and parking - all rendered.</figcaption>
       </figure>
 
       <figure class="showcase-card">
         <div class="frame">
-          <img src="/assets/img/ls-buslane.svg"
-               alt="A carriageway with a bus lane and a cycle lane picked out from general traffic"
-               width="400" height="260" loading="lazy">
+          <img src="/assets/img/ls-buslane.webp"
+               alt="A carriageway with a bus lane and a cycle lane picked out from general traffic" loading="lazy">
         </div>
-        <figcaption>Bus and cycle lanes, tagged on the correct side of the way.</figcaption>
+        <figcaption>Footpath - Bus Lane - Road - Cycle Lane - Parking</figcaption>
       </figure>
 
       <figure class="showcase-card">
         <div class="frame">
-          <img src="/assets/img/ls-validate.svg"
-               alt="A validation panel flagging a lane count that disagrees with the turn lane list"
-               width="400" height="260" loading="lazy">
+          <img src="/assets/img/ls-speedlimit.webp"
+               alt="A roundabout with every lane coloured by its speed limit." loading="lazy">
+        </div>
+        <figcaption>Visualise Speed Limits - and where they are missing.</figcaption>
+      </figure>
+
+      <figure class="showcase-card">
+        <div class="frame">
+          <img src="/assets/img/ls-routing.webp"
+               alt="A validation panel flagging a lane count that disagrees with the turn lane list" loading="lazy">
         </div>
         <figcaption>Contradictions caught before the changeset is uploaded.</figcaption>
       </figure>

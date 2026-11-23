@@ -815,6 +815,29 @@ code {
   color: var(--text-dim);
 }
 
+.feature-card ul {
+  display: grid;
+  gap: 6px;
+  font-size: 14.5px;
+  color: var(--text-dim);
+}
+
+.feature-card li {
+  position: relative;
+  padding-left: 16px;
+}
+
+.feature-card li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.6em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 @media (max-width: 900px) {
   .feature-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1034,18 +1057,16 @@ code {
 
 .showcase-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 22px;
-  overflow-x: auto;
   padding-bottom: 8px;
-  scroll-snap-type: x proximity;
+  justify-content: space-between;
 }
 
 .showcase-card {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  scroll-snap-align: start;
-  width: clamp(260px, 30vw, 340px);
+  max-width: 540px;
 }
 
 .showcase-card .frame {
