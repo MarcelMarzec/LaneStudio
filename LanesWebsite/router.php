@@ -16,6 +16,16 @@ if (str_starts_with($path, '/includes/') || preg_match('/\.md$/i', $path)) {
     return true;
 }
 
+// The XML sitemap, matching the .htaccess rules.
+if (preg_match('#^/sitemap(?:\.php)?/?$#', $path)) {
+    header('Location: /sitemap.xml', true, 301);
+    return true;
+}
+if ($path === '/sitemap.xml') {
+    require __DIR__ . '/sitemap.php';
+    return true;
+}
+
 // Real files (CSS, images) are served by the built-in server itself.
 if ($path !== '/' && is_file($file)) {
     return false;

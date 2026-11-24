@@ -35,8 +35,8 @@ defined('SITE') or exit;
         </div>
       </div>
       <p class="footer-copy">
-        Hosted with <a href="<?= e($site['host']) ?>" target="_blank" rel="sponsored noopener">FyFeWeb</a>
-        &mdash; that is an affiliate link, so I may earn a commission if you sign up through it.
+        Hosted with <a href="<?= e($site['host']) ?>" target="_blank" rel="sponsored noopener">FyFeWeb</a>.
+        That is an affiliate link: if you sign up through it, I may earn a commission.
       </p>
       <p class="footer-copy">
         &copy; <?= date('Y') ?> <?= e($site['author']) ?>. Registered sole trader in England.

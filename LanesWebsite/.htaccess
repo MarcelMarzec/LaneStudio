@@ -25,6 +25,13 @@ DirectoryIndex index.php, index.html
   RewriteRule ^ - [E=CLEAN_URLS:1]
 
   # Drop the .php extension: one canonical URL per page.
+  # The XML sitemap is PHP behind an .xml address; /sitemap.php itself goes
+  # there too. Named in robots.txt for search engines.
+  RewriteCond %{ENV:CLEAN_URLS} =1
+  RewriteCond %{THE_REQUEST} \s/+sitemap(?:\.php)?/?[\s?] [NC]
+  RewriteRule ^ /sitemap.xml [R=301,L]
+  RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
   RewriteCond %{ENV:CLEAN_URLS} =1
   RewriteCond %{THE_REQUEST} \s/+(.*?)index\.php[\s?] [NC]
   RewriteRule ^ /%1 [R=301,L]

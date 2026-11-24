@@ -34,3 +34,11 @@ transifex.auth
 /LanesWebsite/includes/statistics/*.sqlite
 /LanesWebsite/includes/statistics/collect.lock
 /LanesWebsite/data/
+
+# Archives' macOS junk, OS noise and local tool state
+__MACOSX/
+._*
+Thumbs.db
+*.swp
+.claude/settings.local.json
+.ftp-deploy-*state.json

@@ -152,8 +152,13 @@ input:focus-visible {
    Layout
    ========================================================================== */
 
+/* One background for the whole page on all three sites (marcelmarzec.com,
+   Lane Studio, vatsight.com): sections are told apart by the space between
+   them, not by a lighter band or a rule. 72px above and below makes 144px
+   between two sections, against 40-48px between a heading and its content,
+   so the grouping reads at a glance. */
 section {
-  padding: 96px 24px;
+  padding: 72px 24px;
 }
 
 .section-inner {
@@ -178,10 +183,11 @@ section {
   font-size: 16px;
 }
 
+/* Was a lighter band with rules above and below. Kept as a class so the
+   pages need no edits, but it no longer changes the background: see the
+   note on section above. */
 .section-bordered {
-  background: var(--bg-soft);
-  border-top: 1px solid var(--card-border);
-  border-bottom: 1px solid var(--card-border);
+  background: none;
 }
 
 code {
