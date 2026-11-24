@@ -8,6 +8,14 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.24
+##### 2026-Nov-24
+
+#### Website
+* The map on the statistics page shows the changesets again: the site sends its own security policy, which lets
+  MapLibre, OpenFreeMap's map and the site's fonts load, in place of the host's, which blocked them
+* The editor at `/editor/` no longer inherits that policy, which stopped it starting
+
 # 26.11.22r2
 ##### 2026-Nov-22
 

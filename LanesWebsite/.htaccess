@@ -47,6 +47,21 @@ DirectoryIndex index.php, index.html
   RewriteRule ^(.+?)/?$ $1.php [L]
 </IfModule>
 
+# The site's own Content-Security-Policy. The host's parent folder (the
+# marcelmarzec.com site) sends a policy of its own, written for that site, which
+# blocks MapLibre, OpenFreeMap's tiles and Google Fonts here; it is removed from
+# both of mod_headers' tables first, so only this one is sent. The editor in
+# /editor/ removes it again in its own .htaccess (scripts/build_lanes_site.js).
+#   script-src  MapLibre from jsDelivr (statistics map); no inline scripts
+#   style-src   MapLibre's CSS, Google Fonts' CSS, inline style attributes
+#   connect-src OpenFreeMap's style, tiles, glyphs and sprites
+#   worker-src  MapLibre's worker, started from a blob: URL
+<IfModule mod_headers.c>
+  Header always unset Content-Security-Policy
+  Header unset Content-Security-Policy
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://tiles.openfreemap.org; worker-src 'self' blob:; child-src blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+</IfModule>
+
 # error.php reads the original status from REDIRECT_STATUS.
 ErrorDocument 400 /error.php
 ErrorDocument 401 /error.php

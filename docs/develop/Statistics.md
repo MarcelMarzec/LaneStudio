@@ -12,7 +12,7 @@ files the pages read, so a page view never touches the database.
 | Read the edits | Downloads each closed changeset's edits from the API and the versions before them: objects created, modified and deleted, tag keys changed, ways with lane tags changed, length of road edited | `details.php` |
 | Country | The country at each changeset's centre, from the borders iD uses | `countries.php`, `countries.json` |
 | Write | `data/statistics.json` (figures, latest 5, leaderboard, per day, countries, versions, tags) and `data/changesets.geojson` (the map's points) | `snapshot.php` |
-| Show | The figures, map (MapLibre GL on OpenFreeMap's dark style), chart, lists and leaderboard | `view.php`, `statistics.php`, `index.php`, `assets/js/statistics.js` |
+| Show | The figures, map (MapLibre GL on OpenFreeMap's dark style), chart, lists and leaderboard | `view.php`, `statistics.php`, `index.php`, `assets/js/statistics.js`; the hosts it loads from are allowed in `.htaccess`'s Content-Security-Policy |
 
 All in `LanesWebsite/includes/statistics/` unless named otherwise. `collect.php` runs the steps; each run stops after
 about 4 minutes, and a lock keeps two runs from overlapping. The first runs catch up from the `start` day, a few hours

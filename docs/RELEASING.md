@@ -32,7 +32,8 @@ The full rules are in [CLAUDE.md](../CLAUDE.md); `test/spec/lanes/version.ts` ch
    - The website (`LanesWebsite/`: overview, statistics, changelog, privacy) goes to the web root with the current
      changelog, under its own upload record so it never deletes the editor. The statistics' `config.php` and the
      `data/` files the collector writes stay on the server untouched.
-2. Check: the footer shows the version, you can log in, and a test changeset says `created_by=LaneStudio YY.MM.DD`.
+2. Check: the footer shows the version, you can log in, a test changeset says `created_by=LaneStudio YY.MM.DD`,
+   and the map on `/statistics` shows its changesets.
 
 By hand: set `ID_API_CONNECTION_URL`, `ID_API_CONNECTION_API_URL` and `ID_API_CONNECTION_CLIENT_ID`, run
 `npm run all`, and upload `dist-lanes/` (with its `.htaccess`) to `/editor/`.
@@ -42,6 +43,10 @@ By hand: set `ID_API_CONNECTION_URL`, `ID_API_CONNECTION_API_URL` and `ID_API_CO
 `LanesWebsite/` is a PHP site: `index.php`, `statistics.php`, `changelog.php` (renders the changelog),
 `privacy_policy.php`, `error.php`, `includes/` (settings, header, footer, icons, Markdown, the statistics) and
 `assets/`. Run it with `php -S localhost:8000 router.php` in that folder.
+
+Its `.htaccess` sends the site's own Content-Security-Policy, replacing any the host sends from a parent folder: it
+allows jsDelivr (MapLibre), OpenFreeMap and Google Fonts, and no inline scripts (page scripts go in `assets/js/`).
+The editor's `.htaccess` sends none. When the website loads something from a new host, add it there.
 
 The statistics need a database and a cron job on the server, set up once: [Statistics](develop/Statistics.md).
 

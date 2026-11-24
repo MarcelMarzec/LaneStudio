@@ -41,4 +41,5 @@ __MACOSX/
 Thumbs.db
 *.swp
 .claude/settings.local.json
+.claude/
 .ftp-deploy-*state.json

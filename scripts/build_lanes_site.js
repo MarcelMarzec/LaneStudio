@@ -41,7 +41,9 @@ for (const sprite of ['iD-sprite.svg', 'fa-sprite.svg', 'maki-sprite.svg', 'tema
   if (!fs.existsSync(path.join(out, 'dist', 'img', sprite))) throw new Error(`dist/img/${sprite} is missing: run npm run all first`);
 }
 
-// Apache settings for cPanel hosts: JSON and SVG types, compression, and caching
+// Apache settings for cPanel hosts: JSON and SVG types, compression, and caching. A Content-Security-Policy from a
+// parent folder (the website's, or the host's) is removed: the editor runs inline scripts and reaches the
+// OpenStreetMap API, imagery, vector tiles and many other services that a site's policy would block.
 fs.writeFileSync(path.join(out, '.htaccess'), `# Lane Studio
 AddType application/json .json
 AddType image/svg+xml .svg
@@ -49,6 +51,8 @@ AddType image/svg+xml .svg
   AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
 </IfModule>
 <IfModule mod_headers.c>
+  Header always unset Content-Security-Policy
+  Header unset Content-Security-Policy
   <FilesMatch "\\.(html)$">
     Header set Cache-Control "no-cache"
   </FilesMatch>

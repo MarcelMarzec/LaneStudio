@@ -45,24 +45,6 @@ defined('SITE') or exit;
       </p>
     </footer>
 
-    <script>
-      ;(function () {
-        var open = function () { return document.querySelectorAll('.nav-dropdown[open]') }
-
-        document.addEventListener('click', function (event) {
-          open().forEach(function (d) {
-            if (!d.contains(event.target)) d.open = false
-          })
-        })
-
-        document.addEventListener('keydown', function (event) {
-          if (event.key !== 'Escape') return
-          open().forEach(function (d) {
-            d.open = false
-            d.querySelector('summary').focus()
-          })
-        })
-      })()
-    </script>
+    <script src="/assets/js/site.js?v=1" defer></script>
   </body>
 </html>
