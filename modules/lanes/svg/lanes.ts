@@ -1,5 +1,5 @@
 import { select as d3_select } from 'd3-selection';
-import { difference } from 'polyclip-ts';
+import { difference, union } from 'polyclip-ts';
 
 import type { Projection } from '../../geo/raw_mercator';
 import type { Vec2 } from '../../geo/vector';
@@ -11,12 +11,13 @@ import { actionAddSign } from '../actions/add_sign';
 import { laneState } from '../core/lane_state';
 import { laneRouting } from '../core/lane_routing';
 import { accessClassNames, laneAccess } from '../core/route_access';
-import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind } from '../core/lane_speed';
+import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind, type SpeedClass, type SpeedMeasure } from '../core/lane_speed';
+import { shareJunction, type JunctionShare } from '../geometry/junction_shares';
 import { drawRoutes, laneUnder } from './routing';
 import { drawConnectivity } from './connectivity';
 import { laneConnectivity } from '../core/lane_connectivity';
 import { isLaneRoad, isUnderConstruction } from '../core/roads';
-import { isLanePartArea, roadGeometry, type CarriagewayArea, type PartArea, type LaneSwap, type LineTrim, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
+import { cachedLayout, highwayRank, isLanePartArea, roadGeometry, type CarriagewayArea, type PartArea, type LaneSwap, type LineTrim, type RoadGeometry, type RoadPiece, type LaneMark } from '../geometry/road_geometry';
 import type { CycleDetail, LaneInfo, ParkingLayout } from '../geometry/layout';
 import type { SurfaceGroup } from '../model/street_features';
 import { laneSymbols } from '../geometry/lane_symbols';
@@ -58,6 +59,10 @@ import type { NodeId, OsmEntity } from '../../osm';
 import { onBrandLogos } from '../core/brand_logos';
 import { laneSettings } from '../core/lane_settings';
 import { drawBrandLogos } from './brand_logos';
+import { waterGeometry, type WaterGeometry } from '../geometry/water';
+import { stretchIntoJunction, worksGeometry, type WorksShape } from '../geometry/works';
+import { drawnWater, drawWater } from './water';
+import { drawWorks } from './works';
 
 /** Zoom levels where each level of detail appears (see the plan's zoom rules) */
 export const laneZooms = {
@@ -80,6 +85,76 @@ function byWay(pieces: RoadPiece[], shapes: (piece: RoadPiece) => Vec2[][]): { k
 }
 
 const closedRing = (ring: Vec2[]): [number, number][] => [...ring, ring[0]].map(p => [p[0], p[1]]);
+
+/**
+ * The junction boxes as one shape per kind and class, so where they overlap the surface is one even colour rather than
+ * see-through boxes stacked on each other. In the Speed Limit tool (`measure`), a box whose roads' limits differ is
+ * shared out among them, each part in its road's colour. `classOf` is a box's classes, `buildingOf` its building class.
+ */
+function junctionShapes(junctions: { nodeID: string; kind: 'junction' | 'flare'; polygons: Vec2[][] }[], graph: iD.Graph,
+    measure: SpeedMeasure | null, classOf: (key: string) => string, buildingOf: (key: string) => string) {
+    const groups = new Map<string, { key: string; kind: 'junction' | 'flare'; cls: string; polygons: Vec2[][]; shapes: Vec2[][][]; split?: boolean }>();
+    const add = (kind: 'junction' | 'flare', cls: string, shapes: Vec2[][][], split = false) => {
+        const key = kind + cls;
+        const group = groups.get(key) ?? { key, kind, cls, polygons: [], shapes: [] };
+        group.shapes.push(...shapes);
+        if (split) group.split = true;
+        groups.set(key, group);
+    };
+    for (const j of junctions) {
+        const shares = measure ? junctionSpeedShares(j.nodeID, j.polygons, graph, measure) : null;
+        if (!shares) {
+            add(j.kind, classOf(j.nodeID), j.polygons.map(ring => [ring]));
+            continue;
+        }
+        for (const share of shares) {
+            const shown = measure === 'minspeed' && share.value === 'missing' ? '' : ` speed-${share.value}`;
+            add(j.kind, shown + buildingOf(j.nodeID), share.polygons, true);
+        }
+    }
+    for (const group of groups.values()) {
+        group.polygons = group.shapes.flat();
+        // (a colour holding parts cut from boxes: one shape, so the cut parts' holes and the boxes' overlaps fill evenly)
+        if (!group.split || group.shapes.length < 2) continue;
+        try {
+            const [first, ...rest] = group.shapes.map(shape => shape.map(ring => ring.map(p => [p[0], p[1]] as [number, number])));
+            group.polygons = union(first, ...rest).flatMap(polygon => polygon.map(ring => ring as Vec2[]));
+        } catch {
+            // drawn as they are
+        }
+    }
+    return [...groups.values()];
+}
+
+/** Junction boxes shared out by their roads' limits, by box (the polygons, unchanged while the box is) and limits */
+const speedShareCache = new WeakMap<Vec2[][], { sig: string; shares: JunctionShare<SpeedClass>[] | null }>();
+
+/**
+ * The Speed Limit tool's colours for a junction box (or a merged junction, keyed `cluster-<node>-<node>…`) where its
+ * roads' limits differ: each road's part of the box in its own (see shareJunction), the more major road's where two
+ * cross. Null where they all agree, the box is one colour.
+ */
+function junctionSpeedShares(key: string, polygons: Vec2[][], graph: iD.Graph, measure: SpeedMeasure): JunctionShare<SpeedClass>[] | null {
+    const ids = key.startsWith('cluster-') ? key.slice('cluster-'.length).split('-') : [key];
+    const roads = new Set<osmWay>();
+    for (const id of ids) {
+        const node = graph.hasEntity(id as NodeId) as osmNode | undefined;
+        if (node) graph.parentWays(node).filter(isLaneRoad).forEach(way => roads.add(way as osmWay));
+    }
+    const ranked = [...roads].map(way => ({ way, cls: speedClassOf(undefined, way, measure) }))
+        .sort((a, b) => (highwayRank[b.way.tags.highway ?? ''] ?? 0) - (highwayRank[a.way.tags.highway ?? ''] ?? 0));
+    if (ranked.length < 2 || ranked.every(r => r.cls === ranked[0].cls)) return null;
+    const sig = measure + ranked.map(r => `${r.way.id}:${r.cls}`).join(',');
+    const cached = speedShareCache.get(polygons);
+    if (cached?.sig === sig) return cached.shares;
+    const shares = shareJunction(polygons, ranked.map(({ way, cls }) => ({
+        line: way.nodes.map(id => (graph.hasEntity(id) as osmNode | undefined)?.loc as Vec2).filter(Boolean),
+        halfWidth: cachedLayout(way, graph).total / 2,
+        value: cls
+    })));
+    speedShareCache.set(polygons, { sig, shares });
+    return shares;
+}
 
 /**
  * The parts of a polygon outside some areas: the stretch of a road outside the road area it runs into (a road from a
@@ -629,8 +704,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'areas', 'car-parks', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'calming-ways', 'works', 'junctions', 'heads', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs', 'kerb-markings', 'managed-edges',
-                'paths-over', 'rail-over-road', 'kerb-lines', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'lane-boxes', 'arrows', 'lane-symbols', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols',
+                'water', 'water-banks', 'water-features', 'works-sites', 'areas', 'car-parks', 'works-areas', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'calming-ways', 'junctions', 'heads', 'works', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs', 'kerb-markings', 'managed-edges',
+                'paths-over', 'rail-over-road', 'kerb-lines', 'works-cones', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'lane-boxes', 'arrows', 'lane-symbols', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols',
                 'shields', 'managed-badges', 'parking-badges', 'junction-labels', 'short', 'selection', 'routes', 'lane-links',
                 'surface-targets', 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
             ])
@@ -653,7 +728,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     };
     let _drawn: { graph: iD.Graph; key: string } | null = null;
     let _marked: { drawn: Set<string>; drawnWays: Set<string>; drawnNodes: Set<string>; renderedNodes: Set<string>; filledAreas: Set<string>; spaces: Set<string>; logos: Set<string> } | null = null;
-    let _geometry: { graph: iD.Graph; ids: string; roads: RoadGeometry; street: StreetGeometry } | null = null;
+    let _geometry: { graph: iD.Graph; ids: string; roads: RoadGeometry; street: StreetGeometry; water: WaterGeometry; works: WorksShape[] } | null = null;
     let _frame = 0;
 
     /** Redraws once a frame at most, and only when something the lanes depend on changed */
@@ -693,7 +768,10 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         const visibleIDs = visible.map(entity => entity.id).join(',');
         if (!_geometry || _geometry.graph !== graph || _geometry.ids !== visibleIDs) {
             const roads = roadGeometry(ways, graph, carriagewayAreas, islands, partAreas);
-            _geometry = { graph, ids: visibleIDs, roads, street: streetGeometry(visible, graph, roads.visuals) };
+            _geometry = {
+                graph, ids: visibleIDs, roads, street: streetGeometry(visible, graph, roads.visuals),
+                water: waterGeometry(visible, graph), works: worksGeometry(visible, graph, roads.pieces)
+            };
         }
         const { pieces, innerPieces, channelled, junctions, connections, heads, areaRoads, swaps } = _geometry.roads;
         // short links inside a junction cluster are drawn only as lane guide lines (still clickable), except in a
@@ -748,6 +826,11 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         group('areas').selectAll<SVGPathElement, { id: string }>('path')
             .each(classChanged('lanes-landuse', d => !!graph.hasEntity(d.id as NodeId)?.tags.landuse))
             .each(classChanged('lanes-natural', d => !!graph.hasEntity(d.id as NodeId)?.tags.natural));
+
+        /* water under everything; building work: sites, scaffolding, works areas and roadworks cones */
+        const water = _geometry.water;
+        drawWater(group, water, projection);
+        drawWorks(group, _geometry.works, projection);
 
         /* railways, the Underground and trams (sleepers once they can be seen) */
         const tracks = railGeometry(visible, graph, markings);
@@ -862,6 +945,17 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             return cls === null || (speed.measure() === 'minspeed' && cls === 'missing') ? '' : ` speed-${cls}`;
         };
 
+        // road surface at a node being built: a junction box, cluster or turning head where every road meeting is being
+        // built (a box where a new road meets one in use stays a junction of that road)
+        const nodeBuilding = (key: string) => {
+            const ids = key.startsWith('cluster-') ? key.slice('cluster-'.length).split('-') : [key];
+            const roads = ids.flatMap(id => {
+                const node = graph.hasEntity(id as NodeId) as osmNode | undefined;
+                return node ? graph.parentWays(node).filter(isLaneRoad) as osmWay[] : [];
+            });
+            return roads.length > 0 && roads.every(way => isUnderConstruction(way.tags));
+        };
+
         /* junction areas (not inside a road mapped as an area, which is their surface) */
         const shownJunctions = roadAreas.length ? junctions.filter(j => {
             const node = graph.hasEntity(j.nodeID as NodeId) as osmNode | undefined;
@@ -869,16 +963,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         }) : junctions;
         // all junctions of a kind in one path, so where they overlap the surface is one even colour rather than
         // see-through boxes stacked on each other (the Speed Limit tool colours them too: one path per colour)
-        const junctionSpeed = (j: typeof shownJunctions[number]) => nodeSpeed(j.nodeID);
-        const junctionGroups = new Map<string, { key: string; kind: 'junction' | 'flare'; cls: string; polygons: Vec2[][] }>();
-        for (const j of shownJunctions) {
-            const cls = junctionSpeed(j);
-            const key = j.kind + cls;
-            const shape = junctionGroups.get(key) ?? { key, kind: j.kind, cls, polygons: [] };
-            shape.polygons.push(...j.polygons);
-            junctionGroups.set(key, shape);
-        }
-        const junctionKinds = [...junctionGroups.values()];
+        const junctionKinds = junctionShapes(shownJunctions, graph, speed.active() ? speed.measure() : null,
+            key => nodeSpeed(key) + (nodeBuilding(key) ? ' lanes-construction' : ''), key => (nodeBuilding(key) ? ' lanes-construction' : ''));
         const areas = group('junctions').selectAll<SVGPathElement, typeof junctionKinds[number]>('path')
             .data(junctionKinds, d => d.key);
         areas.exit().remove();
@@ -891,7 +977,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         /* turning circles, loops and hammerheads: road surface carried on from the road's end (not where a turning
            circle is mapped as an area, area:highway=turning_circle or a road area round the end: that is its surface) */
         const headShapes = shownHeads.flatMap(head => [
-            { key: head.nodeID, cls: `turning-head ${head.nodeID}` + nodeSpeed(head.nodeID), d: head.polygons.map(ring => path(ring, true)).join('') },
+            { key: head.nodeID, cls: `turning-head ${head.nodeID}` + nodeSpeed(head.nodeID) + (nodeBuilding(head.nodeID) ? ' lanes-construction' : ''),
+                d: head.polygons.map(ring => path(ring, true)).join('') },
             ...(head.island ? [{ key: `${head.nodeID}-island`, cls: 'marking marking-turning_loop_island', d: path(head.island, true) }] : [])
         ]);
         joinPaths(group('heads'), headShapes, d => d.key, d => d.cls, d => d.d);
@@ -996,9 +1083,23 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         ]) : [], d => d.key, d => d.cls, d => d.d);
         joinPaths(group('lane-swaps'), markings ? swaps : [], d => d.key, () => 'lane-swap', d => path(d.line, false));
 
-        /* roads and paths being built: work stripes over them */
+        /* roads and paths being built: work stripes over them, their rounded ends, and the junction boxes and turning
+           heads where only roads being built meet */
         const works = [
-            ...shown.filter(building).map(piece => ({ key: pieceKey(piece), d: path(piece.carriageway, true) })),
+            ...shown.filter(building).map(piece => ({ key: pieceKey(piece), d: [piece.carriageway, ...(piece.caps ?? [])].map(ring => path(ring, true)).join('') })),
+            // (a short link being built inside a merged junction that also holds a road in use, as w1563755167 off Fulney
+            // Lane North, Spalding: the link striped, the junction left as it is)
+            ...[...innerPieces].filter(building).map(piece => ({ key: `inner-${pieceKey(piece)}`, d: path(piece.carriageway, true) })),
+            // (and the stretch of a road being built pulled back into a junction it shares with a road in use)
+            ...shownJunctions.filter(j => !nodeBuilding(j.nodeID)).flatMap(j => {
+                const ids = j.nodeID.startsWith('cluster-') ? j.nodeID.slice('cluster-'.length).split('-') : [j.nodeID];
+                return shown.filter(building).flatMap(piece => [piece.fromNode, piece.toNode].filter(id => ids.includes(id)).flatMap(id => {
+                    const stretch = stretchIntoJunction(piece, id, graph);
+                    return stretch ? [{ key: `into-${pieceKey(piece)}-${id}`, d: path(stretch, true) }] : [];
+                }));
+            }),
+            ...shownJunctions.filter(j => nodeBuilding(j.nodeID)).map(j => ({ key: `junction-${j.nodeID}`, d: j.polygons.map(ring => path(ring, true)).join('') })),
+            ...shownHeads.filter(h => nodeBuilding(h.nodeID)).map(h => ({ key: `head-${h.nodeID}`, d: h.polygons.map(ring => path(ring, true)).join('') })),
             ...street.paths.filter(p => p.construction).map(p => ({ key: p.id, d: path(p.polygon, true) }))
         ];
         joinPaths(group('works'), works, d => d.key, () => 'works', d => d.d);
@@ -1070,9 +1171,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 roadAreas.filter(other => other !== area).map(other => other.polygon)
             ).map((line, i) => ({ key: `${area.id}-kerb-${i}`, line, assumed: false }))),
             // junction corners between neighbouring roads
-            ...shownJunctions.flatMap(j => j.kerbs.map((kerb, i) => ({ key: `${j.nodeID}-kerb-${i}`, line: kerb.line, assumed: kerb.assumed }))),
+            ...shownJunctions.flatMap(j => j.kerbs.map((kerb, i) => ({ key: `${j.nodeID}-kerb-${i}`, line: kerb.line, assumed: kerb.assumed, construction: nodeBuilding(j.nodeID) }))),
             // round turning heads, from one kerb of the road to the other
-            ...shownHeads.flatMap(h => h.kerbs.map((kerb, i) => ({ key: `${h.nodeID}-head-kerb-${i}`, line: kerb.line, assumed: kerb.assumed })))
+            ...shownHeads.flatMap(h => h.kerbs.map((kerb, i) => ({ key: `${h.nodeID}-head-kerb-${i}`, line: kerb.line, assumed: kerb.assumed, construction: nodeBuilding(h.nodeID) })))
         ];
         const kerbs = group('kerbs').selectAll<SVGPathElement, typeof kerbData[number]>('path')
             .data(kerbData, d => d.key);
@@ -1302,10 +1403,15 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         for (const space of [...parkingSpaces.spaces, ...parkingSpaces.carParks]) drawnWays.add(space.id);
         for (const shape of [...rail.ground, ...rail.trackside, ...rail.overRoad, ...rail.symbols]) (shape.id.startsWith('n') ? drawnNodes : drawnWays).add(shape.id);
         markingIDs.nodes.forEach(id => drawnNodes.add(id));
+        const waterIDs = drawnWater(water);
+        waterIDs.ways.forEach(id => drawnWays.add(id));
+        waterIDs.nodes.forEach(id => drawnNodes.add(id));
+        for (const shape of _geometry.works) if (shape.kind !== 'cone') drawnWays.add(shape.id);
         // the nodes drawn here as what they are (markings, signs, railway equipment…), whose icons iD need not draw too
         const renderedNodes = new Set<string>([...[...street.markings, ...street.surfaces, ...signData.signs].map(m => m.nodeID), ...furniture]);
         for (const shape of [...rail.ground, ...rail.trackside, ...rail.overRoad, ...rail.symbols]) if (shape.id.startsWith('n')) renderedNodes.add(shape.id);
         markingIDs.nodes.forEach(id => renderedNodes.add(id));
+        waterIDs.nodes.forEach(id => renderedNodes.add(id));
         for (const id of drawnWays) {
             const way = graph.hasEntity(id as osmWay['id']) as osmWay | undefined;
             if (way?.type === 'way') way.nodes.forEach(n => drawnNodes.add(n));
@@ -1313,7 +1419,8 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         // brands' logos from Wikidata, from the zoom iD shows points at, over everything else on the map
         const logos = drawBrandLogos(logoLayer(), visible, graph, projection, settings.showLogos() && zoom >= 17);
         // the areas drawn here as a surface (car parks, parking spaces, highway areas, islands): iD's fill is not needed
-        const filledAreas = new Set<string>([...parkingSpaces.carParks, ...parkingSpaces.spaces, ...street.areas].map(area => area.id));
+        const filledAreas = new Set<string>([...parkingSpaces.carParks, ...parkingSpaces.spaces, ...street.areas, ...water.areas,
+            ..._geometry.works.filter(shape => shape.kind === 'site')].map(area => area.id));
         _marked = { drawn, drawnWays, drawnNodes, renderedNodes, filledAreas, spaces: new Set(parkingSpaces.spaces.map(space => space.id)), logos };
         markIdFeatures();
     }

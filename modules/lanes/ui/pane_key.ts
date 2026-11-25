@@ -15,7 +15,7 @@ interface KeyEntry {
     swatch: { fill?: string; line?: string; double?: [string, string]; use?: string; text?: string; zigzag?: boolean; chevrons?: boolean; symbol?: string };
 }
 
-/** The map key's groups, each a section of the pane, in the order a road is looked at: lanes, lines, roadside, crossings, areas */
+/** The map key's groups, each a section of the pane, in the order a road is looked at: lanes, lines, roadside, crossings, areas, then water and building work */
 export const mapKeyGroups: { id: string; entries: KeyEntry[] }[] = [
     {
         id: 'lanes',
@@ -107,6 +107,28 @@ export const mapKeyGroups: { id: string; entries: KeyEntry[] }[] = [
             { id: 'island', swatch: { fill: 'street-area street-area-island surface-concrete' } },
             { id: 'car_park', swatch: { fill: 'car-park' } },
             { id: 'solar', swatch: { fill: 'lanes-key-solar' } }
+        ]
+    },
+    {
+        id: 'water',
+        entries: [
+            { id: 'water', swatch: { fill: 'water-area' } },
+            { id: 'water_intermittent', swatch: { fill: 'water-area water-intermittent' } },
+            { id: 'culvert', swatch: { fill: 'water-channel lanes-covered' } },
+            { id: 'weir', swatch: { fill: 'water-weir' } },
+            { id: 'dam', swatch: { fill: 'water-dam' } },
+            { id: 'white_water', swatch: { fill: 'water-rapids' } },
+            { id: 'water_gate', swatch: { fill: 'water-gate' } }
+        ]
+    },
+    {
+        id: 'works',
+        entries: [
+            { id: 'works_site', swatch: { fill: 'works-site' } },
+            { id: 'works_fence', swatch: { line: 'works-fence' } },
+            { id: 'works_scaffold', swatch: { fill: 'works-scaffold' } },
+            { id: 'works_area', swatch: { fill: 'works-area' } },
+            { id: 'works_cones', swatch: { fill: 'works-cone' } }
         ]
     }
 ];

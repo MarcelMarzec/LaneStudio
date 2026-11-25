@@ -74,7 +74,7 @@ The wiki's keys and tags in its group "shops", and whether Lane Studio draws the
 | [`second_hand=*`](https://wiki.openstreetmap.org/wiki/Key:second_hand) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`second_hand=only`](https://wiki.openstreetmap.org/wiki/Tag:second_hand=only) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`second_hand=yes`](https://wiki.openstreetmap.org/wiki/Tag:second_hand=yes) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`self_checkout=*`](https://wiki.openstreetmap.org/wiki/Key:self_checkout) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`self_checkout=*`](https://wiki.openstreetmap.org/wiki/Key:self_checkout) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`shoes=*`](https://wiki.openstreetmap.org/wiki/Key:shoes) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`shop=*`](https://wiki.openstreetmap.org/wiki/Key:shop) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`shop=3d_printing`](https://wiki.openstreetmap.org/wiki/Tag:shop=3d_printing) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

@@ -47,11 +47,11 @@ function corePreferences(k, v) {
 
     return true;
   } catch {
-    /* eslint-disable no-console */
+
     if (typeof console !== 'undefined') {
       console.error('localStorage quota exceeded');
     }
-    /* eslint-enable no-console */
+
     return false;
   }
 }

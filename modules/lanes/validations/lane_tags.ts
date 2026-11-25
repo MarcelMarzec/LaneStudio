@@ -12,6 +12,7 @@ import { connectivityProblems } from '../geometry/connectivity';
 import { laneDriveSide } from '../core/drive_side';
 import { busValue, contraflowSide, hasOldCycleways, upgradeOldCycleways } from '../core/roadside';
 import { laneRoadHighways } from '../core/roads';
+import { futureFeature, serviceValues } from '../core/lifecycle';
 import { parseWidth } from '../geometry/layout';
 import { laneKindFromValues, setLaneKind, upgradeOldBusway } from '../model/kinds';
 import {
@@ -127,7 +128,9 @@ function markKerbsideLanes(model: LaneModel, direction: LaneDirection, kind: 'bu
  * value counts that do not match the lanes, counts that do not add up, unknown turn values,
  * deprecated values, `hov=lane`, `destination` without a direction on two-way roads, a `width` narrower than its
  * lanes, bus lanes counted (`lanes:bus`) but not marked, the old `opposite_*` cycleway and `busway=lane` values, turn
- * arrows at a dead end and merging lanes that never end.
+ * arrows at a dead end and merging lanes that never end; and on anything being built, the two tagging mistakes
+ * Lane Studio reads as what they mean (`amenity=construction` + `construction=parking`, and a `service=*` value as
+ * a road type of `highway=construction`, see lifecycle.ts).
  * One-click fixes are only offered where the right answer is certain.
  */
 export const validationLaneTags: CreateValidator = () => {
@@ -181,7 +184,37 @@ export const validationLaneTags: CreateValidator = () => {
         return issues;
     }
 
+    /**
+     * Features being built tagged the way the wiki calls a mistake, with the wiki's tags as the fix:
+     * `amenity=construction` + `construction=parking` is `construction:amenity=parking` (wiki: Tag:landuse=construction,
+     * Key:construction), and `highway=construction` + `construction=drive-through` is `construction=service` with
+     * `service=drive-through` (wiki: Tag:highway=construction: construction=* is the road's highway=* value)
+     */
+    function constructionIssues(entity: OsmEntity): validationIssue[] {
+        const tags = entity.tags;
+        const issues: validationIssue[] = [];
+        const future = futureFeature(tags);
+        if (future?.mistaken) {
+            issues.push(issue(entity, 'construction_key', { key: future.key, value: future.value }, () => {
+                const next: Tags = { ...tags, [`construction:${future.key}`]: future.value };
+                delete next[future.key];
+                delete next.construction;
+                return next;
+            }, future.key));
+        }
+        const value = tags.construction ?? '';
+        if (tags.highway === 'construction' && serviceValues.has(value)) {
+            issues.push(issue(entity, 'construction_service', { value, service: tags.service ?? value },
+                () => ({ ...tags, construction: 'service', service: tags.service ?? value }), value));
+        }
+        return issues;
+    }
+
     const validation: Validator = function checkLaneTags(entity, graph) {
+        return [...constructionIssues(entity), ...laneIssues(entity, graph)];
+    };
+
+    function laneIssues(entity: OsmEntity, graph: coreGraph | undefined): validationIssue[] {
         if (entity.type === 'relation' && entity.tags.type === 'connectivity' && graph) return connectivityIssues(entity as osmRelation, graph);
         if (entity.type !== 'way' || !laneRoadHighways.has(entity.tags.highway ?? '')) return [];
         const tags = entity.tags;
@@ -277,7 +310,7 @@ export const validationLaneTags: CreateValidator = () => {
         }
 
         return issues;
-    };
+    }
 
     validation.type = type;
     return validation;

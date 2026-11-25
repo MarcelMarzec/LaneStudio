@@ -18,7 +18,7 @@ export function actionChangeLanes(wayID: EntityId, change: (model: LaneModel) =>
             changed = change(model);
         } catch (err) {
             // an edit the model refuses (e.g. on a read-only key) leaves the road as it was
-            console.warn(`Lane Studio: ${(err as Error).message}`);  // eslint-disable-line no-console
+            console.warn(`Lane Studio: ${(err as Error).message}`);
             return graph;
         }
         return actionChangeTags(wayID, serialiseLanes(changed, way.tags))(graph);

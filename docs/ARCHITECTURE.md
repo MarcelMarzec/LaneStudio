@@ -17,7 +17,7 @@ Two rules:
 | --- | --- |
 | `model/` | Pure functions: `parseLanes` reads lane tags into lanes per direction, `serialiseLanes` writes back only the keys that changed; lane types, markings, signs, connectivity, street features, street parking, speed limits, active traffic management |
 | `actions/` | iD actions for lane edits, markings, signs, copying and connecting lanes |
-| `geometry/` | Everything drawn, in metres: `laneLayout`, `roadGeometry`, `streetGeometry`, `laneSymbols`, `parkingGeometry`, `parkingSpaceGeometry`, `railGeometry`, `railFeatures`, `signGeometry`, `routing.ts` |
+| `geometry/` | Everything drawn, in metres: `laneLayout`, `roadGeometry`, `streetGeometry`, `laneSymbols`, `parkingGeometry`, `parkingSpaceGeometry`, `railGeometry`, `railFeatures`, `waterGeometry`, `worksGeometry`, `signGeometry`, `routing.ts` |
 | `svg/` | The `lanes` layer (`svgLanes`) that runs the geometry and draws it, with click targets; `vertices.ts` |
 | `core/` | State with d3 dispatch: selected lanes, tools, settings, the tools' modes (Routing, Speed Limit, Connectivity), brand logos, what's new, boot (`laneStudioInit`) |
 | `osm/` | Looking along roads: the corridor ahead, roundabouts |
@@ -39,7 +39,8 @@ Files by feature: [Code map](develop/Code-Map.md).
    `joinRun` where two roads with lanes of different widths meet end to end; both give the way a `ForkRun`);
    junctions (`junctionAt`: through road, side roads, the box, flares, splits); road pieces (`buildPieces`: lanes,
    lines, arrows, labels, roadside strips); guide lines (`junctionConnections`); lanes channelled between islands.
-3. `streetGeometry`, `signGeometry`, `laneSymbols`, the railway and parking geometry use the same shifts.
+3. `streetGeometry`, `signGeometry`, `laneSymbols`, the railway and parking geometry use the same shifts; `waterGeometry`
+   draws water under it all and `worksGeometry` building work (roadworks cones along the road pieces).
 4. Draw it all with click targets, then mark iD's own features for what was drawn (`markIdFeatures`).
 
 Work is skipped when nothing changed: at most one redraw a frame (`drawWhenChanged`), geometry kept while the graph

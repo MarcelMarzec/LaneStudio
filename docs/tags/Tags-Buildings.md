@@ -1,13 +1,13 @@
 # Tags: Buildings
 
 The wiki's keys and tags in its group "buildings", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-304 keys and tags: 0 rendered, 0 could be, 304 cannot be.
+304 keys and tags: 2 rendered, 0 could be, 302 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
 | [`3dr:type=*`](https://wiki.openstreetmap.org/wiki/Key:3dr:type) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`bond=*`](https://wiki.openstreetmap.org/wiki/Key:bond) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`building=*`](https://wiki.openstreetmap.org/wiki/Key:building) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`building=*`](https://wiki.openstreetmap.org/wiki/Key:building) | approved | ✅ Rendered | Only `building=construction`; iD draws the rest; [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`building=agricultural`](https://wiki.openstreetmap.org/wiki/Tag:building=agricultural) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=allotment_house`](https://wiki.openstreetmap.org/wiki/Tag:building=allotment_house) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=annexe`](https://wiki.openstreetmap.org/wiki/Tag:building=annexe) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -168,7 +168,7 @@ The wiki's keys and tags in its group "buildings", and whether Lane Studio draws
 | [`building=townhall`](https://wiki.openstreetmap.org/wiki/Tag:building=townhall) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=train_station`](https://wiki.openstreetmap.org/wiki/Tag:building=train_station) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=transformer_tower`](https://wiki.openstreetmap.org/wiki/Tag:building=transformer_tower) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`building=transportation`](https://wiki.openstreetmap.org/wiki/Tag:building=transportation) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`building=transportation`](https://wiki.openstreetmap.org/wiki/Tag:building=transportation) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=tree_house`](https://wiki.openstreetmap.org/wiki/Tag:building=tree_house) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=triumphal_arch`](https://wiki.openstreetmap.org/wiki/Tag:building=triumphal_arch) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=trullo`](https://wiki.openstreetmap.org/wiki/Tag:building=trullo) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -225,7 +225,7 @@ The wiki's keys and tags in its group "buildings", and whether Lane Studio draws
 | [`building:with_parts=yes`](https://wiki.openstreetmap.org/wiki/Tag:building:with_parts=yes) | — | ❌ Cannot be rendered | Height or 3D form: Lane Studio draws the street in plan |
 | [`cellar:use=*`](https://wiki.openstreetmap.org/wiki/Key:cellar:use) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`condo=*`](https://wiki.openstreetmap.org/wiki/Key:condo) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`construction=office`](https://wiki.openstreetmap.org/wiki/Tag:construction=office) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`construction=office`](https://wiki.openstreetmap.org/wiki/Tag:construction=office) | in use | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`construction=shed`](https://wiki.openstreetmap.org/wiki/Tag:construction=shed) | imported | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`construction=steps`](https://wiki.openstreetmap.org/wiki/Tag:construction=steps) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`design:ref=*`](https://wiki.openstreetmap.org/wiki/Key:design:ref) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |

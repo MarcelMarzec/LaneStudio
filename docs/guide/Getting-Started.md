@@ -17,25 +17,25 @@ New to Lane Studio? Open **Help** (`H`) → **Start the walkthrough**: it shows 
 - **Sidebar**, for a selected road, top to bottom: iD's feature type and issues; the **Lanes** section
   ([Lanes](Lanes.md)); iD's **Fields** with Lane Studio's road fields among them ([Road fields](Road-Fields.md),
   [Roadside](Roadside.md)); **Roundabout** or **Look ahead** ([Junctions](Junctions.md)); iD's tags.
-- **Panes** on the right: **Lane Studio** (`K`, settings and About) and **Map key** (`G`, what every colour and
+- **Panes** on the right: **Lane Studio** (`P`, settings and About, in place of iD's Preferences) and **Map key** (`G`, what every colour and
   symbol means), then iD's.
 - **What's new**: after an update, a menu lists what changed since your last visit (turn it off under About).
 
 Every Lane Studio field is built like iD's: a bin (removes its tags), undo (back to the last save) and an **i**
 button (a short overview and a link to the wiki page). Rarely needed fields wait in **Add field**.
 
-## Settings (Lane Studio pane, `K`)
+## Settings (Lane Studio pane, `P`)
 
 | Setting | Does |
 | --- | --- |
-| Lane surface opacity | 35% by default; 100% opaque, 0% invisible |
+| Lane surface opacity | 35% by default; 100% opaque, 0% invisible. iD's wireframe (`W`) hides lane surfaces, leaving their outlines and markings; `W` again brings them back at this setting |
 | Hide natural features | Hides [`natural=*`](https://wiki.openstreetmap.org/wiki/Key:natural) only |
-| Hide iD's lines and points under lanes | Leaves Lane Studio's drawing alone (still clickable; the selected road keeps its nodes) |
+| Hide iD's lines and points under lanes | Leaves Lane Studio's drawing alone (still clickable; the selected road keeps its nodes). `⇧W` turns it on and off |
 | Hide land use | Hides [`landuse=*`](https://wiki.openstreetmap.org/wiki/Key:landuse) only, keeping car parks |
 | Show the OpenStreetMap map when zoomed out | Below zoom 16 the standard OpenStreetMap map fades in over the imagery, and the imagery back as you zoom in (on by default; not over a background that is already an OpenStreetMap map) |
 | Show brand logos | A shop's or restaurant's logo in place of iD's marker, from zoom 17: [`brand:wikidata=*`](https://wiki.openstreetmap.org/wiki/Key:brand:wikidata), its Wikidata logo (P8972 or P154) from Wikimedia Commons, on a white tile |
 | Privacy | iD's third-party icons setting (iD's Preferences pane is left out) |
-| About | What's new, and links to the website, privacy policy and contact page |
+| About | What's new, and links to the website, the [OpenStreetMap wiki page](https://wiki.openstreetmap.org/wiki/Lane_Studio), the [forum post](https://community.openstreetmap.org/t/introducing-lane-studio-a-visual-lane-editor-for-openstreetmap-built-on-id/150572), the GitHub repository, privacy policy and contact page |
 
 ## Vertices
 

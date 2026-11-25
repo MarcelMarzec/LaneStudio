@@ -1,7 +1,7 @@
 # Tags: Other
 
 The wiki's keys and tags in its group "other", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-426 keys and tags: 7 rendered, 26 could be, 393 cannot be.
+439 keys and tags: 9 rendered, 24 could be, 406 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -13,6 +13,7 @@ The wiki's keys and tags in its group "other", and whether Lane Studio draws the
 | [`accuracy:meters=*`](https://wiki.openstreetmap.org/wiki/Key:accuracy:meters) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`acres=*`](https://wiki.openstreetmap.org/wiki/Key:acres) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`activation=*`](https://wiki.openstreetmap.org/wiki/Key:activation) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`activation=button`](https://wiki.openstreetmap.org/wiki/Tag:activation=button) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`activation:action=*`](https://wiki.openstreetmap.org/wiki/Key:activation:action) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`admin_type:PH=*`](https://wiki.openstreetmap.org/wiki/Key:admin_type:PH) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`adopted=*`](https://wiki.openstreetmap.org/wiki/Key:adopted) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -87,6 +88,7 @@ The wiki's keys and tags in its group "other", and whether Lane Studio draws the
 | [`contact:webcam=*`](https://wiki.openstreetmap.org/wiki/Key:contact:webcam) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`course=*`](https://wiki.openstreetmap.org/wiki/Key:course) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`cover=*`](https://wiki.openstreetmap.org/wiki/Key:cover) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`crossing_link=*`](https://wiki.openstreetmap.org/wiki/Key:crossing_link) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`crown_type=*`](https://wiki.openstreetmap.org/wiki/Key:crown_type) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`cs_dir:backward=*`](https://wiki.openstreetmap.org/wiki/Key:cs_dir:backward) | — | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`cs_dir:forward=*`](https://wiki.openstreetmap.org/wiki/Key:cs_dir:forward) | — | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
@@ -118,6 +120,10 @@ The wiki's keys and tags in its group "other", and whether Lane Studio draws the
 | [`fix_guidepost=*`](https://wiki.openstreetmap.org/wiki/Key:fix_guidepost) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`forward=*`](https://wiki.openstreetmap.org/wiki/Key:forward) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`fountain_column:position=*`](https://wiki.openstreetmap.org/wiki/Key:fountain_column:position) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`fountain_column:position=centre`](https://wiki.openstreetmap.org/wiki/Tag:fountain_column:position=centre) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`fountain_column:position=corner`](https://wiki.openstreetmap.org/wiki/Tag:fountain_column:position=corner) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`fountain_column:position=long_side`](https://wiki.openstreetmap.org/wiki/Tag:fountain_column:position=long_side) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`fountain_column:position=short_side`](https://wiki.openstreetmap.org/wiki/Tag:fountain_column:position=short_side) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`fountain_jet:arrangement=*`](https://wiki.openstreetmap.org/wiki/Key:fountain_jet:arrangement) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`fountain_spout=*`](https://wiki.openstreetmap.org/wiki/Key:fountain_spout) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`fountain_spout:count=*`](https://wiki.openstreetmap.org/wiki/Key:fountain_spout:count) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -142,6 +148,7 @@ The wiki's keys and tags in its group "other", and whether Lane Studio draws the
 | [`initiative=*`](https://wiki.openstreetmap.org/wiki/Key:initiative) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`internet_access:captive_portal=*`](https://wiki.openstreetmap.org/wiki/Key:internet_access:captive_portal) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`is_sidepath:of:name=*`](https://wiki.openstreetmap.org/wiki/Key:is_sidepath:of:name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`kids_area=*`](https://wiki.openstreetmap.org/wiki/Key:kids_area) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`kids_area=designated`](https://wiki.openstreetmap.org/wiki/Tag:kids_area=designated) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`lamp_flames=*`](https://wiki.openstreetmap.org/wiki/Key:lamp_flames) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`lamp_model=*`](https://wiki.openstreetmap.org/wiki/Key:lamp_model) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -153,6 +160,7 @@ The wiki's keys and tags in its group "other", and whether Lane Studio draws the
 | [`lightning_protection=*`](https://wiki.openstreetmap.org/wiki/Key:lightning_protection) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`limited_service=*`](https://wiki.openstreetmap.org/wiki/Key:limited_service) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`lit_by_gaslight=*`](https://wiki.openstreetmap.org/wiki/Key:lit_by_gaslight) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`locked=*`](https://wiki.openstreetmap.org/wiki/Key:locked) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`locker=*`](https://wiki.openstreetmap.org/wiki/Key:locker) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`logainm:ref=No_entry`](https://wiki.openstreetmap.org/wiki/Tag:logainm:ref=No_entry) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`logainm:url=No_entry`](https://wiki.openstreetmap.org/wiki/Tag:logainm:url=No_entry) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -362,6 +370,7 @@ The wiki's keys and tags in its group "other", and whether Lane Studio draws the
 | [`tower:insulated=*`](https://wiki.openstreetmap.org/wiki/Key:tower:insulated) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`tower:platforms=*`](https://wiki.openstreetmap.org/wiki/Key:tower:platforms) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`towpath=*`](https://wiki.openstreetmap.org/wiki/Key:towpath) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`toys_available=*`](https://wiki.openstreetmap.org/wiki/Key:toys_available) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`traffic_island=*`](https://wiki.openstreetmap.org/wiki/Key:traffic_island) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`traffic_sign=CH:2.13`](https://wiki.openstreetmap.org/wiki/Tag:traffic_sign=CH:2.13) | — | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`traffic_sign=CH:2.14`](https://wiki.openstreetmap.org/wiki/Tag:traffic_sign=CH:2.14) | — | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
@@ -390,6 +399,10 @@ The wiki's keys and tags in its group "other", and whether Lane Studio draws the
 | [`trolleybus_class:length=*`](https://wiki.openstreetmap.org/wiki/Key:trolleybus_class:length) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough=*`](https://wiki.openstreetmap.org/wiki/Key:trough) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough=yes`](https://wiki.openstreetmap.org/wiki/Tag:trough=yes) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`trough:arrangement=*`](https://wiki.openstreetmap.org/wiki/Key:trough:arrangement) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`trough:arrangement=parallel`](https://wiki.openstreetmap.org/wiki/Tag:trough:arrangement=parallel) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`trough:arrangement=sequential`](https://wiki.openstreetmap.org/wiki/Tag:trough:arrangement=sequential) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`trough:arrangement=tiered`](https://wiki.openstreetmap.org/wiki/Tag:trough:arrangement=tiered) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough:count=*`](https://wiki.openstreetmap.org/wiki/Key:trough:count) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough:format=*`](https://wiki.openstreetmap.org/wiki/Key:trough:format) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough:format=half-round`](https://wiki.openstreetmap.org/wiki/Tag:trough:format=half-round) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -397,6 +410,7 @@ The wiki's keys and tags in its group "other", and whether Lane Studio draws the
 | [`trough:format=oval`](https://wiki.openstreetmap.org/wiki/Tag:trough:format=oval) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough:format=rectangle`](https://wiki.openstreetmap.org/wiki/Tag:trough:format=rectangle) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough:format=round`](https://wiki.openstreetmap.org/wiki/Tag:trough:format=round) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`trough:format=square`](https://wiki.openstreetmap.org/wiki/Tag:trough:format=square) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trough:material=*`](https://wiki.openstreetmap.org/wiki/Key:trough:material) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`truck_wash=*`](https://wiki.openstreetmap.org/wiki/Key:truck_wash) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`trunk=*`](https://wiki.openstreetmap.org/wiki/Key:trunk) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -407,9 +421,9 @@ The wiki's keys and tags in its group "other", and whether Lane Studio draws the
 | [`ts_orientacion=*`](https://wiki.openstreetmap.org/wiki/Key:ts_orientacion) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`tsunami=*`](https://wiki.openstreetmap.org/wiki/Key:tsunami) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`tunnel=*`](https://wiki.openstreetmap.org/wiki/Key:tunnel) | de facto | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
-| [`tunnel=avalanche_protector`](https://wiki.openstreetmap.org/wiki/Tag:tunnel=avalanche_protector) | approved | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`tunnel=avalanche_protector`](https://wiki.openstreetmap.org/wiki/Tag:tunnel=avalanche_protector) | approved | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`tunnel=building_passage`](https://wiki.openstreetmap.org/wiki/Tag:tunnel=building_passage) | approved | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
-| [`tunnel=flooded`](https://wiki.openstreetmap.org/wiki/Tag:tunnel=flooded) | approved | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`tunnel=flooded`](https://wiki.openstreetmap.org/wiki/Tag:tunnel=flooded) | approved | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`tunnel=yes`](https://wiki.openstreetmap.org/wiki/Tag:tunnel=yes) | — | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`typhoon:damage=*`](https://wiki.openstreetmap.org/wiki/Key:typhoon:damage) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`typhoon:reviewed=*`](https://wiki.openstreetmap.org/wiki/Key:typhoon:reviewed) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -418,7 +432,6 @@ The wiki's keys and tags in its group "other", and whether Lane Studio draws the
 | [`validate:ants:yellow=*`](https://wiki.openstreetmap.org/wiki/Key:validate:ants:yellow) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`valves=*`](https://wiki.openstreetmap.org/wiki/Key:valves) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`virtual_tour=*`](https://wiki.openstreetmap.org/wiki/Key:virtual_tour) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`walkup_window=*`](https://wiki.openstreetmap.org/wiki/Key:walkup_window) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ward=*`](https://wiki.openstreetmap.org/wiki/Key:ward) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`waterway/Narrow_variants=*`](https://wiki.openstreetmap.org/wiki/Key:waterway/Narrow_variants) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`wayside_shrine=mani`](https://wiki.openstreetmap.org/wiki/Tag:wayside_shrine=mani) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

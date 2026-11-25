@@ -41,8 +41,8 @@ en:
       speed: "Speed Limit colours every lane by its limit, with roads missing one in red. Pick a limit and click roads to set it."
       connectivity: "Connectivity draws every lane connection through junctions: blue where Lane Studio works it out, orange where a relation declares it. Click a lane, then the lanes it leads into."
       key: "The Map key (G) explains every colour, line and symbol on the map."
-      settings: "The Lane Studio pane (K) sets lane opacity, hides iD's lines under lanes, land use and brand logos, turns off the OpenStreetMap map shown when zoomed out, holds the privacy setting and shows what's new."
-      checks: "The Issues pane checks lane tags as you edit: lane counts, widths, unmarked bus lanes, old values, turns into dead ends."
+      settings: "The Lane Studio pane (P) sets lane opacity, hides iD's lines under lanes, land use and brand logos, turns off the OpenStreetMap map shown when zoomed out, holds the privacy setting, shows what's new and links to the wiki page and forum post. Wireframe (W) hides lane surfaces; Shift+W hides iD's lines under lanes."
+      checks: "The Issues pane checks lane tags as you edit: lane counts, widths, unmarked bus lanes, old values, turns into dead ends, construction tagging mistakes."
     start:
       title: Start editing
       help: "Help (H) has Lane Studio's pages first, then iD's. The full guide is on the wiki."
@@ -58,7 +58,7 @@ en:
         - **Roads drawn lane by lane** at their real width over the imagery (from zoom 17; editing from zoom 18).
         - The **Lanes** section in the sidebar, and road fields among iD's (number of lanes, centre line, speed limits, pavements, cycleways, hard shoulders, parking).
         - **Tools** in the top bar: Routing, Speed Limit and Connectivity.
-        - The **Lane Studio** pane (`K`) for settings and the **Map key** pane (`G`).
+        - The **Lane Studio** pane (`P`) for settings and the **Map key** pane (`G`).
         - **Zoomed out** too far to edit (below zoom 16), the OpenStreetMap map fades in over the imagery.
         - **Checks** of lane tags in the Issues pane.
 
@@ -91,7 +91,7 @@ en:
     drawing:
       title: What is drawn
       text: |
-        Lane Studio draws, from the tags: lanes by type, lane lines and turn arrows; junctions with the lanes lined up and guide lines; pavements, cycle lanes, hard shoulders, parking bays and UK yellow lines; crossings with UK zig-zags, beacons and tactile paving; stop and give way lines, signals, traffic calming, mini-roundabouts and turning heads; signs, cameras and road numbers; mapped road areas and surfaces; bridges, tunnels and roads being built; railways with level crossings and signals.
+        Lane Studio draws, from the tags: lanes by type, lane lines and turn arrows; junctions with the lanes lined up and guide lines; pavements, cycle lanes, hard shoulders, parking bays and UK yellow lines; crossings with UK zig-zags, beacons and tactile paving; stop and give way lines, signals, traffic calming, mini-roundabouts and turning heads; signs, cameras and road numbers; mapped road areas and surfaces; bridges, tunnels and roads being built; construction sites, scaffolding and roadworks cones; rivers, streams, drains and ditches at their width, water areas, weirs, dams and lock gates; railways with level crossings and signals.
 
         Every feature it draws on or beside the road (markings, calming, barriers, parking…) has a preset in Add Feature, tagged as the OpenStreetMap wiki documents it. Where tags are missing the drawing is a guess (fainter lines, hatched pavements). The **Map key** (`G`) explains it, and the wiki's guide has every tag Lane Studio reads.
   section:
@@ -471,6 +471,48 @@ en:
     railway_traverser:
       name: Traverser
       terms: traverser, transfer table, sliding track, railway
+    waterway_pressurised:
+      name: Pressurised waterway
+      terms: pressurised waterway, penstock, siphon, pressure pipe, water pipe, hydropower, waterway
+    waterway_canoe_pass:
+      name: Canoe pass
+      terms: canoe pass, canoe chute, kayak pass, boat pass, weir, waterway
+    waterway_rapids:
+      name: Rapids
+      terms: rapids, white water, riffle, fast water, river, waterway
+    waterway_sluice_gate:
+      name: Sluice gate
+      terms: sluice, sluice gate, penstock gate, water gate, weir gate, waterway
+    waterway_floodgate:
+      name: Floodgate
+      terms: floodgate, flood gate, tide gate, flap valve, flood defence, waterway
+    waterway_security_lock:
+      name: Flood barrier
+      terms: security lock, flood barrier, storm surge barrier, safety gate, flood defence, waterway
+    waterway_check_dam:
+      name: Check dam
+      terms: check dam, debris dam, gully plug, small dam, flood, waterway
+    waterway_debris_screen:
+      name: Debris screen
+      terms: debris screen, trash screen, trash rack, grille, culvert screen, waterway
+    water_lock:
+      name: Lock chamber
+      terms: lock, lock chamber, canal lock, water
+    water_ditch:
+      name: Ditch (area)
+      terms: ditch, drainage ditch, dyke, water
+    water_drain:
+      name: Drain (area)
+      terms: drain, drainage channel, water
+    water_rapids:
+      name: Rapids (area)
+      terms: rapids, white water, water
+    water_lagoon:
+      name: Lagoon
+      terms: lagoon, saltwater lagoon, brackish water, water
+    water_fish_pass:
+      name: Fish pass (area)
+      terms: fish pass, fish ladder, fishway, water
   markings:
     types:
       none: Nothing
@@ -668,6 +710,8 @@ en:
       roadside: Roadside
       markings: Crossings and road markings
       areas: Surfaces and areas
+      water: Water
+      works: Building work
     entries:
       general: General traffic lane
       bus: Bus lane
@@ -679,6 +723,18 @@ en:
       restricted: No access, or hatched area
       shoulder: Hard shoulder
       construction: Under construction
+      water: Water (river, pond, drain…)
+      water_intermittent: Water there part of the year
+      culvert: Culvert or pipe (faded, dashed banks)
+      weir: Weir
+      dam: Dam
+      white_water: White water (below a weir or fall, rapids)
+      water_gate: Lock, sluice or flood gate
+      works_site: Construction site
+      works_fence: Site fence
+      works_scaffold: Building going up (scaffolding)
+      works_area: Other feature being built
+      works_cones: Roadworks cones (construction=minor)
       dashed: Lane line, may be crossed
       solid: Lane line, may not be crossed
       unknown: Lane line not tagged (change:lanes)
@@ -855,17 +911,23 @@ en:
     connectivity_syntax_reference: "connectivity=* lists one statement per from lane, separated by |: the lane, a colon, and the lanes it leads to separated by commas, as 1:1|2:2,(3). Lanes count from 1 at the driver's left; bw is the both_ways lane; (n) needs a lane change."
     connectivity_lanes: "{feature} names a lane its {road} road does not have."
     fix_connectivity_syntax: Write one statement per from lane
+    construction_key: "{feature} is tagged {key}=construction + construction={value}: the wiki tags a feature being built with the lifecycle prefix, construction:{key}={value}."
+    construction_key_reference: "Key:construction pairs construction=* with highway, railway, building and landuse only. Anything else being built takes the lifecycle prefix: construction:amenity=parking, not amenity=construction + construction=parking."
+    fix_construction_key: "Tag it construction:{key}={value}"
+    construction_service: "{feature} is a road being built tagged construction={value}, a service=* value: construction=* is the highway=* type the road will be."
+    construction_service_reference: "On highway=construction, construction=* is the road's highway=* value once built. A drive-through, parking aisle, driveway or alley is highway=service with service=*: construction=service + service=drive-through."
+    fix_construction_service: "Tag it construction=service + service={service}"
     connectivity_lanes_reference: "Lanes are counted from 1 at the driver's left among the lanes travelling the relation's way, from the lanes tags of the road. A road without lanes tags has lane 1."
 
   settings:
     title: Lane Studio
     description: Lane Studio settings
-    key: K
+    key: P
     display: Display
     opacity: Lane surface opacity
     reset_opacity: Reset lane surface opacity
     hide_originals: Hide iD's lines and points under lanes
-    hide_originals_tip: Hides iD's own way lines, vertices, points and direction cones for roads, paths, markings and areas Lane Studio draws. They can still be clicked.
+    hide_originals_tip: Hides iD's own way lines, vertices, points and direction cones for roads, paths, markings and areas Lane Studio draws. They can still be clicked. Shift+W turns it on and off.
     hide_landuse: Hide land use
     hide_natural: Hide natural features
     hide_natural_tip: "Hides natural features (natural=*) alone: woods, water, scrub, trees and so on."
@@ -873,8 +935,7 @@ en:
     brand_logos_tip: "Shows the logo of a shop, restaurant or other brand (brand:wikidata=*) in place of its marker, looked up on Wikidata and Wikimedia Commons."
     zoomed_out_map: Show the OpenStreetMap map when zoomed out
     zoomed_out_map_tip: "Below zoom 16, where nothing can be edited, the standard OpenStreetMap map fades in over the imagery; zooming back in fades the imagery back."
-  zoomed_out:
-    name: OpenStreetMap (zoomed out)
+    wireframe_note: "Wireframe (W) is on: lane surfaces are hidden, leaving their outlines and markings. Press W again to bring them back."
     renderer_note: "Lane Studio draws what the tags say. Don't tag for the renderer: tag what is on the ground, even where the drawing looks wrong, and report the drawing instead."
     renderer_link: Tagging for the renderer
     hide_landuse_tip: "Hides land use areas (landuse=*) alone. Map Data's Land Use also hides car parks and other surfaces; this keeps them."
@@ -886,6 +947,10 @@ en:
     github: GitHub repository
     privacy: Privacy policy
     contact: Contact and feedback
+    forum: OpenStreetMap forum post
+    wiki: OpenStreetMap wiki page
+  zoomed_out:
+    name: OpenStreetMap (zoomed out)
   whats_new:
     title: What's new in Lane Studio
     since: "What changed since you last used Lane Studio ({since}). You are now on {version}."

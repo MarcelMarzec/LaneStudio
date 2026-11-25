@@ -22,7 +22,8 @@ junction. Don't change correct tags to fix the drawing: other maps and routers r
 No. Lining up and tapers are drawing only; tags change only when you edit, one undo step each.
 
 **Which countries does it work for?**
-Anywhere, with left- and right-hand traffic. Lane widths, sign pictures, shields, roundels, crossing zig-zags, level
+It has been built around UK roads and their limits; support for other countries will come later. It edits roads
+anywhere, with left- and right-hand traffic. Lane widths, sign pictures, shields, roundels, crossing zig-zags, level
 crossings and railway signals follow UK practice; elsewhere signs are a plate with their code. Speeds are in mph
 (km/h tags are read).
 
@@ -58,7 +59,7 @@ come back.
 Use the + at the kerb: **No-waiting lines** or **Parking** ([Street parking](guide/Street-Parking.md)).
 
 **How do I hide land use without hiding car parks?**
-Lane Studio pane (`K`) → **Hide land use** (Map Data's filter hides car parks too).
+Lane Studio pane (`P`) → **Hide land use** (Map Data's filter hides car parks too).
 
 **Why are there no roads when I zoom out?**
 Data loads from zoom 16, and Mapbox serves iD's Locator Overlay only to iD's own sites. A site sets its own roads

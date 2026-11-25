@@ -1,6 +1,6 @@
 import { select as d3_select } from 'd3-selection';
 
-import { t } from '../../core/localizer';
+import { localizer, t } from '../../core/localizer';
 import { rendererBackgroundSource } from '../../renderer/background_source';
 import { laneSettings } from './lane_settings';
 
@@ -59,7 +59,8 @@ export function laneStudioZoomedOutMap(context: iD.Context) {
         fade();
     }
 
-    background.ensureLoaded().then(() => {
+    // (after Lane Studio's strings too, for the overlay's name)
+    Promise.all([background.ensureLoaded(), localizer.ensureLoaded()]).then(() => {
         const mapnik = background.findSource('MAPNIK');
         _source = rendererBackgroundSource({
             id: zoomedOutMapID,

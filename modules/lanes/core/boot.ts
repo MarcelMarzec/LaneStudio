@@ -33,7 +33,7 @@ import { uiPaneLaneStudio } from '../ui/pane_settings';
 import { uiToolLaneModes } from '../ui/tool_lane_modes';
 import { uiLaneStudioLogo } from '../ui/logo';
 import { laneStudioWhatsNew } from '../ui/whats_new';
-import { laneSettings } from './lane_settings';
+import { laneSettings, laneSettingsKeys } from './lane_settings';
 import { laneStudioZoomedOutMap } from './zoomed_out_map';
 import { laneStudioRepository, laneStudioVersion } from '../version';
 
@@ -105,6 +105,8 @@ export function laneStudioInit(container: HTMLElement, options: LaneStudioOption
 
     context.container().classed('lane-studio', true);
     laneSettings(context);
+    // ⇧W hides iD's lines and points under lanes (W alone is iD's wireframe)
+    laneSettingsKeys(context);
     context.init();
     // after init (it needs the UI), but before iD's UI renders and decides on its own splash
     laneStudioSplash(context);

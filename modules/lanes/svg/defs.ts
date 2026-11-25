@@ -233,6 +233,35 @@ export function svgLaneDefs(defs: d3.Selection<SVGDefsElement>) {
     works.append('rect').attr('width', 6).attr('height', 12).attr('fill', '#f2c400');
     works.append('rect').attr('x', 6).attr('width', 6).attr('height', 12).attr('fill', '#1c1c1c');
 
+    // scaffolding round a building going up: a grid of poles and boards in galvanised grey
+    const scaffold = defs.append('pattern')
+        .attr('id', 'lanes-scaffold')
+        .attr('patternUnits', 'userSpaceOnUse')
+        .attr('width', 8)
+        .attr('height', 8);
+    scaffold.append('path').attr('d', 'M0 0H8M0 0V8').attr('fill', 'none').attr('stroke', 'rgb(190, 196, 204)').attr('stroke-width', 1.2);
+    scaffold.append('path').attr('d', 'M0 8L8 0').attr('fill', 'none').attr('stroke', 'rgb(150, 156, 164)').attr('stroke-width', 0.6);
+
+    // a construction site's ground: churned earth with tyre tracks
+    const site = defs.append('pattern')
+        .attr('id', 'lanes-site')
+        .attr('patternUnits', 'userSpaceOnUse')
+        .attr('width', 14)
+        .attr('height', 14)
+        .attr('patternTransform', 'rotate(-30)');
+    site.append('rect').attr('width', 14).attr('height', 14).attr('fill', 'rgb(176, 148, 106)');
+    site.append('path').attr('d', 'M0 4H14M0 6H14').attr('stroke', 'rgb(140, 114, 78)').attr('stroke-width', 0.8);
+
+    // white water below a weir or waterfall, and over rapids: foam streaks on the water
+    const foam = defs.append('pattern')
+        .attr('id', 'lanes-white-water')
+        .attr('patternUnits', 'userSpaceOnUse')
+        .attr('width', 10)
+        .attr('height', 6);
+    foam.append('rect').attr('width', 10).attr('height', 6).attr('fill', 'rgb(120, 190, 225)');
+    foam.append('path').attr('d', 'M0 2Q2.5 0 5 2T10 2M0 5Q2.5 3 5 5T10 5').attr('fill', 'none')
+        .attr('stroke', '#fff').attr('stroke-width', 1.1);
+
     // variable-access lanes (a running hard shoulder): the lane colour with amber stripes
     const variable = defs.append('pattern')
         .attr('id', 'lanes-variable')

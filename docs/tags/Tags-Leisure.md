@@ -13,7 +13,7 @@ The wiki's keys and tags in its group "leisure", and whether Lane Studio draws t
 | [`amenity=nightclub`](https://wiki.openstreetmap.org/wiki/Tag:amenity=nightclub) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`baby=*`](https://wiki.openstreetmap.org/wiki/Key:baby) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`cooker=*`](https://wiki.openstreetmap.org/wiki/Key:cooker) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`crafting=*`](https://wiki.openstreetmap.org/wiki/Key:crafting) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`craft_studio=*`](https://wiki.openstreetmap.org/wiki/Key:craft_studio) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`garden:style=*`](https://wiki.openstreetmap.org/wiki/Key:garden:style) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`garden:type=*`](https://wiki.openstreetmap.org/wiki/Key:garden:type) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`garden:type=arboretum`](https://wiki.openstreetmap.org/wiki/Tag:garden:type=arboretum) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

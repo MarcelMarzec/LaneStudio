@@ -220,26 +220,42 @@ function stats_bar_svg(array $periods, bool $weekly, int $top, int $step, int $w
     <?php
 }
 
-/** Ranked bars with their labels and figures: rows of [label HTML, value, value as text] */
-function stats_bars(array $rows, string $empty = 'None yet.'): void
+/**
+ * Ranked bars with their labels and figures: rows of [label HTML, value, value as text]. With $show, the first $show
+ * rows are listed and the rest folded under "Show more".
+ */
+function stats_bars(array $rows, string $empty = 'None yet.', int $show = 0): void
 {
     if (!$rows) {
         echo '<p class="stats-muted">' . e($empty) . '</p>';
         return;
     }
     $max = max(1, ...array_column($rows, 1));
+    $list = function (array $rows) use ($max): void {
+        ?>
+        <ul class="stats-bars">
+          <?php foreach ($rows as [$label, $value, $text]): ?>
+            <li>
+              <span class="stats-bars-label"><?= $label ?></span>
+              <span class="stats-bars-track" aria-hidden="true">
+                <span class="stats-bars-fill" style="width: <?= round(max(1, $value / $max * 100), 1) ?>%"></span>
+              </span>
+              <span class="stats-bars-value"><?= e($text) ?></span>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+        <?php
+    };
+    if ($show <= 0 || count($rows) <= $show) {
+        $list($rows);
+        return;
+    }
+    $list(array_slice($rows, 0, $show));
     ?>
-    <ul class="stats-bars">
-      <?php foreach ($rows as [$label, $value, $text]): ?>
-        <li>
-          <span class="stats-bars-label"><?= $label ?></span>
-          <span class="stats-bars-track" aria-hidden="true">
-            <span class="stats-bars-fill" style="width: <?= round(max(1, $value / $max * 100), 1) ?>%"></span>
-          </span>
-          <span class="stats-bars-value"><?= e($text) ?></span>
-        </li>
-      <?php endforeach; ?>
-    </ul>
+    <details class="stats-bars-more">
+      <summary><span class="when-closed">Show <?= count($rows) - $show ?> more</span><span class="when-open">Show fewer</span></summary>
+      <?php $list(array_slice($rows, $show)); ?>
+    </details>
     <?php
 }
 

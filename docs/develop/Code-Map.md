@@ -10,7 +10,7 @@ Where each part of Lane Studio lives, and the hooks it uses in iD.
 | Lane model: parse, edit and write `*:lanes` tags; lane types; markings; connectivity; street features and the centre line; street parking (`parking.ts`); access keys, their hierarchy and values (`access.ts`); active traffic management | `model/` |
 | Actions (lanes, markings, signs, copy, connect), each one undo step | `actions/` |
 | State: selected lanes, tools, keyboard, settings, roadside detection, what's new, links; fields, a preset for every road marking (`markingPresets`) and for the other features iD has none for (`featurePresets`) added to iD's presets (`preset_fields.ts`) | `core/` |
-| Geometry in metres: lane layout, roads and junctions, street features (crossings, UK crossings, tactile paving, advanced stop lines, multipolygon areas), road markings, symbols along lanes, parking, parking spaces, railways, signs, routing | `geometry/` |
+| Geometry in metres: lane layout, roads and junctions, street features (crossings, UK crossings, tactile paving, advanced stop lines, multipolygon areas), road markings, symbols along lanes, parking, parking spaces, railways, water, building work, signs, routing | `geometry/` |
 | Look-ahead corridor, roundabouts | `osm/` |
 | Map drawing and click targets | `svg/` |
 | Sidebar sections; road fields in iD's Fields (`road_fields.ts`); shared field parts (`lane_fields.ts`); i button topics (`field_info.ts`); parking (`parking_fields.ts`) and cycle lane (`cycleway_fields.ts`) details; the + menu (`roadside_menu.ts`); iD's Allowed Access field as Lane Studio draws it (`access_field.ts`); the field filter (`field_filter.ts`); panes (settings, Map key `pane_key.ts`); welcome screen, what's new, walkthrough (`intro.ts`), help pages (`help.ts`), logo, speed roundels | `ui/` |
@@ -23,6 +23,8 @@ Where each part of Lane Studio lives, and the hooks it uses in iD.
 | Speed Limit tool | `core/lane_speed.ts`, `core/mode_speed.ts`, `ui/speed_panel.ts`, `ui/speed_roundels.ts`, `model/speed_limits.ts` |
 | Connectivity tool | `geometry/connectivity.ts` (connections at a node, relations read and checked), `actions/connect_lanes.ts`, `core/lane_connectivity.ts`, `core/mode_connectivity.ts`, `ui/connectivity_panel.ts`, `svg/connectivity.ts`, `css-lanes/45_connectivity.css` |
 | Railways | `geometry/railway.ts`, `geometry/rail_features.ts`, `svg/railway.ts` |
+| Water | `geometry/water.ts` (watercourses at width, water areas, weirs, dams, gates), `svg/water.ts` |
+| Building work | `core/lifecycle.ts` (what is being built, the two mistakes read as meant), `geometry/works.ts` (sites, scaffolding, works areas, roadworks cones), `svg/works.ts`; the fixes in `validations/lane_tags.ts` |
 | Parking spaces and car parks | `geometry/parking_spaces.ts`, `svg/parking_spaces.ts` |
 | Brand logos | `core/brand_logos.ts` (Wikidata), `svg/brand_logos.ts` |
 | The OpenStreetMap map when zoomed out | `core/zoomed_out_map.ts` (an overlay of iD's background, its opacity following the zoom) |

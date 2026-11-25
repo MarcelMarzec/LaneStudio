@@ -494,6 +494,16 @@
     font-size: 12px;
     line-height: 1.4;
 }
+.ideditor.lane-studio .lanes-wireframe-note {
+    margin: 0 0 8px;
+}
+/* (iD's .hide leaves out <p>) */
+.ideditor.lane-studio .lanes-wireframe-note.hide {
+    display: none;
+}
+.ideditor.lane-studio .display-control-lanes-opacity.disabled {
+    opacity: 0.5;
+}
 
 
 /* ---------- one sidebar, iD's fields ----------

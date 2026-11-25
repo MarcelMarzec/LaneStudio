@@ -1,7 +1,7 @@
 # Tags: Accessibility
 
 The wiki's keys and tags in its group "accessibility", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-41 keys and tags: 4 rendered, 13 could be, 24 cannot be.
+42 keys and tags: 4 rendered, 13 could be, 25 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -33,6 +33,7 @@ The wiki's keys and tags in its group "accessibility", and whether Lane Studio d
 | [`speech_output=*`](https://wiki.openstreetmap.org/wiki/Key:speech_output) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`step:condition=*`](https://wiki.openstreetmap.org/wiki/Key:step:condition) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`step:contrast=*`](https://wiki.openstreetmap.org/wiki/Key:step:contrast) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`tactile_indicator=*`](https://wiki.openstreetmap.org/wiki/Key:tactile_indicator) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`tactile_paving=*`](https://wiki.openstreetmap.org/wiki/Key:tactile_paving) | approved | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`tactile_paving=incorrect`](https://wiki.openstreetmap.org/wiki/Tag:tactile_paving=incorrect) | approved | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`tactile_paving=no`](https://wiki.openstreetmap.org/wiki/Tag:tactile_paving=no) | de facto | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |

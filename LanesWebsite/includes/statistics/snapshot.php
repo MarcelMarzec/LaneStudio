@@ -61,7 +61,13 @@ function snapshot_write(PDO $pdo, array $config): void
         ];
     }
 
-    $versions = $all('SELECT version, COUNT(*) AS changesets FROM ls_changesets GROUP BY version');
+    // Versions by day: a day's later commits (26.10.24r2, 26.10.24r3) count with its first (26.10.24)
+    $versions = [];
+    foreach ($all('SELECT version, COUNT(*) AS changesets FROM ls_changesets GROUP BY version') as $row) {
+        $day = preg_replace('/r\d+$/', '', (string) $row['version']);
+        $versions[$day] = ['version' => $day, 'changesets' => ($versions[$day]['changesets'] ?? 0) + $row['changesets']];
+    }
+    $versions = array_values($versions);
     usort($versions, fn ($a, $b) => strnatcmp($b['version'], $a['version']));
 
     // The leaderboard: most changesets, then most changes; the name is the one on their latest changeset
@@ -93,7 +99,7 @@ function snapshot_write(PDO $pdo, array $config): void
     }
     arsort($keys);
     $tags = [];
-    foreach (array_slice($keys, 0, 12, true) as $key => $count) {
+    foreach (array_slice($keys, 0, 20, true) as $key => $count) {
         $tags[] = ['key' => (string) $key, 'objects' => $count];
     }
 

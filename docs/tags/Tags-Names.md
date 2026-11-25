@@ -1,7 +1,7 @@
 # Tags: Names
 
 The wiki's keys and tags in its group "names", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-514 keys and tags: 2 rendered, 0 could be, 512 cannot be.
+516 keys and tags: 2 rendered, 0 could be, 514 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -43,7 +43,9 @@ The wiki's keys and tags in its group "names", and whether Lane Studio draws the
 | [`name=Walmart`](https://wiki.openstreetmap.org/wiki/Tag:name=Walmart) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name=Wendy's`](https://wiki.openstreetmap.org/wiki/Tag:name=Wendy's) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:*-fonipa=*`](https://wiki.openstreetmap.org/wiki/Key:name:*-fonipa) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name:aae=*`](https://wiki.openstreetmap.org/wiki/Key:name:aae) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:aaq=*`](https://wiki.openstreetmap.org/wiki/Key:name:aaq) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`name:aat=*`](https://wiki.openstreetmap.org/wiki/Key:name:aat) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:ab=*`](https://wiki.openstreetmap.org/wiki/Key:name:ab) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:abe=*`](https://wiki.openstreetmap.org/wiki/Key:name:abe) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`name:ace=*`](https://wiki.openstreetmap.org/wiki/Key:name:ace) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

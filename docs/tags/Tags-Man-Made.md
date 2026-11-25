@@ -1,7 +1,7 @@
 # Tags: Man made
 
 The wiki's keys and tags in its group "man made", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-355 keys and tags: 2 rendered, 12 could be, 341 cannot be.
+356 keys and tags: 2 rendered, 12 could be, 342 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -114,7 +114,7 @@ The wiki's keys and tags in its group "man made", and whether Lane Studio draws 
 | [`man_made=crane`](https://wiki.openstreetmap.org/wiki/Tag:man_made=crane) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=crane_rail`](https://wiki.openstreetmap.org/wiki/Tag:man_made=crane_rail) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=cross`](https://wiki.openstreetmap.org/wiki/Tag:man_made=cross) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
-| [`man_made=culvert`](https://wiki.openstreetmap.org/wiki/Tag:man_made=culvert) | in use | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
+| [`man_made=culvert`](https://wiki.openstreetmap.org/wiki/Tag:man_made=culvert) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=cutline`](https://wiki.openstreetmap.org/wiki/Tag:man_made=cutline) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=deck`](https://wiki.openstreetmap.org/wiki/Tag:man_made=deck) | — | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=desalination_plant`](https://wiki.openstreetmap.org/wiki/Tag:man_made=desalination_plant) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
@@ -148,6 +148,7 @@ The wiki's keys and tags in its group "man made", and whether Lane Studio draws 
 | [`man_made=guard_stone`](https://wiki.openstreetmap.org/wiki/Tag:man_made=guard_stone) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=guy_wire`](https://wiki.openstreetmap.org/wiki/Tag:man_made=guy_wire) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=heap`](https://wiki.openstreetmap.org/wiki/Tag:man_made=heap) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`man_made=incinerator`](https://wiki.openstreetmap.org/wiki/Tag:man_made=incinerator) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=insect_hotel`](https://wiki.openstreetmap.org/wiki/Tag:man_made=insect_hotel) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=kiln`](https://wiki.openstreetmap.org/wiki/Tag:man_made=kiln) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`man_made=lamp`](https://wiki.openstreetmap.org/wiki/Tag:man_made=lamp) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |

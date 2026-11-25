@@ -1,7 +1,7 @@
 # Tags: Properties
 
 The wiki's keys and tags in its group "properties", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-1172 keys and tags: 83 rendered, 54 could be, 1035 cannot be.
+1177 keys and tags: 88 rendered, 54 could be, 1035 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -366,9 +366,9 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`informal=no`](https://wiki.openstreetmap.org/wiki/Tag:informal=no) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`informal=yes`](https://wiki.openstreetmap.org/wiki/Tag:informal=yes) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`inscription=-`](https://wiki.openstreetmap.org/wiki/Tag:inscription=-) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`intermittent=*`](https://wiki.openstreetmap.org/wiki/Key:intermittent) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`intermittent=no`](https://wiki.openstreetmap.org/wiki/Tag:intermittent=no) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`intermittent=yes`](https://wiki.openstreetmap.org/wiki/Tag:intermittent=yes) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`intermittent=*`](https://wiki.openstreetmap.org/wiki/Key:intermittent) | approved | ✅ Rendered | [Water](../guide/Water.md) |
+| [`intermittent=no`](https://wiki.openstreetmap.org/wiki/Tag:intermittent=no) | — | ✅ Rendered | [Water](../guide/Water.md) |
+| [`intermittent=yes`](https://wiki.openstreetmap.org/wiki/Tag:intermittent=yes) | approved | ✅ Rendered | [Water](../guide/Water.md) |
 | [`internet_access=*`](https://wiki.openstreetmap.org/wiki/Key:internet_access) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`internet_access=no`](https://wiki.openstreetmap.org/wiki/Tag:internet_access=no) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`internet_access=terminal`](https://wiki.openstreetmap.org/wiki/Tag:internet_access=terminal) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -405,6 +405,7 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`lit:perceived=*`](https://wiki.openstreetmap.org/wiki/Key:lit:perceived) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`live_music=*`](https://wiki.openstreetmap.org/wiki/Key:live_music) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`location=*`](https://wiki.openstreetmap.org/wiki/Key:location) | approved | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
+| [`location=bridge`](https://wiki.openstreetmap.org/wiki/Tag:location=bridge) | — | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
 | [`location=cave`](https://wiki.openstreetmap.org/wiki/Tag:location=cave) | in use | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
 | [`location=indoor`](https://wiki.openstreetmap.org/wiki/Tag:location=indoor) | in use | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
 | [`location=outdoor`](https://wiki.openstreetmap.org/wiki/Tag:location=outdoor) | in use | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
@@ -414,8 +415,10 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`location=roof`](https://wiki.openstreetmap.org/wiki/Tag:location=roof) | de facto | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
 | [`location=rooftop`](https://wiki.openstreetmap.org/wiki/Tag:location=rooftop) | in use | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
 | [`location=surface`](https://wiki.openstreetmap.org/wiki/Tag:location=surface) | de facto | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
+| [`location=tunnel`](https://wiki.openstreetmap.org/wiki/Tag:location=tunnel) | — | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
 | [`location=underground`](https://wiki.openstreetmap.org/wiki/Tag:location=underground) | de facto | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
 | [`location=underwater`](https://wiki.openstreetmap.org/wiki/Tag:location=underwater) | de facto | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
+| [`location=wall_mounted`](https://wiki.openstreetmap.org/wiki/Tag:location=wall_mounted) | — | ❌ Cannot be rendered | Underground, underwater or indoors: not seen from the street |
 | [`location:accuracy=*`](https://wiki.openstreetmap.org/wiki/Key:location:accuracy) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`location:transition=yes`](https://wiki.openstreetmap.org/wiki/Tag:location:transition=yes) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`lockable=*`](https://wiki.openstreetmap.org/wiki/Key:lockable) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -814,6 +817,7 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`ownership=private`](https://wiki.openstreetmap.org/wiki/Tag:ownership=private) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`park_ride=hov`](https://wiki.openstreetmap.org/wiki/Tag:park_ride=hov) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`parking:*=*`](https://wiki.openstreetmap.org/wiki/Key:parking:*) | — | ✅ Rendered | [Street Parking](../guide/Street-Parking.md) |
+| [`parking:fee=*`](https://wiki.openstreetmap.org/wiki/Key:parking:fee) | de facto | ✅ Rendered | [Street Parking](../guide/Street-Parking.md) |
 | [`passage_time=*`](https://wiki.openstreetmap.org/wiki/Key:passage_time) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`patrolled=*`](https://wiki.openstreetmap.org/wiki/Key:patrolled) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`paving_stones:*=*`](https://wiki.openstreetmap.org/wiki/Key:paving_stones:*) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -890,7 +894,7 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`screen=*`](https://wiki.openstreetmap.org/wiki/Key:screen) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`scuba_diving:repair=*`](https://wiki.openstreetmap.org/wiki/Key:scuba_diving:repair) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`seafood:sales=*`](https://wiki.openstreetmap.org/wiki/Key:seafood:sales) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`seasonal=*`](https://wiki.openstreetmap.org/wiki/Key:seasonal) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`seasonal=*`](https://wiki.openstreetmap.org/wiki/Key:seasonal) | de facto | ✅ Rendered | [Water](../guide/Water.md) |
 | [`seasonal:snowfall:regaintime=*`](https://wiki.openstreetmap.org/wiki/Key:seasonal:snowfall:regaintime) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`seats=*`](https://wiki.openstreetmap.org/wiki/Key:seats) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`seats:separated=*`](https://wiki.openstreetmap.org/wiki/Key:seats:separated) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -1154,6 +1158,7 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`visibility=*`](https://wiki.openstreetmap.org/wiki/Key:visibility) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`volume=*`](https://wiki.openstreetmap.org/wiki/Key:volume) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`walk-in=*`](https://wiki.openstreetmap.org/wiki/Key:walk-in) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`walkup_window=*`](https://wiki.openstreetmap.org/wiki/Key:walkup_window) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`warm_water=*`](https://wiki.openstreetmap.org/wiki/Key:warm_water) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`water_tank:volume=*`](https://wiki.openstreetmap.org/wiki/Key:water_tank:volume) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`water_volume=*`](https://wiki.openstreetmap.org/wiki/Key:water_volume) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

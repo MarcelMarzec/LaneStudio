@@ -44,7 +44,5 @@ defined('SITE') or exit;
         affiliated with the OpenStreetMap Foundation.
       </p>
     </footer>
-
-    <script src="/assets/js/site.js?v=1" defer></script>
   </body>
 </html>

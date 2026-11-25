@@ -226,7 +226,7 @@ const streetKeys = new Set(['advertising', 'traffic_sign', 'kerb', 'tactile_pavi
 // information about a feature rather than its shape
 const infoKey = /^(name|alt_name|old_name|official_name|short_name|loc_name|nat_name|int_name|reg_name|addr|contact|website|url|phone|fax|email|opening_hours|service_times|collection_times|operator|owner|brand|network|wikidata|wikipedia|wikimedia_commons|image|mapillary|panoramax|description|note|fixme|FIXME|check_date|survey|start_date|end_date|opening_date|payment|currency|cuisine|diet|internet_access|stars|level|ele|population|is_in|gnis|tiger|ref|old_ref|official_ref|int_ref|nat_ref|reg_ref|loc_ref|source|attribution|license|ISO|iata|icao|wheelchair|capacity|fee|charge|maxstay|access_hours|sport|religion|denomination|healthcare|office|craft|shop|was|heritage|architect|artist|material|colour|wifi|toilets|changing_table|smoking|self_service|takeaway|delivery|drive_through|outdoor_seating|reservation|dog|indoor|min_age|max_age)(:|$)/;
 const lifecycle = /^(proposed|construction|disused|abandoned|razed|demolished|removed|destroyed|was|not|planned):/;
-const hidden = /(^location$|underground|^pipeline|^cable|^substance|^culvert|=culvert$)/;
+const hidden = /(^location$|underground|^pipeline|^cable|^substance|^culvert)/;
 const height = /^(height|min_height|building:|roof:|building_levels|min_level|max_level|levels)/;
 
 // keys the Routing tool reads from its vehicle profiles (lists in geometry/routing.ts, not `tags.key`)
@@ -247,10 +247,19 @@ const notDrawn = {
 };
 // broad keys of which Lane Studio draws only these values (the rest of each key is iD's)
 const onlyValues = {
-    amenity: ['parking', 'parking_space'], natural: ['grassland'], landuse: ['grass'], landcover: ['grass'], power: ['catenary_mast', 'generator'],
+    amenity: ['parking', 'parking_space'], building: ['construction'], natural: ['grassland', 'water'], landuse: ['grass', 'construction', 'reservoir', 'basin'], landcover: ['grass'], power: ['catenary_mast', 'generator'],
     emergency: ['phone'], man_made: ['gantry'], type: ['multipolygon', 'restriction', 'connectivity', 'enforcement'], shelter: ['yes'],
-    'generator:source': ['solar'], 'generator:method': ['photovoltaic', 'thermal'], public_transport: ['platform'], service: [], usage: ['tourism']
+    'generator:source': ['solar'], 'generator:method': ['photovoltaic', 'thermal'], public_transport: ['platform'], service: [], usage: ['tourism'],
+    // watercourses and what stands in them, from the lists in geometry/water.ts (`channelWidths`, `featureKinds`)
+    waterway: ['river', 'stream', 'tidal_channel', 'canal', 'drain', 'ditch', 'pressurised', 'fish_pass', 'canoe_pass', 'weir', 'dam',
+        'lock_gate', 'waterfall', 'rapids', 'sluice_gate', 'floodgate', 'security_lock', 'check_dam', 'debris_screen', 'dock', 'riverbank']
 };
+// keys every value of which is drawn: any water=* is water (geometry/water.ts); anything in a tunnel is drawn faded
+const everyValue = new Set(['water', 'tunnel']);
+
+// what is being built, read through the lifecycle prefix `construction:<key>=*` (modules/lanes/core/lifecycle.ts)
+const builtKeys = ['highway', 'railway', 'building', 'amenity', 'leisure', 'shop', 'tourism', 'man_made', 'power', 'aeroway', 'waterway',
+    'office', 'craft', 'healthcare', 'emergency', 'public_transport', 'barrier', 'sport', 'historic', 'military'];
 
 /** A page's key and value, with the underscores the wiki's titles show as spaces (free text values keep theirs) */
 const split = title => {
@@ -267,7 +276,7 @@ function sorter(code, groupOf) {
         const [key, value] = split(title);
         const top = key.split(':')[0];
         const only = onlyValues[key];
-        const drawn = value === null || value === '*' ? true : only ? only.includes(value) :
+        const drawn = value === null || value === '*' || everyValue.has(key) ? true : only ? only.includes(value) :
             !notDrawn[key]?.includes(value) && (code.named(key, value) || perLane(key));
         if (reads(key) && drawn) {
             if (routingKeys.has(key)) return [RENDERED, 'Routing tool: which vehicles may use the road or lane'];
@@ -279,6 +288,9 @@ function sorter(code, groupOf) {
         }
         if (perLane(key)) {
             return [COULD, reads(key.split(':lanes')[0]) ? 'Read per lane in the Lanes section, not drawn' : 'A per-lane value: could be drawn on the lanes'];
+        }
+        if (key.startsWith('construction:') && builtKeys.includes(key.slice('construction:'.length))) {
+            return [RENDERED, 'Drawn as being built'];
         }
         if (lifecycle.test(key)) return [CANNOT, reasons.life];
         if (hidden.test(key) || (value && hidden.test(`${key}=${value}`))) return [CANNOT, reasons.hidden];
@@ -305,6 +317,8 @@ function guidePage(key, value) {
     if (top === 'railway' || /:railway$/.test(key) || ['electrified', 'gauge', 'tracks', 'usage'].includes(key) || is('power', ['catenary_mast'])) {
         return 'Railways';
     }
+    if (top === 'waterway' || top === 'water' || is('natural', ['water']) || is('landuse', ['reservoir', 'basin']) ||
+        ['intermittent', 'seasonal'].includes(key) || is('tunnel', ['culvert'])) return 'Water';
     if (top === 'parking' || top === 'parking_space' || is('amenity') || key === 'capacity' || key === 'capacity:disabled') return 'Street-Parking';
     if (['junction', 'roundabout', 'turning_circle'].includes(top) || is('highway', ['mini_roundabout', 'turning_circle', 'turning_loop'])) return 'Junctions';
     if (['traffic_sign', 'enforcement', 'ref', 'name', 'destination', 'camera', 'brand'].includes(top) ||

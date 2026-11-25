@@ -8,6 +8,10 @@ features) works as in iD.
 > tags leave something out, Lane Studio's drawing is a guess. If the tags are right and the drawing is wrong,
 > [report it](CONTRIBUTING.md#reporting-issues).
 
+> **Made for UK roads.** Lane Studio has been built around UK roads and their limits: lane widths, signs, markings
+> and speed limits (in mph) follow British practice. Support for other countries will come later
+> ([FAQ](FAQ.md)).
+
 ## Using Lane Studio
 
 | Page | What it covers |
@@ -23,6 +27,7 @@ features) works as in iD.
 | [Areas and surfaces](guide/Areas-And-Surfaces.md) | Surfaces, paths, mapped road areas, bridges and tunnels, roads being built, solar panels |
 | [Signs](guide/Signs.md) | Traffic signs, cameras, road numbers, speed roundels |
 | [Railways](guide/Railways.md) | Track, level crossings, platforms, signals |
+| [Water](guide/Water.md) | Rivers, streams, drains and ditches at their width, water areas, weirs, dams, lock gates |
 | [Routing](guide/Routing.md) | Where traffic in a lane can go, for each vehicle |
 | [Connectivity](guide/Connectivity.md) | How lanes connect through junctions, and `type=connectivity` relations |
 | [Tools](guide/Tools.md) | Speed Limit and the Map key |

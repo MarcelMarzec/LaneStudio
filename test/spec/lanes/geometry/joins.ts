@@ -144,6 +144,36 @@ describe('roads meeting end to end with lanes of different widths', () => {
         expect(drawn.geometry.visuals.get('w2')?.runs).toBeUndefined();
         expect(drawn.geometry.visuals.get('w1')?.taperEnd.length).toBe(1);
     });
+
+    it('tapers every lane added at the same width, however many, so the road never steps', () => {
+        // the Spalding Bypass at n6760418256: one lane each way going south into three southbound and two northbound
+        // on a 37 m way; and more lanes, on one-way and two-way roads, both drive sides, drawn either way
+        const cases: [typeof england, Tags, Tags][] = [
+            [england, { highway: 'trunk', lanes: '2' }, { highway: 'trunk', lanes: '5', 'lanes:forward': '3', 'lanes:backward': '2' }],
+            [england, { highway: 'trunk', lanes: '2' }, { highway: 'trunk', lanes: '7', 'lanes:forward': '4', 'lanes:backward': '3' }],
+            // lanes gained one way only (the Spalding Bypass at n2032368083, w1333796391: one lane south, three north)
+            [england, { highway: 'trunk', lanes: '2' }, { highway: 'trunk', lanes: '4', 'lanes:forward': '1', 'lanes:backward': '3' }],
+            [england, { highway: 'trunk', lanes: '2' }, { highway: 'trunk', lanes: '4', 'lanes:forward': '3', 'lanes:backward': '1' }],
+            [england, { highway: 'trunk', lanes: '2' }, { highway: 'trunk', lanes: '5', 'lanes:forward': '1', 'lanes:backward': '4' }],
+            [texas, { highway: 'trunk', lanes: '2' }, { highway: 'trunk', lanes: '4', 'lanes:forward': '1', 'lanes:backward': '3' }],
+            [texas, { highway: 'trunk', lanes: '2' }, { highway: 'trunk', lanes: '6', 'lanes:forward': '3', 'lanes:backward': '3' }],
+            [england, { highway: 'trunk', oneway: 'yes', lanes: '1' }, { highway: 'trunk', oneway: 'yes', lanes: '4' }],
+            [texas, { highway: 'trunk', oneway: 'yes', lanes: '2' }, { highway: 'trunk', oneway: 'yes', lanes: '5' }]
+        ];
+        for (const [place, narrow, wide] of cases) {
+            for (const length of [37, 200]) {
+                const { node, way, draw } = place;
+                const drawn = draw([node('n1', 0, 100), node('n0', 0, 0), node('n2', 0, -length),
+                    way('w1', ['n1', 'n0'], narrow), way('w2', ['n0', 'n2'], wide)]);
+                // at the join every one of the wider road's lines is on one of the narrower road's, kerbs on kerbs
+                expectFlowsOn(drawn, 'w2', 'w1', 'n0');
+                const w = endsAt(drawn, 'w2', 'n0');
+                const n = endsAt(drawn, 'w1', 'n0');
+                const across = (b: V[]) => Math.hypot(b[0][0] - b[b.length - 1][0], b[0][1] - b[b.length - 1][1]);
+                expect(across(w.boundaries)).toBeCloseTo(across(n.boundaries), 1);
+            }
+        }
+    });
 });
 
 describe('a road dividing into one-way roads, made up', () => {

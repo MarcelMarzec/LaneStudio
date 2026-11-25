@@ -7,6 +7,8 @@ their own: [Routing](Routing.md), [Connectivity](Connectivity.md).
 
 - Every lane is coloured by its limit (`maxspeed:lanes`, else its direction's `maxspeed:forward|backward`, else
   [`maxspeed`](https://wiki.openstreetmap.org/wiki/Key:maxspeed), or the limit [`maxspeed:type`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:type) sets), in mph; other limits grey; roads with none red with a dashed edge.
+- Junctions take the colour of the roads meeting there; where their limits differ, each road's part of the junction is
+  its own colour (the more major road's where two cross).
 - UK limit types have a pattern too: black bands national limit, blue stripes motorway, white dots 20 zone,
   cross-hatching restricted road.
 - The sidebar shows the colours with counts, and lists roads in view with no limit (click one to go to it).

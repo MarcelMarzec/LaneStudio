@@ -1,7 +1,7 @@
 # Tags: Water management
 
 The wiki's keys and tags in its group "water management", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-59 keys and tags: 0 rendered, 1 could be, 58 cannot be.
+60 keys and tags: 3 rendered, 1 could be, 56 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -22,6 +22,7 @@ The wiki's keys and tags in its group "water management", and whether Lane Studi
 | [`fountain=borne-fontaine_genevoise`](https://wiki.openstreetmap.org/wiki/Tag:fountain=borne-fontaine_genevoise) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`fountain=bottle_refill`](https://wiki.openstreetmap.org/wiki/Tag:fountain=bottle_refill) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`fountain=bubbler`](https://wiki.openstreetmap.org/wiki/Tag:fountain=bubbler) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`fountain=canninox`](https://wiki.openstreetmap.org/wiki/Tag:fountain=canninox) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`fountain=cascade`](https://wiki.openstreetmap.org/wiki/Tag:fountain=cascade) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`fountain=decorative`](https://wiki.openstreetmap.org/wiki/Tag:fountain=decorative) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`fountain=drinking`](https://wiki.openstreetmap.org/wiki/Tag:fountain=drinking) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -47,9 +48,9 @@ The wiki's keys and tags in its group "water management", and whether Lane Studi
 | [`pump=no`](https://wiki.openstreetmap.org/wiki/Tag:pump=no) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`pump=powered`](https://wiki.openstreetmap.org/wiki/Tag:pump=powered) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`reservoir_type=*`](https://wiki.openstreetmap.org/wiki/Key:reservoir_type) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`water=basin`](https://wiki.openstreetmap.org/wiki/Tag:water=basin) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`water=reservoir`](https://wiki.openstreetmap.org/wiki/Tag:water=reservoir) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`water=wastewater`](https://wiki.openstreetmap.org/wiki/Tag:water=wastewater) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`water=basin`](https://wiki.openstreetmap.org/wiki/Tag:water=basin) | de facto | ✅ Rendered | [Water](../guide/Water.md) |
+| [`water=reservoir`](https://wiki.openstreetmap.org/wiki/Tag:water=reservoir) | approved | ✅ Rendered | [Water](../guide/Water.md) |
+| [`water=wastewater`](https://wiki.openstreetmap.org/wiki/Tag:water=wastewater) | de facto | ✅ Rendered | [Water](../guide/Water.md) |
 | [`water_point=*`](https://wiki.openstreetmap.org/wiki/Key:water_point) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`water_source=*`](https://wiki.openstreetmap.org/wiki/Key:water_source) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`water_source=groundwater`](https://wiki.openstreetmap.org/wiki/Tag:water_source=groundwater) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |

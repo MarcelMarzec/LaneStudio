@@ -1,6 +1,9 @@
 import { dispatch as d3_dispatch } from 'd3-dispatch';
+import { select as d3_select } from 'd3-selection';
 
+import { localizer, t } from '../../core/localizer';
 import { prefs } from '../../core/preferences';
+import { utilKeybinding } from '../../util/keybinding';
 
 /**
  * Lane surface opacity when nothing is saved, from 0 to 1: the see-through look surfaces have by
@@ -133,4 +136,27 @@ export function laneSettings(context: iD.Context): LaneSettings {
     apply();
     all.set(context, settings);
     return settings;
+}
+
+/** The shortcut that turns "Hide iD's lines and points under lanes" on and off: Shift and iD's wireframe key (⇧W) */
+export function hideOriginalsKey(): string {
+    return '⇧' + t('area_fill.wireframe.key');
+}
+
+/** ⇧W turns "Hide iD's lines and points under lanes" on and off (W alone stays iD's wireframe) */
+export function laneSettingsKeys(context: iD.Context) {
+    const settings = laneSettings(context);
+    localizer.ensureLoaded().then(() => {
+        // capture phase, stopping the key there: iD's own keybinding would also take ⇧W as W, its wireframe
+        // (capture also sees typing in text fields, which is left alone)
+        const keybinding = utilKeybinding('lanes-settings')
+            .on(hideOriginalsKey(), (event: KeyboardEvent) => {
+                const target = event.target as HTMLElement | null;
+                if (target && (/^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName) || target.isContentEditable)) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                settings.setHideOriginals(!settings.hideOriginals());
+            }, true);
+        d3_select(document).call(keybinding);
+    }).catch(() => { /* without strings, no shortcut */ });
 }

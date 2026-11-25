@@ -1,8 +1,7 @@
 <?php
 defined('SITE') or exit;
 // Sticky header. Pages set $navLinks and $navCta; the brand is Lane Studio's.
-// A $navLinks entry with 'items' becomes a dropdown. The mobile menu is a
-// checkbox and :has(), the dropdown is <details>, so neither needs JavaScript.
+// The mobile menu is a checkbox and :has(), so it needs no JavaScript.
 $brandLabel = $site['name'];
 $brandHref  = '/';
 $brandMark  = '/assets/img/lanestudio-mark.svg';
@@ -17,22 +16,7 @@ $brandMark  = '/assets/img/lanestudio-mark.svg';
 
     <nav class="nav-links" aria-label="Primary">
       <?php foreach ($navLinks as $link): ?>
-        <?php if (!empty($link['items'])): ?>
-          <details class="nav-dropdown">
-            <summary><?= e($link['label']) ?><?php icon_chevron_down(); ?></summary>
-            <div class="nav-dropdown-menu">
-              <?php foreach ($link['items'] as $item): ?>
-                <a href="<?= e($item['href']) ?>"<?= external_attrs($item['href']) ?><?=
-                  !empty($item['arrow']) ? ' data-theme="' . e($item['arrow']) . '"' : '' ?>>
-                  <span><?= e($item['label']) ?></span>
-                  <?php is_external($item['href']) ? icon_arrow_up_right() : icon_arrow_right(); ?>
-                </a>
-              <?php endforeach; ?>
-            </div>
-          </details>
-        <?php else: ?>
-          <a href="<?= e($link['href']) ?>"><?= e($link['label']) ?></a>
-        <?php endif; ?>
+        <a href="<?= e($link['href']) ?>"><?= e($link['label']) ?></a>
       <?php endforeach; ?>
     </nav>
 

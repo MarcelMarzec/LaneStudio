@@ -1,6 +1,6 @@
 # Tag coverage
 
-Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draws it: 9975 in all, 597 rendered, 846 could be, 8532 cannot be. One page per wiki group.
+Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draws it: 10002 in all, 659 rendered, 842 could be, 8501 cannot be. One page per wiki group.
 
 | Lane Studio | Means |
 | --- | --- |
@@ -10,8 +10,8 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 
 | Group | Keys and tags | ✅ | 🟡 | ❌ |
 | --- | --- | --- | --- | --- |
-| [Accessibility](tags/Tags-Accessibility.md) | 41 | 4 | 13 | 24 |
-| [Addresses](tags/Tags-Addresses.md) | 229 | 0 | 0 | 229 |
+| [Accessibility](tags/Tags-Accessibility.md) | 42 | 4 | 13 | 25 |
+| [Addresses](tags/Tags-Addresses.md) | 228 | 0 | 0 | 228 |
 | [Advertising](tags/Tags-Advertising.md) | 16 | 0 | 16 | 0 |
 | [Aerialways](tags/Tags-Aerialways.md) | 25 | 0 | 0 | 25 |
 | [Aeroways](tags/Tags-Aeroways.md) | 92 | 0 | 0 | 92 |
@@ -19,14 +19,14 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Amenities](tags/Tags-Amenities.md) | 241 | 3 | 22 | 216 |
 | [Animals](tags/Tags-Animals.md) | 21 | 0 | 0 | 21 |
 | [Annotations](tags/Tags-Annotations.md) | 297 | 5 | 1 | 291 |
-| [Barriers](tags/Tags-Barriers.md) | 101 | 49 | 52 | 0 |
+| [Barriers](tags/Tags-Barriers.md) | 100 | 50 | 50 | 0 |
 | [Bicycles](tags/Tags-Bicycles.md) | 52 | 0 | 52 | 0 |
 | [Boundaries](tags/Tags-Boundaries.md) | 81 | 0 | 0 | 81 |
 | [Bridges](tags/Tags-Bridges.md) | 43 | 4 | 38 | 1 |
-| [Buildings](tags/Tags-Buildings.md) | 304 | 0 | 0 | 304 |
+| [Buildings](tags/Tags-Buildings.md) | 304 | 2 | 0 | 302 |
 | [Buses](tags/Tags-Buses.md) | 1 | 0 | 1 | 0 |
 | [Changeset](tags/Tags-Changeset.md) | 6 | 0 | 0 | 6 |
-| [Children](tags/Tags-Children.md) | 80 | 0 | 0 | 80 |
+| [Children](tags/Tags-Children.md) | 79 | 0 | 0 | 79 |
 | [Climbing](tags/Tags-Climbing.md) | 4 | 0 | 0 | 4 |
 | [Clubs](tags/Tags-Clubs.md) | 50 | 0 | 0 | 50 |
 | [Communications](tags/Tags-Communications.md) | 49 | 0 | 0 | 49 |
@@ -37,31 +37,31 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Education](tags/Tags-Education.md) | 79 | 0 | 0 | 79 |
 | [Emergencies](tags/Tags-Emergencies.md) | 110 | 2 | 9 | 99 |
 | [Ferries](tags/Tags-Ferries.md) | 2 | 0 | 0 | 2 |
-| [Food and beverages](tags/Tags-Food-And-Beverages.md) | 185 | 0 | 0 | 185 |
+| [Food and beverages](tags/Tags-Food-And-Beverages.md) | 188 | 0 | 0 | 188 |
 | [Government](tags/Tags-Government.md) | 4 | 0 | 0 | 4 |
 | [GPS](tags/Tags-GPS.md) | 8 | 0 | 0 | 8 |
 | [Hazards](tags/Tags-Hazards.md) | 73 | 0 | 0 | 73 |
 | [Health](tags/Tags-Health.md) | 141 | 0 | 0 | 141 |
 | [Highways](tags/Tags-Highways.md) | 304 | 144 | 145 | 15 |
 | [Hiking](tags/Tags-Hiking.md) | 7 | 0 | 0 | 7 |
-| [Historic](tags/Tags-Historic.md) | 250 | 0 | 5 | 245 |
+| [Historic](tags/Tags-Historic.md) | 251 | 0 | 5 | 246 |
 | [Import](tags/Tags-Import.md) | 19 | 0 | 0 | 19 |
 | [Industrial](tags/Tags-Industrial.md) | 59 | 0 | 0 | 59 |
 | [Infrastructure](tags/Tags-Infrastructure.md) | 28 | 0 | 2 | 26 |
 | [Landcover](tags/Tags-Landcover.md) | 1 | 0 | 0 | 1 |
-| [Landuse](tags/Tags-Landuse.md) | 119 | 2 | 0 | 117 |
+| [Landuse](tags/Tags-Landuse.md) | 121 | 3 | 0 | 118 |
 | [Leisure](tags/Tags-Leisure.md) | 133 | 0 | 1 | 132 |
-| [Lifecycle](tags/Tags-Lifecycle.md) | 57 | 3 | 0 | 54 |
-| [Man made](tags/Tags-Man-Made.md) | 355 | 2 | 12 | 341 |
+| [Lifecycle](tags/Tags-Lifecycle.md) | 57 | 7 | 0 | 50 |
+| [Man made](tags/Tags-Man-Made.md) | 356 | 2 | 12 | 342 |
 | [Marine](tags/Tags-Marine.md) | 14 | 0 | 0 | 14 |
 | [Marine navigation](tags/Tags-Marine-Navigation.md) | 410 | 0 | 0 | 410 |
 | [Maritime](tags/Tags-Maritime.md) | 52 | 0 | 0 | 52 |
 | [Mechanics](tags/Tags-Mechanics.md) | 8 | 0 | 0 | 8 |
 | [Military](tags/Tags-Military.md) | 45 | 0 | 0 | 45 |
 | [Motorcycles](tags/Tags-Motorcycles.md) | 1 | 0 | 1 | 0 |
-| [Names](tags/Tags-Names.md) | 514 | 2 | 0 | 512 |
+| [Names](tags/Tags-Names.md) | 516 | 2 | 0 | 514 |
 | [NaPTAN](tags/Tags-NaPTAN.md) | 24 | 0 | 0 | 24 |
-| [Natural](tags/Tags-Natural.md) | 203 | 4 | 3 | 196 |
+| [Natural](tags/Tags-Natural.md) | 203 | 5 | 3 | 195 |
 | [Offices](tags/Tags-Offices.md) | 140 | 0 | 0 | 140 |
 | [Parking](tags/Tags-Parking.md) | 64 | 41 | 16 | 7 |
 | [Pipelines](tags/Tags-Pipelines.md) | 23 | 0 | 0 | 23 |
@@ -69,12 +69,12 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Police](tags/Tags-Police.md) | 15 | 0 | 0 | 15 |
 | [Power](tags/Tags-Power.md) | 224 | 11 | 7 | 206 |
 | [Products](tags/Tags-Products.md) | 8 | 0 | 0 | 8 |
-| [Properties](tags/Tags-Properties.md) | 1172 | 83 | 54 | 1035 |
+| [Properties](tags/Tags-Properties.md) | 1177 | 88 | 54 | 1035 |
 | [Public transport](tags/Tags-Public-Transport.md) | 75 | 2 | 68 | 5 |
-| [Railways](tags/Tags-Railways.md) | 270 | 45 | 221 | 4 |
-| [References](tags/Tags-References.md) | 485 | 1 | 0 | 484 |
+| [Railways](tags/Tags-Railways.md) | 271 | 45 | 222 | 4 |
+| [References](tags/Tags-References.md) | 484 | 1 | 0 | 483 |
 | [Religion](tags/Tags-Religion.md) | 58 | 0 | 0 | 58 |
-| [Restrictions](tags/Tags-Restrictions.md) | 423 | 116 | 41 | 266 |
+| [Restrictions](tags/Tags-Restrictions.md) | 424 | 117 | 41 | 266 |
 | [Riding](tags/Tags-Riding.md) | 1 | 0 | 0 | 1 |
 | [Routes](tags/Tags-Routes.md) | 152 | 2 | 0 | 150 |
 | [Shops](tags/Tags-Shops.md) | 362 | 0 | 0 | 362 |
@@ -86,14 +86,14 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Transport](tags/Tags-Transport.md) | 8 | 0 | 5 | 3 |
 | [Vending machines](tags/Tags-Vending-Machines.md) | 65 | 0 | 1 | 64 |
 | [Waste processing](tags/Tags-Waste-Processing.md) | 36 | 0 | 2 | 34 |
-| [Water](tags/Tags-Water.md) | 26 | 0 | 0 | 26 |
-| [Water management](tags/Tags-Water-Management.md) | 59 | 0 | 1 | 58 |
-| [Waterways](tags/Tags-Waterways.md) | 83 | 0 | 1 | 82 |
-| [Other](tags/Tags-Other.md) | 426 | 7 | 26 | 393 |
+| [Water](tags/Tags-Water.md) | 26 | 18 | 0 | 8 |
+| [Water management](tags/Tags-Water-Management.md) | 60 | 3 | 1 | 56 |
+| [Waterways](tags/Tags-Waterways.md) | 83 | 24 | 0 | 59 |
+| [Other](tags/Tags-Other.md) | 439 | 9 | 24 | 406 |
 
 ## How it is made
 
-- Read from the wiki on 2026-11-15: every English `Key:` and `Tag:` page in the trees of
+- Read from the wiki on 2026-11-25: every English `Key:` and `Tag:` page in the trees of
   [Category:Tags](https://wiki.openstreetmap.org/wiki/Category:Tags) (845 categories,
   5 levels deep) and [Category:Features](https://wiki.openstreetmap.org/wiki/Category:Features)
   (6545 categories, 5 levels), translations left out, going

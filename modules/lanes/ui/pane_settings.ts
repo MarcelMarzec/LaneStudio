@@ -6,7 +6,7 @@ import { uiPane } from '../../ui/pane';
 import { uiSection } from '../../ui/section';
 import { uiSectionPrivacy } from '../../ui/sections/privacy';
 import { uiTooltip } from '../../ui/tooltip';
-import { laneSettings, defaultSurfaceOpacity } from '../core/lane_settings';
+import { laneSettings, defaultSurfaceOpacity, hideOriginalsKey } from '../core/lane_settings';
 import { laneStudioLinks } from '../core/links';
 import { setWhatsNewEnabled, whatsNewEnabled } from '../core/whats_new';
 import { laneStudioVersion } from '../version';
@@ -40,6 +40,7 @@ function uiSectionLaneDisplay(context: iD.Context) {
         .disclosureContent(render);
 
     settings.on('change.pane', () => section.reRender());
+    context.map().on('changeAreaFill.lanes-settings', () => section.reRender());
 
     function render(selection: Div) {
         let container = selection.selectAll<HTMLDivElement, number>('.display-options-container').data([0]);
@@ -69,11 +70,14 @@ function uiSectionLaneDisplay(context: iD.Context) {
             })
             .call(svgIcon('#iD-icon-' + (localizer.textDirection() === 'rtl' ? 'redo' : 'undo'), '') as any);
 
+        // iD's wireframe (W) hides lane surfaces whatever the slider says (in CSS: .fill-wireframe in 20_lanes_layer.css)
+        enter.append('p').attr('class', 'lanes-settings-note lanes-wireframe-note').text(t('_lanes.settings.wireframe_note'));
+
         // hide iD's own lines, vertices, points and cones, as a checkbox list like Map Data's
         const list = enter.append('ul').attr('class', 'layer-list lanes-settings-list');
         const item = list.append('li')
             .attr('class', 'lanes-hide-originals-option')
-            .call((uiTooltip() as any).title(() => t.append('_lanes.settings.hide_originals_tip')).placement('top'));
+            .call((uiTooltip() as any).title(() => t.append('_lanes.settings.hide_originals_tip')).keys([hideOriginalsKey()]).placement('top'));
         const label = item.append('label');
         label.append('input')
             .attr('type', 'checkbox')
@@ -138,6 +142,9 @@ function uiSectionLaneDisplay(context: iD.Context) {
         container.select('.display-option-input').property('value', opacity);
         container.select('.display-option-value').text(`${Math.round(opacity * 100)}%`);
         container.select('.display-option-reset').classed('disabled', opacity === defaultSurfaceOpacity);
+        const wireframe = context.map().activeAreaFill() === 'wireframe';
+        container.select('.lanes-wireframe-note').classed('hide', !wireframe);
+        container.select('.display-control-lanes-opacity').classed('disabled', wireframe);
         container.select('.lanes-hide-originals-option')
             .classed('active', settings.hideOriginals())
             .select('input')
@@ -165,7 +172,7 @@ function uiSectionLaneDisplay(context: iD.Context) {
 
 
 /** "About Lane Studio": the what's new menu (and whether it shows after updates), and links to the website,
- *  GitHub repository, privacy policy and contact page */
+ *  OpenStreetMap wiki page and forum post, GitHub repository, privacy policy and contact page */
 function uiSectionLaneAbout(context: iD.Context) {
     const section = (uiSection('lanes-about', context) as any)
         .label(() => t.append('_lanes.settings.about'))
@@ -198,7 +205,7 @@ function uiSectionLaneAbout(context: iD.Context) {
             });
 
         const links = enter.append('ul').attr('class', 'lanes-about-links');
-        for (const key of ['website', 'github', 'privacy', 'contact'] as const) {
+        for (const key of ['website', 'wiki', 'forum', 'github', 'privacy', 'contact'] as const) {
             links.append('li').append('a')
                 .attr('href', laneStudioLinks[key]).attr('target', '_blank').attr('rel', 'noopener')
                 .call(svgIcon('#iD-icon-out-link', 'inline') as any)

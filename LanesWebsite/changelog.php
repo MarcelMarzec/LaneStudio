@@ -45,7 +45,7 @@ require __DIR__ . '/includes/head.php';
   </div>
 </section>
 
-<section class="section-bordered">
+<section>
   <div class="section-inner">
     <div class="prose prose-changelog">
       <?php if ($markdown !== ''): ?>

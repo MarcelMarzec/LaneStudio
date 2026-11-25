@@ -9,7 +9,7 @@ The wiki's keys and tags in its group "health", and whether Lane Studio draws th
 | [`amenity=clinic`](https://wiki.openstreetmap.org/wiki/Tag:amenity=clinic) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`amenity=dentist`](https://wiki.openstreetmap.org/wiki/Tag:amenity=dentist) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`amenity=doctors`](https://wiki.openstreetmap.org/wiki/Tag:amenity=doctors) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
-| [`amenity=health_post`](https://wiki.openstreetmap.org/wiki/Tag:amenity=health_post) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`amenity=health_post`](https://wiki.openstreetmap.org/wiki/Tag:amenity=health_post) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`amenity=pharmacy`](https://wiki.openstreetmap.org/wiki/Tag:amenity=pharmacy) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`amenity=veterinary_pharmacy`](https://wiki.openstreetmap.org/wiki/Tag:amenity=veterinary_pharmacy) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`dispensing=*`](https://wiki.openstreetmap.org/wiki/Key:dispensing) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

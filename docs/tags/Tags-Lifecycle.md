@@ -1,7 +1,7 @@
 # Tags: Lifecycle
 
 The wiki's keys and tags in its group "lifecycle", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-57 keys and tags: 3 rendered, 0 could be, 54 cannot be.
+57 keys and tags: 7 rendered, 0 could be, 50 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -10,15 +10,15 @@ The wiki's keys and tags in its group "lifecycle", and whether Lane Studio draws
 | [`abandoned:*=*`](https://wiki.openstreetmap.org/wiki/Key:abandoned:*) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`abandoned:building=*`](https://wiki.openstreetmap.org/wiki/Key:abandoned:building) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`abandoned:highway=*`](https://wiki.openstreetmap.org/wiki/Key:abandoned:highway) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
-| [`building=construction`](https://wiki.openstreetmap.org/wiki/Tag:building=construction) | de facto | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
+| [`building=construction`](https://wiki.openstreetmap.org/wiki/Tag:building=construction) | de facto | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`closed:*=*`](https://wiki.openstreetmap.org/wiki/Key:closed:*) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`construction=*`](https://wiki.openstreetmap.org/wiki/Key:construction) | de facto | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`construction=apartments`](https://wiki.openstreetmap.org/wiki/Tag:construction=apartments) | de facto | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`construction=house`](https://wiki.openstreetmap.org/wiki/Tag:construction=house) | de facto | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
-| [`construction=minor`](https://wiki.openstreetmap.org/wiki/Tag:construction=minor) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
+| [`construction=minor`](https://wiki.openstreetmap.org/wiki/Tag:construction=minor) | in use | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`construction:*=*`](https://wiki.openstreetmap.org/wiki/Key:construction:*) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`construction:aerialway=*`](https://wiki.openstreetmap.org/wiki/Key:construction:aerialway) | — | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
-| [`construction:building=*`](https://wiki.openstreetmap.org/wiki/Key:construction:building) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
+| [`construction:building=*`](https://wiki.openstreetmap.org/wiki/Key:construction:building) | in use | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`damage:*=*`](https://wiki.openstreetmap.org/wiki/Key:damage:*) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`damage:date=*`](https://wiki.openstreetmap.org/wiki/Key:damage:date) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`damage:type=explosion`](https://wiki.openstreetmap.org/wiki/Tag:damage:type=explosion) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
@@ -40,7 +40,7 @@ The wiki's keys and tags in its group "lifecycle", and whether Lane Studio draws
 | [`disused:leisure=*`](https://wiki.openstreetmap.org/wiki/Key:disused:leisure) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`disused:shop=*`](https://wiki.openstreetmap.org/wiki/Key:disused:shop) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`landuse=brownfield`](https://wiki.openstreetmap.org/wiki/Tag:landuse=brownfield) | de facto | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
-| [`landuse=construction`](https://wiki.openstreetmap.org/wiki/Tag:landuse=construction) | approved | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
+| [`landuse=construction`](https://wiki.openstreetmap.org/wiki/Tag:landuse=construction) | approved | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`landuse=greenfield`](https://wiki.openstreetmap.org/wiki/Tag:landuse=greenfield) | de facto | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`no:*=*`](https://wiki.openstreetmap.org/wiki/Key:no:*) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |
 | [`operational_status=*`](https://wiki.openstreetmap.org/wiki/Key:operational_status) | in use | ❌ Cannot be rendered | Not built yet, or gone: nothing on the ground to draw |

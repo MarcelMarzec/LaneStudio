@@ -51,10 +51,19 @@ largest outer ring).
 | [`cutting=*`](https://wiki.openstreetmap.org/wiki/Key:cutting), [`embankment=*`](https://wiki.openstreetmap.org/wiki/Key:embankment) (`yes`, `both`, `left`, `right`) | Slopes on that side (iD's triangles are hidden) |
 | [`ford=*`](https://wiki.openstreetmap.org/wiki/Key:ford) | Water |
 
-## Roads being built
+## Building work
 
-[`highway=construction`](https://wiki.openstreetmap.org/wiki/Tag:highway=construction) + [`construction=<type>`](https://wiki.openstreetmap.org/wiki/Key:construction) (or `construction:highway=<type>`): drawn as the road it will be,
-faded, with yellow and black stripes and orange kerbs, without arrows or lane lines. Without a type, left to iD.
+| Tag | Drawn |
+| --- | --- |
+| [`highway=construction`](https://wiki.openstreetmap.org/wiki/Tag:highway=construction) + [`construction=<type>`](https://wiki.openstreetmap.org/wiki/Key:construction) (or `construction:highway=<type>`) | The road or path it will be, faded, yellow and black stripes, orange kerbs, no arrows or lane lines; its junction boxes and turning heads too where only roads being built meet (where it joins a road in use, striped up to that road's junction). Without a type, left to iD |
+| [`landuse=construction`](https://wiki.openstreetmap.org/wiki/Tag:landuse=construction) | Churned ground behind a mesh fence (Hide land use hides it) |
+| [`building=construction`](https://wiki.openstreetmap.org/wiki/Tag:building=construction) (or `construction:building=*`) | Scaffolding |
+| `construction:<key>=<value>` ([lifecycle prefix](https://wiki.openstreetmap.org/wiki/Lifecycle_prefix)), as `construction:amenity=parking` | Works stripes, an orange dashed edge; a car park also as a car park, faded |
+| [`construction=minor`](https://wiki.openstreetmap.org/wiki/Key:construction) on a road still open | Cones along both kerbs |
+
+Two mistakes are drawn as meant, and the Issues pane offers their fix: `amenity=construction` + `construction=parking`
+(→ `construction:amenity=parking`), and a [`service=*`](https://wiki.openstreetmap.org/wiki/Key:service) value as the road type
+(`construction=drive-through` → `construction=service` + `service=drive-through`).
 
 ## Other road types
 

@@ -661,3 +661,67 @@
 .ideditor.lane-studio .lanes-layer .rail-semaphore-arm.distant { fill: #f2c200; }
 .ideditor.lane-studio .lanes-layer .rail-semaphore-mark { fill: none; stroke: #fff; }
 .ideditor.lane-studio .lanes-layer .rail-semaphore-mark.distant { stroke: #111; }
+
+
+/* water (wiki: Key:waterway, Key:water): areas and watercourses solid in one layer, faded with the lane surface
+   opacity setting (and gone in wireframe, like the lanes), so a river running into its own area is one colour */
+.ideditor.lane-studio .lanes-layer .lanes-water {
+    --lanes-a: 0.6;
+    opacity: calc(var(--lanes-a) * var(--lanes-low, 1) + (1 - var(--lanes-a)) * var(--lanes-high, 0));
+}
+.ideditor.lane-studio .lanes-layer .water-area,
+.ideditor.lane-studio .lanes-layer .water-channel {
+    fill: rgb(46, 128, 196);
+    fill-rule: evenodd;
+    stroke: none;
+}
+/* water there part of the year: paler */
+.ideditor.lane-studio .lanes-layer .water-area.water-intermittent,
+.ideditor.lane-studio .lanes-layer .water-channel.water-intermittent {
+    fill: rgb(120, 170, 205);
+}
+/* wastewater tanks: grey-green */
+.ideditor.lane-studio .lanes-layer .water-area.water-wastewater { fill: rgb(96, 130, 110); }
+/* banks: a fine dark edge; dashed where the water dries up or runs in a culvert */
+.ideditor.lane-studio .lanes-layer .water-bank {
+    fill: none;
+    stroke: rgb(24, 70, 112);
+    stroke-width: 1.2px;
+    stroke-opacity: 0.8;
+    pointer-events: none;
+}
+.ideditor.lane-studio .lanes-layer .water-bank.water-intermittent { stroke-dasharray: 5, 4; }
+.ideditor.lane-studio .lanes-layer .water-bank.lanes-covered { stroke-dasharray: 3, 3; }
+.ideditor.lane-studio .lanes-layer .water-area-edge { stroke-opacity: 0.5; }
+.ideditor.lane-studio .surface.fill-wireframe .lanes-layer .water-bank { stroke-opacity: 1; }
+
+/* in the water: weirs and dams in concrete, gates in steel, white water below a weir or fall and over rapids */
+.ideditor.lane-studio .lanes-layer .water-feature { stroke: none; pointer-events: none; }
+.ideditor.lane-studio .lanes-layer .water-weir { fill: rgb(206, 206, 200); stroke: rgb(120, 120, 116); stroke-width: 0.8px; }
+.ideditor.lane-studio .lanes-layer .water-dam { fill: rgb(178, 176, 168); stroke: rgb(110, 108, 102); stroke-width: 1px; }
+.ideditor.lane-studio .lanes-layer .water-lock_gate,
+.ideditor.lane-studio .lanes-layer .water-gate { fill: rgb(60, 64, 70); }
+.ideditor.lane-studio .lanes-layer .water-screen { fill: rgb(60, 64, 70); opacity: 0.7; }
+.ideditor.lane-studio .lanes-layer .water-lip { fill: rgb(90, 80, 70); }
+.ideditor.lane-studio .lanes-layer .water-rapids { fill: url(#lanes-white-water); opacity: 0.85; }
+
+/* building work (wiki: Key:construction): a site's churned ground behind a mesh fence; scaffolding round a
+   building going up; works stripes over other features being built; cones along roadworks */
+.ideditor.lane-studio .lanes-layer .works-site { fill: url(#lanes-site); fill-opacity: 0.45; stroke: none; }
+.ideditor.lane-studio .lanes-layer .works-fence {
+    fill: none;
+    stroke: rgb(205, 210, 214);
+    stroke-width: 2.2px;
+    stroke-dasharray: 9, 2;
+    pointer-events: none;
+}
+.ideditor.lane-studio .lanes-layer .works-scaffold { fill: url(#lanes-scaffold); fill-opacity: 0.7; stroke: rgb(170, 176, 184); stroke-width: 2px; }
+.ideditor.lane-studio .lanes-layer .works-area { fill: url(#lanes-works); fill-opacity: 0.18; stroke: #ff8c1a; stroke-width: 1.5px; stroke-dasharray: 6, 4; }
+.ideditor.lane-studio .lanes-layer .works-cone { fill: #ff6a00; stroke: #fff; stroke-width: 0.8px; }
+.ideditor.lane-studio .lanes-layer .works-site,
+.ideditor.lane-studio .lanes-layer .works-scaffold,
+.ideditor.lane-studio .lanes-layer .works-area,
+.ideditor.lane-studio .lanes-layer .works-cone { pointer-events: none; }
+.ideditor.lane-studio .surface.fill-wireframe .lanes-layer .works-site,
+.ideditor.lane-studio .surface.fill-wireframe .lanes-layer .works-scaffold,
+.ideditor.lane-studio .surface.fill-wireframe .lanes-layer .works-area { fill-opacity: 0; }

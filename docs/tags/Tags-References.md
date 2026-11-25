@@ -1,7 +1,7 @@
 # Tags: References
 
 The wiki's keys and tags in its group "references", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-485 keys and tags: 1 rendered, 0 could be, 484 cannot be.
+484 keys and tags: 1 rendered, 0 could be, 483 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -411,7 +411,6 @@ The wiki's keys and tags in its group "references", and whether Lane Studio draw
 | [`ref:TECX=*`](https://wiki.openstreetmap.org/wiki/Key:ref:TECX) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:temples.ru=*`](https://wiki.openstreetmap.org/wiki/Key:ref:temples.ru) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:tenbruggencate=*`](https://wiki.openstreetmap.org/wiki/Key:ref:tenbruggencate) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`ref:tesla=*`](https://wiki.openstreetmap.org/wiki/Key:ref:tesla) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:tiploc=*`](https://wiki.openstreetmap.org/wiki/Key:ref:tiploc) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:TR:stn=*`](https://wiki.openstreetmap.org/wiki/Key:ref:TR:stn) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:UAI=*`](https://wiki.openstreetmap.org/wiki/Key:ref:UAI) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -468,7 +467,7 @@ The wiki's keys and tags in its group "references", and whether Lane Studio draw
 | [`route_ref:TECN=*`](https://wiki.openstreetmap.org/wiki/Key:route_ref:TECN) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`route_ref:TECX=*`](https://wiki.openstreetmap.org/wiki/Key:route_ref:TECX) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`rpn_ref=*`](https://wiki.openstreetmap.org/wiki/Key:rpn_ref) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`rwn_name=*`](https://wiki.openstreetmap.org/wiki/Key:rwn_name) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`rwn_name=*`](https://wiki.openstreetmap.org/wiki/Key:rwn_name) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`rwn_ref=*`](https://wiki.openstreetmap.org/wiki/Key:rwn_ref) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`sagns_id=*`](https://wiki.openstreetmap.org/wiki/Key:sagns_id) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`Schalansky_ref=*`](https://wiki.openstreetmap.org/wiki/Key:Schalansky_ref) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

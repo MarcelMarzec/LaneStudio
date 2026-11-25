@@ -26,26 +26,11 @@
   --radius-sm: 10px;
 }
 
-/* Set with data-theme on <html>, or on any element to re-colour a subtree. */
-[data-theme="red"] {
-  --accent: rgb(255, 94, 80);
-  --accent-ink: rgb(26, 8, 6);
-  --accent-soft: rgba(255, 94, 80, 0.12);
-  --accent-line: rgba(255, 94, 80, 0.28);
-}
-
 [data-theme="orange"] {
   --accent: rgb(255, 146, 43);
   --accent-ink: rgb(28, 14, 2);
   --accent-soft: rgba(255, 146, 43, 0.12);
   --accent-line: rgba(255, 146, 43, 0.28);
-}
-
-[data-theme="green"] {
-  --accent: rgb(134, 203, 14);
-  --accent-ink: rgb(12, 16, 4);
-  --accent-soft: rgba(134, 203, 14, 0.12);
-  --accent-line: rgba(134, 203, 14, 0.28);
 }
 
 /* ==========================================================================
@@ -183,13 +168,6 @@ section {
   font-size: 16px;
 }
 
-/* Was a lighter band with rules above and below. Kept as a class so the
-   pages need no edits, but it no longer changes the background: see the
-   note on section above. */
-.section-bordered {
-  background: none;
-}
-
 code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.88em;
@@ -271,78 +249,6 @@ code {
 
 .nav-links a:hover {
   color: var(--text);
-}
-
-/* Projects dropdown. <details> carries the open state, so it works by click,
-   tap and keyboard with no JavaScript. */
-.nav-dropdown {
-  position: relative;
-}
-
-.nav-dropdown summary {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 0;
-  cursor: pointer;
-  white-space: nowrap;
-  list-style: none;
-}
-
-.nav-dropdown summary::-webkit-details-marker {
-  display: none;
-}
-
-.nav-dropdown summary:hover,
-.nav-dropdown[open] summary {
-  color: var(--text);
-}
-
-.nav-dropdown summary svg {
-  width: 14px;
-  height: 14px;
-  transition: transform 0.15s ease;
-}
-
-.nav-dropdown[open] summary svg {
-  transform: rotate(180deg);
-}
-
-.nav-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 14px);
-  left: -10px;
-  min-width: 236px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-}
-
-.nav-dropdown-menu a {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  color: var(--text);
-}
-
-.nav-dropdown-menu a:hover {
-  background: var(--hover-strong);
-}
-
-/* data-theme on the item sets the arrow's colour, per project. */
-.nav-dropdown-menu svg {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-  color: var(--accent);
 }
 
 .nav-right {
@@ -435,7 +341,7 @@ code {
 }
 
 /* Tighten before the switch to the menu button. */
-@media (max-width: 980px) {
+@media (max-width: 1160px) {
   .nav-links {
     gap: 18px;
   }
@@ -445,10 +351,10 @@ code {
   }
 }
 
-/* The menu button takes over well above phone width: Lane Studio's six links
-   need the room, and one breakpoint for every page is easier to reason about
-   than a different one per nav. */
-@media (max-width: 900px) {
+/* The menu button takes over well above phone width: the front page's seven
+   links need the room, and one breakpoint for every page is easier to reason
+   about than a different one per nav. */
+@media (max-width: 1060px) {
   .nav-links {
     display: none;
     position: absolute;
@@ -473,42 +379,7 @@ code {
     border-bottom: none;
   }
 
-  /* In the menu the dropdown expands in flow rather than floating over it. */
-  .nav-dropdown summary {
-    justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--card-border);
-  }
-
-  .nav-dropdown[open] summary {
-    border-bottom: 0;
-  }
-
-  .nav-dropdown-menu {
-    position: static;
-    min-width: 0;
-    padding: 0 0 6px 14px;
-    background: none;
-    border: 0;
-    border-bottom: 1px solid var(--card-border);
-    border-radius: 0;
-  }
-
-  .nav-dropdown:last-child .nav-dropdown-menu {
-    border-bottom: none;
-  }
-
-  .nav-dropdown-menu a {
-    padding: 12px 0;
-    justify-content: flex-start;
-    gap: 10px;
-  }
-
-  .nav-dropdown-menu a:hover {
-    background: none;
-  }
-
-  .nav-toggle {
+    .nav-toggle {
     display: inline-flex;
   }
 
@@ -555,7 +426,7 @@ code {
 }
 
 /* ==========================================================================
-   Buttons, pills, chips
+   Buttons
    ========================================================================== */
 
 .btn-primary,
@@ -596,62 +467,6 @@ code {
   flex-shrink: 0;
 }
 
-.kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-line);
-  padding: 7px 14px;
-  border-radius: 999px;
-}
-
-.kicker-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
-.chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--card-border);
-  padding: 5px 11px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--accent);
-  white-space: nowrap;
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
 /* ==========================================================================
    Hero
    ========================================================================== */
@@ -662,14 +477,8 @@ code {
   overflow: hidden;
 }
 
-.hero-inner {
-  position: relative;
-  max-width: var(--max);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
-  align-items: start;
-  gap: 48px;
+.hero-narrow {
+  padding-bottom: 0;
 }
 
 .hero h1 {
@@ -706,49 +515,6 @@ code {
 
 .hero-meta .sep {
   opacity: 0.5;
-}
-
-.hero-visual {
-  position: relative;
-}
-
-/* Portrait frame: flat card, one-pixel border, no gradient. */
-.portrait {
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-card);
-  background: var(--card);
-  padding: 10px;
-}
-
-.portrait img {
-  width: 100%;
-  border-radius: 12px;
-}
-
-.portrait figcaption {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 6px 4px;
-  font-size: 13px;
-  color: var(--text-faint);
-}
-
-.portrait figcaption svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-
-@media (max-width: 900px) {
-  .hero-inner {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-
-  .hero-visual {
-    max-width: 380px;
-  }
 }
 
 /* Product hero: copy above, one wide visual beneath it. */
@@ -857,207 +623,6 @@ code {
 }
 
 /* ==========================================================================
-   Project cards — each sets its own data-theme for the product's colour
-   ========================================================================== */
-
-.project-list {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-/* Equal columns that may shrink: without min-width a flex item refuses to go
-   below its content, which overflows the page on a phone. */
-.project-card {
-  display: flex;
-  flex-direction: row;
-  flex: 1 1 320px;
-  min-width: 0;
-  gap: 40px;
-  align-items: center;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-card);
-  padding: 32px;
-}
-
-.project-head {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 16px;
-}
-
-.project-head img,
-.project-head svg.project-mark {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-tile);
-  flex-shrink: 0;
-}
-
-.project-head h3 {
-  font-size: 21px;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  line-height: 1.2;
-}
-
-.project-tagline {
-  font-size: 15px;
-  color: var(--text);
-  font-weight: 500;
-  margin-bottom: 10px;
-}
-
-.project-card p.project-body {
-  font-size: 14.5px;
-  color: var(--text-dim);
-  margin-bottom: 20px;
-  max-width: 54ch;
-}
-
-.project-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-.project-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 10px 16px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--card-border);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.project-link:hover {
-  background: var(--hover-strong);
-}
-
-.project-link-primary {
-  background: var(--accent-soft);
-  border-color: var(--accent-line);
-  color: var(--accent);
-}
-
-.project-link-primary:hover {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-
-.project-link svg {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-}
-
-.project-visual {
-  border: 1px solid var(--card-border);
-  border-radius: 12px;
-  background: var(--bg-soft);
-  overflow: hidden;
-}
-
-.project-visual img,
-.project-visual svg {
-  width: 100%;
-  height: auto;
-}
-
-/* A device mock-up reads better floating than framed. */
-.project-visual-device {
-  border: 0;
-  background: none;
-  border-radius: 0;
-}
-
-.project-visual-device img {
-  width: auto;
-  max-height: 430px;
-  margin: 0 auto;
-}
-
-@media (max-width: 860px) {
-  .project-list {
-    flex-direction: column;
-  }
-
-  .project-card {
-    gap: 28px;
-    padding: 24px;
-  }
-}
-
-/* ==========================================================================
-   Repo list
-   ========================================================================== */
-
-.repo-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.repo-card {
-  display: block;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-  padding: 22px;
-}
-
-.repo-card:hover {
-  border-color: var(--card-border-strong);
-}
-
-.repo-name {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 14.5px;
-  font-weight: 600;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  margin-bottom: 9px;
-  word-break: break-word;
-}
-
-.repo-name svg {
-  width: 15px;
-  height: 15px;
-  color: var(--text-faint);
-  flex-shrink: 0;
-}
-
-.repo-card:hover .repo-name svg {
-  color: var(--accent);
-}
-
-.repo-card p {
-  font-size: 14px;
-  color: var(--text-dim);
-  margin-bottom: 10px;
-}
-
-.repo-upstream {
-  font-size: 12px;
-  color: var(--text-faint);
-}
-
-@media (max-width: 860px) {
-  .repo-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ==========================================================================
    Showcase strip
    ========================================================================== */
 
@@ -1099,8 +664,8 @@ code {
   align-items: center;
 }
 
-/* reCAPTCHA's iframe is a fixed 304px wide, which would otherwise set this
-   column's minimum width and push the page sideways on a phone. */
+/* Without min-width the column takes its widest line (a long tag) as its minimum and pushes the page sideways on a
+   phone. */
 .split-body {
   min-width: 0;
 }
@@ -1195,143 +760,10 @@ code {
 }
 
 /* ==========================================================================
-   Forms
+   Alerts
    ========================================================================== */
 
-.hero-narrow {
-  padding-bottom: 0;
-}
-
-.split-form {
-  grid-template-columns: 1.15fr 0.85fr;
-  align-items: start;
-  gap: 56px;
-}
-
-.form {
-  max-width: 560px;
-}
-
-.field {
-  margin-bottom: 20px;
-}
-
-.field label {
-  display: block;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 7px;
-}
-
-.field input,
-.field textarea {
-  width: 100%;
-  font: inherit;
-  font-size: 15px;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-}
-
-.field textarea {
-  min-height: 150px;
-  resize: vertical;
-}
-
-.field input::placeholder,
-.field textarea::placeholder {
-  color: var(--text-faint);
-}
-
-.field input:hover,
-.field textarea:hover {
-  border-color: var(--card-border-strong);
-}
-
-.field input:focus,
-.field textarea:focus {
-  outline: none;
-  border-color: var(--accent);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.field input:focus-visible,
-.field textarea:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.field-hint {
-  font-size: 13px;
-  color: var(--text-faint);
-  margin-top: 7px;
-}
-
-/* reCAPTCHA renders a fixed 304px iframe, which would overflow a narrow
-   phone; scaling it down keeps it inside the column. */
-.field-captcha {
-  max-width: 100%;
-  overflow: hidden;
-}
-
-/* Below this the 304px widget no longer fits the column, so scale it down.
-   A transform does not change layout size, hence the negative margin. */
-@media (max-width: 400px) {
-  .field-captcha .g-recaptcha {
-    transform: scale(0.85);
-    transform-origin: 0 0;
-    margin-bottom: -12px;
-  }
-}
-
-.field-error {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--accent);
-  margin-top: 8px;
-}
-
-.field-error[hidden] {
-  display: none;
-}
-
-.form button[type="submit"] {
-  border: 0;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 4px;
-}
-
-.form-footnote {
-  margin-top: 20px;
-  max-width: 44ch;
-}
-
-.form-footnote a {
-  color: var(--text-dim);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.form-footnote a:hover {
-  color: var(--text);
-}
-
-/* Honeypot: off-screen rather than display:none, which some bots detect. */
-.hp {
-  position: absolute;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
-
-/* Colour comes from data-theme on the element: green confirms, red fails. */
+/* A note in the accent colour. */
 .alert {
   background: var(--accent-soft);
   border: 1px solid var(--accent-line);
@@ -1350,87 +782,6 @@ code {
 .alert strong {
   color: var(--accent);
   font-weight: 600;
-}
-
-/* ==========================================================================
-   Contact sidebar
-   ========================================================================== */
-
-.contact-aside h2 {
-  font-size: 17px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-.contact-aside > p {
-  font-size: 14.5px;
-  color: var(--text-dim);
-  margin-bottom: 22px;
-}
-
-.contact-links {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.contact-links a {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-  padding: 16px 18px;
-}
-
-.contact-links a:hover {
-  border-color: var(--card-border-strong);
-}
-
-.contact-links svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--accent);
-}
-
-.contact-links span {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 13.5px;
-  color: var(--text-dim);
-  line-height: 1.45;
-}
-
-.contact-links strong {
-  font-size: 14.5px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.contact-location {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-faint);
-}
-
-.contact-location svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-
-@media (max-width: 860px) {
-  .split-form {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
 }
 
 /* ==========================================================================
@@ -1543,242 +894,8 @@ code {
 }
 
 /* ==========================================================================
-   Sitemap
+   Markdown (the changelog): everything includes/markdown.php can produce
    ========================================================================== */
-
-.sitemap-group + .sitemap-group {
-  margin-top: 48px;
-}
-
-.sitemap-group h2 {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 16px;
-}
-
-.sitemap-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.sitemap-list a {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  height: 100%;
-  padding: 20px 22px;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-}
-
-.sitemap-list a:hover {
-  border-color: var(--card-border-strong);
-}
-
-.sitemap-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.sitemap-text strong {
-  font-size: 15.5px;
-  font-weight: 600;
-}
-
-.sitemap-summary {
-  font-size: 14px;
-  color: var(--text-dim);
-}
-
-.sitemap-path {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 12.5px;
-  color: var(--text-faint);
-  word-break: break-word;
-}
-
-.sitemap-list svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  color: var(--accent);
-}
-
-@media (max-width: 720px) {
-  .sitemap-list {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ==========================================================================
-   Blog listing
-   ========================================================================== */
-
-.post-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.post-card a {
-  display: block;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-card);
-  padding: 26px 28px;
-}
-
-.post-card a:hover {
-  border-color: var(--card-border-strong);
-}
-
-.post-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-faint);
-  margin-bottom: 10px;
-}
-
-.post-meta .sep {
-  opacity: 0.5;
-}
-
-.post-card h3 {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  margin-bottom: 8px;
-}
-
-.post-summary {
-  font-size: 14.5px;
-  color: var(--text-dim);
-  max-width: 68ch;
-  margin-bottom: 14px;
-}
-
-.post-more {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.post-more svg {
-  width: 15px;
-  height: 15px;
-}
-
-.contents-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 32px 40px;
-}
-
-.contents-group h3 {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-  padding-bottom: 12px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid var(--card-border);
-}
-
-.contents-list a {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--card-border);
-  font-size: 14.5px;
-  color: var(--text-dim);
-}
-
-.contents-list a:hover {
-  color: var(--text);
-}
-
-.contents-list time {
-  font-size: 12.5px;
-  color: var(--text-faint);
-  white-space: nowrap;
-}
-
-.post-tags {
-  margin-top: 18px;
-}
-
-.post-nav {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.post-nav-link {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-  padding: 20px 22px;
-}
-
-.post-nav-link:hover {
-  border-color: var(--card-border-strong);
-}
-
-.post-nav-next {
-  text-align: right;
-}
-
-.post-nav-label {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.post-nav-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-@media (max-width: 720px) {
-  .contents-grid,
-  .post-nav {
-    grid-template-columns: 1fr;
-  }
-
-  .post-nav-next {
-    text-align: left;
-  }
-}
-
-/* ==========================================================================
-   Post body — everything Obsidian can produce
-   ========================================================================== */
-
-.prose-post > :first-child {
-  margin-top: 0;
-}
 
 .prose img {
   width: 100%;
@@ -2011,43 +1128,6 @@ code {
   flex-wrap: wrap;
   gap: 14px;
   justify-content: center;
-}
-
-/* Inside a normal section the buttons sit under the content, not centred. */
-.cta-actions-left {
-  justify-content: flex-start;
-  margin-top: 32px;
-}
-
-.social-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 28px;
-}
-
-.social-row a {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-dim);
-  padding: 9px 15px;
-  border-radius: 999px;
-  border: 1px solid var(--card-border);
-}
-
-.social-row a:hover {
-  color: var(--text);
-  border-color: var(--card-border-strong);
-}
-
-.social-row svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
 }
 
 /* ==========================================================================
@@ -2507,6 +1587,34 @@ footer {
   text-align: right;
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
+}
+
+/* The rest of a ranked list, folded under "Show more" */
+.stats-bars-more summary {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.stats-bars-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.stats-bars-more summary:hover {
+  text-decoration: underline;
+}
+
+.stats-bars-more .when-open,
+.stats-bars-more[open] .when-closed {
+  display: none;
+}
+
+.stats-bars-more[open] .when-open {
+  display: inline;
 }
 
 /* MapLibre's controls and popups in the site's colours */

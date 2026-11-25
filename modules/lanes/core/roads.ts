@@ -1,5 +1,6 @@
 import type { OsmEntity } from '../../osm';
 import type { osmWay } from '../../osm/way';
+import { constructionHighway } from './lifecycle';
 
 /** `highway=*` values that carry motor traffic lanes, so Lane Studio draws and edits their lanes */
 export const laneRoadHighways = new Set([
@@ -19,7 +20,8 @@ export const sidewalkExpectedHighways = new Set([
  * lifecycle prefix (wiki: Tag:highway=construction, Lifecycle prefix)
  */
 export function builtHighway(tags: Tags): string | undefined {
-    if (tags.highway === 'construction') return tags.construction && tags.construction !== 'yes' ? tags.construction : undefined;
+    // (a service=* value, as construction=drive-through, is a service road: see lifecycle.ts)
+    if (tags.highway === 'construction') return constructionHighway(tags.construction);
     return tags.highway ?? tags['construction:highway'];
 }
 

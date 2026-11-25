@@ -316,11 +316,7 @@ export function uiPaneHelp(context) {
             });
 
             nav.text('');
-            if (rtl) {
-                nav.call(drawNext).call(drawPrevious);
-            } else {
-                nav.call(drawPrevious).call(drawNext);
-            }
+            nav.call(drawPrevious).call(drawNext);
 
 
             function drawNext(selection) {

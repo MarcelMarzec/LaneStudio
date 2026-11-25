@@ -1,7 +1,7 @@
 # Tags: Restrictions
 
 The wiki's keys and tags in its group "restrictions", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-423 keys and tags: 116 rendered, 41 could be, 266 cannot be.
+424 keys and tags: 117 rendered, 41 could be, 266 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -281,6 +281,7 @@ The wiki's keys and tags in its group "restrictions", and whether Lane Studio dr
 | [`oneway=yes`](https://wiki.openstreetmap.org/wiki/Tag:oneway=yes) | de facto | ✅ Rendered | [Road Fields](../guide/Road-Fields.md) |
 | [`oneway:bicycle=*`](https://wiki.openstreetmap.org/wiki/Key:oneway:bicycle) | de facto | ✅ Rendered | [Road Fields](../guide/Road-Fields.md) |
 | [`oneway:bicycle=-1`](https://wiki.openstreetmap.org/wiki/Tag:oneway:bicycle=-1) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`oneway:bicycle=no`](https://wiki.openstreetmap.org/wiki/Tag:oneway:bicycle=no) | de facto | ✅ Rendered | [Road Fields](../guide/Road-Fields.md) |
 | [`oneway:bicycle=yes`](https://wiki.openstreetmap.org/wiki/Tag:oneway:bicycle=yes) | de facto | ✅ Rendered | [Road Fields](../guide/Road-Fields.md) |
 | [`oneway:boat=*`](https://wiki.openstreetmap.org/wiki/Key:oneway:boat) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`oneway:bus=*`](https://wiki.openstreetmap.org/wiki/Key:oneway:bus) | in use | ✅ Rendered | [Road Fields](../guide/Road-Fields.md) |

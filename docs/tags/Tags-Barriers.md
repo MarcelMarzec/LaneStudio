@@ -1,7 +1,7 @@
 # Tags: Barriers
 
 The wiki's keys and tags in its group "barriers", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-101 keys and tags: 49 rendered, 52 could be, 0 cannot be.
+100 keys and tags: 50 rendered, 50 could be, 0 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -27,7 +27,7 @@ The wiki's keys and tags in its group "barriers", and whether Lane Studio draws 
 | [`barrier=debris`](https://wiki.openstreetmap.org/wiki/Tag:barrier=debris) | in use | ✅ Rendered | [Crossings And Markings](../guide/Crossings-And-Markings.md) |
 | [`barrier=delineator_kerb`](https://wiki.openstreetmap.org/wiki/Tag:barrier=delineator_kerb) | in use | ✅ Rendered | [Crossings And Markings](../guide/Crossings-And-Markings.md) |
 | [`barrier=delineators`](https://wiki.openstreetmap.org/wiki/Tag:barrier=delineators) | in use | ✅ Rendered | [Crossings And Markings](../guide/Crossings-And-Markings.md) |
-| [`barrier=ditch`](https://wiki.openstreetmap.org/wiki/Tag:barrier=ditch) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`barrier=ditch`](https://wiki.openstreetmap.org/wiki/Tag:barrier=ditch) | de facto | ✅ Rendered | [Crossings And Markings](../guide/Crossings-And-Markings.md) |
 | [`barrier=dug-in_tyres`](https://wiki.openstreetmap.org/wiki/Tag:barrier=dug-in_tyres) | in use | ✅ Rendered | [Crossings And Markings](../guide/Crossings-And-Markings.md) |
 | [`barrier=entrance`](https://wiki.openstreetmap.org/wiki/Tag:barrier=entrance) | approved | ✅ Rendered | [Crossings And Markings](../guide/Crossings-And-Markings.md) |
 | [`barrier=fence`](https://wiki.openstreetmap.org/wiki/Tag:barrier=fence) | approved | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
@@ -85,7 +85,6 @@ The wiki's keys and tags in its group "barriers", and whether Lane Studio draws 
 | [`hedge=*`](https://wiki.openstreetmap.org/wiki/Key:hedge) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`hedge=hedge_bank`](https://wiki.openstreetmap.org/wiki/Tag:hedge=hedge_bank) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`lift_gate:type=*`](https://wiki.openstreetmap.org/wiki/Key:lift_gate:type) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
-| [`locked=*`](https://wiki.openstreetmap.org/wiki/Key:locked) | approved | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railing=*`](https://wiki.openstreetmap.org/wiki/Key:railing) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`stile=stepover`](https://wiki.openstreetmap.org/wiki/Tag:stile=stepover) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`swing_gate:type=*`](https://wiki.openstreetmap.org/wiki/Key:swing_gate:type) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |

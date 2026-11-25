@@ -375,6 +375,14 @@
     fill-opacity: calc(var(--lanes-a, 1) * var(--lanes-low, 1) + (1 - var(--lanes-a, 1)) * var(--lanes-high, 0));
 }
 
+/* iD's wireframe (W): lane surfaces go, whatever the opacity setting, leaving their outlines and markings; W again
+   brings them back at the setting */
+.ideditor.lane-studio .surface.fill-wireframe .lanes-layer {
+    --lanes-low: 0;
+    --lanes-high: 0;
+    --lanes-road-alpha: 0;
+}
+
 /* settings: hide iD's own drawing of what Lane Studio draws (touch targets stay, so it can still be clicked) */
 .ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm .lanes-drawn,
 .ideditor.lane-studio.lanes-hide-originals .surface.lanes-visible .layer-osm .lanes-drawn-feature {
@@ -514,6 +522,8 @@
     stroke: none;
     pointer-events: none;
 }
+/* (wireframe: the stripes go with the lane surfaces, leaving the dashed orange kerbs) */
+.ideditor.lane-studio .surface.fill-wireframe .lanes-layer .works { fill-opacity: 0; }
 .ideditor.lane-studio .lanes-layer .kerb.construction {
     stroke: #ff8c1a;
     stroke-dasharray: 6, 4;

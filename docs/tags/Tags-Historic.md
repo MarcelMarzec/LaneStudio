@@ -1,7 +1,7 @@
 # Tags: Historic
 
 The wiki's keys and tags in its group "historic", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-250 keys and tags: 0 rendered, 5 could be, 245 cannot be.
+251 keys and tags: 0 rendered, 5 could be, 246 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -146,6 +146,7 @@ The wiki's keys and tags in its group "historic", and whether Lane Studio draws 
 | [`historic=tank`](https://wiki.openstreetmap.org/wiki/Tag:historic=tank) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`historic=temple`](https://wiki.openstreetmap.org/wiki/Tag:historic=temple) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`historic=tomb`](https://wiki.openstreetmap.org/wiki/Tag:historic=tomb) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`historic=torpedo`](https://wiki.openstreetmap.org/wiki/Tag:historic=torpedo) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`historic=tower`](https://wiki.openstreetmap.org/wiki/Tag:historic=tower) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`historic=trebuchet`](https://wiki.openstreetmap.org/wiki/Tag:historic=trebuchet) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`historic=tree_shrine`](https://wiki.openstreetmap.org/wiki/Tag:historic=tree_shrine) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |

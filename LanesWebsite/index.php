@@ -69,7 +69,7 @@ require __DIR__ . '/includes/head.php';
   </div>
 </section>
 
-<section class="section-bordered" id="problem">
+<section id="problem">
   <div class="section-inner">
     <div class="split">
       <div class="split-body">
@@ -83,6 +83,11 @@ require __DIR__ . '/includes/head.php';
         <p>
           It is a format designed for machines to read, and it shows. Most mappers avoid it
           entirely — which is why so many junctions have no lane data at all.
+        </p>
+        <p class="alert" role="note">
+          <strong>Made for UK roads.</strong> Lane Studio has been built around UK roads and their limits: lane widths,
+          signs, markings and speed limits (in mph) follow British practice. Support for other countries will come
+          later.
         </p>
       </div>
 
@@ -208,6 +213,7 @@ require __DIR__ . '/includes/head.php';
           <li>Widths too narrow, unmarked bus lanes, old values</li>
           <li>Turn arrows at dead ends, endless merges</li>
           <li>Broken connectivity relations</li>
+          <li>Construction tagging mistakes</li>
           <li>One-click fixes where the answer is certain</li>
         </ul>
       </article>
@@ -224,6 +230,17 @@ require __DIR__ . '/includes/head.php';
       </article>
 
       <article class="feature-card">
+        <div class="feature-icon"><?php icon_water(); ?></div>
+        <h3>Water and building work</h3>
+        <ul>
+          <li>Rivers, drains and ditches at their width</li>
+          <li>Weirs, dams, lock gates and white water</li>
+          <li>Construction sites, scaffolding and roadworks</li>
+          <li>Roads being built drawn as they will be</li>
+        </ul>
+      </article>
+
+      <article class="feature-card">
         <div class="feature-icon"><?php icon_lanes(); ?></div>
         <h3>Read the map</h3>
         <ul>
@@ -236,7 +253,7 @@ require __DIR__ . '/includes/head.php';
   </div>
 </section>
 
-<section class="section-bordered" id="how">
+<section id="how">
   <div class="section-inner">
     <div class="section-head">
       <h2>How it works</h2>
@@ -338,7 +355,7 @@ require __DIR__ . '/includes/head.php';
           <img src="/assets/img/ls-routing.webp"
                alt="A validation panel flagging a lane count that disagrees with the turn lane list" loading="lazy">
         </div>
-        <figcaption>Contradictions caught before the changeset is uploaded.</figcaption>
+        <figcaption>Visualised routing for every lane - including turn restrictions.</figcaption>
       </figure>
     </div>
   </div>

@@ -1,7 +1,7 @@
 # Tags: Natural
 
 The wiki's keys and tags in its group "natural", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-203 keys and tags: 4 rendered, 3 could be, 196 cannot be.
+203 keys and tags: 5 rendered, 3 could be, 195 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -79,7 +79,7 @@ The wiki's keys and tags in its group "natural", and whether Lane Studio draws t
 | [`leaf_type=needleleaved`](https://wiki.openstreetmap.org/wiki/Tag:leaf_type=needleleaved) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`leaf_type=palm`](https://wiki.openstreetmap.org/wiki/Tag:leaf_type=palm) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`managed=*`](https://wiki.openstreetmap.org/wiki/Key:managed) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`natural=*`](https://wiki.openstreetmap.org/wiki/Key:natural) | de facto | ✅ Rendered | Only `natural=grassland`; iD draws the rest; [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
+| [`natural=*`](https://wiki.openstreetmap.org/wiki/Key:natural) | de facto | ✅ Rendered | Only `natural=grassland`, `natural=water`; iD draws the rest; [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`natural=anthill`](https://wiki.openstreetmap.org/wiki/Tag:natural=anthill) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`natural=arch`](https://wiki.openstreetmap.org/wiki/Tag:natural=arch) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`natural=arete`](https://wiki.openstreetmap.org/wiki/Tag:natural=arete) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -150,7 +150,7 @@ The wiki's keys and tags in its group "natural", and whether Lane Studio draws t
 | [`natural=valley`](https://wiki.openstreetmap.org/wiki/Tag:natural=valley) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`natural=volcano`](https://wiki.openstreetmap.org/wiki/Tag:natural=volcano) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`natural=wallow`](https://wiki.openstreetmap.org/wiki/Tag:natural=wallow) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
-| [`natural=water`](https://wiki.openstreetmap.org/wiki/Tag:natural=water) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`natural=water`](https://wiki.openstreetmap.org/wiki/Tag:natural=water) | approved | ✅ Rendered | [Water](../guide/Water.md) |
 | [`natural=wetland`](https://wiki.openstreetmap.org/wiki/Tag:natural=wetland) | approved | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`natural=wood`](https://wiki.openstreetmap.org/wiki/Tag:natural=wood) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`raba:id=1410`](https://wiki.openstreetmap.org/wiki/Tag:raba:id=1410) | imported | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |

@@ -1,7 +1,7 @@
 # Tags: Addresses
 
 The wiki's keys and tags in its group "addresses", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-229 keys and tags: 0 rendered, 0 could be, 229 cannot be.
+228 keys and tags: 0 rendered, 0 could be, 228 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -58,7 +58,6 @@ The wiki's keys and tags in its group "addresses", and whether Lane Studio draws
 | [`addr:country=EE`](https://wiki.openstreetmap.org/wiki/Tag:addr:country=EE) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:country=EG`](https://wiki.openstreetmap.org/wiki/Tag:addr:country=EG) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:country=ER`](https://wiki.openstreetmap.org/wiki/Tag:addr:country=ER) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`addr:country=ES`](https://wiki.openstreetmap.org/wiki/Tag:addr:country=ES) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:country=FI`](https://wiki.openstreetmap.org/wiki/Tag:addr:country=FI) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:country=FR`](https://wiki.openstreetmap.org/wiki/Tag:addr:country=FR) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`addr:country=GB`](https://wiki.openstreetmap.org/wiki/Tag:addr:country=GB) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

@@ -104,7 +104,7 @@ The wiki's keys and tags in its group "offices", and whether Lane Studio draws t
 | [`office=insurance_adjuster`](https://wiki.openstreetmap.org/wiki/Tag:office=insurance_adjuster) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`office=interior_design`](https://wiki.openstreetmap.org/wiki/Tag:office=interior_design) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`office=international_organization`](https://wiki.openstreetmap.org/wiki/Tag:office=international_organization) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`office=it`](https://wiki.openstreetmap.org/wiki/Tag:office=it) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`office=it`](https://wiki.openstreetmap.org/wiki/Tag:office=it) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`office=landscape_architect`](https://wiki.openstreetmap.org/wiki/Tag:office=landscape_architect) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`office=lawyer`](https://wiki.openstreetmap.org/wiki/Tag:office=lawyer) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`office=lifeguard`](https://wiki.openstreetmap.org/wiki/Tag:office=lifeguard) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

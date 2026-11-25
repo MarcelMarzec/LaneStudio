@@ -1,7 +1,7 @@
 # Tags: Food and beverages
 
 The wiki's keys and tags in its group "food and beverages", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-185 keys and tags: 0 rendered, 0 could be, 185 cannot be.
+188 keys and tags: 0 rendered, 0 could be, 188 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -50,6 +50,7 @@ The wiki's keys and tags in its group "food and beverages", and whether Lane Stu
 | [`cuisine=dumplings`](https://wiki.openstreetmap.org/wiki/Tag:cuisine=dumplings) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`cuisine=empanada`](https://wiki.openstreetmap.org/wiki/Tag:cuisine=empanada) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`cuisine=ethiopian`](https://wiki.openstreetmap.org/wiki/Tag:cuisine=ethiopian) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`cuisine=filipino`](https://wiki.openstreetmap.org/wiki/Tag:cuisine=filipino) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`cuisine=fish`](https://wiki.openstreetmap.org/wiki/Tag:cuisine=fish) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`cuisine=fish_and_chips`](https://wiki.openstreetmap.org/wiki/Tag:cuisine=fish_and_chips) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`cuisine=french`](https://wiki.openstreetmap.org/wiki/Tag:cuisine=french) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -138,6 +139,8 @@ The wiki's keys and tags in its group "food and beverages", and whether Lane Stu
 | [`drink=*`](https://wiki.openstreetmap.org/wiki/Key:drink) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`drink=beer`](https://wiki.openstreetmap.org/wiki/Tag:drink=beer) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`drink:*=*`](https://wiki.openstreetmap.org/wiki/Key:drink:*) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`drink:babyccino:fee=*`](https://wiki.openstreetmap.org/wiki/Key:drink:babyccino:fee) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`drink:babyccino:fee=no`](https://wiki.openstreetmap.org/wiki/Tag:drink:babyccino:fee=no) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`drink:beer=*`](https://wiki.openstreetmap.org/wiki/Key:drink:beer) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`drink:beer=yes`](https://wiki.openstreetmap.org/wiki/Tag:drink:beer=yes) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`drink:bubble_tea=*`](https://wiki.openstreetmap.org/wiki/Key:drink:bubble_tea) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

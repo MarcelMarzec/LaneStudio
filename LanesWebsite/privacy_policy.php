@@ -33,10 +33,10 @@ require __DIR__ . '/includes/head.php';
   </div>
 </section>
 
-<section class="section-bordered">
+<section>
   <div class="section-inner">
     <div class="prose">
-      <div class="alert" data-theme="orange" role="note">
+      <div class="alert" role="note">
         <strong>Lane Studio is in early access.</strong>
         The editor is open to use at
         <a href="<?= e($site['editor']) ?>">lanestudio.marcelmarzec.com/editor</a>, and this

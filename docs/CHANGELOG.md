@@ -8,6 +8,84 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.25
+##### 2026-Nov-25
+
+#### Lanes and junctions
+* A two-way road gaining or dropping lanes one way only narrows smoothly into the next road, with no step or stray diagonal line (Spalding Bypass, A16, w1333796391)
+* Where a road gains or loses several lanes at once, every lane that ends now tapers, from the side away from oncoming
+  traffic, over 25 m a lane, so the road widens smoothly however many lanes are added. On the Spalding Bypass at
+  n6760418256 (`lanes=2` going south into `lanes:forward=3`, `lanes:backward=2`) the road no longer steps out by two
+  lanes at the node
+* Where a one-way road gains or loses two or more lanes, the lanes that carry on stay in the middle, the others
+  tapering away on both sides
+
+#### Water
+* Rivers, streams, canals, drains and ditches are drawn as water at their width (`width=*`, else a UK width: a ditch
+  1 m, a drain 2 m, a river 10 m, a canal 12 m), with their banks; culverts (`tunnel=culvert`) and pressurised pipes
+  faded with dashed banks, and water there part of the year (`intermittent=yes`) paler. Where a river's water is
+  mapped as an area, the area is drawn in its place, as on the River Cam at Bottisham Lock
+* Ponds, lakes, reservoirs, basins, locks and the rest of `natural=water` + `water=*` are drawn as water (the replaced
+  `waterway=riverbank` and `landuse=reservoir` too); Hide natural features hides them
+* Weirs and waterfalls with white water below them, rapids, dams, lock gates (mitre gates pointing upstream, spanning
+  the lock), sluice gates, floodgates, flood barriers, check dams and debris screens are drawn in the water
+* New presets in Add Feature for the waterways iD has none for: Rapids, Sluice gate, Floodgate, Flood barrier, Check
+  dam, Debris screen, Pressurised waterway, Canoe pass, and water areas for a lock chamber, ditch, drain, rapids,
+  lagoon and fish pass
+
+#### Building work
+* Roads being built lose their works stripes in wireframe (`W`), like the lane surfaces
+* Construction sites (`landuse=construction`) are drawn as churned ground behind a mesh fence, buildings going up
+  (`building=construction`) in scaffolding, and other features being built (`construction:amenity=parking`…) under
+  works stripes; a car park being built is also drawn as the car park, faded. At the Spalding Bypass services the
+  Starbucks and Burger King are in scaffolding and the car parks striped
+* Junction boxes, turning heads and the rounded ends of roads being built are striped and faded with them where
+  only roads being built meet; where a road being built joins one in use, the junction stays that road's and the new
+  road is striped up to it (at the Spalding Bypass services, w1563755167 off Fulney Lane North and the aisles round
+  the car parks, which were plain road)
+* Roadworks on a road that stays open (`construction=minor`) put cones along both kerbs
+* A road being built tagged with a `service=*` value (`construction=drive-through`, as the drive-throughs at the
+  Spalding Bypass services, w1563755154) is drawn as the service road it will be
+* The Issues pane flags two construction mistakes and fixes them in one click: `amenity=construction` +
+  `construction=parking` becomes `construction:amenity=parking`, and `construction=drive-through` becomes
+  `construction=service` + `service=drive-through`
+
+#### Editing
+* Speed Limit tool: where roads with different limits meet, each road's part of the junction is in its own colour, so a 30 mph road no longer shows as 40 where it meets a 40 mph roundabout (Benner Road, Spalding)
+* iD's wireframe (`W`) now hides lane surfaces too, leaving their outlines and markings; `W` again brings them back
+  at the Lane surface opacity setting, which the Lane Studio pane greys out while wireframe is on. Thanks to [RedAuburn Harry](https://community.openstreetmap.org/u/redauburn) for the suggestion!
+* The Lane Studio pane's renderer note, About section and links show their text again, in place of "Missing
+  translation"
+* The Lane Studio pane opens with `P`, the key of iD's Preferences pane it replaces, in place of `K`
+* `⇧W` turns Hide iD's lines and points under lanes on and off (`W` alone stays iD's wireframe)
+* Lane Studio is brought up to date with iD's latest development version (to f4ff9a6f of 25 November). Among iD's
+  changes: translated values no longer leak into tags in fields with set options; the raw tag editor keeps line
+  breaks; merging no longer makes a relation a member of itself; keyboard shortcuts no longer lose the feature being
+  drawn; nodes stacked on one another can be selected; large GPX traces no longer freeze the editor; and the
+  sidebar no longer sends hundreds of requests to Wikidata when resized. See
+  [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md)
+* The Lane Studio pane links to Lane Studio's [OpenStreetMap wiki page](https://wiki.openstreetmap.org/wiki/Lane_Studio)
+  and its [forum post](https://community.openstreetmap.org/t/introducing-lane-studio-a-visual-lane-editor-for-openstreetmap-built-on-id/150572)
+
+#### Website
+* Statistics count versions by day: `26.10.24r2` and `26.10.24r3` count with `26.10.24`
+* Statistics list the first five versions and tags changed most, with the rest under Show more
+* The front page lists water and building work among what Lane Studio draws, and construction mistakes among its
+  checks
+* The front page, README and guide say Lane Studio is made for UK roads and their limits, with other countries to
+  come later
+* The site's stylesheet drops the styles no page used (forms, project and blog cards, the navigation dropdown and its
+  script), and pages lose classes that no longer changed anything
+* The navigation switches to the menu button before its links run off the side of the page (between about 900 and
+  1020 px wide the page scrolled sideways)
+
+#### Behind the scenes
+* A test checks every Lane Studio string the code names is in `data/lanes.yaml`
+* The tag coverage tables are read from the wiki again, with water, culverts and building work now drawn
+* New versions of Lane Studio's tools come with iD's update, and its stricter code checks
+* The zoomed-out OpenStreetMap map waits for Lane Studio's strings before taking its name, which logged a missing
+  translation when imagery loaded first
+
 # 26.11.24
 ##### 2026-Nov-24
 

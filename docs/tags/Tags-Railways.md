@@ -1,7 +1,7 @@
 # Tags: Railways
 
 The wiki's keys and tags in its group "railways", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-270 keys and tags: 45 rendered, 221 could be, 4 cannot be.
+271 keys and tags: 45 rendered, 222 could be, 4 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -41,6 +41,7 @@ The wiki's keys and tags in its group "railways", and whether Lane Studio draws 
 | [`gauge=1435`](https://wiki.openstreetmap.org/wiki/Tag:gauge=1435) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`highspeed=*`](https://wiki.openstreetmap.org/wiki/Key:highspeed) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`importance=*`](https://wiki.openstreetmap.org/wiki/Key:importance) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`level_crossing=*`](https://wiki.openstreetmap.org/wiki/Key:level_crossing) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`level_crossing=uncontrolled`](https://wiki.openstreetmap.org/wiki/Tag:level_crossing=uncontrolled) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`loading_gauge=*`](https://wiki.openstreetmap.org/wiki/Key:loading_gauge) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`maxspeed:freight=*`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:freight) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |

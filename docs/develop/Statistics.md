@@ -11,8 +11,8 @@ files the pages read, so a page view never touches the database.
 | Find | Reads OpenStreetMap's [changeset feed](https://planet.openstreetmap.org/replication/changesets/) (a file a minute) from where it stopped, keeping Lane Studio's changesets | `replication.php` |
 | Read the edits | Downloads each closed changeset's edits from the API and the versions before them: objects created, modified and deleted, tag keys changed, ways with lane tags changed, length of road edited | `details.php` |
 | Country | The country at each changeset's centre, from the borders iD uses | `countries.php`, `countries.json` |
-| Write | `data/statistics.json` (figures, latest 5, leaderboard, per day, countries, versions, tags) and `data/changesets.geojson` (the map's points) | `snapshot.php` |
-| Show | The figures, map (MapLibre GL on OpenFreeMap's dark style), chart, lists and leaderboard | `view.php`, `statistics.php`, `index.php`, `assets/js/statistics.js`; the hosts it loads from are allowed in `.htaccess`'s Content-Security-Policy |
+| Write | `data/statistics.json` (figures, latest 5, leaderboard, per day, countries, versions by day with `r2`, `r3` … counted with the day's first, the 20 tag keys changed most) and `data/changesets.geojson` (the map's points) | `snapshot.php` |
+| Show | The figures, map (MapLibre GL on OpenFreeMap's dark style), chart, lists (the first 5 versions and tags, the rest under Show more) and leaderboard | `view.php`, `statistics.php`, `index.php`, `assets/js/statistics.js`; the hosts it loads from are allowed in `.htaccess`'s Content-Security-Policy |
 
 All in `LanesWebsite/includes/statistics/` unless named otherwise. `collect.php` runs the steps; each run stops after
 about 4 minutes, and a lock keeps two runs from overlapping. The first runs catch up from the `start` day, a few hours

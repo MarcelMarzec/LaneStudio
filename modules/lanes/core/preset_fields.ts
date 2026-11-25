@@ -95,6 +95,12 @@ const space = (value: string, icon?: string): [string, FeaturePreset] => [`lanes
 const barrier = (value: string, geometry: string[], icon?: string): [string, FeaturePreset] => [`lanes/barrier/${value}`, {
     strings: `barrier_${value.replace(/-/g, '_')}`, tags: { barrier: value }, geometry, like: 'barrier', icon
 }];
+const waterway = (value: string, geometry: string[], like: string, icon?: string): [string, FeaturePreset] => [`lanes/waterway/${value}`, {
+    strings: `waterway_${value}`, tags: { waterway: value }, geometry, like, icon
+}];
+const water = (value: string, icon?: string): [string, FeaturePreset] => [`lanes/natural/water/${value}`, {
+    strings: `water_${value}`, tags: { natural: 'water', water: value }, geometry: ['area'], like: 'natural/water', icon
+}];
 const roadArea = (value: string, icon: string): [string, FeaturePreset] => [`lanes/area/highway/${value}`, {
     strings: `area_${value}`, tags: { 'area:highway': value }, geometry: ['area'], like: 'area/highway', icon
 }];
@@ -127,6 +133,13 @@ export const featurePresets: Record<string, FeaturePreset> = Object.fromEntries(
     barrier('armadillo', pointLine), barrier('parking_bumper', pointLine), barrier('collision_protection', pointLine),
     barrier('tyres', pointLine), barrier('tank_trap', pointLine), barrier('dug-in_tyres', ['line']),
     barrier('berm', ['line', 'area'], 'temaki-hedge'), barrier('haha', ['line', 'area'], 'temaki-trench'),
+    // watercourses and what stands in them (wiki: Key:waterway), and water areas (wiki: Key:water) iD has no preset for
+    waterway('pressurised', ['line'], 'waterway/canal'), waterway('canoe_pass', ['line'], 'waterway/fish_pass', 'temaki-canoe'),
+    waterway('rapids', ['vertex', 'line', 'area'], 'waterway/waterfall'),
+    waterway('sluice_gate', ['vertex', 'line', 'area'], 'waterway/lock_gate'), waterway('floodgate', ['vertex', 'line', 'area'], 'waterway/lock_gate'),
+    waterway('security_lock', vertexLine, 'waterway/lock_gate'), waterway('check_dam', vertexLine, 'waterway/weir'),
+    waterway('debris_screen', vertexLine, 'waterway/lock_gate'),
+    water('lock'), water('ditch'), water('drain'), water('rapids'), water('lagoon'), water('fish_pass'),
     // solar water heating (wiki: Tag:generator:method=thermal, Tag:generator:type=solar_thermal_collector)
     ['lanes/power/generator/solar_thermal', {
         strings: 'solar_thermal', tags: { power: 'generator', 'generator:source': 'solar', 'generator:method': 'thermal' },

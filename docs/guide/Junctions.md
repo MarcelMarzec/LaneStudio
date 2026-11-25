@@ -13,8 +13,10 @@ Junctions are drawing only: nothing here writes tags.
   runs in straight lines to its own lanes (over 15 m or more, at most half its length). A lane of the wider road that
   ends closes in a V; a new lane opens from nothing; where two lanes come from one (`through|right` into
   `through|through|right|right`, by the arrows), the line between them opens out of the middle of that lane.
-- **Added and dropped lanes taper** over 25 m (lanes of the same width). A `merge_to_left|right` lane is the one that ends; a one-way slip
-  road starts where the lane leading into it ends.
+- **Added and dropped lanes taper** over 25 m a lane (lanes of the same width), every lane that ends however many
+  (one lane each way into three and two, as on the Spalding Bypass), from the side away from oncoming traffic. Where a
+  one-way road gains or loses two or more lanes, the lanes that carry on stay in the middle. A `merge_to_left|right`
+  lane is the one that ends; a one-way slip road starts where the lane leading into it ends.
 - **Short links** (40 m or less, no arrows of their own, as between the halves of a dual carriageway) take the
   arrows of the road leading in, less the turns already taken.
 - **Slip roads** joining or leaving at a shallow angle line up with the lane they become, unless they give way, stop

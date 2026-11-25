@@ -14,6 +14,10 @@ imagery. You edit lanes where they are drawn, and Lane Studio writes the OpenStr
 > It is not made or supported by the iD project: report Lane Studio problems
 > [here](https://github.com/MarcelMarzec/LaneStudio/issues), not to iD.
 >
+> **Lane Studio is made for UK roads.** It has been built around UK roads and their limits: lane widths,
+> signs, markings and speed limits (in mph) follow British practice. It edits roads anywhere, but support
+> for other countries will come later.
+>
 > **Lane Studio was written with AI.** Its code, tests and documentation were written with
 > [Claude Code](https://claude.com/claude-code), Anthropic's AI coding tool, directed and reviewed by
 > the project's maintainer.
@@ -64,6 +68,10 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   barriers, light signals and road markings; Network Rail colour-light, shunt and semaphore signals
   and other countries' light signals; overhead line masts; buffer stops, switches, turntables and old
   trackbeds.
+* **Water**: rivers, streams, canals, drains and ditches at their width (culverts faded), ponds, lakes and
+  other water areas, and weirs, dams, lock gates, waterfalls, rapids and sluice gates in the water.
+* **Building work**: roads and paths being built drawn as they will be, construction sites behind their
+  fence, buildings in scaffolding, other features being built striped as works, and roadworks cones.
 * **Routing**: hover a lane to see every route a car, motorcycle, van, lorry, bus, taxi or bicycle can
   take from it, following turn arrows, lane connections and turn restrictions; hover a footway to see
   where people can walk. The roads turn the colour of their access for the vehicle picked (no,
@@ -82,7 +90,8 @@ The website is Lane Studio only; iD's own page is still in the repository for de
 * **Map key**: a pane explaining every colour, line, symbol and surface on the map.
 * **Walkthrough and help**: Lane Studio's own walkthrough chapters and Help pages, showing what it adds to iD.
 * **Checks**: a lane tags rule in iD's Issues pane (lane counts, widths, unmarked bus lanes, old values, turn
-  arrows at dead ends, merges that never end), with fixes where the answer is certain.
+  arrows at dead ends, merges that never end, two common construction tagging mistakes), with fixes where the
+  answer is certain.
 * **What's new**: after an update, a menu lists what changed since the version you last used.
 
 New here? Help (`H`) → **Start the walkthrough**. The guide ([LANES.md](docs/LANES.md), also the

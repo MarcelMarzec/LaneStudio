@@ -1,7 +1,7 @@
 # Tags: Children
 
 The wiki's keys and tags in its group "children", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-80 keys and tags: 0 rendered, 0 could be, 80 cannot be.
+79 keys and tags: 0 rendered, 0 could be, 79 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -10,9 +10,8 @@ The wiki's keys and tags in its group "children", and whether Lane Studio draws 
 | [`capacity:baby=*`](https://wiki.openstreetmap.org/wiki/Key:capacity:baby) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`capacity:pregnant=*`](https://wiki.openstreetmap.org/wiki/Key:capacity:pregnant) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`clothes=women;men;children`](https://wiki.openstreetmap.org/wiki/Tag:clothes=women;men;children) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`drink:babyccino=*`](https://wiki.openstreetmap.org/wiki/Key:drink:babyccino) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`drink:babyccino=*`](https://wiki.openstreetmap.org/wiki/Key:drink:babyccino) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`drink:babyccino=yes`](https://wiki.openstreetmap.org/wiki/Tag:drink:babyccino=yes) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`kids_area=*`](https://wiki.openstreetmap.org/wiki/Key:kids_area) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`leisure=summer_camp`](https://wiki.openstreetmap.org/wiki/Tag:leisure=summer_camp) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`min_age=0`](https://wiki.openstreetmap.org/wiki/Tag:min_age=0) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`playground=activitypanel`](https://wiki.openstreetmap.org/wiki/Tag:playground=activitypanel) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

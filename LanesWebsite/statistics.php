@@ -43,19 +43,19 @@ require __DIR__ . '/includes/head.php';
 </section>
 
 <?php if (!$stats): ?>
-  <section class="section-bordered">
+  <section>
     <div class="section-inner">
-      <div class="alert" data-theme="orange" role="note">
+      <div class="alert" role="note">
         The statistics appear here once the collector has run on the server.
       </div>
     </div>
   </section>
 <?php else: $t = $stats['totals']; ?>
 
-  <section class="section-bordered stats-section">
+  <section class="stats-section">
     <div class="section-inner">
       <?php if ($stats['catching_up']): ?>
-        <div class="alert" data-theme="orange" role="note">
+        <div class="alert" role="note">
           Still reading the history: these figures cover changesets up to
           <?= e(gmdate('j F Y, H:i', strtotime($stats['up_to']))) ?> UTC.
         </div>
@@ -95,7 +95,7 @@ require __DIR__ . '/includes/head.php';
     </div>
   </section>
 
-  <section class="section-bordered stats-section">
+  <section class="stats-section">
     <div class="section-inner">
       <div class="section-head">
         <h2>When</h2>
@@ -128,7 +128,7 @@ require __DIR__ . '/includes/head.php';
     </div>
   </section>
 
-  <section class="section-bordered stats-section">
+  <section class="stats-section">
     <div class="section-inner">
       <div class="stats-columns">
         <div class="stats-card">
@@ -136,15 +136,15 @@ require __DIR__ . '/includes/head.php';
           <p class="stats-card-sub">How many objects had each key added, changed or removed.</p>
           <?php stats_bars(array_map(fn ($tag) => [
               '<code>' . e($tag['key']) . '</code>', $tag['objects'], stats_n($tag['objects']),
-          ], $stats['tags'])); ?>
+          ], $stats['tags']), 'None yet.', 5); ?>
         </div>
 
         <div class="stats-card">
           <h2 class="stats-card-title">Versions</h2>
-          <p class="stats-card-sub">Changesets by the version of Lane Studio that saved them.</p>
+          <p class="stats-card-sub">Changesets by the day's version of Lane Studio that saved them.</p>
           <?php stats_bars(array_map(fn ($v) => [
               'v' . e($v['version']), $v['changesets'], stats_n($v['changesets']),
-          ], array_slice($stats['versions'], 0, 10))); ?>
+          ], $stats['versions']), 'None yet.', 5); ?>
         </div>
       </div>
     </div>
@@ -163,6 +163,8 @@ require __DIR__ . '/includes/head.php';
             removed.</li>
           <li><strong>Km of road edited</strong> is the length of the roads (<code>highway=*</code> from
             motorway to service road, not paths) a changeset created or changed.</li>
+          <li><strong>Versions</strong> are counted by day: a day's later versions (<code>26.10.24r2</code>,
+            <code>26.10.24r3</code>) count with its first, <code>26.10.24</code>.</li>
           <li>Changesets wider than 50 km count in the figures but are left off the map.</li>
           <li>Usernames and changesets are public on OpenStreetMap. To be left off the leaderboard, use the
             <a href="<?= e($site['contact']) ?>">contact form</a>.</li>
