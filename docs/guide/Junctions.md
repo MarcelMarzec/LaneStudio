@@ -39,7 +39,8 @@ Junctions are drawing only: nothing here writes tags.
   branch. There is no junction box: each branch starts on the end of the lanes it carries on from, edge to edge, and
   its lane lines and kerbs run in straight lines to its own lanes (over 15 m, or more the further they move, at most
   the branch's length). Roads joining there end on the lanes they merge into the same way. A [`placement`](https://wiki.openstreetmap.org/wiki/Key:placement) other than `transition` keeps a branch where it is mapped.
-- **Junction boxes** are a shade lighter than the road, with curved kerbs from road to road. Where no traffic crosses
+- **Junction boxes** are a shade lighter than the road, with curved kerbs from road to road. Two roads parting at a
+  sharp angle, whose kerbs would only meet past the node, get a straight kerb between them. Where no traffic crosses
   the main road (roundabouts, slip roads) the box is only the widening mouth. At a bend, both halves meet on the
   bisector.
 - **Guide lines** (dashed) carry each lane through the box to the lanes it leads to; with a road selected, its

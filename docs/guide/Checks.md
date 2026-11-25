@@ -5,7 +5,7 @@ is certain.
 
 | Check | Fix |
 | --- | --- |
-| A `*:lanes` tag with more or fewer values than lanes | — |
+| A `*:lanes` tag with more or fewer values than lanes (not where the extra values are the cycle lanes `cycleway:lanes=lane` marks) | — |
 | `lanes:forward` + `lanes:backward` + [`lanes:both_ways`](https://wiki.openstreetmap.org/wiki/Key:lanes:both_ways) not adding up to [`lanes`](https://wiki.openstreetmap.org/wiki/Key:lanes) | — |
 | An odd `lanes` on a two-way road with no direction counts | — |
 | A key tagged with and without a direction | — |

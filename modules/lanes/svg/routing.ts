@@ -2,7 +2,7 @@ import type { Vec2 } from '../../geo/vector';
 import type { osmNode } from '../../osm/node';
 import type { osmWay } from '../../osm/way';
 import { laneRouting, routeColours, routesFor, type RoutingFocus } from '../core/lane_routing';
-import { pointAlong, pointInPolygon, polylineLength } from '../geometry/frame';
+import { pointAlong, pointInPolygon, polylineLength, slicePolyline } from '../geometry/frame';
 import type { LaneRun, Route } from '../geometry/routing';
 import { junctionRules, type RoadPiece } from '../geometry/road_geometry';
 import type { LaneRef } from '../model';
@@ -118,20 +118,77 @@ const direction = (line: Vec2[], atEnd: boolean): Vec2 => {
     return [(q[0] - p[0]) / d, (q[1] - p[1]) / d];
 };
 
-/** A whole route on screen: its runs, joined through each junction by a curve from lane to lane */
-function routeLine(route: Route, graph: iD.Graph, piecesByWay: Map<string, RoadPiece[]>, project: (loc: Vec2) => Vec2): Vec2[] {
+/**
+ * Where a route's line goes on from `end` (travelling along `tangent`) into `line`. Where the next road's lanes begin
+ * behind the lane driven in by (a slip lane joining a road beyond the road's own node, a link starting at the node
+ * before the approach lane ends), the line joins the road further on, within a few lane widths of its start: at the
+ * first point a turn reaches without doubling back, and on a turn, on to where it rounds evenly, so it curves into
+ * the road as driven rather than looping back.
+ */
+export function joinInto(end: Vec2, tangent: Vec2, line: Vec2[]): Vec2[] {
+    const total = polylineLength(line);
+    const reach = Math.min(total / 2, Math.hypot(line[0][0] - end[0], line[0][1] - end[1]) * 2.5);
+    const steps = 24;
+    let found = -1;
+    for (let i = 0; i <= steps; i++) {
+        const s = reach * i / steps;
+        const { point, direction: along } = pointAlong(line, s);
+        const d: Vec2 = [point[0] - end[0], point[1] - end[1]];
+        const cross = tangent[0] * along[1] - tangent[1] * along[0];
+        // (a U-turn bends round however its ends lie)
+        if (tangent[0] * along[0] + tangent[1] * along[1] < -0.7) return i ? slicePolyline(line, s, total) : line;
+        if (Math.abs(cross) <= 0.1) {
+            // straight on, or a step sideways: not behind the lane left
+            if (d[0] * tangent[0] + d[1] * tangent[1] >= 0) return i ? slicePolyline(line, s, total) : line;
+            continue;
+        }
+        // a turn: the two directions of travel meet ahead of the lane left and before the lane joined
+        const ahead = (d[0] * along[1] - d[1] * along[0]) / cross;
+        const behind = (tangent[0] * d[1] - tangent[1] * d[0]) / cross;
+        if (ahead < 0 || behind < 0) {
+            if (found >= 0) break;
+            continue;
+        }
+        if (!i) return line;
+        found = i;
+        if (behind >= ahead) break;
+    }
+    return found > 0 ? slicePolyline(line, reach * found / steps, total) : line;
+}
+
+/** Whether a run is only along short links inside a junction (drawn as guide lines, not as a road) */
+function insideJunction(run: LaneRun, graph: iD.Graph, piecesByWay: Map<string, RoadPiece[]>, inner: Set<RoadPiece>): boolean {
+    const way = graph.hasEntity(run.wayID) as osmWay | undefined;
+    if (!way) return false;
+    const [lo, hi] = run.from < run.to ? [run.from, run.to] : [run.to, run.from];
+    const within = (piecesByWay.get(run.wayID) ?? []).filter(piece => {
+        const [start, end] = pieceSpan(piece, way);
+        return start >= lo && end <= hi && start >= 0 && end >= 0;
+    });
+    return within.length > 0 && within.every(piece => inner.has(piece));
+}
+
+/**
+ * A whole route on screen: its runs, joined through each junction by a curve from lane to lane. A run only along
+ * a junction's inner links (between the two halves of a dual carriageway) is left out, so the curve goes straight
+ * from the lane driven in by to the lane driven out by, as the turn is driven, not via the links' middle.
+ */
+function routeLine(route: Route, graph: iD.Graph, piecesByWay: Map<string, RoadPiece[]>, project: (loc: Vec2) => Vec2,
+    inner: Set<RoadPiece>): Vec2[] {
     const out: Vec2[] = [];
-    for (const run of route.runs) {
-        const line = runLine(run, graph, piecesByWay, project);
-        if (line.length < 2) continue;
+    route.runs.forEach((run, i) => {
+        if (i > 0 && i < route.runs.length - 1 && insideJunction(run, graph, piecesByWay, inner)) return;
+        let line = runLine(run, graph, piecesByWay, project);
+        if (line.length < 2) return;
         if (out.length >= 2) {
+            line = joinInto(out[out.length - 1], direction(out, true), line);
             const join = junctionRules.curve(
                 { point: out[out.length - 1], tangent: direction(out, true) },
                 { point: line[0], tangent: direction(line, false) });
             out.push(...join.slice(1, -1));
         }
         out.push(...line);
-    }
+    });
     return out;
 }
 
@@ -162,7 +219,8 @@ interface Shape {
  * at their ends as in the panel, the lanes leading into it dashed, ways the vehicle may not take as red stubs;
  * or the paths someone walking can reach, dotted, with the crossings they use.
  */
-export function drawRoutes(group: Group, context: iD.Context, pieces: RoadPiece[], project: (loc: Vec2) => Vec2) {
+export function drawRoutes(group: Group, context: iD.Context, pieces: RoadPiece[], project: (loc: Vec2) => Vec2,
+    inner: Set<RoadPiece> = new Set()) {
     const routing = laneRouting(context);
     const graph = context.graph();
     const found = routing.active() ? routesFor(graph, routing.focus(), routing.profile()) : null;
@@ -175,7 +233,7 @@ export function drawRoutes(group: Group, context: iD.Context, pieces: RoadPiece[
         for (const list of piecesByWay.values()) list.sort((a, b) => a.index - b.index);
 
         const { result } = found;
-        const lines = result.routes.map(route => routeLine(route, graph, piecesByWay, project));
+        const lines = result.routes.map(route => routeLine(route, graph, piecesByWay, project, inner));
         // the lanes leading in, dashed, ending where the lane starts
         result.incoming.forEach((route, i) => {
             const line = runLine(route.runs[0], graph, piecesByWay, project);

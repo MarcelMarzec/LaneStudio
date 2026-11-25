@@ -581,8 +581,9 @@ en:
     none: This lane leads nowhere here.
     into: "Into {road}"
     into_via: "Into {road}, past the via ways"
-    worked_out: Worked out from the turn arrows and lane counts. Connecting or disconnecting a lane writes a relation.
+    worked_out: Worked out from the turn arrows, lane counts and turn restrictions. Connecting or disconnecting a lane writes a relation.
     declared_by: "Declared by relation r{id}: connectivity={value}"
+    declared_new: "Declared by a relation you added in this edit, not saved yet: connectivity={value}. Undo takes it away."
     conditional: "At times it changes: connectivity:conditional={value}"
     pair: "{from} → {to}"
     lane_change: Lane change

@@ -290,3 +290,36 @@ describe('one-way exceptions and motorroads', () => {
         expect(firstRoads(motorroad, 0, 'car')).toContain('w2');
     });
 });
+
+describe('routes across the link between the halves of a dual carriageway', () => {
+    // Marie-Curie-Straße at Altenhöferallee, Frankfurt (right-hand traffic): the northbound half (w1) reaches n100, the
+    // link (w2, 9 m, `left|through` for the traffic driving straight into it from Lurgiallee, w7) runs west to n200, and
+    // Altenhöferallee (w3) carries on west; the southbound half runs w5 into n200 and w4 on south
+    const fm = 1 / 111320;
+    const fmx = fm / Math.cos(50.17 * Math.PI / 180);
+    const de = (dx: number, dy: number): [number, number] => [8.636 + dx * fmx, 50.17 + dy * fm];
+    const graph = graphOf([
+        new iD.osmNode({ id: 'n1', loc: de(0, -100) }), new iD.osmNode({ id: 'n100', loc: de(0, 0) }), new iD.osmNode({ id: 'n6', loc: de(0, 100) }),
+        new iD.osmNode({ id: 'n7', loc: de(100, 0) }), new iD.osmNode({ id: 'n200', loc: de(-9, 0) }), new iD.osmNode({ id: 'n3', loc: de(-100, 0) }),
+        new iD.osmNode({ id: 'n5', loc: de(-9, 100) }), new iD.osmNode({ id: 'n4', loc: de(-9, -100) }),
+        new iD.osmWay({ id: 'w1', nodes: ['n1', 'n100'], tags: { highway: 'primary', oneway: 'yes', lanes: '3', 'turn:lanes': 'left|through|through' } }),
+        new iD.osmWay({ id: 'w6', nodes: ['n100', 'n6'], tags: { highway: 'primary', oneway: 'yes', lanes: '2' } }),
+        new iD.osmWay({ id: 'w7', nodes: ['n7', 'n100'], tags: { highway: 'tertiary', oneway: 'yes', lanes: '2', 'turn:lanes': 'left|through' } }),
+        new iD.osmWay({ id: 'w2', nodes: ['n100', 'n200'], tags: { highway: 'tertiary', oneway: 'yes', lanes: '2', 'turn:lanes': 'left|through' } }),
+        new iD.osmWay({ id: 'w3', nodes: ['n200', 'n3'], tags: { highway: 'tertiary', oneway: 'yes', lanes: '2' } }),
+        new iD.osmWay({ id: 'w5', nodes: ['n5', 'n200'], tags: { highway: 'primary', oneway: 'yes', lanes: '2' } }),
+        new iD.osmWay({ id: 'w4', nodes: ['n200', 'n4'], tags: { highway: 'primary', oneway: 'yes', lanes: '2' } })
+    ]);
+    const roads = (wayID: string, lane: number) => vehicleRoutes(graph, wayID as `w${number}`, { direction: 'forward', index: lane }, 0, 1)
+        .routes.map(r => r.moves.slice(0, 2).map(move => move.toWayID).join('>'));
+
+    it('carries a car that turned into the link on across it, whatever the link\'s arrows say', () => {
+        // (the link's `left` is for traffic from Lurgiallee; turned into it, the left lane goes on into Altenhöferallee)
+        expect(roads('w1', 0)).toContain('w2>w3');
+        expect(roads('w1', 0)).not.toContain('w2>w4');
+    });
+
+    it('still follows the link\'s arrows for traffic driving straight into it', () => {
+        expect(roads('w7', 0)).toContain('w2>w4');
+    });
+});

@@ -122,9 +122,11 @@ export function connectivityPanel(context: iD.Context) {
             title.append('span').attr('class', 'connectivity-road')
                 .text(t(first.viaWays ? '_lanes.connectivity.into_via' : '_lanes.connectivity.into', { road: roadName(first.to.wayID) }));
             const relation = first.relationID ? graph.hasEntity(first.relationID) as osmRelation | undefined : undefined;
-            group.append('p').attr('class', 'routing-hint connectivity-source').text(relation
-                ? t('_lanes.connectivity.declared_by', { id: relation.id.slice(1), value: relation.tags.connectivity ?? '' })
-                : t('_lanes.connectivity.worked_out'));
+            // (a relation added in this edit, by clicking a lane, is said to be new and not saved, so it is not taken for
+            // one already on the map)
+            group.append('p').attr('class', 'routing-hint connectivity-source').text(!relation ? t('_lanes.connectivity.worked_out')
+                : relation.isNew() ? t('_lanes.connectivity.declared_new', { value: relation.tags.connectivity ?? '' })
+                    : t('_lanes.connectivity.declared_by', { id: relation.id.slice(1), value: relation.tags.connectivity ?? '' }));
             if (relation?.tags['connectivity:conditional']) {
                 group.append('p').attr('class', 'routing-hint').text(t('_lanes.connectivity.conditional', { value: relation.tags['connectivity:conditional'] }));
             }

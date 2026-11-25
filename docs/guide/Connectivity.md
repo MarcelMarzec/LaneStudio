@@ -19,10 +19,11 @@ then leaves.
 
 ## Connecting lanes
 
-1. Click a lane to pick it. The lanes it can lead into are outlined, numbered; those it leads into now are filled in
-   the connection's colour.
+1. Click a lane to pick it. The lanes it can lead into are outlined, numbered (not roads a turn restriction bans from
+   it); those it leads into now are filled in the connection's colour.
 2. Click an outlined lane to connect into it; click a filled one to disconnect it. **Shift-click** connects (or
-   disconnects) it as needing a lane change.
+   disconnects) it as needing a lane change. Each writes a relation: the panel says when it is one you added and
+   haven't saved, which Undo takes away.
 3. Click another lane on a road it can't reach to pick that lane instead; click the picked lane, or press Esc, to let go.
 
 Each click is one undo step. The panel lists the picked lane's connections road by road, each with **Lane change**

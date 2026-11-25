@@ -293,9 +293,10 @@ function junctionOf(graph: coreGraph, nodeID: string): Junction {
  * Where a lane arriving at a junction on arm `i` can go: into which roads and lanes. A lane connection
  * (type=connectivity) says exactly; otherwise the lane's turn arrows pick the roads, and unmarked lanes may
  * turn to the side they are on (left turns from the left half of the road, right from the right) or go ahead.
- * Lanes entering a roundabout all join it; the ring's lanes may go round or leave from its outer side.
+ * Lanes entering a roundabout all join it; the ring's lanes may go round or leave from its outer side. With
+ * `onlyAhead`, lanes with arrows go straight on, whatever the arrows say.
  */
-function lanesOn(junction: Junction, i: number, graph: coreGraph, profileID: RoutingProfile): Map<number, Move[]>[] {
+function lanesOn(junction: Junction, i: number, graph: coreGraph, profileID: RoutingProfile, onlyAhead = false): Map<number, Move[]>[] {
     const { arms, through, ring, node } = junction;
     const up = arms[i];
     const upDirection = junctionRules.armLaneDirection(up, true);
@@ -324,7 +325,8 @@ function lanesOn(junction: Junction, i: number, graph: coreGraph, profileID: Rou
     }
 
     // which roads each lane may turn into
-    const turns = up.arrows;
+    // (a link's arrows set aside: they are for the traffic driving straight into it)
+    const turns = onlyAhead && up.arrows.some(t => t.length) ? up.arrows.map(() => ['through']) : up.arrows;
     const anyTagged = turns.some(t => t.length);
     const n = upLanes.length;
     const ringTurns = onRing(i) && anyTagged ? ringArrowExits(turns, exits) : null;
@@ -342,14 +344,8 @@ function lanesOn(junction: Junction, i: number, graph: coreGraph, profileID: Rou
             }
         } else if (turns[lane].length) {
             for (const value of turns[lane]) {
-                const ideal = junctionRules.idealAngle[value];
-                if (ideal === undefined) continue;
-                let best: { j: number; d: number } | null = null;
-                for (const x of exits) {
-                    const d = Math.abs(((x.angle - ideal + 540) % 360) - 180);
-                    if (!best || d < best.d) best = { j: x.j, d };
-                }
-                if (best && best.d < 70) result.add(best.j);
+                const j = junctionRules.exitForArrow(exits, value);
+                if (j >= 0) result.add(j);
             }
             // arrows only for turns banned here (for this vehicle) are for a junction further on: the lane
             // carries on ahead too, and the banned turns stay to be shown as not allowed
@@ -567,6 +563,8 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
          * carriageway) is held to it when every road it may have come from is
          */
         feeders: string[][];
+        /** the run was turned into (not driven straight on into) */
+        turnedIn?: boolean;
     }
 
     const finish = (s: State, run: LaneRun, end: Route['end']) => {
@@ -624,6 +622,9 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
         return went;
     };
 
+    // turned into a link too short to change lanes on, at a junction it carries on across (see lanesOn's onlyAhead)
+    const acrossLink = (s: State, short: boolean, j: Junction) => !!s.turnedIn && short && s.runs.length > 0 && j.arms.length > 2;
+
     const explore = (s: State) => {
         if (routes.length >= limit.routes) return;
         const stop = s.runs.length === 0 ? to : nextStop(graph, s.way, s.from, s.step);
@@ -638,12 +639,15 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
         const j = junction(s.way.nodes[stop]);
         const i = arrivalArm(j.arms, s.way.id, stop, s.step);
         if (i < 0) return finish(here, run, 'dead_end');
-        const options = lanesOn(j, i, graph, profileID);
         const upWay = j.arms[i].way;
         // keeping to its lane at the first junction, and along a link too short to change lanes on (the stretch
         // between the two halves of a dual carriageway crossroads); after that, any lane of the road it is on
         // (round a roundabout, mapped as short ways, the lane to leave from is chosen by the exit: see ringArrows)
         const short = length - s.length < laneChangeRoom && !junctionRules.isRing(s.way);
+        // turned into such a link (left from one half of a dual carriageway onto the road crossing it), the vehicle
+        // carries on across: the link's arrows are for the traffic driving straight into it (with none, its lanes
+        // may still turn, as through a gap in the central reservation)
+        const options = lanesOn(j, i, graph, profileID, acrossLink(s, short, j));
         const lanes = s.strict || short ? [s.enter.index] : options.map((_, lane) => lane)
             .filter(lane => !laneClosed(j.arms[i].layout, { direction: s.enter.direction, index: lane }, upWay.tags, profile));
         // one way on per road reached, from the lane nearest the one driven in
@@ -724,7 +728,8 @@ export function vehicleRoutes(graph: coreGraph, wayID: WayId, ref: LaneRef, from
                     way: down.way, from: down.nodeIndex, step: nextStep,
                     enter: { direction: downDirection, index: entry }, strict: false,
                     runs: [...s.runs, { ...run, leave: { direction: s.enter.direction, index: lane } }],
-                    moves, length: length + 3, visited: new Set([...s.visited, key]), ringExits, ringArrows, feeders
+                    moves, length: length + 3, visited: new Set([...s.visited, key]), ringExits, ringArrows, feeders,
+                    turnedIn: Math.abs(move.angle) > 35
                 });
             }
         }

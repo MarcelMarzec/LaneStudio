@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { metricFrame } from '../../../../modules/lanes/geometry/frame';
+import { metricFrame, pointInPolygon } from '../../../../modules/lanes/geometry/frame';
 import { laneLayout } from '../../../../modules/lanes/geometry/layout';
 import { roadGeometry, type RoadPiece } from '../../../../modules/lanes/geometry/road_geometry';
 
@@ -255,3 +255,40 @@ describe('Hitchin Road, Luton', () => {
 });
 
 export type { RoadPiece };
+
+describe('roads parting at a sharp angle, as mapped in Frankfurt', () => {
+    const frankfurt = place(8.7426, 50.1584);
+
+    it('fills the junction between a road coming in and a link leaving beside it, with no wedge cut out', () => {
+        // Vilbeler Landstraße at n32619710: the B 521 comes in from the north-east (w1), its link leaves east (w3), 57° apart,
+        // their kerbs only meeting past the node, inside Vilbeler Landstraße (w2 north-west, w4 south-east)
+        const { node, way, draw } = frankfurt;
+        const { geometry, frame } = draw([
+            node('n0', 0, 0), node('n11', 56.2, 34.9), node('n12', 33.4, 22.9), node('n13', 22.1, 16.4), node('n14', 15.2, 11.9),
+            node('n23', -4.4, 4.0), node('n21', -12.4, 10.7), node('n22', -40.9, 35.3), node('n31', 6.3, -2.2), node('n34', 12.3, -2.8), node('n32', 16.5, -1.4), node('n35', 20.3, 0.9), node('n33', 32.6, 12.6),
+            node('n41', 33.8, -30.2), node('n42', 20.2, -17.8),
+            way('w1', ['n11', 'n12', 'n13', 'n14', 'n0'], { highway: 'primary', oneway: 'yes', lanes: '2', 'turn:lanes': 'left|right' }),
+            way('w2', ['n0', 'n23', 'n21', 'n22'], { highway: 'primary', lanes: '3', 'lanes:backward': '2', 'lanes:forward': '1' }),
+            way('w3', ['n0', 'n31', 'n34', 'n32', 'n35', 'n33'], { highway: 'primary', oneway: 'yes', lanes: '1' }),
+            way('w4', ['n41', 'n42', 'n0'], { highway: 'secondary', lanes: '2' })
+        ]);
+        const box = geometry.junctions.find(j => j.nodeID === 'n0');
+        expect(box).toBeDefined();
+        // between the two roads' mouths, just on the junction's side of them
+        const between = frame.toLoc([9.5, -1.5]) as V;
+        expect(box!.polygons.some(polygon => pointInPolygon(between, polygon as V[]))).toBe(true);
+    });
+
+    it('carries the outer cycle lane on round into a slip road parting off, but not on along the same road', () => {
+        // Altenhöferallee at n1861604579: the slip to Heddernheim (w3) parts off the outer lanes nearly straight, its cycle
+        // lane carrying on the one along the outside of Altenhöferallee (w1); Altenhöferallee itself (w2) carries on
+        const { node, way, draw } = frankfurt;
+        const { geometry } = draw([
+            node('n1', 0, -100), node('n0', 0, 0), node('n2', -4, 100), node('n3', 4, 30), node('n4', 30, 100),
+            way('w1', ['n1', 'n0'], { highway: 'tertiary', oneway: 'yes', lanes: '3', name: 'Altenhöferallee', 'cycleway:right': 'lane' }),
+            way('w2', ['n0', 'n2'], { highway: 'tertiary', oneway: 'yes', lanes: '2', name: 'Altenhöferallee', 'cycleway:right': 'lane' }),
+            way('w3', ['n0', 'n3', 'n4'], { highway: 'tertiary_link', oneway: 'yes', lanes: '1', 'cycleway:right': 'lane' })
+        ]);
+        expect(geometry.cycleLinks.map(link => link.key)).toEqual([expect.stringMatching(/^n0-w1-\d+-w3-\d+$/)]);
+    });
+});

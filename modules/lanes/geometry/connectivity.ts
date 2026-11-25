@@ -299,6 +299,9 @@ export function linkTargets(pieces: RoadPiece[], graph: coreGraph, from: LaneSpo
                 : [lane.ref.direction === 'forward' ? piece.fromNode : piece.toNode];
             const nodeID = arrivals.find(id => leaves.includes(id)) as NodeId | undefined;
             if (!nodeID) continue;
+            // (not into a road a turn restriction bans from here, as only_straight_on on w253670825, Frankfurt)
+            const into = graph.hasEntity(piece.wayID as WayId) as osmWay | undefined;
+            if (!into || restrictionAt(graph, way, nodeID, into, 'car')) continue;
             const spot = spotOf(piece, lane.ref);
             const key = `${piece.wayID}-${spot.from}-${spot.to}-${lane.ref.direction}${lane.ref.index}`;
             if (seen.has(key)) continue;

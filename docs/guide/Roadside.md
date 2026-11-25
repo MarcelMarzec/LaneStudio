@@ -43,6 +43,10 @@ A pavement mapped separately beside the road offers **Set to mapped separately**
 | `share_busway` | Cycle symbols in the bus lane |
 | `cycleway:<side>:width` | Its width (lane 1.5 m, track 2 m until tagged) |
 
+Where a slip road parts off the outer lanes at a slight angle and carries a cycle lane on along the same kerb, the
+cycle lane is drawn round across the junction from one road into the other. It is not drawn through an ordinary turn
+or on along the same road (by `name` or `ref`) across a crossroads.
+
 Each side's details fold under the Cycleway field:
 
 | Detail | Tag | Drawn |

@@ -85,6 +85,20 @@ function maxSlots(groups: Map<string, KeyGroup>, variant: Variant): number | und
 }
 
 
+/**
+ * A `*:lanes` value's slots for the lanes `lanes` counts, where it has a slot for each cycle lane too (wiki: Lanes:
+ * `lanes` counts motor traffic's lanes only, while `*:lanes` tags may include the cycle lanes between them, which
+ * `cycleway:lanes=lane` marks, as Altenhöferallee, Frankfurt, w175591297, `turn:lanes:backward` with six values for
+ * four lanes and two cycle lanes): the slots with the cycle lanes' left out, or null where they don't account for the
+ * difference
+ */
+function withoutCycleLanes(groups: Map<string, KeyGroup>, variant: Variant, slots: string[], count: number): string[] | null {
+    const cycle = groups.get('cycleway:lanes')?.variants[variant]?.slots;
+    if (!cycle || cycle.length !== slots.length) return null;
+    const motor = slots.filter((_, i) => cycle[i] !== 'lane');
+    return motor.length === count && motor.length < slots.length ? motor : null;
+}
+
 /** Works out how many lanes each direction has, and how sure we are */
 function laneCounts(tags: Tags, oneway: LaneOneway, groups: Map<string, KeyGroup>, issues: LaneIssue[]) {
     const counts: Record<LaneDirection, number> = { forward: 0, backward: 0, both_ways: 0 };
@@ -245,7 +259,9 @@ export function parseLanes(tags: Tags, options: ParseLanesOptions = {}): LaneMod
                 continue;
             }
             if (v.slots.length !== counts[oneway]) {
-                issues.push({ code: 'count_mismatch', key: id, direction: oneway, expected: counts[oneway], actual: v.slots.length });
+                const motor = withoutCycleLanes(groups, variants.all ? 'all' : oneway, v.slots, counts[oneway]);
+                if (motor) lanes[oneway].forEach((lane, i) => lane.values[id] = motor[i]);
+                else issues.push({ code: 'count_mismatch', key: id, direction: oneway, expected: counts[oneway], actual: v.slots.length });
                 key.readonly = true;
                 continue;
             }
@@ -259,8 +275,16 @@ export function parseLanes(tags: Tags, options: ParseLanesOptions = {}): LaneMod
             }
             const mismatched = laneDirections.filter(d => variants[d] && variants[d]!.slots.length !== counts[d]);
             if (mismatched.length) {
+                const motor = new Map(mismatched.map(d => [d, withoutCycleLanes(groups, d, variants[d]!.slots, counts[d])]));
                 for (const d of mismatched) {
-                    issues.push({ code: 'count_mismatch', key: id, direction: d, expected: counts[d], actual: variants[d]!.slots.length });
+                    if (!motor.get(d)) issues.push({ code: 'count_mismatch', key: id, direction: d, expected: counts[d], actual: variants[d]!.slots.length });
+                }
+                // (values counting cycle lanes the lane count leaves out are read onto the motor lanes, kept as tagged)
+                if ([...motor.values()].every(Boolean)) {
+                    for (const d of laneDirections) {
+                        const slots = motor.get(d) ?? variants[d]?.slots;
+                        if (slots) lanes[d].forEach((lane, i) => lane.values[id] = slots[i]);
+                    }
                 }
                 key.readonly = true;
                 continue;

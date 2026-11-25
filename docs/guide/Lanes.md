@@ -39,6 +39,12 @@ Two lanes, one each way (a one-way road: one). One lane shared both ways on a tr
 alley, drive-through, fuel station lane or emergency access road ([`service=*`](https://wiki.openstreetmap.org/wiki/Key:service)), or a service road tagged
 `narrow=yes` or narrower than 4.5 m.
 
+## Values counting cycle lanes
+
+`lanes` counts motor traffic's lanes only. A `*:lanes` tag with a value for each cycle lane too (marked
+`cycleway:lanes=lane`, as the [Lanes](https://wiki.openstreetmap.org/wiki/Lanes) page allows) is read onto the lanes
+past the cycle lanes, and kept as tagged.
+
 ## Lane types
 
 | Drawn as | When |

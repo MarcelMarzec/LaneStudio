@@ -60,7 +60,9 @@ export interface RoadPiece {
     /** where lane labels go, one per lane in the middle of the piece */
     labels: LaneMark[];
     roadside: { side: 'left' | 'right'; kind: RoadsideKind; assumed: boolean; polygon: Vec2[]; parking?: ParkingLayout;
-        cycle?: CycleDetail; surface?: SurfaceGroup; kerb?: string }[];
+        cycle?: CycleDetail; surface?: SurfaceGroup; kerb?: string;
+        /** how many of `polygon`'s points are its edge nearer the lanes (in the way's direction); the rest are its outer edge, back */
+        split?: number }[];
     /** metres */
     length: number;
     /** whether this piece starts at the way's first node / ends at its last node */
@@ -681,16 +683,37 @@ function turnMatches(value: string, angle: number): boolean {
 
 /** The road an arrow `value` on arm `up` points to (by the turn angle), or -1 if it points to none of them */
 function arrowExit(arms: Arm[], up: Arm, value: string): number {
+    const exits = arms.flatMap((down, j) => (down === up || !down.layout.model.lanes[armLaneDirection(down, false)].length ? []
+        : [{ j, angle: signedAngle(scale(up.direction, -1), down.direction) }]));
+    return exitForArrow(exits, value);
+}
+
+/**
+ * The road a turn arrow points to, among the roads leaving (`exits`, by their angle from straight on, left positive):
+ * the nearest within 70° of the arrow's own angle; else, for a turn to one side, the road leaving furthest to that
+ * side where another leaves straighter (a slip road parting at a shallow angle, as the A 661's right lane into the
+ * `turn:lanes=right` slip at n1596102541, Frankfurt); else none (an arrow for a junction further on). -1 for none.
+ */
+function exitForArrow(exits: { j: number; angle: number }[], value: string): number {
     const ideal = idealAngle[value];
     if (ideal === undefined) return -1;
-    let best = { j: -1, d: Infinity };
-    arms.forEach((down, j) => {
-        if (down === up || !down.layout.model.lanes[armLaneDirection(down, false)].length) return;
-        const angle = signedAngle(scale(up.direction, -1), down.direction);
-        const d = Math.abs(((angle - ideal + 540) % 360) - 180);
-        if (d < best.d) best = { j, d };
-    });
-    return best.d < 70 ? best.j : -1;
+    const off = (x: { angle: number }) => Math.abs(((x.angle - ideal + 540) % 360) - 180);
+    const near = exits.filter(x => off(x) < 70).sort((a, b) => off(a) - off(b));
+    if (near.length) {
+        // a turn sharper than 120° (almost back the way it came) only where no ordinary turn that way is near enough:
+        // a `left` arrow leads into the road leaving 35° left rather than the hairpin 136° left (Frankfurt, w254636218)
+        if (Math.abs(ideal) < 120 && Math.abs(near[0].angle) > 120) {
+            const ordinary = near.find(x => Math.abs(x.angle) <= 120 && Math.sign(x.angle) === Math.sign(near[0].angle));
+            if (ordinary) return ordinary.j;
+        }
+        return near[0].j;
+    }
+    const side = Math.sign(ideal);
+    if (!side || Math.abs(ideal) >= 180) return -1;
+    const onSide = exits.filter(x => x.angle * side > 10 && Math.abs(x.angle) < 150);
+    if (!onSide.length) return -1;
+    const furthest = onSide.reduce((a, x) => (x.angle * side > a.angle * side ? x : a));
+    return exits.some(x => x.angle * side < furthest.angle * side - 5) ? furthest.j : -1;
 }
 
 // a link no longer than this, between two junctions, has no room for arrows or lane changes of its own
@@ -1431,7 +1454,7 @@ function laneEnd(arm: Arm, trim: number, direction: LaneDirection, index: number
 /**
  * A line through a junction from one lane end to another. A turn bends round the corner where
  * the two directions of travel meet (a quadratic curve), so tight inner corners do not loop;
- * a lane shifting sideways, where they do not meet ahead, takes a gentle S-curve.
+ * a lane shifting sideways, where they do not meet ahead, takes a gentle S-curve, and a U-turn a half circle.
  */
 function curve(a: { point: Vec2; tangent: Vec2 }, b: { point: Vec2; tangent: Vec2 }): Vec2[] {
     const cross = a.tangent[0] * b.tangent[1] - a.tangent[1] * b.tangent[0];
@@ -1452,7 +1475,9 @@ function curve(a: { point: Vec2; tangent: Vec2 }, b: { point: Vec2; tangent: Vec
         }
     }
     const chord = len(sub(b.point, a.point));
-    const c = Math.max(1.5, chord * 0.4);
+    // (a U-turn, the two directions opposite, bulges round as a half circle rather than flat across)
+    const opposite = a.tangent[0] * b.tangent[0] + a.tangent[1] * b.tangent[1] < -0.7;
+    const c = Math.max(1.5, chord * (opposite ? 0.67 : 0.4));
     const p1 = add(a.point, scale(a.tangent, c));
     const p2 = sub(b.point, scale(b.tangent, c));
     const points: Vec2[] = [];
@@ -1517,14 +1542,8 @@ function laneExits(arms: Arm[], i: number, through: [number, number] | null, ban
             return result;
         }
         for (const value of (values.length ? values : ['through'])) {
-            const ideal = idealAngle[value];
-            if (ideal === undefined) continue;
-            let best: { j: number; d: number } | null = null;
-            for (const x of exits) {
-                const d = Math.abs(((x.angle - ideal + 540) % 360) - 180);
-                if (!best || d < best.d) best = { j: x.j, d };
-            }
-            if (best && best.d < 70) result.add(best.j);
+            const j = exitForArrow(exits, value);
+            if (j >= 0) result.add(j);
         }
         return result;
     });
@@ -1882,12 +1901,6 @@ function junctionConnections(node: osmNode, graph: coreGraph, arms: Arm[], trims
 
 
 /**
- * The edge of a junction box between the left kerb of one road (ending at `from`, running
- * `fromDirection` away from the node) and the right kerb of the next (ending at `to`): a curve bending
- * round the point where the two kerbs would meet, as a kerb rounds a corner; a straight line when they
- * do not meet on the junction's side, or only far away (very sharp angles).
- */
-/**
  * The kerb where a roundabout's outer lanes run on into an exit: from the end of the ring's road (`from`, its
  * direction pointing back along the ring) sweeping on in the direction of travel into the exit's kerb (`to`)
  */
@@ -1934,6 +1947,12 @@ function quadraticCurve(from: Vec2, control: Vec2, to: Vec2): Vec2[] {
         ] as Vec2;
     });
 }
+/**
+ * The edge of a junction box between the left kerb of one road (ending at `from`, running
+ * `fromDirection` away from the node) and the right kerb of the next (ending at `to`): a curve bending
+ * round the point where the two kerbs would meet, as a kerb rounds a corner; a straight line when they
+ * do not meet on the junction's side, or only far away or past the node (very sharp angles).
+ */
 function cornerCurve(from: Vec2, fromDirection: Vec2, to: Vec2, toDirection: Vec2): Vec2[] {
     // the kerbs run back towards the node: from - t × fromDirection and to - u × toDirection
     const cross = fromDirection[0] * toDirection[1] - fromDirection[1] * toDirection[0];
@@ -1941,8 +1960,12 @@ function cornerCurve(from: Vec2, fromDirection: Vec2, to: Vec2, toDirection: Vec
         const d = sub(to, from);
         const t = -(d[0] * toDirection[1] - d[1] * toDirection[0]) / cross;
         const u = -(d[0] * fromDirection[1] - d[1] * fromDirection[0]) / cross;
-        if (t >= 0 && u >= 0 && t < 20 && u < 20) {
-            const meet = sub(from, scale(fromDirection, t));
+        const meet = sub(from, scale(fromDirection, t));
+        // (two roads parting at a sharp angle, an island's nose between them, have kerbs that would only meet past the
+        // node, inside the road opposite: a curve round that point would cut a wedge out of the box, so the kerb runs
+        // straight across between them)
+        const beyondNode = meet[0] * (from[0] + to[0]) + meet[1] * (from[1] + to[1]) < 0;
+        if (t >= 0 && u >= 0 && t < 20 && u < 20 && !beyondNode) {
             return Array.from({ length: 9 }, (_, i) => {
                 const a = i / 8;
                 const b = 1 - a;
@@ -3301,7 +3324,7 @@ function buildPieces(way: osmWay, graph: coreGraph, junctionNodes: Set<string>, 
                 const outside = clip(offset(outer), fromStart, fromEnd);
                 if (inner.length > 1 && outside.length > 1) {
                     roadside.push({ side, kind: strip.kind, assumed: strip.assumed, polygon: toLocs(frame, ring(inner, outside)), parking: strip.parking,
-                        cycle: strip.cycle, surface: strip.surface, kerb: strip.kerb });
+                        cycle: strip.cycle, surface: strip.surface, kerb: strip.kerb, split: inner.length });
                 }
                 cursor = outer;
             }
@@ -3409,6 +3432,103 @@ function junctionClusters(ways: osmWay[], graph: coreGraph, junctionNodes: Set<s
 }
 
 
+/** A cycle lane carried across a junction, from the road it runs along to the road parting off that carries it on */
+export interface CycleLink {
+    key: string;
+    wayID: string;
+    polygon: Vec2[];
+    cycle?: CycleDetail;
+}
+
+/** A cycle lane's end at a junction node, in metres from the node */
+interface CycleEnd {
+    piece: RoadPiece;
+    strip: number;
+    inner: Vec2;
+    outer: Vec2;
+    /** pointing away from the node along the lane */
+    away: Vec2;
+    /** cycles ride towards the node (arriving) or away from it (leaving) */
+    arriving: boolean;
+    /** the lane is on the right of its cycles' direction of travel */
+    rightOfTravel: boolean;
+}
+
+/**
+ * Cycle lanes carried across junctions where a road parts off at a slight angle (a slip road splitting from the
+ * outer lanes) and carries on the cycle lane or track that ran along the outside of the lanes: the cycle lane follows the kerb
+ * round from the one road into the other, rather than stopping at the junction. A road leaving at a wider angle (an
+ * ordinary turn), or the same road (by name or ref) carrying on, gets none: cycle lanes are not marked through a
+ * crossroads.
+ */
+function cycleLinks(pieces: RoadPiece[], graph: coreGraph): CycleLink[] {
+    const ends = new Map<string, CycleEnd[]>();
+    for (const piece of pieces) {
+        piece.roadside.forEach((strip, k) => {
+            if ((strip.kind !== 'cycle_lane' && strip.kind !== 'cycle_track') || !strip.split || !strip.cycle || strip.cycle.travel === 'both') return;
+            for (const atStart of [true, false]) {
+                const nodeID = atStart ? piece.fromNode : piece.toNode;
+                const node = graph.hasEntity(nodeID as NodeId) as osmNode | undefined;
+                if (!node) continue;
+                const frame = metricFrame(node.loc);
+                const innerLine = strip.polygon.slice(0, strip.split).map(frame.toMetres);
+                const outerLine = strip.polygon.slice(strip.split).reverse().map(frame.toMetres);
+                if (innerLine.length < 2 || outerLine.length < 2) continue;
+                const pick = (line: Vec2[]) => (atStart ? [line[0], line[1]] : [line[line.length - 1], line[line.length - 2]]);
+                const [inner, innerNext] = pick(innerLine);
+                const [outer, outerNext] = pick(outerLine);
+                const away = unit(add(sub(innerNext, inner), sub(outerNext, outer)));
+                const forward = strip.cycle.travel === 'forward';
+                // (the way runs away from the node at its start: cycles riding with it leave there)
+                const arriving = atStart ? !forward : forward;
+                ends.set(nodeID, [...(ends.get(nodeID) ?? []), {
+                    piece, strip: k, inner, outer, away, arriving, rightOfTravel: (strip.side === 'right') === forward
+                }]);
+            }
+        });
+    }
+    const roadName = (id: string) => {
+        const tags = (graph.hasEntity(id as WayId) as osmWay | undefined)?.tags ?? {};
+        return tags.name ?? tags.ref ?? '';
+    };
+    const sameRoad = (a: string, b: string) => !!roadName(a) && roadName(a) === roadName(b);
+    const links: CycleLink[] = [];
+    for (const [nodeID, list] of ends) {
+        const node = graph.entity(nodeID as NodeId) as osmNode;
+        const frame = metricFrame(node.loc);
+        const taken = new Set<CycleEnd>();
+        for (const from of list.filter(e => e.arriving)) {
+            const travel = scale(from.away, -1);
+            // the outward side of the lane: right of travel for a lane on the right
+            const outward: Vec2 = from.rightOfTravel ? [travel[1], -travel[0]] : [-travel[1], travel[0]];
+            let best: { end: CycleEnd; lateral: number } | null = null;
+            for (const to of list) {
+                if (to.arriving || to.piece.wayID === from.piece.wayID || to.rightOfTravel !== from.rightOfTravel || taken.has(to)) continue;
+                // (the same road carrying on across the junction: cycle lanes are not marked through a crossroads)
+                if (sameRoad(from.piece.wayID, to.piece.wayID)) continue;
+                const cross = travel[0] * to.away[1] - travel[1] * to.away[0];
+                const angle = Math.abs(Math.atan2(cross, travel[0] * to.away[0] + travel[1] * to.away[1])) * 180 / Math.PI;
+                // parting off at a slight angle towards the lane's own side, its cycle lane carrying on along the same kerb
+                if (angle > 60 || (angle > 8 && cross * (from.rightOfTravel ? -1 : 1) < 0)) continue;
+                const gap = sub(to.outer, from.outer);
+                const lateral = gap[0] * outward[0] + gap[1] * outward[1];
+                if (lateral < -2 || len(gap) > 40) continue;
+                if (!best || lateral > best.lateral) best = { end: to, lateral };
+            }
+            if (!best) continue;
+            const to = best.end;
+            taken.add(to);
+            const outerLine = curve({ point: from.outer, tangent: travel }, { point: to.outer, tangent: to.away });
+            const innerLine = curve({ point: from.inner, tangent: travel }, { point: to.inner, tangent: to.away });
+            links.push({
+                key: `${nodeID}-${from.piece.wayID}-${from.strip}-${to.piece.wayID}-${to.strip}`, wayID: from.piece.wayID,
+                polygon: [...outerLine, ...innerLine.reverse()].map(frame.toLoc), cycle: from.piece.roadside[from.strip].cycle
+            });
+        }
+    }
+    return links;
+}
+
 export interface RoadGeometry {
     /** drawing-only shifts and tapers per way id, for markings that should move with their road */
     visuals: Map<string, WayVisual>;
@@ -3424,6 +3544,8 @@ export interface RoadGeometry {
     connections: JunctionConnection[];
     /** turning circles, loops and hammerheads at road ends */
     heads: TurningHead[];
+    /** cycle lanes carried across a junction where a road parts off and carries the cycle lane on (see cycleLinks) */
+    cycleLinks: CycleLink[];
     /** the road each mapped carriageway area is the surface of, by area id */
     areaRoads: Map<string, string>;
     /**
@@ -3740,6 +3862,7 @@ export function roadGeometry(ways: osmWay[], graph: coreGraph, carriagewayAreas:
         visuals, pieces, innerPieces, channelled,
         junctions: [...junctions.values()], connections: [...connections.values()].flat(),
         heads: [...heads.values()].map(h => h.head),
+        cycleLinks: cycleLinks(pieces.filter(piece => !innerPieces.has(piece)), graph),
         areaRoads: new Map([...owners].map(([areaID, way]) => [areaID, way.id])),
         swaps: laneSwaps(pieces, graph, visuals)
     };
@@ -3752,5 +3875,5 @@ export const _test = { throughPair, zipLanes, unit, uncovered };
 export const junctionRules = {
     armsAt: (node: osmNode, graph: coreGraph) => armsAt(node, graph, new Map()),
     throughPair, armLaneDirection, signedAngle, idealAngle, connectivityRelation, relationPairs, zipLanes, continuationPairs, isRing, curve,
-    arrowExit, ringMiddle, forkPairs
+    arrowExit, exitForArrow, ringMiddle, forkPairs
 };

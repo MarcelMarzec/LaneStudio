@@ -144,6 +144,17 @@ describe('parseLanes', () => {
         expect(mismatched.issues).toContainEqual(expect.objectContaining({ code: 'count_mismatch', key: 'turn:lanes', expected: 3, actual: 2 }));
     });
 
+    it('reads *:lanes values that count the cycle lanes lanes leaves out, kept as tagged', () => {
+        // (wiki: Lanes; Altenhöferallee, Frankfurt, w175591297)
+        const tags = { highway: 'tertiary', lanes: '5', 'lanes:forward': '1', 'lanes:backward': '4',
+            'turn:lanes:backward': 'left|left|through|through|right|right', 'cycleway:lanes:backward': 'no|no|no|lane|no|lane' };
+        const model = parseLanes(tags);
+        expect(model.lanes.backward.map(lane => lane.values['turn:lanes'])).toEqual(['left', 'left', 'through', 'right']);
+        expect(model.keys['turn:lanes'].readonly).toBe(true);
+        expect(model.issues.filter(issue => issue.code === 'count_mismatch')).toEqual([]);
+        expect(serialiseLanes(model, tags)).toEqual(tags);
+    });
+
     it('assumes the wiki defaults when nothing is tagged', () => {
         const residential = parseLanes({ highway: 'residential' });
         expect(residential.countSource).toBe('assumed');

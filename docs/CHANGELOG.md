@@ -8,6 +8,25 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.25r2
+##### 2026-Nov-25
+
+#### Lanes and junctions
+* A lane whose arrow turns onto a slip road parting at a shallow angle leads into that slip road, rather than every lane carrying on (A 661, Frankfurt, w256917269: 3 lanes into 2 + 1)
+* Left and right arrows lead into the ordinary turn rather than a hairpin sharper than 120° (Frankfurt, w254636218)
+* `turn:lanes` and other `*:lanes` tags with a value for each cycle lane (marked `cycleway:lanes=lane`) are read onto the right lanes, instead of being ignored (Altenhöferallee, Frankfurt, w175591297)
+* The junction box between two roads parting at a sharp angle is filled to a straight kerb between them, no longer cut away by a kerb curving round past the node (Vilbeler Landstraße, Frankfurt)
+* A cycle lane or track along the outside of the lanes carries on round across the junction into a slip road parting off with its own cycle lane (Altenhöferallee into the slip to Heddernheim, Frankfurt)
+
+#### Routing tool
+* Routes curve through a junction from the lane driven in by straight into the lane driven out by, rather than via the middle of the link between the halves of a dual carriageway (Marie-Curie-Straße, Frankfurt)
+* A turn into a road whose lanes begin behind the turning lane curves into it further on, rather than looping back (the slip lane from the B 3 onto the L 3008, Frankfurt), and a U-turn is drawn as a round curve
+* A route that turned into the link between the halves of a dual carriageway carries on across it, rather than taking the link's arrows meant for traffic driving straight in: the left lane of Marie-Curie-Straße turns left onto Altenhöferallee, not round a U-turn
+
+#### Editing
+* Connectivity tool: a road a turn restriction bans from the picked lane is no longer offered to connect into (L 3008, w253670825, `only_straight_on`)
+* Connectivity tool: a relation you've just added by clicking a lane is shown as yours and not saved yet, which Undo takes away, so it isn't taken for one already on the map
+
 # 26.11.25
 ##### 2026-Nov-25
 

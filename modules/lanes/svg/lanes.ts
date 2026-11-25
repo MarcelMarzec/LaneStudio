@@ -704,7 +704,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
     function groups() {
         _layer.selectAll('g.lanes-group')
             .data([
-                'water', 'water-banks', 'water-features', 'works-sites', 'areas', 'car-parks', 'works-areas', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'calming-ways', 'junctions', 'heads', 'works', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs', 'kerb-markings', 'managed-edges',
+                'water', 'water-banks', 'water-features', 'works-sites', 'areas', 'car-parks', 'works-areas', 'rail-beds', 'rail-sleepers', 'rails', 'rail-ground', 'rail-trackside', 'roadside', 'parking-bays', 'parking', 'parking-spaces', 'parking-space-symbols', 'paths', 'carriageway', 'general-lanes', 'lanes', 'calming-ways', 'junctions', 'cycle-links', 'heads', 'works', 'channel-lanes', 'node-surfaces', 'area-markings', 'islands', 'dividers', 'ghost-islands', 'lane-swaps', 'tram-rails', 'kerbs', 'kerb-markings', 'managed-edges',
                 'paths-over', 'rail-over-road', 'kerb-lines', 'works-cones', 'structures', 'barriers', 'crossings', 'markings', 'road-markings', 'lane-boxes', 'arrows', 'lane-symbols', 'connectivity', 'enforcement', 'labels', 'symbols', 'gantries', 'signs', 'rail-symbols',
                 'shields', 'managed-badges', 'parking-badges', 'junction-labels', 'short', 'selection', 'routes', 'lane-links',
                 'surface-targets', 'area-targets', 'targets', 'node-targets', 'short-targets', 'divider-targets'
@@ -773,7 +773,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 water: waterGeometry(visible, graph), works: worksGeometry(visible, graph, roads.pieces)
             };
         }
-        const { pieces, innerPieces, channelled, junctions, connections, heads, areaRoads, swaps } = _geometry.roads;
+        const { pieces, innerPieces, channelled, junctions, connections, heads, areaRoads, swaps, cycleLinks } = _geometry.roads;
         // short links inside a junction cluster are drawn only as lane guide lines (still clickable), except in a
         // junction holding traffic islands, where they are drawn whole over the junction, running between the islands
         const shown = pieces.filter(piece => !innerPieces.has(piece));
@@ -923,6 +923,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                     (corridor.has(piece.wayID) && !selected.has(piece.wayID) ? ' corridor' : ''));
             }))
             .each(attrChanged('d', d => d.polygons.map(polygon => path(polygon, true)).join('')));
+        // cycle lanes carried across a junction where a road parts off and carries the cycle lane on, over its box
+        joinPaths(group('cycle-links'), cycleLinks, d => d.key,
+            d => 'roadside roadside-cycle_lane cycle-link' + stripDetailClass(d) + coveredTag(d.wayID), d => path(d.polygon, true));
 
         // traffic calming mapped along a way (a long table, a rumble strip, a chicane…, wiki: Key:traffic_calming)
         // covers the whole carriageway of that way
@@ -1359,7 +1362,9 @@ export function svgLanes(projection: Projection, context: iD.Context) {
 
         /* the Routing tool's routes */
         _pieces = pieces;
-        drawRoutes(group('routes'), context, pieces, loc => projection(loc) as Vec2);
+        // (along the links drawn in a junction holding islands; the other inner links' runs are curved across)
+        drawRoutes(group('routes'), context, [...pieces.filter(piece => !replaced.has(piece)), ...channelled],
+            loc => projection(loc) as Vec2, new Set([...innerPieces].filter(piece => !replaced.has(piece))));
         drawConnectivity(group('lane-links'), context, pieces, loc => projection(loc) as Vec2);
 
         /* click targets: lanes and shoulders wherever lanes are drawn, dividers of the selected road from the editing zoom */
