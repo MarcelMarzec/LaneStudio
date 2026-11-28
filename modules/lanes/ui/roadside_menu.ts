@@ -8,7 +8,7 @@ import { svgIcon } from '../../svg/icon';
 import { actionChangeLanes } from '../actions/change_lanes';
 import { laneDriveSide } from '../core/drive_side';
 import { cyclewayValue, roadContraflowSide, shoulderValue, sidewalkValue, withCycleway, withShoulder, withSidewalk } from '../core/roadside';
-import { insertLane, laneKindKeys, parseLanes, setLaneKind } from '../model';
+import { insertLane, laneKindKeys, laneOneway, setLaneKind } from '../model';
 import {
     kerbMarking, parkedPositions, parkingMaxstays, parkingOrientations, parkingValue, withParkingValue, type KerbMarking, type ParkingSide
 } from '../model/parking';
@@ -48,10 +48,10 @@ function forwardSideOf(road: osmWay, graph: iD.Graph): ParkingSide {
 
 /** The side a one-way road's plain `shoulder=yes` is on: its driving side */
 function shoulderSideOf(road: osmWay, graph: iD.Graph): ParkingSide | null {
-    const model = parseLanes(road.tags, { driveSide: laneDriveSide(road, graph) });
-    const driveSide = model.driveSide;
-    if (model.oneway === 'forward') return driveSide;
-    if (model.oneway === 'backward') return driveSide === 'left' ? 'right' : 'left';
+    const oneway = laneOneway(road.tags);
+    const driveSide = laneDriveSide(road, graph);
+    if (oneway === 'forward') return driveSide;
+    if (oneway === 'backward') return driveSide === 'left' ? 'right' : 'left';
     return null;
 }
 

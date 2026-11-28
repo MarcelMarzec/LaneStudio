@@ -23,7 +23,7 @@ import {
 import { hasOldParkingTags, isParkingKey, parkingPositions, parkingValue, upgradeOldParking, withParkingValue, type ParkingSide } from '../model/parking';
 import { centreLine, centreLines, withCentreLine, type CentreLine } from '../model/street_features';
 import {
-    insertLane, laneCount, laneDirections, laneKindOf, laneRefsInWayOrder, parseLanes, removeLane, setLaneKind,
+    insertLane, laneCount, laneDirections, laneKindOf, laneOneway, laneRefsInWayOrder, parseLanes, removeLane, setLaneKind,
     type LaneDirection, type LaneModel
 } from '../model';
 import type { InfoTopic } from './field_info';
@@ -63,10 +63,10 @@ const prefixed = (...bases: string[]) => (key: string) => bases.some(base => key
 
 /** The side of the way a one-way road's plain `shoulder=yes` is on: its driving side */
 function shoulderSide(road: osmWay, graph: iD.Graph): ParkingSide | null {
-    const layout = laneLayout(road, graph);
+    const oneway = laneOneway(road.tags);
     const driveSide = laneDriveSide(road, graph);
-    return layout.model.oneway === 'forward' ? driveSide
-        : layout.model.oneway === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
+    return oneway === 'forward' ? driveSide
+        : oneway === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
 }
 
 /** The way's sides, forward first (beside traffic going the way's drawing direction), and their names */

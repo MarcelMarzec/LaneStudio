@@ -1,7 +1,7 @@
 # Tags: Buildings
 
 The wiki's keys and tags in its group "buildings", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-304 keys and tags: 2 rendered, 0 could be, 302 cannot be.
+307 keys and tags: 2 rendered, 0 could be, 305 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -173,6 +173,7 @@ The wiki's keys and tags in its group "buildings", and whether Lane Studio draws
 | [`building=triumphal_arch`](https://wiki.openstreetmap.org/wiki/Tag:building=triumphal_arch) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=trullo`](https://wiki.openstreetmap.org/wiki/Tag:building=trullo) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=university`](https://wiki.openstreetmap.org/wiki/Tag:building=university) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`building=utility`](https://wiki.openstreetmap.org/wiki/Tag:building=utility) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=warehouse`](https://wiki.openstreetmap.org/wiki/Tag:building=warehouse) | de facto | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=water_tower`](https://wiki.openstreetmap.org/wiki/Tag:building=water_tower) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`building=wayside_shrine`](https://wiki.openstreetmap.org/wiki/Tag:building=wayside_shrine) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -199,6 +200,8 @@ The wiki's keys and tags in its group "buildings", and whether Lane Studio draws
 | [`building:max_level=*`](https://wiki.openstreetmap.org/wiki/Key:building:max_level) | in use | ❌ Cannot be rendered | Height or 3D form: Lane Studio draws the street in plan |
 | [`building:min_level=*`](https://wiki.openstreetmap.org/wiki/Key:building:min_level) | de facto | ❌ Cannot be rendered | Height or 3D form: Lane Studio draws the street in plan |
 | [`building:obm=*`](https://wiki.openstreetmap.org/wiki/Key:building:obm) | — | ❌ Cannot be rendered | Height or 3D form: Lane Studio draws the street in plan |
+| [`building:open_side=*`](https://wiki.openstreetmap.org/wiki/Key:building:open_side) | — | ❌ Cannot be rendered | Height or 3D form: Lane Studio draws the street in plan |
+| [`building:parapet=*`](https://wiki.openstreetmap.org/wiki/Key:building:parapet) | in use | ❌ Cannot be rendered | Height or 3D form: Lane Studio draws the street in plan |
 | [`building:part=*`](https://wiki.openstreetmap.org/wiki/Key:building:part) | de facto | ❌ Cannot be rendered | Height or 3D form: Lane Studio draws the street in plan |
 | [`building:part=balcony`](https://wiki.openstreetmap.org/wiki/Tag:building:part=balcony) | in use | ❌ Cannot be rendered | Height or 3D form: Lane Studio draws the street in plan |
 | [`building:part=bridge`](https://wiki.openstreetmap.org/wiki/Tag:building:part=bridge) | in use | ❌ Cannot be rendered | Height or 3D form: Lane Studio draws the street in plan |

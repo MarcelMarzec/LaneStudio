@@ -1,7 +1,7 @@
 # Tags: Boundaries
 
 The wiki's keys and tags in its group "boundaries", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-81 keys and tags: 0 rendered, 0 could be, 81 cannot be.
+83 keys and tags: 0 rendered, 0 could be, 83 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -38,6 +38,7 @@ The wiki's keys and tags in its group "boundaries", and whether Lane Studio draw
 | [`boundary=health`](https://wiki.openstreetmap.org/wiki/Tag:boundary=health) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`boundary=historic`](https://wiki.openstreetmap.org/wiki/Tag:boundary=historic) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`boundary=indigenous_administration`](https://wiki.openstreetmap.org/wiki/Tag:boundary=indigenous_administration) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`boundary=land_area`](https://wiki.openstreetmap.org/wiki/Tag:boundary=land_area) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`boundary=limited_traffic_zone`](https://wiki.openstreetmap.org/wiki/Tag:boundary=limited_traffic_zone) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`boundary=local_authority`](https://wiki.openstreetmap.org/wiki/Tag:boundary=local_authority) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`boundary=lot`](https://wiki.openstreetmap.org/wiki/Tag:boundary=lot) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
@@ -56,6 +57,7 @@ The wiki's keys and tags in its group "boundaries", and whether Lane Studio draw
 | [`boundary=urban`](https://wiki.openstreetmap.org/wiki/Tag:boundary=urban) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`boundary=vice_county`](https://wiki.openstreetmap.org/wiki/Tag:boundary=vice_county) | — | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`boundary=water_protection_area`](https://wiki.openstreetmap.org/wiki/Tag:boundary=water_protection_area) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
+| [`boundary=zone`](https://wiki.openstreetmap.org/wiki/Tag:boundary=zone) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`boundary_type=*`](https://wiki.openstreetmap.org/wiki/Key:boundary_type) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`controlled_by=*`](https://wiki.openstreetmap.org/wiki/Key:controlled_by) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |
 | [`designation=civil_parish`](https://wiki.openstreetmap.org/wiki/Tag:designation=civil_parish) | in use | ❌ Cannot be rendered | Land, water or buildings beside the street: iD draws them as areas |

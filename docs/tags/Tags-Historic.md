@@ -1,7 +1,7 @@
 # Tags: Historic
 
 The wiki's keys and tags in its group "historic", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-251 keys and tags: 0 rendered, 5 could be, 246 cannot be.
+252 keys and tags: 0 rendered, 5 could be, 247 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -125,6 +125,7 @@ The wiki's keys and tags in its group "historic", and whether Lane Studio draws 
 | [`historic=monastery`](https://wiki.openstreetmap.org/wiki/Tag:historic=monastery) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`historic=monument`](https://wiki.openstreetmap.org/wiki/Tag:historic=monument) | de facto | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`historic=mosque`](https://wiki.openstreetmap.org/wiki/Tag:historic=mosque) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
+| [`historic=no`](https://wiki.openstreetmap.org/wiki/Tag:historic=no) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`historic=ogham_stone`](https://wiki.openstreetmap.org/wiki/Tag:historic=ogham_stone) | approved | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`historic=optical_telegraph`](https://wiki.openstreetmap.org/wiki/Tag:historic=optical_telegraph) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |
 | [`historic=pillory`](https://wiki.openstreetmap.org/wiki/Tag:historic=pillory) | in use | ❌ Cannot be rendered | A place, business or service, not part of the road: iD draws it as a point or area |

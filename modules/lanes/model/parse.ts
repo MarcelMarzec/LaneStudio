@@ -51,6 +51,20 @@ export function laneOneway(tags: Tags): LaneOneway {
 }
 
 
+/**
+ * The direction(s) the road's lanes run in: `laneOneway`, unless lanes running against the one-way traffic are
+ * counted, as a contraflow bus lane is (wiki: Bus lanes, `oneway=yes` with `oneway:bus=no`, `lanes:forward=1` and
+ * `lanes:backward=1`; Juliana Dunajewskiego, Kraków, w364784222). Those lanes are read as a two-way road's, each
+ * direction with its own count. The roadside (cycle lanes, shoulders) still follows `laneOneway`.
+ */
+export function laneModelOneway(tags: Tags): LaneOneway {
+    const oneway = laneOneway(tags);
+    if (!oneway) return false;
+    const against = parseCount(tags[`lanes:${oneway === 'forward' ? 'backward' : 'forward'}`]);
+    return against !== undefined && against > 0 ? false : oneway;
+}
+
+
 function parseCount(value: string | undefined): number | undefined {
     if (value === undefined) return undefined;
     return /^\d+$/.test(value.trim()) ? parseInt(value, 10) : NaN;
@@ -213,7 +227,7 @@ function laneCounts(tags: Tags, oneway: LaneOneway, groups: Map<string, KeyGroup
  * so that `serialiseLanes(parseLanes(tags), tags)` gives back exactly `tags`.
  */
 export function parseLanes(tags: Tags, options: ParseLanesOptions = {}): LaneModel {
-    const oneway = laneOneway(tags);
+    const oneway = laneModelOneway(tags);
     const issues: LaneIssue[] = [];
     const groups = groupLaneKeys(tags);
     const { counts, source } = laneCounts(tags, oneway, groups, issues);

@@ -138,6 +138,7 @@ en:
       kerb_right: The kerb is on the right
       nothing: no lane to change into
     kind: Lane type
+    kind_implied: "{kind}, from {key}"
     remove: Remove this lane
     order: Position
     move_left: Move left
@@ -1410,11 +1411,11 @@ en:
     direction: "Which way the lane's traffic goes: forward (along the way's drawing direction), backward, or both ways for a centre turn lane (lanes:forward, lanes:backward, lanes:both_ways)."
     island_surface: "A traffic island mapped as an area (area:highway=traffic_island). Its surface sets its colour; untagged islands are drawn as concrete."
     kerb: "The kerb round the island (barrier=kerb with kerb=raised, lowered, flush or rolled)."
-    kind: "What the lane is for: a bus lane is bus:lanes=designated, a cycle lane bicycle:lanes=designated, a variable lane access:lanes=variable, and so on. A lane closed to other traffic (access:lanes=no) and open to buses (bus:lanes=yes) is a bus lane too."
+    kind: "What the lane is for: a bus lane is bus:lanes=designated, a cycle lane bicycle:lanes=designated, a variable lane access:lanes=variable, and so on. A lane closed to other traffic (access:lanes=no) and open to buses (bus:lanes=yes) is a bus lane too. A lane against a one-way road where only buses may go that way (oneway:bus=no, or oneway:psv=no) is drawn as their lane; pick the type to tag it."
     lane_minspeed: "The selected lanes' own minimum speed (minspeed:lanes). Lanes with none of their own follow the road's."
     lane_speed: "The selected lanes' own speed limit (maxspeed:lanes, and maxspeed:type:lanes for a UK limit type). Lanes with none of their own follow the road's."
     lane_strip: "The road's lanes, left to right as the way is drawn, with their turn arrows and colours by lane type. Click a lane to edit it; shift-click to pick more."
-    lanes: "How many traffic lanes the road has: lanes, and on two-way roads lanes:forward, lanes:backward and lanes:both_ways. Parking, hard shoulders and cycle lanes are not counted."
+    lanes: "How many traffic lanes the road has: lanes, and on two-way roads lanes:forward, lanes:backward and lanes:both_ways. A one-way road with a lane against its traffic (a contraflow bus lane, with oneway:bus=no) counts it too, in lanes:backward. Parking, hard shoulders and cycle lanes are not counted."
     lookahead: "The roads this one leads on to, with their lanes and the exits at its end. A turn or destination from an exit is only written to the selected lanes when you click it."
     managed: "Smart motorways and other roads where signs change the limit or open a lane (active_traffic_management=yes). All lanes running has no hard shoulder (shoulder=no); a dynamic hard shoulder is a lane opened by signs (access:lanes=…|variable)."
     marking_tool: "Click a road to put a crossing, stop or give way line, traffic signals, traffic calming, a mini-roundabout, a passing place or an emergency bay on it, as a node with that feature's tags."

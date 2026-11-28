@@ -1,7 +1,7 @@
 # Tags: Properties
 
 The wiki's keys and tags in its group "properties", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-1177 keys and tags: 88 rendered, 54 could be, 1035 cannot be.
+1181 keys and tags: 89 rendered, 53 could be, 1039 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -196,6 +196,7 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`date=C18`](https://wiki.openstreetmap.org/wiki/Tag:date=C18) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`date=C19`](https://wiki.openstreetmap.org/wiki/Tag:date=C19) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`date=C20`](https://wiki.openstreetmap.org/wiki/Tag:date=C20) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`dedicated_to=*`](https://wiki.openstreetmap.org/wiki/Key:dedicated_to) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`delivery:*=*`](https://wiki.openstreetmap.org/wiki/Key:delivery:*) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`denotation=*`](https://wiki.openstreetmap.org/wiki/Key:denotation) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`denotation=agricultural`](https://wiki.openstreetmap.org/wiki/Tag:denotation=agricultural) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -302,7 +303,7 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`flow_direction=*`](https://wiki.openstreetmap.org/wiki/Key:flow_direction) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`flow_direction=both`](https://wiki.openstreetmap.org/wiki/Tag:flow_direction=both) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`flow_rate=*`](https://wiki.openstreetmap.org/wiki/Key:flow_rate) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`footway:surface=*`](https://wiki.openstreetmap.org/wiki/Key:footway:surface) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`footway:surface=*`](https://wiki.openstreetmap.org/wiki/Key:footway:surface) | in use | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
 | [`for=*`](https://wiki.openstreetmap.org/wiki/Key:for) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`format=*`](https://wiki.openstreetmap.org/wiki/Key:format) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`foundation_date=*`](https://wiki.openstreetmap.org/wiki/Key:foundation_date) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -344,6 +345,7 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`height:range=*`](https://wiki.openstreetmap.org/wiki/Key:height:range) | imported | ❌ Cannot be rendered | Height or 3D form: Lane Studio draws the street in plan |
 | [`hgv:national_network=*`](https://wiki.openstreetmap.org/wiki/Key:hgv:national_network) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`hgv:repair=*`](https://wiki.openstreetmap.org/wiki/Key:hgv:repair) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`hide=*`](https://wiki.openstreetmap.org/wiki/Key:hide) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`highchair=*`](https://wiki.openstreetmap.org/wiki/Key:highchair) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`highway:category=*`](https://wiki.openstreetmap.org/wiki/Key:highway:category) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`hiking_exposition=*`](https://wiki.openstreetmap.org/wiki/Key:hiking_exposition) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
@@ -484,6 +486,7 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`moved=*`](https://wiki.openstreetmap.org/wiki/Key:moved) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`mtb:scale:imba=*`](https://wiki.openstreetmap.org/wiki/Key:mtb:scale:imba) | approved | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`mtb:scale:ntfu=*`](https://wiki.openstreetmap.org/wiki/Key:mtb:scale:ntfu) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`multi_stemmed=*`](https://wiki.openstreetmap.org/wiki/Key:multi_stemmed) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`munro=*`](https://wiki.openstreetmap.org/wiki/Key:munro) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`munro_number=*`](https://wiki.openstreetmap.org/wiki/Key:munro_number) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`narrow=*`](https://wiki.openstreetmap.org/wiki/Key:narrow) | approved | ✅ Rendered | [Areas And Surfaces](../guide/Areas-And-Surfaces.md) |
@@ -795,6 +798,7 @@ The wiki's keys and tags in its group "properties", and whether Lane Studio draw
 | [`osmc:status=*`](https://wiki.openstreetmap.org/wiki/Key:osmc:status) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`osmc:symbol=*`](https://wiki.openstreetmap.org/wiki/Key:osmc:symbol) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`outdoor=*`](https://wiki.openstreetmap.org/wiki/Key:outdoor) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`outdoor=yes`](https://wiki.openstreetmap.org/wiki/Tag:outdoor=yes) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`outdoor_seating=*`](https://wiki.openstreetmap.org/wiki/Key:outdoor_seating) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`outdoor_seating=balcony`](https://wiki.openstreetmap.org/wiki/Tag:outdoor_seating=balcony) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`outdoor_seating=beach`](https://wiki.openstreetmap.org/wiki/Tag:outdoor_seating=beach) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

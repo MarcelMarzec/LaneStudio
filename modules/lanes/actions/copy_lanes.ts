@@ -1,7 +1,7 @@
 import { actionChangeTags } from '../../actions/change_tags';
 import type { Action } from '../../core/history';
 import type { WayId } from '../../osm';
-import { laneOneway, parseLaneTagKey, laneTagKey, splitLaneValue } from '../model';
+import { laneModelOneway, parseLaneTagKey, laneTagKey, splitLaneValue } from '../model';
 
 const countKeys = ['lanes', 'lanes:forward', 'lanes:backward', 'lanes:both_ways'];
 const swapped = { forward: 'backward', backward: 'forward', both_ways: 'both_ways' } as const;
@@ -9,9 +9,9 @@ const swapped = { forward: 'backward', backward: 'forward', both_ways: 'both_way
 /** Lane keys that belong to one approach to a junction and so are not copied along a road */
 const keepsOwn = (base: string) => base === 'turn' || base.startsWith('destination');
 
-/** Whether lanes can be copied between two roads: both one-way or both two-way */
+/** Whether lanes can be copied between two roads: both one-way or both two-way (a contraflow lane making it two-way) */
 export function canCopyLanes(from: Tags, to: Tags): boolean {
-    return !!laneOneway(from) === !!laneOneway(to);
+    return !!laneModelOneway(from) === !!laneModelOneway(to);
 }
 
 /**
@@ -21,7 +21,7 @@ export function canCopyLanes(from: Tags, to: Tags): boolean {
  */
 export function copiedLaneTags(from: Tags, to: Tags, sameOrientation: boolean): Tags {
     const next: Tags = {};
-    const twoWay = !laneOneway(from);
+    const twoWay = !laneModelOneway(from);
     const flip = twoWay && !sameOrientation;
 
     for (const [key, value] of Object.entries(to)) {

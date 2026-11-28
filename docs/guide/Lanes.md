@@ -39,6 +39,18 @@ Two lanes, one each way (a one-way road: one). One lane shared both ways on a tr
 alley, drive-through, fuel station lane or emergency access road ([`service=*`](https://wiki.openstreetmap.org/wiki/Key:service)), or a service road tagged
 `narrow=yes` or narrower than 4.5 m.
 
+## Contraflow lanes on one-way roads
+
+A one-way road with a lane against its traffic, such as a contraflow bus lane, is tagged as the
+[Bus lanes](https://wiki.openstreetmap.org/wiki/Bus_lanes) page shows: `oneway=yes`, `oneway:bus=no` (or
+`oneway:psv=no`), `lanes` counting every lane, `lanes:forward` and `lanes:backward` for each direction, and the
+lane's users on it, as `bus:lanes:backward=designated`.
+
+- Its lanes are drawn and edited as a two-way road's, each direction with its own count.
+- The roadside follows the one-way traffic: a contraflow cycle lane and a plain `shoulder=yes` stay where they were.
+- A contraflow lane with no type of its own is drawn as a bus lane where only buses may go against the road
+  (`oneway:bus=no`), or a PSV lane (`oneway:psv=no`); its Lane type shows the hint. Pick the type to tag it.
+
 ## Values counting cycle lanes
 
 `lanes` counts motor traffic's lanes only. A `*:lanes` tag with a value for each cycle lane too (marked
@@ -53,6 +65,7 @@ past the cycle lanes, and kept as tagged.
 | Variable lane (running hard shoulder) | `access:lanes=variable` |
 | No access (hatched) | Closed to general traffic and open to none of the above |
 | Bus lane | Every lane of a busway or guided busway ([`highway=busway`](https://wiki.openstreetmap.org/wiki/Tag:highway=busway), `bus_guideway`) |
+| Bus or PSV lane | A lane against a one-way road with no type, where only buses (`oneway:bus=no`) or PSVs (`oneway:psv=no`) may go that way ([below](#contraflow-lanes-on-one-way-roads)) |
 
 Making such a lane general traffic again opens its access too.
 

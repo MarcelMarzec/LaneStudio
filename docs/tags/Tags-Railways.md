@@ -1,7 +1,7 @@
 # Tags: Railways
 
 The wiki's keys and tags in its group "railways", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-271 keys and tags: 45 rendered, 222 could be, 4 cannot be.
+271 keys and tags: 46 rendered, 221 could be, 4 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -64,7 +64,7 @@ The wiki's keys and tags in its group "railways", and whether Lane Studio draws 
 | [`railway=halt`](https://wiki.openstreetmap.org/wiki/Tag:railway=halt) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway=hirail_access`](https://wiki.openstreetmap.org/wiki/Tag:railway=hirail_access) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway=interlocking`](https://wiki.openstreetmap.org/wiki/Tag:railway=interlocking) | — | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
-| [`railway=junction`](https://wiki.openstreetmap.org/wiki/Tag:railway=junction) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`railway=junction`](https://wiki.openstreetmap.org/wiki/Tag:railway=junction) | in use | ✅ Rendered | [Railways](../guide/Railways.md) |
 | [`railway=light_rail`](https://wiki.openstreetmap.org/wiki/Tag:railway=light_rail) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway=loading_ramp`](https://wiki.openstreetmap.org/wiki/Tag:railway=loading_ramp) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway=milestone`](https://wiki.openstreetmap.org/wiki/Tag:railway=milestone) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
@@ -129,7 +129,7 @@ The wiki's keys and tags in its group "railways", and whether Lane Studio draws 
 | [`railway:electricity:jumpering=closed`](https://wiki.openstreetmap.org/wiki/Tag:railway:electricity:jumpering=closed) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway:electricity:jumpering=no`](https://wiki.openstreetmap.org/wiki/Tag:railway:electricity:jumpering=no) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway:electricity:jumpering=possible`](https://wiki.openstreetmap.org/wiki/Tag:railway:electricity:jumpering=possible) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
-| [`railway:etcs=*`](https://wiki.openstreetmap.org/wiki/Key:railway:etcs) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`railway:etcs=*`](https://wiki.openstreetmap.org/wiki/Key:railway:etcs) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway:etms=*`](https://wiki.openstreetmap.org/wiki/Key:railway:etms) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway:gnt=*`](https://wiki.openstreetmap.org/wiki/Key:railway:gnt) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway:interlaced=*`](https://wiki.openstreetmap.org/wiki/Key:railway:interlaced) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
@@ -137,7 +137,7 @@ The wiki's keys and tags in its group "railways", and whether Lane Studio draws 
 | [`railway:kvb=*`](https://wiki.openstreetmap.org/wiki/Key:railway:kvb) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway:local_operated=*`](https://wiki.openstreetmap.org/wiki/Key:railway:local_operated) | — | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway:ls=*`](https://wiki.openstreetmap.org/wiki/Key:railway:ls) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
-| [`railway:lzb=*`](https://wiki.openstreetmap.org/wiki/Key:railway:lzb) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
+| [`railway:lzb=*`](https://wiki.openstreetmap.org/wiki/Key:railway:lzb) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway:maximum_current=*`](https://wiki.openstreetmap.org/wiki/Key:railway:maximum_current) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway:milestone:catenary_mast=*`](https://wiki.openstreetmap.org/wiki/Key:railway:milestone:catenary_mast) | de facto | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |
 | [`railway:pa-135=*`](https://wiki.openstreetmap.org/wiki/Key:railway:pa-135) | in use | 🟡 Could be rendered | On or beside the street: Lane Studio's street layer could draw it |

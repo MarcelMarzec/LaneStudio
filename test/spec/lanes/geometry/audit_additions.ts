@@ -49,6 +49,29 @@ describe('roadside detail', () => {
         expect(laneLayout(contra.way, contra.graph).roadside.right[0].cycle!.travel).toBe('backward');
     });
 
+    it('draws a one-way road\'s contraflow lane against it, its cycle lane still following the road\'s traffic', () => {
+        // as Juliana Dunajewskiego, Kraków (w364784222): one-way with a contraflow lane for buses and a contraflow cycle lane
+        const { graph, way } = road({ highway: 'residential', oneway: 'yes', 'oneway:bus': 'no', 'oneway:psv': 'no',
+            'oneway:bicycle': 'no', lanes: '3', 'lanes:forward': '2', 'lanes:backward': '1',
+            'cycleway:left': 'lane', 'cycleway:left:oneway': '-1', 'cycleway:right': 'no', 'shoulder': 'yes' }, germany);
+        const layout = laneLayout(way, graph);
+        expect(layout.lanes.map(lane => lane.ref.direction)).toEqual(['backward', 'forward', 'forward']);
+        // only buses may go against it, so its contraflow lane is drawn as a bus lane (signed so: KMK, Policja)
+        expect(layout.lanes.map(lane => lane.kind)).toEqual(['bus', 'general', 'general']);
+        expect(layout.roadside.left.find(s => s.kind === 'cycle_lane')!.cycle!.travel).toBe('backward');
+        // a plain shoulder=yes is on the side the one-way traffic keeps to
+        expect(layout.roadside.right.map(s => s.kind)).toContain('shoulder');
+        expect(layout.roadside.left.map(s => s.kind)).not.toContain('shoulder');
+    });
+
+    it('draws a contraflow lane as tagged, or as general traffic where the road gives no type', () => {
+        const base = { highway: 'residential', oneway: 'yes', lanes: '2', 'lanes:forward': '1', 'lanes:backward': '1' };
+        const kinds = (tags: Tags) => { const r = road(tags, germany); return laneLayout(r.way, r.graph).lanes.map(lane => lane.kind); };
+        expect(kinds(base)).toEqual(['general', 'general']);
+        expect(kinds({ ...base, 'oneway:psv': 'no' })).toEqual(['psv', 'general']);
+        expect(kinds({ ...base, 'oneway:bus': 'no', 'taxi:lanes:backward': 'designated' })).toEqual(['taxi', 'general']);
+    });
+
     it('draws a pedestrian lane on the road, a pavement\'s surface and kerb, and a bus bay', () => {
         const { graph, way } = road({ highway: 'residential', 'sidewalk:left': 'lane', 'sidewalk:right': 'yes',
             'sidewalk:right:surface': 'paving_stones', 'sidewalk:right:kerb': 'lowered', bus_bay: 'right' });

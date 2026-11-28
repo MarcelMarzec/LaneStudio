@@ -20,6 +20,11 @@ Painted by [`crossing:markings`](https://wiki.openstreetmap.org/wiki/Key:crossin
 | `no`, untagged unmarked | Nothing (a faint outline) |
 | Several (`zebra;dots`) | All of them |
 
+A crossing way takes the crossing tags of its node on the road, where the wiki puts them; its own win. A segregated
+foot and cycle crossing (`path=crossing` with `segregated=yes`) is painted part by part: `footway:crossing:markings`
+and `cycleway:crossing:markings`, else `crossing:markings` on the foot part (the second of two, `zebra;dots`, on the
+cycle part), and `cycleway:surface:colour` colours the cycle part (a red cycle crossing).
+
 With no markings tagged: [`crossing=uncontrolled`](https://wiki.openstreetmap.org/wiki/Tag:crossing=uncontrolled) or `marked` is a zebra; a crossing with signals has lines, or in
 the UK two rows of studs (pelican, puffin, toucan, pegasus, by [`crossing_ref`](https://wiki.openstreetmap.org/wiki/Key:crossing_ref) too); `crossing_ref=tiger` is a zebra
 with a cycle crossing beside it. `crossing:island=yes` adds a refuge; signals add a head for each direction.

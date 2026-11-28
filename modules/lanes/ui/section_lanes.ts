@@ -29,6 +29,7 @@ import {
     laneKindKeys, laneKindOf, setLaneKind,
     type LaneModel, type LaneRef
 } from '../model';
+import { impliedLaneKind } from '../model/kinds';
 
 type Div = d3.Selection<HTMLDivElement>;
 
@@ -108,6 +109,13 @@ export function speedField(parent: Div, id: string, label: string, chrome: Field
 }
 
 
+/** A lane's type as the map draws it: its own, or the one the road implies (a contraflow bus lane) */
+function drawnKind(model: LaneModel, ref: LaneRef, tags: Tags): string {
+    const kind = laneKindOf(model, ref);
+    return kind === 'general' ? impliedLaneKind(tags, ref.direction) ?? kind : kind;
+}
+
+
 /**
  * The "Lanes" section in iD's entity editor, shown for one selected road, above iD's Fields (where Lane Studio's road
  * fields are, among iD's): the tools, the lanes along the road with the + menu for the roadside, and the selected
@@ -158,7 +166,7 @@ export function uiSectionLanes(context: iD.Context) {
 
         const wrap = selection.append('div').attr('class', 'lanes-editor');
         renderTools(wrap);
-        renderStrip(wrap, model, wayID, selected);
+        renderStrip(wrap, model, wayID, selected, road.tags);
         renderRoadside(wrap, road);
 
         /* issues with the lane tags */
@@ -176,7 +184,7 @@ export function uiSectionLanes(context: iD.Context) {
 
 
     /** The lanes along the road, left to right as the way is drawn: click one to edit it */
-    function renderStrip(wrap: Div, model: LaneModel, wayID: WayId, selected: LaneRef[]) {
+    function renderStrip(wrap: Div, model: LaneModel, wayID: WayId, selected: LaneRef[], tags: Tags) {
         const { wrap: body } = fieldShell(wrap, { id: 'strip', label: t('_lanes.section.strip_title'), info: 'lane_strip', wrapClass: 'lane-field-body' });
         const strip = body.append('div').attr('class', 'lanes-strip');
         laneRefsInWayOrder(model).forEach((ref, i) => {
@@ -184,7 +192,7 @@ export function uiSectionLanes(context: iD.Context) {
             const isSelected = selected.some(r => r.direction === ref.direction && r.index === ref.index);
             strip.append('button')
                 .attr('type', 'button')
-                .attr('class', `lanes-strip-lane lane-${laneKindOf(model, ref)} lane-${ref.direction}` + (isSelected ? ' selected' : ''))
+                .attr('class', `lanes-strip-lane lane-${drawnKind(model, ref, tags)} lane-${ref.direction}` + (isSelected ? ' selected' : ''))
                 .attr('aria-pressed', isSelected)
                 .attr('aria-label', `${i + 1}, ${t(`_lanes.direction.${ref.direction}`)}` +
                     (turns.length ? ', ' + turns.map(v => t(`_lanes.turn.${v}`, { default: v })).join(', ') : ''))
@@ -354,11 +362,15 @@ export function uiSectionLanes(context: iD.Context) {
 
         /* lane type, from a dropdown of type names */
         const kinds = refs.map(ref => laneKindOf(model, ref));
+        // general traffic lanes the road implies a type for (a contraflow bus lane) show it as the field's hint
+        const implied = refs.map(ref => impliedLaneKind(road.tags, ref.direction));
+        const hint = kinds.every(k => k === 'general') && implied.every(k => k && k === implied[0]) ? implied[0] : null;
         laneField(context, inspector, {
             id: 'kind',
             label: t('_lanes.inspector.kind'),
             info: 'kind',
-            value: kinds.every(k => k === kinds[0]) ? kinds[0] : undefined,
+            value: hint ? '' : kinds.every(k => k === kinds[0]) ? kinds[0] : undefined,
+            ...(hint ? { placeholder: t('_lanes.inspector.kind_implied', { kind: t(`_lanes.kind.${hint}`), key: `oneway:${hint}=no` }) } : {}),
             present: kinds.some(k => k !== 'general'),
             onRemove: () => perform(wayID, m => setLaneKind(m, refs, 'general'), 'kind'),
             strict: true,

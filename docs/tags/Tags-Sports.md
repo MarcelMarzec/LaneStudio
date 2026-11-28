@@ -117,7 +117,7 @@ The wiki's keys and tags in its group "sports", and whether Lane Studio draws th
 | [`sport=batting_cage`](https://wiki.openstreetmap.org/wiki/Tag:sport=batting_cage) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`sport=beach_hockey`](https://wiki.openstreetmap.org/wiki/Tag:sport=beach_hockey) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`sport=beach_soccer`](https://wiki.openstreetmap.org/wiki/Tag:sport=beach_soccer) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`sport=beach_tennis`](https://wiki.openstreetmap.org/wiki/Tag:sport=beach_tennis) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`sport=beach_tennis`](https://wiki.openstreetmap.org/wiki/Tag:sport=beach_tennis) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`sport=beachhandball`](https://wiki.openstreetmap.org/wiki/Tag:sport=beachhandball) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`sport=beachsoccer`](https://wiki.openstreetmap.org/wiki/Tag:sport=beachsoccer) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`sport=beachtennis`](https://wiki.openstreetmap.org/wiki/Tag:sport=beachtennis) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

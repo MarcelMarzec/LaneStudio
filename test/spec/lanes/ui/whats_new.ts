@@ -90,6 +90,13 @@ describe('what\'s new', () => {
         expect(li.text()).toBe('New Advisory speed (maxspeed:advisory) field');
     });
 
+    it('shows a markdown link as a link', () => {
+        const li = d3_select(document.createElement('li'));
+        appendLine(li as any, 'Fixed. Thanks to [Someone](https://www.openstreetmap.org/user/Someone) for the report!');
+        expect(li.select('a').attr('href')).toBe('https://www.openstreetmap.org/user/Someone');
+        expect(li.text()).toBe('Fixed. Thanks to Someone for the report!');
+    });
+
     it('reads the real changelog: the current version first, every section with lines', () => {
         const versions = parseChangelog(fs.readFileSync('docs/CHANGELOG.md', 'utf8'));
         expect(versions[0].version).toBe(laneStudioVersion);

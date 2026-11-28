@@ -24,8 +24,16 @@ export function appendLine(parent: Selection, line: string) {
             parent.append('code').text(part);
             return;
         }
-        part.split('**').forEach((text, j) => {
-            if (text) parent.append(j % 2 ? 'strong' : 'span').text(text);
+        // a markdown link, [text](https://…), as credits to the people who reported a change are
+        part.split(/(\[[^\]]+\]\(https:\/\/[^)\s]+\))/).forEach(piece => {
+            const link = piece.match(/^\[([^\]]+)\]\((https:\/\/[^)\s]+)\)$/);
+            if (link) {
+                parent.append('a').attr('href', link[2]).attr('target', '_blank').attr('rel', 'noopener').text(link[1]);
+                return;
+            }
+            piece.split('**').forEach((text, j) => {
+                if (text) parent.append(j % 2 ? 'strong' : 'span').text(text);
+            });
         });
     });
 }

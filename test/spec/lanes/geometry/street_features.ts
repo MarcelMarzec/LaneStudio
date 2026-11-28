@@ -319,6 +319,85 @@ describe('streetGeometry: rounded path ends', () => {
 });
 
 
+describe('streetGeometry: foot and cycle paths and their crossings', () => {
+    // as Świętego Filipa, Kraków (w755634525): a segregated foot and cycle crossing, its zebra tagged on its node
+    function build(crossingWay: Tags, crossingNode: Tags, pavementFromEast = false) {
+        const entities = [
+            new iD.osmNode({ id: 'n1', loc: at(-30, 0) }),
+            new iD.osmNode({ id: 'n2', loc: at(0, 0), tags: crossingNode }),
+            new iD.osmNode({ id: 'n3', loc: at(30, 0) }),
+            new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2', 'n3'], tags: { highway: 'residential', lanes: '2' } }),
+            new iD.osmNode({ id: 'n4', loc: at(0, -6) }),
+            new iD.osmNode({ id: 'n5', loc: at(0, 6) }),
+            new iD.osmWay({ id: 'w2', nodes: ['n4', 'n2', 'n5'], tags: crossingWay }),
+            ...(pavementFromEast ? [
+                new iD.osmNode({ id: 'n6', loc: at(20, -6) }),
+                new iD.osmWay({ id: 'w3', nodes: ['n6', 'n4'], tags: { highway: 'footway', footway: 'sidewalk' } }),
+                new iD.osmNode({ id: 'n7', loc: at(0, -30) }),
+                new iD.osmWay({ id: 'w4', nodes: ['n4', 'n7'], tags: { highway: 'cycleway' } })
+            ] : [])
+        ];
+        const graph = new iD.coreGraph(entities);
+        const street = streetGeometry(entities.map(e => graph.entity(e.id)), graph);
+        return { street, frame: metricFrame(at(0, 0)) };
+    }
+    const segregated = { highway: 'path', path: 'crossing', foot: 'designated', bicycle: 'designated', segregated: 'yes', 'cycleway:width': '2' };
+    const zebraNode = { highway: 'crossing', crossing: 'uncontrolled', 'crossing:markings': 'zebra', bicycle: 'yes' };
+    // how far across the crossing (east, along the road) its marks reach
+    const reach = (marks: { points: [number, number][]; cls: string }[], frame: ReturnType<typeof metricFrame>, cls: string) => {
+        const xs = marks.filter(mk => mk.cls.includes(cls)).flatMap(mk => mk.points.map(p => frame.toMetres(p)[0]));
+        return xs.length ? [Math.min(...xs), Math.max(...xs)] : null;
+    };
+
+    it('paints a crossing way as its node is tagged, the zebra on the foot part only', () => {
+        const { street, frame } = build(segregated, zebraNode);
+        const crossing = street.paths.find(p => p.id === 'w2')!;
+        expect(crossing.markings).toBe('zebra');
+        // 2 m foot part beside the 2 m cycle part: 4 m in all; drawn northwards, its left (foot) part is west
+        const [west, east] = reach(crossing.marks as any, frame, 'zebra_bar')!;
+        expect(west).toBeCloseTo(-2, 1);
+        expect(east).toBeLessThanOrEqual(0.01);
+        expect(street.markings.some(mk => mk.nodeID === 'n2' && mk.kind === 'zebra_bar')).toBe(false);
+    });
+
+    it('puts the foot part on the side the pavement joins the crossing from', () => {
+        const { street, frame } = build(segregated, zebraNode, true);
+        const [west, east] = reach(street.paths.find(p => p.id === 'w2')!.marks as any, frame, 'zebra_bar')!;
+        expect(west).toBeGreaterThan(-0.01);
+        expect(east).toBeCloseTo(2, 1);
+    });
+
+    it('paints each part as tagged, and a coloured cycle part', () => {
+        const { street, frame } = build({ ...segregated, 'cycleway:surface:colour': 'red' },
+            { ...zebraNode, 'crossing:markings': undefined as any, 'footway:crossing:markings': 'zebra', 'cycleway:crossing:markings': 'dots' });
+        const crossing = street.paths.find(p => p.id === 'w2')!;
+        const [dotsWest] = reach(crossing.marks as any, frame, 'dots')!;
+        expect(dotsWest).toBeGreaterThan(-0.01);
+        const surface = crossing.marks.find(mk => mk.cls.includes('crossing_surface'))!;
+        expect(surface.cls).toContain('colour-red');
+    });
+
+    it('draws a segregated path as wide as its parts, and a shared one wider than a plain path', () => {
+        const path = (tags: Tags) => {
+            const entities = [new iD.osmNode({ id: 'n1', loc: at(0, 0) }), new iD.osmNode({ id: 'n2', loc: at(40, 0) }),
+                new iD.osmWay({ id: 'w1', nodes: ['n1', 'n2'], tags })];
+            const graph = new iD.coreGraph(entities);
+            const shape = streetGeometry(entities.map(e => graph.entity(e.id)), graph).paths[0];
+            const ys = shape.polygon.map(p => metricFrame(at(0, 0)).toMetres(p)[1]);
+            return { shape, width: Math.max(...ys) - Math.min(...ys) };
+        };
+        const both = { highway: 'path', foot: 'designated', bicycle: 'designated' };
+        const seg = path({ ...both, segregated: 'yes', 'cycleway:width': '1', 'footway:surface': 'paving_stones', 'cycleway:surface': 'asphalt' });
+        expect(seg.width).toBeCloseTo(3, 1);
+        expect(seg.shape).toMatchObject({ use: 'segregated', footSurface: 'paving', cycleSurface: 'asphalt', surface: 'asphalt', assumed: true });
+        expect(path({ ...both, segregated: 'yes', width: '4', 'cycleway:width': '1.5' }).shape.assumed).toBe(false);
+        expect(path({ ...both, segregated: 'no' }).width).toBeCloseTo(2.5, 1);
+        expect(path({ highway: 'path' }).width).toBeCloseTo(1.5, 1);
+        expect(path({ highway: 'cycleway', 'surface:colour': 'red' }).shape.cycleColour).toBe('red');
+    });
+});
+
+
 describe('streetGeometry: forward, backward or both', () => {
     function build(tags: Tags) {
         const entities = [

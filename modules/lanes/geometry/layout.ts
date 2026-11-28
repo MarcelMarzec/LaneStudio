@@ -4,11 +4,11 @@ import type { osmWay } from '../../osm/way';
 import { laneDriveSide } from '../core/drive_side';
 import { builtHighway, isLaneRoad, sidewalkExpectedHighways } from '../core/roads';
 import { assumedShoulder, busValue, contraflowSide, cyclewayValue, cyclewayWidth, shoulderValue, type Side } from '../core/roadside';
-import { laneKindFromValues, type LaneKindValue } from '../model/kinds';
+import { drawnLaneKind, type LaneKindValue } from '../model/kinds';
 import { markingColour, surfaceGroup, type MarkingColour, type SurfaceGroup } from '../model/street_features';
 import { kerbMarking, parkingUse, parkingValue, type KerbMarking, type ParkingUse } from '../model/parking';
 import {
-    parseLanes, laneRefsInWayOrder, parseChange,
+    parseLanes, laneOneway, laneRefsInWayOrder, parseChange,
     type LaneChange, type LaneModel, type LaneRef
 } from '../model';
 
@@ -275,14 +275,14 @@ const roadDefaults: [string, string][] = [['turn:lanes', 'turn'], ['destination:
 
 /**
  * Fills a lane's blank slots from the road (a blank value takes the plain key's, wiki: Lanes): `turn:forward` or `turn`
- * for every lane, `destination:forward` (or plain `destination` on a one-way road, where the wiki puts it) for its
- * direction. Only the drawing's copy of the values is filled, never the tags. Returns the keys it filled.
+ * for every lane, `destination:forward` (or plain `destination` on a one-way road, where the wiki puts it, for the
+ * lanes running with its traffic) for its direction. Only the drawing's copy of the values is filled, never the tags. Returns the keys it filled.
  */
-function fillFromRoad(values: Record<string, string>, tags: Tags, direction: LaneRef['direction'], oneway: boolean): string[] {
+function fillFromRoad(values: Record<string, string>, tags: Tags, direction: LaneRef['direction'], withOneway: boolean): string[] {
     const filled: string[] = [];
     for (const [laneKey, plain] of roadDefaults) {
         if (values[laneKey]) continue;
-        const value = tags[`${plain}:${direction}`] ?? (oneway || plain === 'turn' ? tags[plain] : undefined);
+        const value = tags[`${plain}:${direction}`] ?? (withOneway || plain === 'turn' ? tags[plain] : undefined);
         if (!value) continue;
         values[laneKey] = value;
         filled.push(laneKey);
@@ -323,17 +323,19 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
     const refs = laneRefsInWayOrder(model);
     const count = refs.length;
 
-    // a plain shoulder=yes on a one-way road is on the side traffic keeps to (the left in the UK)
+    // a plain shoulder=yes on a one-way road is on the side traffic keeps to (the left in the UK); the roadside follows
+    // the road's one-way traffic even where a contraflow lane makes its lanes two-way
     const driveSide = laneDriveSide(way, graph);
-    const shoulderSide: Side | null = model.oneway === 'forward' ? driveSide : model.oneway === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
-    const contraflow = contraflowSide(model.oneway, driveSide);
+    const traffic = laneOneway(tags);
+    const shoulderSide: Side | null = traffic === 'forward' ? driveSide : traffic === 'backward' ? (driveSide === 'left' ? 'right' : 'left') : null;
+    const contraflow = contraflowSide(traffic, driveSide);
 
-    const kinds = refs.map(ref => laneKindFromValues(model.lanes[ref.direction][ref.index].values, builtHighway(tags)));
+    const kinds = refs.map(ref => drawnLaneKind(model.lanes[ref.direction][ref.index].values, tags, ref.direction));
     const runningShoulder = kinds.includes('variable');
     const busLanes = kinds.some(kind => kind === 'bus' || kind === 'psv');
     const roadside = {
-        left: roadsideStrips(tags, 'left', shoulderSide, runningShoulder, contraflow, driveSide, model.oneway, busLanes),
-        right: roadsideStrips(tags, 'right', shoulderSide, runningShoulder, contraflow, driveSide, model.oneway, busLanes)
+        left: roadsideStrips(tags, 'left', shoulderSide, runningShoulder, contraflow, driveSide, traffic, busLanes),
+        right: roadsideStrips(tags, 'right', shoulderSide, runningShoulder, contraflow, driveSide, traffic, busLanes)
     };
 
     // `width` is the carriageway from kerb to kerb, cycle lanes and parking on the road included (wiki: Key:width), so
@@ -352,7 +354,7 @@ export function laneLayout(way: osmWay, graph: coreGraph, depth = 0): LaneLayout
 
     const lanes: LaneInfo[] = refs.map((ref, i) => {
         const values = model.lanes[ref.direction][ref.index].values;
-        const inherited = fillFromRoad(values, tags, ref.direction, !!model.oneway);
+        const inherited = fillFromRoad(values, tags, ref.direction, traffic === ref.direction);
         const tagged = taggedWidths[i];
         if (tagged === undefined && kerbToKerb === undefined) assumed = true;
         return {

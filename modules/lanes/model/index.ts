@@ -1,7 +1,7 @@
 export * from './types';
 export { parseLaneTagKey, laneTagKey, laneKeyBase, splitLaneValue } from './keys';
 export { laneRefsInWayOrder, laneAt, laneCount, sameLaneRef } from './order';
-export { parseLanes, laneOneway, type ParseLanesOptions } from './parse';
+export { parseLanes, laneOneway, laneModelOneway, type ParseLanesOptions } from './parse';
 export { serialiseLanes } from './serialise';
 export { insertLane, removeLane, moveLane, setLaneValue, laneValue } from './ops';
 export {

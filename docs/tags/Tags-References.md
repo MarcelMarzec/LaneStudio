@@ -410,7 +410,7 @@ The wiki's keys and tags in its group "references", and whether Lane Studio draw
 | [`ref:TECN=*`](https://wiki.openstreetmap.org/wiki/Key:ref:TECN) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:TECX=*`](https://wiki.openstreetmap.org/wiki/Key:ref:TECX) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:temples.ru=*`](https://wiki.openstreetmap.org/wiki/Key:ref:temples.ru) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
-| [`ref:tenbruggencate=*`](https://wiki.openstreetmap.org/wiki/Key:ref:tenbruggencate) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`ref:tenbruggencate=*`](https://wiki.openstreetmap.org/wiki/Key:ref:tenbruggencate) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:tiploc=*`](https://wiki.openstreetmap.org/wiki/Key:ref:tiploc) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:TR:stn=*`](https://wiki.openstreetmap.org/wiki/Key:ref:TR:stn) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`ref:UAI=*`](https://wiki.openstreetmap.org/wiki/Key:ref:UAI) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |

@@ -1,5 +1,5 @@
 import {
-    parseLanes, serialiseLanes, laneRefsInWayOrder, parseLaneTagKey, laneTagKey, laneOneway
+    parseLanes, serialiseLanes, laneRefsInWayOrder, parseLaneTagKey, laneTagKey, laneOneway, laneModelOneway
 } from '../../../../modules/lanes/model';
 
 // Real-world shaped tag sets (tags only, no geometry) that must survive a round trip unchanged
@@ -47,6 +47,10 @@ const fixtures: Record<string, Tags> = {
     'empty slots inherit': {
         highway: 'primary', oneway: 'yes', lanes: '3', maxspeed: '100', 'maxspeed:lanes': '||80'
     },
+    'contraflow bus lane on a one-way road (wiki: Bus lanes)': {
+        highway: 'tertiary', oneway: 'yes', 'oneway:bus': 'no', lanes: '2', 'lanes:forward': '1', 'lanes:backward': '1',
+        'bus:lanes:backward': 'designated', 'cycleway:left': 'share_busway', 'cycleway:left:oneway': '-1'
+    },
     'hov lanes': {
         highway: 'motorway', lanes: '3', 'hov:lanes': 'designated|no|no', 'hov:minimum': '2'
     }
@@ -85,6 +89,15 @@ describe('laneOneway', () => {
         expect(laneOneway({ highway: 'motorway' })).toBe('forward');
         expect(laneOneway({ highway: 'motorway', oneway: 'no' })).toBe(false);
     });
+
+    it('stays one-way for traffic where a contraflow lane is counted, while the lanes are two-way', () => {
+        const tags = { highway: 'residential', oneway: 'yes', lanes: '3', 'lanes:forward': '2', 'lanes:backward': '1' };
+        expect(laneOneway(tags)).toBe('forward');
+        expect(laneModelOneway(tags)).toBe(false);
+        expect(laneModelOneway({ ...tags, 'lanes:backward': '0' })).toBe('forward');
+        expect(laneModelOneway({ highway: 'primary', oneway: '-1', lanes: '2', 'lanes:forward': '1', 'lanes:backward': '1' })).toBe(false);
+        expect(laneModelOneway({ highway: 'primary', oneway: 'yes', lanes: '2' })).toBe('forward');
+    });
 });
 
 
@@ -97,6 +110,26 @@ describe('parseLanes', () => {
         expect(model.lanes.backward).toHaveLength(0);
         expect(model.lanes.forward[2].values['turn:lanes']).toBe('slight_left');
         expect(model.lanes.forward[0].values['destination:ref:lanes']).toBe('M4');
+        expect(model.issues).toEqual([]);
+    });
+
+    it('reads the contraflow lane of a one-way road (Juliana Dunajewskiego, Kraków, w364784222)', () => {
+        const model = parseLanes({
+            highway: 'residential', oneway: 'yes', 'oneway:bus': 'no', 'oneway:psv': 'no', 'oneway:bicycle': 'no',
+            lanes: '3', 'lanes:forward': '2', 'lanes:backward': '1',
+            'cycleway:left': 'lane', 'cycleway:left:oneway': '-1', 'cycleway:right': 'no'
+        });
+        expect(model.oneway).toBe(false);
+        expect(model.lanes.forward).toHaveLength(2);
+        expect(model.lanes.backward).toHaveLength(1);
+        expect(model.issues).toEqual([]);
+    });
+
+    it('reads the wiki\'s contraflow bus lane with its key', () => {
+        const model = parseLanes(fixtures['contraflow bus lane on a one-way road (wiki: Bus lanes)']);
+        expect(model.oneway).toBe(false);
+        expect(model.lanes.forward).toHaveLength(1);
+        expect(model.lanes.backward[0].values['bus:lanes']).toBe('designated');
         expect(model.issues).toEqual([]);
     });
 

@@ -22,10 +22,12 @@ import { ukMarkings } from '../core/drive_side';
  * All output is in lon/lat, ready to project.
  */
 
-/** Paths drawn at true width, with their default width in metres */
+/** Paths drawn at true width, with their default width in metres (the wiki gives none) */
 export const pathWidths: Record<string, number> = {
     footway: 2, path: 1.5, cycleway: 2, steps: 2, pedestrian: 4, bridleway: 2.5, corridor: 2
 };
+/** The default width of a path people walk and cycle on together (`foot` and `bicycle=designated`, not segregated) */
+const sharedPathWidth = 2.5;
 
 export type PathKind = 'sidewalk' | 'crossing' | 'footway' | 'path' | 'cycleway' | 'steps' | 'pedestrian' | 'bridleway';
 /** How a crossing is painted (wiki: Key:crossing:markings) */
@@ -139,6 +141,11 @@ export interface PathShape {
     divider?: Vec2[];
     /** the foot half of a segregated path (the rest is the cycle half) */
     footHalf?: Vec2[];
+    /** a segregated path's foot and cycle parts' surfaces (`footway:surface`, `cycleway:surface`), where tagged */
+    footSurface?: SurfaceGroup;
+    cycleSurface?: SurfaceGroup;
+    /** the cycle part's colour (`cycleway:surface:colour`, or `surface:colour` on a cycleway) */
+    cycleColour?: MarkingColour;
     /** crossing paths only */
     markings?: CrossingMarkings;
     /** a crossing's painted marks (see crossingMarks) */
@@ -340,6 +347,42 @@ export function crossingMarkingColour(tags: Tags): MarkingColour | undefined {
 const isCrossingPath = (tags: Tags) =>
     tags.footway === 'crossing' || tags.cycleway === 'crossing' || tags.path === 'crossing';
 
+/** The tags of a crossing that belong to the crossing, not the path: its markings, signals and parts */
+const isCrossingKey = (key: string) => /^(crossing|crossing_ref|segregated|(footway|cycleway):crossing)(:|$)/.test(key);
+
+/**
+ * A crossing way's crossing tags: its own, over those of the crossing node where it meets the road, which is where the
+ * wiki puts them (Key:crossing; Świętego Filipa, Kraków: `crossing:markings=zebra` on node 2330688598 of w755634525)
+ */
+function crossingWayTags(way: osmWay, tags: Tags, graph: coreGraph): Tags {
+    const node = way.nodes.map(id => graph.entity(id) as osmNode)
+        .find(n => (n.tags.highway === 'crossing' || !!n.tags.crossing) && graph.parentWays(n).some(isLaneRoad));
+    if (!node) return tags;
+    const inherited = Object.fromEntries(Object.entries(node.tags).filter(([key]) => isCrossingKey(key)));
+    return { ...inherited, ...tags };
+}
+
+/** A colour tag's colour, where it names one of the painted colours (red, green…) other than white */
+function partColour(value: string | undefined): MarkingColour | undefined {
+    if (!value) return undefined;
+    const colour = markingColour({ colour: value });
+    return colour === 'white' && value.toLowerCase() !== 'white' ? undefined : colour;
+}
+
+/**
+ * How a segregated crossing's foot and cycle parts are painted (wiki: Key:crossing:markings): `footway:crossing:markings`
+ * and `cycleway:crossing:markings`, else `crossing:markings` for the foot part, and where it lists two (`zebra;dots`)
+ * the second for the cycle part. A part with nothing of its own is not painted.
+ */
+function crossingPartMarkings(tags: Tags, uk: boolean): { foot: CrossingMarkings[]; cycle: CrossingMarkings[] } {
+    const own = (key: string) => (tags[key] ? crossingMarkingList({ 'crossing:markings': tags[key] }, uk) : undefined);
+    const whole = crossingMarkingList(tags, uk);
+    const foot = own('footway:crossing:markings');
+    const cycle = own('cycleway:crossing:markings');
+    if (foot || cycle) return { foot: foot ?? (cycle ? whole.filter(m => !cycle.includes(m)).slice(0, 1) : whole), cycle: cycle ?? [] };
+    return whole.length > 1 ? { foot: [whole[0]], cycle: [whole[1]] } : { foot: whole, cycle: [] };
+}
+
 
 function pathKind(tags: Tags): PathKind {
     if (isCrossingPath(tags)) return 'crossing';
@@ -409,10 +452,113 @@ function crossingStretch(way: osmWay, graph: coreGraph, points: Vec2[], frame: M
     return [atStart, atEnd];
 }
 
+/**
+ * Which side of a segregated crossing its foot part is on, as the paths at its ends show it (OSM has no tag for it):
+ * the side footways join it from, or away from the side cycleways join it from (Świętego Filipa, Kraków, w755634525:
+ * the pavement joins from the west, where the zebra is). 1 for its right, -1 for its left, the default.
+ */
+function crossingFootSide(way: osmWay, graph: coreGraph, points: Vec2[], frame: MetricFrame): 1 | -1 {
+    let score = 0;
+    for (const [nodeID, next] of [[way.first(), points[1]], [way.last(), points[points.length - 2]]] as const) {
+        const node = graph.entity(nodeID) as osmNode;
+        const at = frame.toMetres(node.loc);
+        // along the crossing, the way it is drawn
+        const along = unit(nodeID === way.first() ? sub(next, at) : sub(at, next));
+        for (const other of graph.parentWays(node) as osmWay[]) {
+            if (other.id === way.id || isCrossingPath(other.tags)) continue;
+            const highway = other.tags.highway;
+            const footOnly = highway === 'footway' || (highway === 'path' && other.tags.foot === 'designated' && other.tags.bicycle !== 'designated');
+            const cycleOnly = highway === 'cycleway' && other.tags.foot !== 'designated';
+            if (!footOnly && !cycleOnly) continue;
+            const i = other.nodes.indexOf(nodeID);
+            const neighbours = [other.nodes[i - 1], other.nodes[i + 1]].filter(Boolean);
+            for (const id of neighbours) {
+                const away = unit(sub(frame.toMetres((graph.entity(id) as osmNode).loc), at));
+                const side = dot(away, rightNormal(along));
+                if (Math.abs(side) < 0.3) continue;
+                score += (footOnly ? 1 : -1) * Math.sign(side);
+            }
+        }
+    }
+    return score > 0 ? 1 : -1;
+}
+
+/**
+ * A path's width, and how foot and cycle traffic share it (wiki: Key:segregated): side by side, each part
+ * `footway:width` and `cycleway:width` wide (2 m each until tagged, or what `width` leaves), or sharing the path
+ */
+function pathWidth(tags: Tags) {
+    const foot = tags.foot === 'designated' || tags.highway === 'footway';
+    const bike = tags.bicycle === 'designated' || tags.highway === 'cycleway';
+    const segregated = foot && bike && tags.segregated === 'yes';
+    const tagged = parseWidth(tags.width) ?? parseWidth(tags.est_width);
+    const taggedCycle = parseWidth(tags['cycleway:width']);
+    const taggedFoot = parseWidth(tags['footway:width']);
+    let footWidth = 0;
+    if (segregated) {
+        const cycle = taggedCycle ?? (tagged !== undefined && taggedFoot !== undefined ? tagged - taggedFoot : pathWidths.cycleway);
+        footWidth = taggedFoot ?? (tagged !== undefined ? tagged - cycle : pathWidths.footway);
+        // (parts that do not fit the width tagged share it)
+        if (tagged !== undefined && (footWidth < 0.5 || tagged - footWidth < 0.5)) footWidth = tagged / 2;
+        if (tagged === undefined) footWidth = Math.max(footWidth, 0.5);
+    }
+    const width = tagged ?? (segregated ? footWidth + (taggedCycle ?? pathWidths.cycleway) : foot && bike ? sharedPathWidth : pathWidths[tags.highway!]);
+    const assumed = tagged === undefined && !(segregated && taggedCycle !== undefined && taggedFoot !== undefined);
+    return { foot, bike, segregated, width, footWidth, assumed };
+}
+
+/**
+ * A crossing way's painted marks, along it (t) and across it (u). A segregated crossing (`parts`: where its parts
+ * meet, the foot part's side and the cycle part's colour) is painted part by part.
+ */
+function crossingWayMarks(tags: Tags, points: Vec2[], frame: MetricFrame, width: number,
+    parts: { split: number; footSide: number; cycleColour?: MarkingColour } | null): { markings: CrossingMarkings; marks: CrossingMark[] } {
+    const marks: CrossingMark[] = [];
+    const uk = ukMarkings(frame.toLoc(points[0]));
+    const length = polylineLength(points);
+    const place = ([t, u]: [number, number]) => {
+        const at = pointAlong(points, Math.max(0, Math.min(length, t)));
+        return frame.toLoc(add(at.point, scale(rightNormal(at.direction), u)));
+    };
+    // marks across a part [from, to] of the crossing
+    const paint = (list: CrossingMarkings[], [from, to]: [number, number]) => {
+        const centre = (from + to) / 2;
+        for (const mark of list.flatMap(m => crossingMarks(m, length, to - from, crossingMarkingColour(tags)))) {
+            const shifted = mark.points.map(([t, u]) => [t, u + centre] as [number, number]);
+            // a line along the path follows its bends
+            const steps = Math.max(2, Math.ceil(length));
+            const points2 = !mark.closed && shifted.length === 2
+                ? Array.from({ length: steps + 1 }, (_, k) => place([length * k / steps, shifted[0][1]]))
+                : shifted.map(place);
+            marks.push({ points: points2, closed: mark.closed, cls: mark.cls });
+        }
+    };
+    if (!parts) {
+        const list = crossingMarkingList(tags, uk);
+        paint(list, [-width / 2, width / 2]);
+        return { markings: list[0], marks };
+    }
+    // a zebra for people walking, and beside it the cycle crossing, each painted as its part is tagged
+    const { split, footSide, cycleColour } = parts;
+    const footPart: [number, number] = footSide < 0 ? [-width / 2, split] : [split, width / 2];
+    const cyclePart: [number, number] = footSide < 0 ? [split, width / 2] : [-width / 2, split];
+    const lists = crossingPartMarkings(tags, uk);
+    if (cycleColour) {
+        marks.push({ points: [[0, cyclePart[0]], [length, cyclePart[0]], [length, cyclePart[1]], [0, cyclePart[1]]].map(p => place(p as [number, number])),
+            closed: true, cls: `marking marking-crossing_surface colour-${cycleColour}` });
+    }
+    const foot = lists.foot.filter(m => m !== 'none');
+    const cycle = lists.cycle.filter(m => m !== 'none' && !(m === 'surface' && cycleColour));
+    paint(foot, footPart);
+    paint(cycle, cyclePart);
+    return { markings: foot[0] ?? lists.cycle.find(m => m !== 'none') ?? 'none', marks };
+}
+
 function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisual>): PathShape {
     const nodes = way.nodes.map(id => graph.entity(id));
-    // a path under construction is drawn as the path it will be
-    const tags = asBuilt(way.tags);
+    // a path under construction is drawn as the path it will be; a crossing takes its crossing node's tags
+    const built = asBuilt(way.tags);
+    const tags = isCrossingPath(built) ? crossingWayTags(way, built, graph) : built;
     const frame = metricFrame((nodes[0] as osmNode).loc);
     let points = locs(way, graph).map(frame.toMetres);
     const stretch: [number, number] = isCrossingPath(tags) ? crossingStretch(way, graph, points, frame, visuals) : [0, 0];
@@ -427,44 +573,28 @@ function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisua
         const last = unit(sub(points[points.length - 1], points[points.length - 2]));
         points = [sub(points[0], scale(first, stretch[0])), ...points.slice(1, -1), add(points[points.length - 1], scale(last, stretch[1]))];
     }
-    const tagged = parseWidth(tags.width) ?? parseWidth(tags.est_width);
-    const width = tagged ?? pathWidths[tags.highway!];
+    const { foot, bike, segregated, width, footWidth, assumed } = pathWidth(tags);
     const left = offsetPolyline(points, points.map(() => -width / 2));
     const right = offsetPolyline(points, points.map(() => width / 2));
     const kind = pathKind(tags);
+    // OSM does not say which part is which; the foot part is drawn on the left, or on a crossing the side its footways
+    // join it from
+    const footSide = segregated && isCrossingPath(tags) && points.length > 1 ? crossingFootSide(way, graph, points, frame) : -1;
+    const split = footSide < 0 ? -width / 2 + footWidth : width / 2 - footWidth;
+    const cycleColour = partColour(tags['cycleway:surface:colour'] ?? (kind === 'cycleway' ? tags['surface:colour'] : undefined));
+    const { markings, marks } = kind === 'crossing'
+        ? crossingWayMarks(tags, points, frame, width, segregated ? { split, footSide, cycleColour } : null)
+        : { markings: undefined, marks: [] as CrossingMark[] };
 
-    const marks: CrossingMark[] = [];
-    let markings: CrossingMarkings | undefined;
-    if (kind === 'crossing') {
-        const list = crossingMarkingList(tags, ukMarkings(frame.toLoc(points[0])));
-        markings = list[0];
-        const length = polylineLength(points);
-        // laid out along the path (t) and across it (u)
-        const place = ([t, u]: [number, number]) => {
-            const at = pointAlong(points, Math.max(0, Math.min(length, t)));
-            return frame.toLoc(add(at.point, scale(rightNormal(at.direction), u)));
-        };
-        for (const mark of list.flatMap(m => crossingMarks(m, length, width, crossingMarkingColour(tags)))) {
-            // a line along the path follows its bends
-            const points2 = !mark.closed && mark.points.length === 2
-                ? Array.from({ length: Math.max(2, Math.ceil(length)) + 1 }, (_, k) => place([length * k / Math.max(2, Math.ceil(length)), mark.points[0][1]]))
-                : mark.points.map(place);
-            marks.push({ points: points2, closed: mark.closed, cls: mark.cls });
-        }
-    }
-
-    // foot and cycle traffic together: split down the middle when segregated
-    const foot = tags.foot === 'designated' || tags.highway === 'footway';
-    const bike = tags.bicycle === 'designated' || tags.highway === 'cycleway';
     let use: PathShape['use'];
     let divider: Vec2[] | undefined;
     let footHalf: Vec2[] | undefined;
     if (foot && bike && kind !== 'crossing') {
-        use = tags.segregated === 'yes' ? 'segregated' : 'shared';
-        if (use === 'segregated') {
-            // OSM does not say which side is which; the foot half is drawn on the left
-            divider = points.map(frame.toLoc);
-            footHalf = [...left, ...points.slice().reverse()].map(frame.toLoc);
+        use = segregated ? 'segregated' : 'shared';
+        if (segregated) {
+            const line = offsetPolyline(points, points.map(() => split));
+            divider = line.map(frame.toLoc);
+            footHalf = [...left, ...line.slice().reverse()].map(frame.toLoc);
         }
     }
 
@@ -475,8 +605,10 @@ function pathShape(way: osmWay, graph: coreGraph, visuals?: Map<string, WayVisua
         : undefined;
 
     const shape: PathShape = {
-        id: way.id, kind, assumed: tagged === undefined, markings, marks, construction: isUnderConstruction(way.tags), ramp,
-        surface: surfaceGroup(tags.surface), use, divider, footHalf,
+        id: way.id, kind, assumed, markings, marks, construction: isUnderConstruction(way.tags), ramp,
+        surface: surfaceGroup((segregated ? tags['cycleway:surface'] : undefined) ?? tags.surface), use, divider, footHalf,
+        ...(segregated ? { footSurface: surfaceGroup(tags['footway:surface'] ?? tags.surface), cycleSurface: surfaceGroup(tags['cycleway:surface'] ?? tags.surface) } : {}),
+        ...(cycleColour && kind !== 'crossing' ? { cycleColour } : {}),
         below: (!!tags.tunnel && tags.tunnel !== 'no') || Number(tags.layer) < 0,
         above: (!!tags.bridge && tags.bridge !== 'no') || Number(tags.layer) > 0,
         polygon: [

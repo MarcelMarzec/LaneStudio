@@ -9,9 +9,19 @@ lane or road, such as a red bus lane.
 ## Paths
 
 Footways, paths, cycleways, steps and pedestrian streets are drawn at their width ([`width`](https://wiki.openstreetmap.org/wiki/Key:width), [`est_width`](https://wiki.openstreetmap.org/wiki/Key:est_width)), under the
-roads; crossings and paths on bridges ([`layer`](https://wiki.openstreetmap.org/wiki/Key:layer) > 0) over them. Shared foot and cycle paths are striped, segregated
-ones split in two. A free path end is rounded. Steps with a ramp ([`ramp`](https://wiki.openstreetmap.org/wiki/Key:ramp), `ramp:bicycle`, `ramp:stroller`,
+roads; crossings and paths on bridges ([`layer`](https://wiki.openstreetmap.org/wiki/Key:layer) > 0) over them. A free path end is rounded. Steps with a ramp ([`ramp`](https://wiki.openstreetmap.org/wiki/Key:ramp), `ramp:bicycle`, `ramp:stroller`,
 `ramp:wheelchair=yes`) have a smooth strip up one side.
+
+Paths for walking and cycling together (`foot` and `bicycle=designated`, wiki: [Key:segregated](https://wiki.openstreetmap.org/wiki/Key:segregated)):
+
+| Tagged | Drawn |
+| --- | --- |
+| `segregated=no` or untagged | Striped, 2.5 m until `width` is tagged |
+| `segregated=yes` | A foot part and a cycle part side by side, each its own width ([`cycleway:width`](https://wiki.openstreetmap.org/wiki/Key:cycleway), `footway:width`; 2 m each until tagged, or what `width` leaves) and surface ([`footway:surface`](https://wiki.openstreetmap.org/wiki/Key:footway:surface), [`cycleway:surface`](https://wiki.openstreetmap.org/wiki/Key:cycleway:surface)) |
+| `cycleway:surface:colour` (or `surface:colour` on a cycleway) | The cycle part in that colour |
+
+OSM has no tag for which part is on which side: the foot part is drawn on the left of the way, and on a crossing on
+the side its footways join it from. `footway:width` is not on the wiki; it is read as `cycleway:width`'s partner.
 
 ## Mapped road areas (micro-mapping)
 

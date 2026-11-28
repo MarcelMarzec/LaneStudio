@@ -1,6 +1,6 @@
 # Tag coverage
 
-Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draws it: 10002 in all, 659 rendered, 842 could be, 8501 cannot be. One page per wiki group.
+Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draws it: 10014 in all, 661 rendered, 840 could be, 8513 cannot be. One page per wiki group.
 
 | Lane Studio | Means |
 | --- | --- |
@@ -18,12 +18,12 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Agriculture](tags/Tags-Agriculture.md) | 33 | 0 | 0 | 33 |
 | [Amenities](tags/Tags-Amenities.md) | 241 | 3 | 22 | 216 |
 | [Animals](tags/Tags-Animals.md) | 21 | 0 | 0 | 21 |
-| [Annotations](tags/Tags-Annotations.md) | 297 | 5 | 1 | 291 |
+| [Annotations](tags/Tags-Annotations.md) | 298 | 5 | 1 | 292 |
 | [Barriers](tags/Tags-Barriers.md) | 100 | 50 | 50 | 0 |
 | [Bicycles](tags/Tags-Bicycles.md) | 52 | 0 | 52 | 0 |
-| [Boundaries](tags/Tags-Boundaries.md) | 81 | 0 | 0 | 81 |
+| [Boundaries](tags/Tags-Boundaries.md) | 83 | 0 | 0 | 83 |
 | [Bridges](tags/Tags-Bridges.md) | 43 | 4 | 38 | 1 |
-| [Buildings](tags/Tags-Buildings.md) | 304 | 2 | 0 | 302 |
+| [Buildings](tags/Tags-Buildings.md) | 307 | 2 | 0 | 305 |
 | [Buses](tags/Tags-Buses.md) | 1 | 0 | 1 | 0 |
 | [Changeset](tags/Tags-Changeset.md) | 6 | 0 | 0 | 6 |
 | [Children](tags/Tags-Children.md) | 79 | 0 | 0 | 79 |
@@ -44,7 +44,7 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Health](tags/Tags-Health.md) | 141 | 0 | 0 | 141 |
 | [Highways](tags/Tags-Highways.md) | 304 | 144 | 145 | 15 |
 | [Hiking](tags/Tags-Hiking.md) | 7 | 0 | 0 | 7 |
-| [Historic](tags/Tags-Historic.md) | 251 | 0 | 5 | 246 |
+| [Historic](tags/Tags-Historic.md) | 252 | 0 | 5 | 247 |
 | [Import](tags/Tags-Import.md) | 19 | 0 | 0 | 19 |
 | [Industrial](tags/Tags-Industrial.md) | 59 | 0 | 0 | 59 |
 | [Infrastructure](tags/Tags-Infrastructure.md) | 28 | 0 | 2 | 26 |
@@ -69,9 +69,9 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Police](tags/Tags-Police.md) | 15 | 0 | 0 | 15 |
 | [Power](tags/Tags-Power.md) | 224 | 11 | 7 | 206 |
 | [Products](tags/Tags-Products.md) | 8 | 0 | 0 | 8 |
-| [Properties](tags/Tags-Properties.md) | 1177 | 88 | 54 | 1035 |
+| [Properties](tags/Tags-Properties.md) | 1181 | 89 | 53 | 1039 |
 | [Public transport](tags/Tags-Public-Transport.md) | 75 | 2 | 68 | 5 |
-| [Railways](tags/Tags-Railways.md) | 271 | 45 | 222 | 4 |
+| [Railways](tags/Tags-Railways.md) | 271 | 46 | 221 | 4 |
 | [References](tags/Tags-References.md) | 484 | 1 | 0 | 483 |
 | [Religion](tags/Tags-Religion.md) | 58 | 0 | 0 | 58 |
 | [Restrictions](tags/Tags-Restrictions.md) | 424 | 117 | 41 | 266 |
@@ -79,7 +79,7 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Routes](tags/Tags-Routes.md) | 152 | 2 | 0 | 150 |
 | [Shops](tags/Tags-Shops.md) | 362 | 0 | 0 | 362 |
 | [Social facilities](tags/Tags-Social-Facilities.md) | 20 | 0 | 0 | 20 |
-| [Social networks](tags/Tags-Social-Networks.md) | 4 | 0 | 0 | 4 |
+| [Social networks](tags/Tags-Social-Networks.md) | 5 | 0 | 0 | 5 |
 | [Sports](tags/Tags-Sports.md) | 286 | 0 | 0 | 286 |
 | [Swimming and bathing](tags/Tags-Swimming-And-Bathing.md) | 11 | 0 | 0 | 11 |
 | [Tourism](tags/Tags-Tourism.md) | 212 | 0 | 2 | 210 |
@@ -93,7 +93,7 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 
 ## How it is made
 
-- Read from the wiki on 2026-11-25: every English `Key:` and `Tag:` page in the trees of
+- Read from the wiki on 2026-11-28: every English `Key:` and `Tag:` page in the trees of
   [Category:Tags](https://wiki.openstreetmap.org/wiki/Category:Tags) (845 categories,
   5 levels deep) and [Category:Features](https://wiki.openstreetmap.org/wiki/Category:Features)
   (6545 categories, 5 levels), translations left out, going

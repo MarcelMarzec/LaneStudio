@@ -137,9 +137,10 @@ export function drawStreet(
         {
             key: p.id, d: path(p.polygon, true), above: p.above,
             cls: `street-path street-path-${p.kind} ${p.id}` + (p.assumed ? ' assumed' : '') +
-                (p.surface ? ` surface-${p.surface}` : '') + (p.use ? ` use-${p.use}` : '') + (p.construction ? ' lanes-construction' : '')
+                (p.surface ? ` surface-${p.surface}` : '') + (p.use ? ` use-${p.use}` : '') + (p.cycleColour ? ` cycle-colour-${p.cycleColour}` : '') +
+                (p.construction ? ' lanes-construction' : '')
         },
-        ...(p.footHalf ? [{ key: `${p.id}-foot`, cls: 'street-path-foot-half', d: path(p.footHalf, true), above: p.above }] : []),
+        ...(p.footHalf ? [{ key: `${p.id}-foot`, cls: 'street-path-foot-half' + (p.footSurface ? ` surface-${p.footSurface}` : ''), d: path(p.footHalf, true), above: p.above }] : []),
         ...(p.ramp ? [{ key: `${p.id}-ramp`, cls: 'street-path-ramp', d: path(p.ramp, true), above: p.above }] : []),
         ...(p.divider && markings ? [{ key: `${p.id}-divider`, cls: 'street-path-divider', d: path(p.divider, false), above: p.above }] : [])
     ]);

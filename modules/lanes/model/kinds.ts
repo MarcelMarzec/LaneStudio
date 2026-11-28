@@ -1,5 +1,7 @@
 import { insertLane, laneValue, setLaneValue } from './ops';
 import type { LaneDirection, LaneModel, LaneRef } from './types';
+import { laneOneway } from './parse';
+import { builtHighway } from '../core/roads';
 
 /** Lane types and the `*:lanes` key that marks each one `designated`; general traffic sets none */
 export const laneKindKeys: Record<string, string | null> = {
@@ -42,6 +44,25 @@ export function laneKindFromValues(values: Record<string, string>, highway?: str
         return 'restricted';
     }
     return highway === 'busway' || highway === 'bus_guideway' ? 'bus' : 'general';
+}
+
+/**
+ * The type a lane with none tagged is drawn as from the road's tags: a lane counted against a one-way road's traffic
+ * where only buses (`oneway:bus=no`) or PSVs (`oneway:psv=no`) may go that way is their contraflow lane (wiki: Bus
+ * lanes; Juliana Dunajewskiego, Kraków, w364784222, signed as a bus lane). Null where the road says nothing.
+ */
+export function impliedLaneKind(tags: Tags, direction: LaneDirection): 'bus' | 'psv' | null {
+    const traffic = laneOneway(tags);
+    if (!traffic || direction === traffic || direction === 'both_ways') return null;
+    if (tags['oneway:bus'] === 'no') return 'bus';
+    if (tags['oneway:psv'] === 'no') return 'psv';
+    return null;
+}
+
+/** A lane's type as drawn: its own, or for general traffic the type the road implies (`impliedLaneKind`) */
+export function drawnLaneKind(values: Record<string, string>, tags: Tags, direction: LaneDirection): LaneKindValue {
+    const kind = laneKindFromValues(values, builtHighway(tags));
+    return kind === 'general' ? impliedLaneKind(tags, direction) ?? kind : kind;
 }
 
 /** A lane's type, as the lane type field shows it (a restricted lane is general traffic with its access closed) */

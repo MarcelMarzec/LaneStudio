@@ -286,9 +286,10 @@ export const validationLaneTags: CreateValidator = () => {
         if (hasOldCycleways(tags)) {
             issues.push(issue(entity, 'old_cycleway', {}, () => upgradeOldCycleways(tags, contraflowSide(laneOneway(tags), driveSide))));
         }
+        const traffic = laneOneway(tags);
         const oldBus = (['left', 'right'] as const).filter(side => busValue(tags, side,
-            model.oneway ? (model.oneway === 'forward' ? driveSide : driveSide === 'left' ? 'right' : 'left') : null,
-            contraflowSide(model.oneway, driveSide)) === 'lane');
+            traffic ? (traffic === 'forward' ? driveSide : driveSide === 'left' ? 'right' : 'left') : null,
+            contraflowSide(traffic, driveSide)) === 'lane');
         if (oldBus.length && model.countSource !== 'assumed') {
             issues.push(issue(entity, 'old_busway', {}, () => {
                 const next = serialiseLanes(upgradeOldBusway(model, oldBus), tags);

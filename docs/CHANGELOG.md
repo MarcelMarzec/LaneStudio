@@ -8,6 +8,21 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
+# 26.11.27
+##### 2026-Nov-27
+
+#### Lanes and junctions
+* A one-way road with a lane against its traffic (`lanes:forward` and `lanes:backward`, as a contraflow bus lane with `oneway:bus=no`) is drawn and edited with each direction's lanes, rather than all its lanes running one way (Juliana Dunajewskiego, Kraków, w364784222: 2 lanes forward and 1 back); its contraflow cycle lane stays as tagged. Thanks to [Mateusz_Konieczny](https://www.openstreetmap.org/user/Mateusz_Konieczny) for the report!
+* A lane against a one-way road that only buses may drive against (`oneway:bus=no`, or `oneway:psv=no`) is drawn as a bus (or PSV) lane when it has no type of its own, as Juliana Dunajewskiego's sign shows; the lane's Lane type shows it as a hint
+
+#### Roads and signs
+* A crossing mapped as a way is painted as its crossing node is tagged (`crossing:markings=zebra` on the node), rather than left unpainted (Świętego Filipa, Kraków, w755634525). Thanks to [Mateusz_Konieczny](https://www.openstreetmap.org/user/Mateusz_Konieczny) for the report!
+* A segregated foot and cycle path or crossing (`segregated=yes`) is drawn as wide as its two parts (`cycleway:width`, `footway:width`, 2 m each until tagged), each with its own surface (`footway:surface`, `cycleway:surface`); a shared one is 2.5 m wide until its `width` is tagged
+* A segregated crossing paints its foot and cycle parts as tagged (`footway:crossing:markings`, `cycleway:crossing:markings`, or `zebra;dots`), the foot part on the side the pavement joins it from, and `cycleway:surface:colour=red` colours the cycle crossing
+
+#### Editing
+* Links in the what's new menu open, rather than showing as `[text](link)`
+
 # 26.11.25r2
 ##### 2026-Nov-25
 

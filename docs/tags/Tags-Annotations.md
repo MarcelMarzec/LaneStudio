@@ -1,7 +1,7 @@
 # Tags: Annotations
 
 The wiki's keys and tags in its group "annotations", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-297 keys and tags: 5 rendered, 1 could be, 291 cannot be.
+298 keys and tags: 5 rendered, 1 could be, 292 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -194,6 +194,7 @@ The wiki's keys and tags in its group "annotations", and whether Lane Studio dra
 | [`source=DNT_Oslo_og_Omegn`](https://wiki.openstreetmap.org/wiki/Tag:source=DNT_Oslo_og_Omegn) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`source=DOP_LVA`](https://wiki.openstreetmap.org/wiki/Tag:source=DOP_LVA) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`source=Gazetteer_of_Australia_2012`](https://wiki.openstreetmap.org/wiki/Tag:source=Gazetteer_of_Australia_2012) | de facto | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
+| [`source=GeoEye`](https://wiki.openstreetmap.org/wiki/Tag:source=GeoEye) | — | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`source=Google`](https://wiki.openstreetmap.org/wiki/Tag:source=Google) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`source=Google,_2010-01-21`](https://wiki.openstreetmap.org/wiki/Tag:source=Google,_2010-01-21) | in use | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
 | [`source=GURS`](https://wiki.openstreetmap.org/wiki/Tag:source=GURS) | imported | ❌ Cannot be rendered | Information, not a shape on the ground (iD shows it in the fields) |
