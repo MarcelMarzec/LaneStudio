@@ -8,7 +8,17 @@ Before versions were dates, builds were numbered 0.1.0 (12 to 21 October) and 0.
 21 October); each day's work is listed here under its date. Lane Studio is built on iD 2.43.0-dev;
 for the changes in iD itself, see [iD's changelog](https://github.com/openstreetmap/iD/blob/develop/CHANGELOG.md).
 
-# 26.11.27
+# 26.11.28
+##### 2026-Nov-28
+
+#### Roads and signs
+* Speed limits are shown and set in the unit the country's road signs use: km/h (written as a bare number, `50`) outside the UK, the US and the other places that use mph, rather than always mph (Juliana Dunajewskiego, Kraków, showed its `maxspeed=30` as 19 mph, and picking a limit there wrote `30 mph`)
+* The Lane Studio pane has a **Speed unit** setting: as the country's road signs, always mph, or always km/h
+* The speed limit offers 20 to 140 km/h in km/h countries, `none` (no limit) and `walk` (walking pace), and the country's limit types from the wiki's Key:maxspeed (`PL:urban` 50, `DE:motorway` none, `FR:zone30` 30…), written in `source:maxspeed` (or where the road has its type already, `maxspeed:type` in the UK); any `CC:zoneNN` type reads as NN (`PL:zone30`)
+* The Speed Limit tool colours km/h limits in bands (20 or less, 30, 40–50, 60–70, 80–90, 100–110, 120 or more), its keys 1 to 9 pick the first nine limits, and other countries' types get the national, motorway and zone patterns
+* The advisory speed (`maxspeed:advisory`), minimum speed, speed limit for lorries and a speed camera's enforced speed follow the unit too, and the new **Practical speed** field sets `maxspeed:practical` (in Add field)
+* `maxspeed=none` is painted on the road as the end of limits, as the national speed limit's disc
+
 ##### 2026-Nov-27
 
 #### Lanes and junctions

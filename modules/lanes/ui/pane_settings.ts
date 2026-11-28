@@ -8,6 +8,7 @@ import { uiSectionPrivacy } from '../../ui/sections/privacy';
 import { uiTooltip } from '../../ui/tooltip';
 import { laneSettings, defaultSurfaceOpacity, hideOriginalsKey } from '../core/lane_settings';
 import { laneStudioLinks } from '../core/links';
+import type { SpeedUnitSetting } from '../core/speed_unit';
 import { setWhatsNewEnabled, whatsNewEnabled } from '../core/whats_new';
 import { laneStudioVersion } from '../version';
 import { laneStudioMark } from './logo';
@@ -130,6 +131,21 @@ function uiSectionLaneDisplay(context: iD.Context) {
             });
         zoomedOutLabel.append('span').text(t('_lanes.settings.zoomed_out_map'));
 
+        // the unit speeds are shown and set in: the country's road signs', or always mph or km/h
+        const units = enter.append('div').attr('class', 'lanes-speed-unit');
+        units.append('h4').text(t('_lanes.settings.speed_unit'));
+        const unitList = units.append('ul').attr('class', 'layer-list lanes-settings-list').attr('role', 'radiogroup');
+        for (const unit of ['auto', 'mph', 'km/h'] as SpeedUnitSetting[]) {
+            const option = unitList.append('li').attr('class', `lanes-speed-unit-option lanes-speed-unit-${unit.replace('/', '')}`);
+            const unitLabel = option.append('label');
+            unitLabel.append('input')
+                .attr('type', 'radio')
+                .attr('name', 'lanes-speed-unit')
+                .attr('value', unit)
+                .on('change', () => settings.setSpeedUnit(unit));
+            unitLabel.append('span').text(t(`_lanes.settings.speed_units.${unit.replace('/', '')}`));
+        }
+
         // OSM's guidance: the tags describe what is there, whatever the drawing makes of them
         const note = enter.append('p').attr('class', 'lanes-settings-note');
         note.append('span').text(t('_lanes.settings.renderer_note') + ' ');
@@ -157,6 +173,12 @@ function uiSectionLaneDisplay(context: iD.Context) {
             .classed('active', settings.showZoomedOutMap())
             .select('input')
             .property('checked', settings.showZoomedOutMap());
+        container.selectAll<HTMLLIElement, unknown>('.lanes-speed-unit-option').each(function() {
+            const input = this.querySelector('input')!;
+            const chosen = input.value === settings.speedUnit();
+            this.classList.toggle('active', chosen);
+            input.checked = chosen;
+        });
         container.select('.lanes-hide-landuse-option')
             .classed('active', settings.hideLanduse())
             .select('input')

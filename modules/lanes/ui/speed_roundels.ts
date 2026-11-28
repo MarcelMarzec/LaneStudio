@@ -3,7 +3,10 @@ import { select as d3_select } from 'd3-selection';
 import { t } from '../../core/localizer';
 import { uiTooltip } from '../../ui/tooltip';
 import { compactChoice } from './lane_fields';
-import { mphLimits, nationalTypes, samePick, ukSpeedTypeList, ukSpeedTypes, type SpeedPick, type UkSpeedType } from '../model/speed_limits';
+import {
+    isUkSpeedType, nationalTypes, parseSpeed, samePick, speedLimits, speedTypesFor, speedTypeValue, speedValues, ukSpeedTypes,
+    type SpeedPick, type SpeedUnit, type UkSpeedType
+} from '../model/speed_limits';
 
 // the speed tag rules live in the model; the sidebar and the tool read them from here too
 export * from '../model/speed_limits';
@@ -18,12 +21,12 @@ function nationalDisc(svg: Selection) {
 }
 
 /** A limit's number in a red ring, or for a minimum speed in white on a blue disc */
-function numberRoundel(svg: Selection, mph: number, minimum = false) {
+function numberRoundel(svg: Selection, n: number | string, minimum = false) {
     svg.append('circle').attr('r', 11.5).attr('class', minimum ? 'roundel-min-disc' : 'roundel-disc');
     if (!minimum) svg.append('circle').attr('r', 10).attr('class', 'roundel-ring');
     svg.append('text').attr('class', minimum ? 'roundel-number roundel-min-number' : 'roundel-number')
         .attr('text-anchor', 'middle').attr('dy', '0.36em')
-        .attr('font-size', mph >= 100 ? 8.5 : 10.5).text(mph);
+        .attr('font-size', String(n).length >= 3 ? 8.5 : 10.5).text(n);
 }
 
 /**
@@ -58,12 +61,41 @@ function drawTypeSign(svg: d3.Selection<SVGSVGElement>, type: UkSpeedType) {
 }
 
 /**
- * The roundel's picture: the number in a red ring, a UK limit type's sign, no limit as a dashed ring, or for a
- * minimum speed the number in white on a blue disc
+ * Another country's limit type: the limit it sets in a red ring (or as a value with no number), with the type's name
+ * in small letters on a plate below it
+ */
+function drawCountryType(svg: d3.Selection<SVGSVGElement>, type: string) {
+    svg.attr('viewBox', '-13 -13 26 36');
+    svg.append('rect').attr('x', -12.5).attr('y', -12.5).attr('width', 25).attr('height', 35).attr('rx', 3).attr('class', 'roundel-plate');
+    const sign = svg.append('g').attr('transform', 'scale(0.86) translate(0 -1)');
+    const value = speedTypeValue(type);
+    if (value === 'none' || value === 'walk') drawValue(sign, value);
+    else numberRoundel(sign, value ? parseSpeed(value)?.n ?? '?' : '?');
+    const name = type.split(':')[1].replace(/_/g, ' ');
+    svg.append('text').attr('class', 'roundel-caption').attr('text-anchor', 'middle').attr('y', 19.2)
+        // (sized to fit the plate's width)
+        .style('font-size', `${Math.min(5.2, 40 / Math.min(name.length, 12)).toFixed(1)}px`).text(name.length > 12 ? name.slice(0, 11) + '…' : name);
+}
+
+/** A value with no number: no limit as the end of limits' disc with its band, walking pace as a walker on a disc */
+function drawValue(svg: Selection, value: string) {
+    if (value === 'none') {
+        nationalDisc(svg);
+        return;
+    }
+    svg.append('circle').attr('r', 11.5).attr('class', 'roundel-disc');
+    svg.append('circle').attr('r', 10).attr('class', 'roundel-ring');
+    svg.append('text').attr('class', 'roundel-number').attr('text-anchor', 'middle').attr('dy', '0.36em').attr('font-size', 6.5).text('walk');
+}
+
+/**
+ * The roundel's picture: the number in a red ring, a limit type's sign, no limit (`none`) or walking pace, no limit
+ * tagged as a dashed ring, or for a minimum speed the number in white on a blue disc
  */
 function drawRoundel(svg: d3.Selection<SVGSVGElement>, pick: SpeedPick, minimum = false) {
     if (pick.kind === 'type') {
-        drawTypeSign(svg, pick.type);
+        if (isUkSpeedType(pick.type)) drawTypeSign(svg, pick.type);
+        else drawCountryType(svg, pick.type);
         return;
     }
     svg.attr('viewBox', '-13 -13 26 26');
@@ -72,21 +104,45 @@ function drawRoundel(svg: d3.Selection<SVGSVGElement>, pick: SpeedPick, minimum 
         svg.append('text').attr('class', 'roundel-none-text').attr('text-anchor', 'middle').attr('dy', '0.35em').text('—');
         return;
     }
-    numberRoundel(svg, pick.mph, minimum);
+    if (pick.kind === 'value') {
+        drawValue(svg, pick.value);
+        return;
+    }
+    numberRoundel(svg, pick.n, minimum);
 }
+
+/** A speed with its unit, for labels: `30 mph`, `50 km/h` */
+export const speedText = (n: number, unit: SpeedUnit) => t(unit === 'mph' ? '_lanes.speed.mph' : '_lanes.speed.kmh', { n });
 
 /** The name of a pick, for its tooltip and screen readers */
 export function speedPickLabel(pick: SpeedPick, minimum = false, noneLabel?: string): string {
-    if (pick.kind === 'mph') return t(minimum ? '_lanes.speed.min_mph' : '_lanes.speed.mph', { n: pick.mph });
-    if (pick.kind === 'type') return t(`_lanes.speed.types.${pick.type.replace('GB:', '')}`, { mph: ukSpeedTypes[pick.type].mph });
+    if (pick.kind === 'speed') return minimum ? t('_lanes.speed.min_speed', { speed: speedText(pick.n, pick.unit) }) : speedText(pick.n, pick.unit);
+    if (pick.kind === 'value') return t(`_lanes.speed.values.${pick.value}`);
+    if (pick.kind === 'type') {
+        if (isUkSpeedType(pick.type)) return t(`_lanes.speed.types.${pick.type.replace('GB:', '')}`, { mph: ukSpeedTypes[pick.type].mph });
+        const [country, name] = pick.type.split(':');
+        const value = speedTypeValue(pick.type);
+        const speed = value ? parseSpeed(value) : null;
+        return t('_lanes.speed.country_type', {
+            name: t(`_lanes.speed.type_names.${name}`, { default: name.replace(/_/g, ' ') }), country,
+            limit: speed ? speedText(speed.n, speed.unit) : value ? t(`_lanes.speed.values.${value}`, { default: value }) : pick.type
+        });
+    }
     return noneLabel ?? t(minimum ? '_lanes.speed.min_none' : '_lanes.speed.none');
 }
 
 export interface SpeedRoundelOptions {
     /** what is tagged now, highlighted; undefined when the selected lanes differ */
     current: SpeedPick | undefined;
-    /** offer the UK limit types: national, motorway, restricted road and 20 zone (for a whole road, not a lane) */
+    /** the unit the limits offered are in (mph unless given) */
+    unit?: SpeedUnit;
+    /**
+     * offer the limit types of the road's country (`country`): the UK's national, motorway, restricted road and 20
+     * zone, or the urban, rural, motorway… limits the wiki lists for others; and no limit (`none`) and walking pace
+     */
     types?: boolean;
+    /** the country the road is in, as its ISO code, for its limit types */
+    country?: string;
     /** minimum speeds: blue roundels */
     minimum?: boolean;
     /** offer "no limit tagged" to clear it */
@@ -101,18 +157,29 @@ export interface SpeedRoundelOptions {
 /**
  * A row of speed limit roundels, as on UK signs: click one to set the limit; the one tagged now is highlighted
  */
-export function speedRoundels(parent: Selection, options: SpeedRoundelOptions) {
-    const picks: SpeedPick[] = [
-        ...mphLimits.map(mph => ({ kind: 'mph', mph } as SpeedPick)),
-        ...(options.types ? ukSpeedTypeList.map(type => ({ kind: 'type', type } as SpeedPick)) : []),
+/** The picks offered: the limits in the unit, the country's limit types and the values with no number, and none */
+function offeredPicks(options: SpeedRoundelOptions): SpeedPick[] {
+    const unit = options.unit ?? 'mph';
+    return [
+        ...speedLimits[unit].map(n => ({ kind: 'speed', n, unit } as SpeedPick)),
+        ...(options.types ? speedTypesFor(options.country).map(type => ({ kind: 'type', type } as SpeedPick)) : []),
+        ...(options.types && !options.minimum ? speedValues.map(value => ({ kind: 'value', value } as SpeedPick)) : []),
         ...(options.none ? [{ kind: 'none' } as SpeedPick] : [])
     ];
+}
+
+/** A pick's name in CSS classes */
+const pickName = (pick: SpeedPick) => (pick.kind === 'speed' ? String(pick.n) : pick.kind === 'type' ? pick.type.replace(':', '-')
+    : pick.kind === 'value' ? pick.value : pick.kind);
+
+export function speedRoundels(parent: Selection, options: SpeedRoundelOptions) {
+    const picks = offeredPicks(options);
     const size = options.size ?? 34;
     const row = parent.append('div').attr('class', 'speed-roundels' + (options.minimum ? ' speed-roundels-min' : '')).attr('role', 'radiogroup');
     for (const pick of picks) {
         const label = speedPickLabel(pick, options.minimum, options.noneLabel);
         const active = samePick(options.current, pick);
-        const name = pick.kind === 'mph' ? pick.mph : pick.kind === 'type' ? pick.type.replace('GB:', '') : pick.kind;
+        const name = pickName(pick);
         const button = row.append('button')
             .attr('class', 'speed-roundel' + (active ? ' active' : '') + ` speed-roundel-${name}` + (pick.kind === 'type' ? ' speed-roundel-type' : ''))
             .attr('role', 'radio')
@@ -130,29 +197,37 @@ export function speedRoundels(parent: Selection, options: SpeedRoundelOptions) {
 }
 
 
-/** A pick as a choice's value: `mph:30`, `type:GB:nsl_single` or `none` */
-const pickKey = (pick: SpeedPick) => (pick.kind === 'mph' ? `mph:${pick.mph}` : pick.kind === 'type' ? `type:${pick.type}` : 'none');
-const keyPick = (key: string): SpeedPick => (key.startsWith('mph:') ? { kind: 'mph', mph: Number(key.slice(4)) }
-    : key.startsWith('type:') ? { kind: 'type', type: key.slice(5) as UkSpeedType } : { kind: 'none' });
+/** A pick as a choice's value: `speed:30:mph`, `type:GB:nsl_single`, `value:none` or `none` */
+const pickKey = (pick: SpeedPick) => (pick.kind === 'speed' ? `speed:${pick.n}:${pick.unit}` : pick.kind === 'type' ? `type:${pick.type}`
+    : pick.kind === 'value' ? `value:${pick.value}` : 'none');
+function keyPick(key: string): SpeedPick {
+    if (key.startsWith('speed:')) {
+        const [, n, unit] = key.split(':');
+        return { kind: 'speed', n: Number(n), unit: unit as SpeedUnit };
+    }
+    if (key.startsWith('type:')) return { kind: 'type', type: key.slice(5) };
+    if (key.startsWith('value:')) return { kind: 'value', value: key.slice(6) as 'none' | 'walk' };
+    return { kind: 'none' };
+}
 
 /**
  * A speed limit picked in one compact row (as the sidebar's fields have it): the roundel of the limit chosen now and a
- * dropdown of every roundel and UK limit type. A typed number is that many mph (`25` or `25 mph`), so limits no roundel
- * shows can be set; `nsl`, `national`, `motorway`, `zone` and the like find the limit types.
+ * dropdown of every roundel, limit type and value. A typed number is in the unit used there (`25`), or in the unit
+ * typed with it (`25 mph`, `40 km/h`), so limits no roundel shows can be set; `nsl`, `national`, `urban`, `motorway`,
+ * `zone` and the like find the limit types.
  */
 export function speedChoice(context: iD.Context, parent: Selection, id: string, options: SpeedRoundelOptions) {
-    const picks: SpeedPick[] = [
-        ...mphLimits.map(mph => ({ kind: 'mph', mph } as SpeedPick)),
-        ...(options.types ? ukSpeedTypeList.map(type => ({ kind: 'type', type } as SpeedPick)) : []),
-        ...(options.none ? [{ kind: 'none' } as SpeedPick] : [])
-    ];
+    const unit = options.unit ?? 'mph';
+    const picks = offeredPicks(options);
     // a limit tagged that no roundel shows is offered too, so it shows as chosen
-    if (options.current?.kind === 'mph' && !picks.some(p => samePick(p, options.current!))) picks.unshift(options.current);
+    if (options.current && options.current.kind !== 'none' && !picks.some(p => samePick(p, options.current!))) picks.unshift(options.current);
     const terms = (pick: SpeedPick): string[] => {
-        if (pick.kind === 'mph') return [String(pick.mph), `${pick.mph}mph`];
+        if (pick.kind === 'speed') return [String(pick.n), `${pick.n}${pick.unit === 'mph' ? 'mph' : 'km/h'}`];
         if (pick.kind === 'none') return ['none', 'no limit'];
-        const short = pick.type.replace('GB:', '');
-        return [pick.type, short, ...(short.startsWith('nsl') ? ['nsl', 'national'] : []), ...(short === 'zone20' ? ['zone', '20 zone'] : [])];
+        if (pick.kind === 'value') return pick.value === 'none' ? ['none', 'unlimited', 'no limit'] : ['walk', 'walking pace'];
+        const short = pick.type.split(':')[1];
+        return [pick.type, short, short.replace(/_/g, ' '), ...(short.startsWith('nsl') ? ['nsl', 'national'] : []),
+            ...(short.startsWith('zone') ? ['zone', `${short.slice(4)} zone`] : [])];
     };
     return compactChoice(context, parent, {
         id,
@@ -165,8 +240,10 @@ export function speedChoice(context: iD.Context, parent: Selection, id: string, 
         })),
         current: options.current ? pickKey(options.current) : undefined,
         custom: text => {
-            const m = text.match(/^(\d{1,3})\s*(mph)?$/i);
-            return m ? `mph:${Number(m[1])}` : undefined;
+            const m = text.trim().match(/^(\d{1,3})\s*(mph|km\/h|kmh|kph)?$/i);
+            if (!m) return undefined;
+            const typed: SpeedUnit = m[2] ? (/mph/i.test(m[2]) ? 'mph' : 'km/h') : unit;
+            return `speed:${Number(m[1])}:${typed}`;
         },
         onPick: key => options.onPick(keyPick(key))
     });

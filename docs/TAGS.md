@@ -1,6 +1,6 @@
 # Tag coverage
 
-Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draws it: 10014 in all, 661 rendered, 840 could be, 8513 cannot be. One page per wiki group.
+Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draws it: 10014 in all, 662 rendered, 840 could be, 8512 cannot be. One page per wiki group.
 
 | Lane Studio | Means |
 | --- | --- |
@@ -74,7 +74,7 @@ Every key and tag the OpenStreetMap wiki documents, and whether Lane Studio draw
 | [Railways](tags/Tags-Railways.md) | 271 | 46 | 221 | 4 |
 | [References](tags/Tags-References.md) | 484 | 1 | 0 | 483 |
 | [Religion](tags/Tags-Religion.md) | 58 | 0 | 0 | 58 |
-| [Restrictions](tags/Tags-Restrictions.md) | 424 | 117 | 41 | 266 |
+| [Restrictions](tags/Tags-Restrictions.md) | 424 | 118 | 41 | 265 |
 | [Riding](tags/Tags-Riding.md) | 1 | 0 | 0 | 1 |
 | [Routes](tags/Tags-Routes.md) | 152 | 2 | 0 | 150 |
 | [Shops](tags/Tags-Shops.md) | 362 | 0 | 0 | 362 |

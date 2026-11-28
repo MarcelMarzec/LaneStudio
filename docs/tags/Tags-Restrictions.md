@@ -1,7 +1,7 @@
 # Tags: Restrictions
 
 The wiki's keys and tags in its group "restrictions", and whether Lane Studio draws them ([Tag coverage](../TAGS.md)).
-424 keys and tags: 117 rendered, 41 could be, 266 cannot be.
+424 keys and tags: 118 rendered, 41 could be, 265 cannot be.
 
 | Key or tag | Wiki status | Lane Studio | Why, or how |
 | --- | --- | --- | --- |
@@ -194,7 +194,7 @@ The wiki's keys and tags in its group "restrictions", and whether Lane Studio dr
 | [`maxspeed:hgv=*`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:hgv) | de facto | ✅ Rendered | [Road Fields](../guide/Road-Fields.md) |
 | [`maxspeed:hgv:backward=*`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:hgv:backward) | de facto | ✅ Rendered | [Road Fields](../guide/Road-Fields.md) |
 | [`maxspeed:hgv:forward=*`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:hgv:forward) | de facto | ✅ Rendered | [Road Fields](../guide/Road-Fields.md) |
-| [`maxspeed:practical=*`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:practical) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
+| [`maxspeed:practical=*`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:practical) | in use | ✅ Rendered | [Road Fields](../guide/Road-Fields.md) |
 | [`maxspeed:reason=*`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:reason) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`maxspeed:tilting=*`](https://wiki.openstreetmap.org/wiki/Key:maxspeed:tilting) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |
 | [`maxspeed:type=AU:rural`](https://wiki.openstreetmap.org/wiki/Tag:maxspeed:type=AU:rural) | in use | ❌ Cannot be rendered | A rule or condition with nothing painted or built to draw |

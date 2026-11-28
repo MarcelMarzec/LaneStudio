@@ -27,7 +27,7 @@ use the [contact form](https://marcelmarzec.com/contact). If you interact with t
 Lane Studio does not set tracking cookies and does not collect analytics. It stores some information
 in your browser's local storage so you don't have to re-enter it: your settings (such as lane opacity,
 the map layers shown, whether the what's new menu is shown, whether Lane Studio's sections (Look ahead,
-Roundabout, the Map key's sections) and each side's parking and cycle lane details are folded away, and whether land use, brand logos and the OpenStreetMap map when zoomed out are shown), the Lane Studio version you last used
+Roundabout, the Map key's sections) and each side's parking and cycle lane details are folded away, whether land use, brand logos and the OpenStreetMap map when zoomed out are shown, and the speed unit chosen), the Lane Studio version you last used
 (so the what's new menu shows only what changed since) and edits you have not saved yet, under keys
 starting with `lanes_`, and
 your OpenStreetMap login token, under a key named after the OpenStreetMap server. This stays on your
@@ -98,6 +98,7 @@ law, or want to ask about it, open an issue at
 
 ### Changelog
 
+* _2026-Nov-28_ - The speed unit chosen in the Lane Studio pane (automatic, mph or km/h) is stored with your settings.
 * _2026-Nov-21_ - Below zoom 16, the standard OpenStreetMap map's tiles are loaded from tile.openstreetmap.org; whether this is turned off is stored with your settings.
 * _2026-Nov-15_ - The hide road areas and traffic islands setting, added and taken out the same day, is no longer stored.
 * _2026-Nov-10_ - The website's statistics keep public changeset data from OpenStreetMap (number, username, time, comment, area and what changed) for changesets made with Lane Studio, and show them on a map and leaderboard; their pages load MapLibre from jsDelivr and map tiles from OpenFreeMap.

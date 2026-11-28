@@ -14,9 +14,9 @@ imagery. You edit lanes where they are drawn, and Lane Studio writes the OpenStr
 > It is not made or supported by the iD project: report Lane Studio problems
 > [here](https://github.com/MarcelMarzec/LaneStudio/issues), not to iD.
 >
-> **Lane Studio is made for UK roads.** It has been built around UK roads and their limits: lane widths,
-> signs, markings and speed limits (in mph) follow British practice. It edits roads anywhere, but support
-> for other countries will come later.
+> **Lane Studio is made for UK roads.** It has been built around UK roads: lane widths, signs and markings
+> follow British practice, while speed limits are in each country's unit (mph or km/h). It edits roads
+> anywhere, but support for other countries will come later.
 >
 > **Lane Studio was written with AI.** Its code, tests and documentation were written with
 > [Claude Code](https://claude.com/claude-code), Anthropic's AI coding tool, directed and reviewed by
@@ -35,7 +35,7 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   values onto lanes; set the centre line (dashed, or a double white line
   where overtaking is banned) from the sidebar, from a lane beside it, or by clicking it on the map.
 * **One sidebar with iD's**: Lane Studio's road fields (number of lanes, centre line, speed limits,
-  advisory speeds, structure, pavements, cycleways, hard shoulders, street parking, active traffic
+  advisory and practical speeds, structure, pavements, cycleways, hard shoulders, street parking, active traffic
   management) sit among iD's own in its Fields section, in place of iD's for the same tags, each with
   iD's bin and undo buttons and an i button giving a short overview and the wiki page. Choices show only
   the value chosen, with its sign, and a dropdown of the rest. Fields a road doesn't usually need wait in
@@ -77,8 +77,9 @@ The website is Lane Studio only; iD's own page is still in the repository for de
   where people can walk. The roads turn the colour of their access for the vehicle picked (no,
   yes, discouraged, destination or delivery only, private), with a key in the panel.
 * **Speed limits**: the Speed Limit tool colours every lane by its limit, with roads missing one in
-  red; pick a limit (UK roundels, in mph) and click roads or lanes to set it. Minimum speeds work the
-  same way, and the UK's national, motorway and restricted road limit types are set with their limit.
+  red; pick a limit (roundels in mph or km/h, as the country's signs) and click roads or lanes to set it.
+  Minimum speeds work the same way, and limit types (the UK's national, motorway and restricted road
+  limits, or another country's urban, rural and motorway limits) are set with their limit.
 * **Look ahead**: the roads a selected road leads on to, its exits and their destinations, and
   copying lanes to the next road.
 * **Connectivity**: every lane connection through junctions drawn as a line, those Lane Studio works out

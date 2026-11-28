@@ -2,9 +2,20 @@ import { t } from '../../core/localizer';
 import { modeBrowse } from '../../modes/browse';
 import type { osmWay } from '../../osm/way';
 import { svgIcon } from '../../svg/icon';
-import { colouredLimits, laneSpeed, speedClassOf, speedTypeKind, type SpeedClass, type SpeedMeasure, type SpeedTypeKind } from '../core/lane_speed';
+import { colouredLimits, laneSpeed, speedClassOf, speedClassRange, speedTypeKind, type SpeedClass, type SpeedMeasure, type SpeedTypeKind } from '../core/lane_speed';
+import { countryAt } from '../core/speed_unit';
 import { isLaneRoad } from '../core/roads';
-import { samePick, speedRoundels } from './speed_roundels';
+import { samePick, speedRoundels, speedText } from './speed_roundels';
+import type { SpeedUnit } from '../model/speed_limits';
+
+/** What a colour shows, for the key: `30 mph`, `40–50 km/h`, `20 km/h or less`, `120 km/h or more` */
+function classLabel(cls: number, unit: SpeedUnit): string {
+    const { from, to } = speedClassRange(cls, unit);
+    if (from === to) return speedText(from!, unit);
+    if (from === undefined) return t('_lanes.speed_tool.or_less', { speed: speedText(to!, unit) });
+    if (to === undefined) return t('_lanes.speed_tool.or_more', { speed: speedText(from, unit) });
+    return t('_lanes.speed_tool.range', { from, speed: speedText(to, unit) });
+}
 
 type Div = d3.Selection<HTMLDivElement>;
 
@@ -55,8 +66,10 @@ export function speedPanel(context: iD.Context) {
 
         const pick = body.append('div').attr('class', 'routing-section');
         pick.append('h4').text(t(minimum ? '_lanes.speed_tool.apply_min' : '_lanes.speed_tool.apply'));
+        const unit = speed.unit();
         speedRoundels(pick, {
             current: speed.picked() ?? undefined, types: !minimum, minimum, none: true,
+            unit, country: countryAt(context.map().center() as [number, number]),
             noneLabel: t(minimum ? '_lanes.speed_tool.remove_min' : '_lanes.speed_tool.remove'),
             // clicking the picked limit again lets go of it
             onPick: next => speed.setPicked(samePick(speed.picked() ?? undefined, next) ? null : next)
@@ -70,7 +83,7 @@ export function speedPanel(context: iD.Context) {
         const roads = context.history().intersects(map.extent()).filter(isLaneRoad) as osmWay[];
         const counts = new Map<SpeedClass, number>();
         for (const road of roads) {
-            const cls = speedClassOf(undefined, road, measure);
+            const cls = speedClassOf(undefined, road, measure, undefined, unit);
             counts.set(cls, (counts.get(cls) ?? 0) + 1);
         }
         const legend = body.append('div').attr('class', 'routing-section');
@@ -82,7 +95,7 @@ export function speedPanel(context: iD.Context) {
             const item = list.append('li').classed('none-in-view', !counts.get(cls));
             item.append('span').attr('class', `speed-swatch speed-${cls}`);
             item.append('span').attr('class', 'speed-key-label')
-                .text(typeof cls === 'number' ? t('_lanes.speed.mph', { n: cls }) : t(`_lanes.speed_tool.${cls}`));
+                .text(typeof cls === 'number' ? classLabel(cls, unit) : t(`_lanes.speed_tool.${cls}`));
             item.append('span').attr('class', 'speed-key-count').text(t('_lanes.speed_tool.roads', { n: counts.get(cls) ?? 0 }));
         }
 

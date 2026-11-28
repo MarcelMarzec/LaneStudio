@@ -34,7 +34,11 @@ import { upgradeOldBusway } from '../model/kinds';
 import { cyclewaySideDetails } from './cycleway_fields';
 import { uiFieldLanesAccess } from './access_field';
 import { taggedAccessKeys } from '../model/access';
-import { mphOf, roadSpeedPick, speedChoice, speedTypeOf, ukSpeedTypes, withRoadMinspeed, withRoadSpeed } from './speed_roundels';
+import {
+    advisoryLimits, formatSpeed, isUkSpeedType, parseSpeed, roadSpeedPick, speedChoice, speedText, speedTypeOf, ukSpeedTypes, valuePick,
+    withRoadMinspeed, withRoadSpeed, type SpeedPick, type SpeedUnit
+} from './speed_roundels';
+import { roadCountry, roadSpeedUnit } from '../core/speed_unit';
 
 type Div = d3.Selection<HTMLDivElement>;
 
@@ -178,15 +182,21 @@ function withTag(tags: Tags, key: string, value: string): Tags {
     return next;
 }
 
+/** A speed value tagged as a number, as a pick (no value: none); undefined where it is no number */
+function numberPick(value: string | undefined): SpeedPick | undefined {
+    if (!value) return { kind: 'none' };
+    const speed = parseSpeed(value);
+    return speed ? { kind: 'speed', ...speed } : undefined;
+}
+
 /** The limit for lorries (`maxspeed:hgv`), lower than the road's on some roads, as roundels */
 function drawHgvSpeed(context: iD.Context, wrap: Div, road: osmWay) {
     const value = road.tags['maxspeed:hgv'];
-    const mph = mphOf(value);
     speedChoice(context, wrap, 'maxspeed-hgv', {
-        current: !value ? { kind: 'none' } : mph === null ? undefined : { kind: 'mph', mph },
+        current: numberPick(value), unit: roadSpeedUnit(road, context.graph()),
         none: true, noneLabel: t('_lanes.speed.hgv_none'),
         onPick: next => context.perform(actionChangeTags(road.id,
-            withTag(road.tags, 'maxspeed:hgv', next.kind === 'mph' ? `${next.mph} mph` : '')), t('_lanes.annotation.speed'))
+            withTag(road.tags, 'maxspeed:hgv', next.kind === 'speed' ? formatSpeed(next.n, next.unit) : '')), t('_lanes.annotation.speed'))
     });
     const odd = unusualSpeed(value);
     if (odd) wrap.append('p').attr('class', 'speed-tagged').text(t('_lanes.speed.tagged', { value: odd }));
@@ -197,7 +207,9 @@ function drawConditionalSpeed(context: iD.Context, wrap: Div, road: osmWay) {
     laneInput(context, wrap, {
         id: 'maxspeed-conditional', value: road.tags['maxspeed:conditional'] ?? '',
         placeholder: t('_lanes.speed.conditional_placeholder'),
-        suggestions: ['20 mph @ (Mo-Fr 08:00-09:30,14:30-16:00)', '50 mph @ (wet)', '40 mph @ (hgv)'].map(value => ({ value })),
+        suggestions: (roadSpeedUnit(road, context.graph()) === 'mph'
+            ? ['20 mph @ (Mo-Fr 08:00-09:30,14:30-16:00)', '50 mph @ (wet)', '40 mph @ (hgv)']
+            : ['30 @ (Mo-Fr 07:00-17:00)', '110 @ (wet)', '80 @ (hgv)', '30 @ (22:00-06:00)']).map(value => ({ value })),
         onChange: value => context.perform(actionChangeTags(road.id, withTag(road.tags, 'maxspeed:conditional', value.trim())),
             t('_lanes.annotation.speed'))
     });
@@ -232,32 +244,32 @@ const centreLineTerms: Record<CentreLine, string[]> = {
     no_both: ['double', 'double white', 'no', 'overtaking=no']
 };
 
-/** A value tagged in mph that no roundel shows (25 mph, 50 km/h), named under the roundels so it is not lost */
+/** A value no pick shows as it is tagged (`fast`, `50 kmh`), named under the roundels so it is not lost */
 function unusualSpeed(value: string | undefined) {
-    const mph = mphOf(value);
-    return value && (mph === null || !/^\d+ mph$/i.test(value) || ![10, 20, 30, 40, 50, 60, 70].includes(mph)) ? value : undefined;
+    if (!value || /^\d+( mph)?$/.test(value)) return undefined;
+    return valuePick(value) && !/kmh|kph|km\/h|knots/i.test(value) ? undefined : value;
 }
 
-/** The road's speed limit, as roundels and the UK limit types' signs */
+/** The road's speed limit, as roundels, the country's limit types and the values with no number */
 function drawSpeed(context: iD.Context, wrap: Div, road: osmWay) {
     const pick = roadSpeedPick(road.tags);
     speedChoice(context, wrap, 'maxspeed', {
         current: pick, types: true, none: true,
+        unit: roadSpeedUnit(road, context.graph()), country: roadCountry(road, context.graph()),
         onPick: next => context.perform(actionChangeTags(road.id, withRoadSpeed(road.tags, next)), t('_lanes.annotation.speed'))
     });
-    const odd = pick.kind === 'mph' ? unusualSpeed(road.tags.maxspeed) : undefined;
+    const odd = pick.kind !== 'type' ? unusualSpeed(road.tags.maxspeed) : undefined;
     if (odd) wrap.append('p').attr('class', 'speed-tagged').text(t('_lanes.speed.tagged', { value: odd }));
     // the lower national limit for some vehicles, as the Highway Code sets it
     const type = speedTypeOf(road.tags);
-    const lower = type ? ukSpeedTypes[type].lower : undefined;
+    const lower = isUkSpeedType(type) ? ukSpeedTypes[type].lower : undefined;
     if (lower) fieldNote(wrap, t(`_lanes.speed.lower.${lower.vehicles}`, { mph: lower.mph }), 'speed-lower');
 }
 
 /** The road's minimum speed, as blue roundels */
 function drawMinspeed(context: iD.Context, wrap: Div, road: osmWay) {
-    const minimum = mphOf(road.tags.minspeed);
     speedChoice(context, wrap, 'minspeed', {
-        current: !road.tags.minspeed ? { kind: 'none' } : minimum === null ? undefined : { kind: 'mph', mph: minimum },
+        current: numberPick(road.tags.minspeed), unit: roadSpeedUnit(road, context.graph()),
         minimum: true, none: true, noneLabel: t('_lanes.speed.min_none'),
         onPick: next => context.perform(actionChangeTags(road.id, withRoadMinspeed(road.tags, next)), t('_lanes.annotation.minspeed'))
     });
@@ -265,39 +277,51 @@ function drawMinspeed(context: iD.Context, wrap: Div, road: osmWay) {
     if (odd) wrap.append('p').attr('class', 'speed-tagged').text(t('_lanes.speed.tagged', { value: odd }));
 }
 
-/** The road's advisory speed limit (`maxspeed:advisory`): the limit on a plate below a warning sign, not enforced */
-function drawAdvisory(context: iD.Context, wrap: Div, road: osmWay) {
-    const value = road.tags['maxspeed:advisory'];
-    const mph = mphOf(value);
-    const advisories = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
-    const shown = mph !== null && !advisories.includes(mph) ? [mph, ...advisories] : advisories;
+/**
+ * A speed that is not a limit, as a dropdown of plates: the advisory speed on a plate below a warning sign
+ * (`maxspeed:advisory`, wiki: Key:maxspeed:advisory) or the speed the road can practically be driven at
+ * (`maxspeed:practical`, wiki: Key:maxspeed:practical), in the unit used where the road is
+ */
+function drawPlateSpeed(context: iD.Context, wrap: Div, road: osmWay, key: 'maxspeed:advisory' | 'maxspeed:practical') {
+    const value = road.tags[key];
+    const unit = roadSpeedUnit(road, context.graph());
+    const speed = parseSpeed(value);
+    const offered = advisoryLimits[unit].map(n => ({ n, unit }));
+    const shown = speed && !offered.some(o => o.n === speed.n && o.unit === speed.unit) ? [speed, ...offered] : offered;
+    const name = key === 'maxspeed:advisory' ? 'advisory' : 'practical';
     compactChoice(context, wrap, {
-        id: 'advisory',
+        id: name,
         choices: [
-            ...shown.map(n => ({ value: String(n), label: t('_lanes.speed.advisory_mph', { n }), terms: [`${n}`, `${n} mph`], icon: advisoryPlate(n) })),
-            { value: 'none', label: t('_lanes.speed.advisory_none'), terms: ['none', 'no'] }
+            ...shown.map(o => ({ value: `${o.n}:${o.unit}`, label: t(`_lanes.speed.${name}_speed`, { speed: speedText(o.n, o.unit) }),
+                terms: [`${o.n}`, formatSpeed(o.n, o.unit), `${o.n} ${o.unit}`], icon: advisoryPlate(o.n, o.unit) })),
+            { value: 'none', label: t(`_lanes.speed.${name}_none`), terms: ['none', 'no'] }
         ],
-        current: !value ? 'none' : mph === null ? undefined : String(mph),
-        custom: text => text.match(/^(\d{1,3})\s*(mph)?$/i)?.[1],
+        current: !value ? 'none' : speed ? `${speed.n}:${speed.unit}` : undefined,
+        custom: text => {
+            const m = text.trim().match(/^(\d{1,3})\s*(mph|km\/h|kmh|kph)?$/i);
+            return m ? `${Number(m[1])}:${m[2] ? (/mph/i.test(m[2]) ? 'mph' : 'km/h') : unit}` : undefined;
+        },
         onPick: next => {
-            const tags = { ...road.tags };
-            if (next === 'none') delete tags['maxspeed:advisory'];
-            else tags['maxspeed:advisory'] = `${next} mph`;
-            context.perform(actionChangeTags(road.id, tags), t('_lanes.annotation.speed'));
+            const [n, u] = next.split(':');
+            context.perform(actionChangeTags(road.id, withTag(road.tags, key, next === 'none' ? '' : formatSpeed(Number(n), u as SpeedUnit))),
+                t('_lanes.annotation.speed'));
         }
     });
-    const odd = value && mph === null ? value : undefined;
+    const odd = value && !speed ? value : undefined;
     if (odd) wrap.append('p').attr('class', 'speed-tagged').text(t('_lanes.speed.tagged', { value: odd }));
 }
 
-/** An advisory speed plate, as in the UK (TSRGD diagram 513): the number over MPH on a white rectangle */
-const advisoryPlate = (n: number) => (box: d3.Selection<any>) => {
+const drawAdvisory = (context: iD.Context, wrap: Div, road: osmWay) => drawPlateSpeed(context, wrap, road, 'maxspeed:advisory');
+const drawPractical = (context: iD.Context, wrap: Div, road: osmWay) => drawPlateSpeed(context, wrap, road, 'maxspeed:practical');
+
+/** An advisory speed plate, as in the UK (TSRGD diagram 513): the number over MPH (or km/h) on a white rectangle */
+const advisoryPlate = (n: number, unit: SpeedUnit) => (box: d3.Selection<any>) => {
     const svg = box.append('svg').attr('width', 20).attr('height', 22).attr('viewBox', '0 0 20 22');
     svg.append('rect').attr('x', 1).attr('y', 1).attr('width', 18).attr('height', 20).attr('rx', 2)
         .attr('fill', '#fff').attr('stroke', '#111').attr('stroke-width', 1.4);
     svg.append('text').attr('x', 10).attr('y', 12).attr('text-anchor', 'middle').attr('font-size', 9).attr('font-weight', 700)
         .attr('fill', '#111').text(n);
-    svg.append('text').attr('x', 10).attr('y', 18.5).attr('text-anchor', 'middle').attr('font-size', 5).attr('fill', '#111').text('MPH');
+    svg.append('text').attr('x', 10).attr('y', 18.5).attr('text-anchor', 'middle').attr('font-size', 5).attr('fill', '#111').text(unit === 'mph' ? 'MPH' : 'km/h');
 };
 
 /** Structures a road can be on or in (wiki: Key:bridge, Key:tunnel…): the tags each writes */
@@ -548,6 +572,8 @@ export const roadFieldDefs: RoadFieldDef[] = [
         info: 'minspeed', label: '_lanes.speed.min_road_label', draw: drawMinspeed, wrapClass: 'lane-field-body form-field-speed' },
     { id: 'lanes/advisory', keys: ['maxspeed:advisory'], owns: key => key === 'maxspeed:advisory',
         info: 'advisory', label: '_lanes.speed.advisory_label', draw: drawAdvisory, wrapClass: 'lane-field-body form-field-speed' },
+    { id: 'lanes/practical', keys: ['maxspeed:practical'], owns: key => key === 'maxspeed:practical',
+        info: 'practical', label: '_lanes.speed.practical_label', draw: drawPractical, wrapClass: 'lane-field-body form-field-speed' },
     { id: 'lanes/maxspeed_hgv', keys: ['maxspeed:hgv'], owns: key => key === 'maxspeed:hgv',
         info: 'maxspeed_hgv', label: '_lanes.speed.hgv_label', draw: drawHgvSpeed, wrapClass: 'lane-field-body form-field-speed' },
     { id: 'lanes/maxspeed_conditional', keys: ['maxspeed:conditional'], owns: key => key === 'maxspeed:conditional',
@@ -631,6 +657,7 @@ function placeFor(id: string, highway: string): 'fields' | 'more' | null {
         case 'lanes/parking': return ['residential', 'living_street'].includes(highway) ? 'fields' : 'more';
         case 'lanes/managed': return motorway ? 'fields' : canBeManaged({ highway }) ? 'more' : null;
         case 'lanes/advisory':
+        case 'lanes/practical':
         case 'lanes/structure':
         case 'lanes/maxspeed_hgv':
         case 'lanes/maxspeed_conditional':

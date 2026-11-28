@@ -12,6 +12,7 @@ import { laneState } from '../core/lane_state';
 import { laneRouting } from '../core/lane_routing';
 import { accessClassNames, laneAccess } from '../core/route_access';
 import { junctionSpeedClass, laneSpeed, speedClassOf, speedTypeKind, type SpeedClass, type SpeedMeasure } from '../core/lane_speed';
+import type { SpeedUnit } from '../model/speed_limits';
 import { shareJunction, type JunctionShare } from '../geometry/junction_shares';
 import { drawRoutes, laneUnder } from './routing';
 import { drawConnectivity } from './connectivity';
@@ -92,7 +93,7 @@ const closedRing = (ring: Vec2[]): [number, number][] => [...ring, ring[0]].map(
  * shared out among them, each part in its road's colour. `classOf` is a box's classes, `buildingOf` its building class.
  */
 function junctionShapes(junctions: { nodeID: string; kind: 'junction' | 'flare'; polygons: Vec2[][] }[], graph: iD.Graph,
-    measure: SpeedMeasure | null, classOf: (key: string) => string, buildingOf: (key: string) => string) {
+    measure: SpeedMeasure | null, classOf: (key: string) => string, buildingOf: (key: string) => string, unit: SpeedUnit = 'mph') {
     const groups = new Map<string, { key: string; kind: 'junction' | 'flare'; cls: string; polygons: Vec2[][]; shapes: Vec2[][][]; split?: boolean }>();
     const add = (kind: 'junction' | 'flare', cls: string, shapes: Vec2[][][], split = false) => {
         const key = kind + cls;
@@ -102,7 +103,7 @@ function junctionShapes(junctions: { nodeID: string; kind: 'junction' | 'flare';
         groups.set(key, group);
     };
     for (const j of junctions) {
-        const shares = measure ? junctionSpeedShares(j.nodeID, j.polygons, graph, measure) : null;
+        const shares = measure ? junctionSpeedShares(j.nodeID, j.polygons, graph, measure, unit) : null;
         if (!shares) {
             add(j.kind, classOf(j.nodeID), j.polygons.map(ring => [ring]));
             continue;
@@ -134,17 +135,17 @@ const speedShareCache = new WeakMap<Vec2[][], { sig: string; shares: JunctionSha
  * roads' limits differ: each road's part of the box in its own (see shareJunction), the more major road's where two
  * cross. Null where they all agree, the box is one colour.
  */
-function junctionSpeedShares(key: string, polygons: Vec2[][], graph: iD.Graph, measure: SpeedMeasure): JunctionShare<SpeedClass>[] | null {
+function junctionSpeedShares(key: string, polygons: Vec2[][], graph: iD.Graph, measure: SpeedMeasure, unit: SpeedUnit): JunctionShare<SpeedClass>[] | null {
     const ids = key.startsWith('cluster-') ? key.slice('cluster-'.length).split('-') : [key];
     const roads = new Set<osmWay>();
     for (const id of ids) {
         const node = graph.hasEntity(id as NodeId) as osmNode | undefined;
         if (node) graph.parentWays(node).filter(isLaneRoad).forEach(way => roads.add(way as osmWay));
     }
-    const ranked = [...roads].map(way => ({ way, cls: speedClassOf(undefined, way, measure) }))
+    const ranked = [...roads].map(way => ({ way, cls: speedClassOf(undefined, way, measure, undefined, unit) }))
         .sort((a, b) => (highwayRank[b.way.tags.highway ?? ''] ?? 0) - (highwayRank[a.way.tags.highway ?? ''] ?? 0));
     if (ranked.length < 2 || ranked.every(r => r.cls === ranked[0].cls)) return null;
-    const sig = measure + ranked.map(r => `${r.way.id}:${r.cls}`).join(',');
+    const sig = measure + unit + ranked.map(r => `${r.way.id}:${r.cls}`).join(',');
     const cached = speedShareCache.get(polygons);
     if (cached?.sig === sig) return cached.shares;
     const shares = shareJunction(polygons, ranked.map(({ way, cls }) => ({
@@ -944,7 +945,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 const node = graph.hasEntity(id as NodeId) as osmNode | undefined;
                 if (node) graph.parentWays(node).filter(isLaneRoad).forEach(way => roads.add(way as osmWay));
             }
-            const cls = junctionSpeedClass([...roads], speed.measure());
+            const cls = junctionSpeedClass([...roads], speed.measure(), speed.unit());
             return cls === null || (speed.measure() === 'minspeed' && cls === 'missing') ? '' : ` speed-${cls}`;
         };
 
@@ -967,7 +968,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
         // all junctions of a kind in one path, so where they overlap the surface is one even colour rather than
         // see-through boxes stacked on each other (the Speed Limit tool colours them too: one path per colour)
         const junctionKinds = junctionShapes(shownJunctions, graph, speed.active() ? speed.measure() : null,
-            key => nodeSpeed(key) + (nodeBuilding(key) ? ' lanes-construction' : ''), key => (nodeBuilding(key) ? ' lanes-construction' : ''));
+            key => nodeSpeed(key) + (nodeBuilding(key) ? ' lanes-construction' : ''), key => (nodeBuilding(key) ? ' lanes-construction' : ''), speed.unit());
         const areas = group('junctions').selectAll<SVGPathElement, typeof junctionKinds[number]>('path')
             .data(junctionKinds, d => d.key);
         areas.exit().remove();
@@ -1001,7 +1002,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
                 const roadID = areaRoads.get(d.id);
                 const roads = roadID ? [graph.hasEntity(roadID as osmWay['id']) as osmWay].filter(Boolean)
                     : ways.filter(way => (way as osmWay).nodes.some(id => pointInPolygon((graph.entity(id) as osmNode).loc as Vec2, d.polygon))) as osmWay[];
-                const cls = junctionSpeedClass(roads, speed.measure());
+                const cls = junctionSpeedClass(roads, speed.measure(), speed.unit());
                 if (cls !== null && !(speed.measure() === 'minspeed' && cls === 'missing')) this.classList.add(`speed-${cls}`);
             });
         // mini-roundabouts' carriageways and passing places (drawn with the street features) take their roads' colour in
@@ -1022,7 +1023,7 @@ export function svgLanes(projection: Projection, context: iD.Context) {
             const road = speed.active() ? graph.hasEntity(piece.wayID) as osmWay | undefined : undefined;
             if (!road) return '';
             const measure = speed.measure();
-            const cls = speedClassOf(lane.values[`${measure}:lanes`], road, measure, lane.ref.direction);
+            const cls = speedClassOf(lane.values[`${measure}:lanes`], road, measure, lane.ref.direction, speed.unit());
             if (measure === 'minspeed' && cls === 'missing') return '';
             // a limit set by its type (national, motorway, 20 zone, restricted road) is patterned over its colour
             const kind = measure === 'maxspeed' && cls !== 'missing' ? speedTypeKind(lane.values['maxspeed:lanes'], road, lane.values['maxspeed:type:lanes']) : null;

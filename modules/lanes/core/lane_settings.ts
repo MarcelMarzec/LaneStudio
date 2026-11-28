@@ -3,7 +3,9 @@ import { select as d3_select } from 'd3-selection';
 
 import { localizer, t } from '../../core/localizer';
 import { prefs } from '../../core/preferences';
+import { modeSelect } from '../../modes/select';
 import { utilKeybinding } from '../../util/keybinding';
+import { setSpeedUnitSetting, speedUnitSetting, type SpeedUnitSetting } from './speed_unit';
 
 /**
  * Lane surface opacity when nothing is saved, from 0 to 1: the see-through look surfaces have by
@@ -30,6 +32,9 @@ export interface LaneSettings {
     /** show the standard OpenStreetMap map, fading in over the imagery, when zoomed out too far to edit (on unless turned off) */
     showZoomedOutMap(): boolean;
     setShowZoomedOutMap(value: boolean): void;
+    /** the unit speeds are shown and set in: automatic (the country's), mph or km/h */
+    speedUnit(): SpeedUnitSetting;
+    setSpeedUnit(value: SpeedUnitSetting): void;
     on(type: `change${string}`, listener: (() => void) | null): LaneSettings;
 }
 
@@ -126,6 +131,16 @@ export function laneSettings(context: iD.Context): LaneSettings {
             _showZoomedOutMap = value;
             prefs('lanes-zoomed-out-map', value ? null : 'false');
             dispatch.call('change', settings);
+        },
+        speedUnit: speedUnitSetting,
+        setSpeedUnit(value) {
+            if (value === speedUnitSetting()) return;
+            setSpeedUnitSetting(value);
+            dispatch.call('change', settings);
+            // the sidebar's fields and the Speed Limit tool's colours follow the unit
+            context.map().pan([0, 0]);
+            const selected = context.selectedIDs();
+            if (selected.length) context.enter(modeSelect(context, selected));
         },
         on(type, listener) {
             dispatch.on(type as 'change', listener as () => void);

@@ -21,7 +21,8 @@ import { isKerbWay, parallelWays } from '../core/roadside';
 import { svgIcon } from '../../svg/icon';
 import { openRoadsideMenu } from './roadside_menu';
 import { isShownOnDemand, onShownChange, selectedLaneRoad, showOnDemand } from './road_sections';
-import { mphLimits, mphOf, roadSpeedPick, speedPickLabel, speedChoice, ukSpeedTypes, type SpeedPick, type UkSpeedType } from './speed_roundels';
+import { isSpeedType, isUkSpeedType, pickValue, roadSpeedPick, speedPickLabel, speedChoice, ukSpeedTypes, valuePick, type SpeedPick } from './speed_roundels';
+import { roadCountry, roadSpeedUnit } from '../core/speed_unit';
 import {
     parseLanes, laneRefsInWayOrder, laneCount, removeLane, moveLane, setLaneValue, laneValue,
     turnValues, parseTurn, toggleTurn, parseChange, formatChange, laneDirections, rareTurnValues,
@@ -92,8 +93,8 @@ type Beside = 'lane' | 'centre' | 'kerb';
 
 /** A value tagged in mph that no roundel shows (25 mph, 50 km/h), named under the roundels so it is not lost */
 export function unusualSpeed(value: string | undefined) {
-    const mph = mphOf(value);
-    return value && (mph === null || !mphLimits.includes(mph) || !/mph/i.test(value)) ? value : undefined;
+    if (!value || /^\d+( mph)?$/.test(value)) return undefined;
+    return valuePick(value) && !/kmh|kph|km\/h|knots/i.test(value) ? undefined : value;
 }
 
 /**
@@ -251,11 +252,10 @@ export function uiSectionLanes(context: iD.Context) {
         const minimum = measure === 'minspeed';
         const value = shared(`${measure}:lanes`);
         const type = minimum ? undefined : shared('maxspeed:type:lanes');
-        const mph = mphOf(value);
         // a lane's limit type (maxspeed:type:lanes), like a road's: the national limit, a motorway, a 20 zone…
-        const typed = type && Object.hasOwn(ukSpeedTypes, type) ? type as UkSpeedType : undefined;
+        const typed = isSpeedType(type) ? type : undefined;
         const current: SpeedPick | undefined = value === undefined ? undefined : typed ? { kind: 'type', type: typed }
-            : !value ? { kind: 'none' } : mph === null ? undefined : { kind: 'mph', mph };
+            : valuePick(value) ?? undefined;
         const unusual = value === undefined ? t('inspector.multiple_values') : typed ? undefined : unusualSpeed(value);
         const write = (speed: string, speedType: string) => perform(road.id, m => {
             const next = setLaneValue(m, refs, `${measure}:lanes`, speed);
@@ -267,11 +267,11 @@ export function uiSectionLanes(context: iD.Context) {
             onRemove: () => write('', '')
         }, unusual, row => speedChoice(context, row, `lane-${measure}`, {
             current, minimum, types: !minimum, none: true, noneLabel: t('_lanes.speed.lanes_none'),
-            onPick: pick => write(pick.kind === 'mph' ? `${pick.mph} mph` : pick.kind === 'type' ? `${ukSpeedTypes[pick.type].mph} mph` : '',
-                pick.kind === 'type' ? pick.type : '')
+            unit: roadSpeedUnit(road, context.graph()), country: roadCountry(road, context.graph()),
+            onPick: pick => write(pickValue(pick), pick.kind === 'type' ? pick.type : '')
         }));
         // the lower national limit for some vehicles, as for the whole road
-        const lower = typed ? ukSpeedTypes[typed].lower : undefined;
+        const lower = isUkSpeedType(typed) ? ukSpeedTypes[typed].lower : undefined;
         if (lower) fieldNote(parent, t(`_lanes.speed.lower.${lower.vehicles}`, { mph: lower.mph }), 'speed-lower');
     }
 

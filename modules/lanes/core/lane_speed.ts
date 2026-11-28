@@ -2,9 +2,14 @@ import { dispatch as d3_dispatch } from 'd3-dispatch';
 
 import type { osmWay } from '../../osm/way';
 import { highwayRank } from '../geometry/road_geometry';
-import { mphOf, roadMaxspeed, speedTypeOf, type SpeedPick } from '../model/speed_limits';
+import { speedUnitAt } from './speed_unit';
+import { isUkSpeedType, roadMaxspeed, speedIn, speedTypeOf, type SpeedPick, type SpeedUnit } from '../model/speed_limits';
 
-/** How a lane's speed limit is coloured: a limit in mph, a limit no roundel shows, or none tagged */
+/**
+ * How a lane's speed limit is coloured: one of seven colours (named by the limits in mph they show: 10 to 70), a limit
+ * none of them shows, or none tagged. In km/h the colours are bands: 20 or less, 30, 40–50, 60–70, 80–90, 100–110, 120
+ * or more.
+ */
 export type SpeedClass = number | 'other' | 'missing';
 
 /** How a limit set by its UK type is patterned over its colour: the national limit, a motorway, a 20 zone, a restricted road */
@@ -20,8 +25,13 @@ export const speedPatternClasses = ['10', '20', '30', '40', '50', '60', '70', 'o
 export function speedTypeKind(laneValue: string | undefined, road: osmWay, laneType?: string): SpeedTypeKind | null {
     if (laneValue && !laneType) return null;
     const type = laneValue ? speedTypeOf({ 'maxspeed:type': laneType! }) : speedTypeOf(road.tags);
-    return type === 'GB:motorway' ? 'motorway' : type === 'GB:zone20' ? 'zone' : type === 'GB:nsl_restricted' ? 'restricted'
-        : type ? 'national' : null;
+    if (!type) return null;
+    const name = type.split(':')[1];
+    if (isUkSpeedType(type)) {
+        return type === 'GB:motorway' ? 'motorway' : type === 'GB:zone20' ? 'zone' : type === 'GB:nsl_restricted' ? 'restricted' : 'national';
+    }
+    // other countries' types: a motorway's, a zone's, or the default limit for the kind of road or area
+    return name.includes('motorway') ? 'motorway' : name.startsWith('zone') ? 'zone' : 'national';
 }
 
 /** What the Speed Limit tool shows and sets: the speed limit (`maxspeed`) or the minimum speed (`minspeed`) */
@@ -37,11 +47,34 @@ export interface LaneSpeed {
     /** the limit clicking a road applies, if one is picked */
     picked(): SpeedPick | null;
     setPicked(pick: SpeedPick | null): void;
+    /** the unit the tool shows and sets limits in: the setting's, or the one used where the map is */
+    unit(): SpeedUnit;
     on(type: `change${string}`, listener: (() => void) | null): LaneSpeed;
 }
 
-/** The limits coloured on the map, in mph; any other limit is coloured as "other" */
+/** The colours on the map, by the limits in mph they show; any other limit is coloured as "other" */
 export const colouredLimits = [10, 20, 30, 40, 50, 60, 70];
+
+/** The highest limit in km/h each colour shows (its band), from 20 or less to 120 or more */
+const kmhBands = [20, 30, 50, 70, 90, 110, Infinity];
+
+/** The colour a limit gets in a unit: in mph, one of the UK's limits; in km/h, its band */
+export function speedClassFor(value: string, unit: SpeedUnit): SpeedClass {
+    if (value === 'walk') return colouredLimits[0];
+    const n = speedIn(value, unit);
+    if (n === null) return 'other';
+    if (unit === 'mph') return colouredLimits.includes(n) ? n : 'other';
+    return colouredLimits[kmhBands.findIndex(top => n <= top)];
+}
+
+/** What a colour shows in a unit, for the key: `30 mph`, or a band of limits in km/h (`40–50 km/h`) */
+export function speedClassRange(cls: number, unit: SpeedUnit): { from?: number; to?: number } {
+    if (unit === 'mph') return { from: cls, to: cls };
+    const i = colouredLimits.indexOf(cls);
+    const to = kmhBands[i];
+    const from = i > 0 ? kmhBands[i - 1] + 10 : undefined;
+    return { from, to: to === Infinity ? undefined : to };
+}
 
 /**
  * A road's limit for traffic going one way: `maxspeed:forward` or `maxspeed:backward` where the limit differs by direction
@@ -59,20 +92,19 @@ export function roadSpeedFor(tags: Tags, measure: SpeedMeasure, direction?: 'for
  * `minspeed:lanes` or its road's `minspeed`.
  */
 export function speedClassOf(laneValue: string | undefined, road: osmWay, measure: SpeedMeasure = 'maxspeed',
-    direction?: 'forward' | 'backward' | 'both_ways'): SpeedClass {
+    direction?: 'forward' | 'backward' | 'both_ways', unit: SpeedUnit = 'mph'): SpeedClass {
     const value = laneValue || roadSpeedFor(road.tags, measure, direction);
     if (!value) return 'missing';
-    const mph = mphOf(value);
-    return mph !== null && colouredLimits.includes(mph) ? mph : 'other';
+    return speedClassFor(value, unit);
 }
 
 /**
  * How a junction is coloured: its roads' limit where they all agree, else the main road's (the most major road
  * meeting there), so a side road without a limit doesn't paint a main road's junction red
  */
-export function junctionSpeedClass(roads: osmWay[], measure: SpeedMeasure = 'maxspeed'): SpeedClass | null {
+export function junctionSpeedClass(roads: osmWay[], measure: SpeedMeasure = 'maxspeed', unit: SpeedUnit = 'mph'): SpeedClass | null {
     if (!roads.length) return null;
-    const classes = roads.map(road => speedClassOf(undefined, road, measure));
+    const classes = roads.map(road => speedClassOf(undefined, road, measure, undefined, unit));
     if (classes.every(cls => cls === classes[0])) return classes[0];
     const rank = (road: osmWay) => highwayRank[road.tags.highway ?? ''] ?? 0;
     const main = roads.reduce((best, road, i) => (rank(road) > rank(roads[best]) ? i : best), 0);
@@ -109,6 +141,7 @@ export function laneSpeed(context: iD.Context): LaneSpeed {
             changed();
         },
         picked: () => _picked,
+        unit: () => speedUnitAt(context.map().center() as [number, number]),
         setPicked(pick) {
             _picked = pick;
             changed();

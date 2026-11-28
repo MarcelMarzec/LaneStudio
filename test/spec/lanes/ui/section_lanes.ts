@@ -108,12 +108,30 @@ describe('Lane Studio sidebar', () => {
         expect(context.entity('w1').tags['bus:lanes:forward']).toBe('|designated');
     });
 
+    /** Moves the road to Leicester, where limits are in mph and the UK's limit types apply */
+    function inTheUk() {
+        for (const [id, [dx, dy]] of [['n1', [0, 0]], ['n2', [0.001, 0]], ['n3', [0, 0.001]]] as const) {
+            context.replace((graph: iD.Graph) => graph.replace((graph.entity(id) as iD.OsmNode).move([-1.13 + dx, 52.63 + dy])));
+        }
+    }
+
     /** Types into a compact choice, as a person does, and leaves it */
     function choose(id: string, text: string) {
         selection.select<HTMLInputElement>(`#lane-field-${id}`).property('value', text).dispatch('change');
     }
 
+    it('sets a limit in km/h, a country\'s limit type, and no limit where the road is in Germany', () => {
+        renderField('lanes_maxspeed');
+        choose('maxspeed', '50');
+        expect(context.entity('w1').tags.maxspeed).toBe('50');
+        renderField('lanes_maxspeed');
+        expect(selection.select('#lane-field-maxspeed').property('value')).toBe('50 km/h');
+        choose('maxspeed', 'Motorway (DE, No limit (none))');
+        expect(context.entity('w1').tags).toMatchObject({ maxspeed: 'none', 'source:maxspeed': 'DE:motorway' });
+    });
+
     it('sets the whole road\'s limit, a UK limit type and its minimum speed from one compact choice each', () => {
+        inTheUk();
         renderField('lanes_maxspeed');
         choose('maxspeed', 'National, dual carriageway (70 mph)');
         expect(context.entity('w1').tags).toMatchObject({ maxspeed: '70 mph', 'maxspeed:type': 'GB:nsl_dual' });
@@ -232,7 +250,7 @@ describe('Lane Studio sidebar', () => {
         arrangeFields(fields, more, 'residential');
         expect(fields).toEqual(['name', 'oneway', 'lanes/counts', 'lanes/centre_line', 'lanes/maxspeed', 'surface', 'access',
             'lanes/sidewalk', 'lanes/parking']);
-        expect(more).toEqual(['lit', 'width', 'lanes/minspeed', 'lanes/advisory', 'lanes/maxspeed_hgv', 'lanes/maxspeed_conditional',
+        expect(more).toEqual(['lit', 'width', 'lanes/minspeed', 'lanes/advisory', 'lanes/practical', 'lanes/maxspeed_hgv', 'lanes/maxspeed_conditional',
             'lanes/priority', 'lanes/structure', 'lanes/shoulder', 'lanes/cycleway']);
         // iD's structure and advisory fields are replaced where they were
         const bridge = ['name', 'structure', 'maxspeed/advisory'];
@@ -265,6 +283,7 @@ describe('Lane Studio sidebar', () => {
     it('sets selected lanes\' speeds from roundels, and goes back to the whole road', () => {
         context.enter(selectMode(['w1']));
         const state = laneState(context);
+        inTheUk();
         state.select('w1', [{ direction: 'forward', index: 0 }]);
         render(['w1']);
         const speed = () => selection.select('.form-field-lane-lane-maxspeed');

@@ -9,6 +9,8 @@ import { signCode, signNameKey, signsWithValue, turnedRound, ukSignCodes, withSi
 import { drawFace } from '../svg/signs';
 import type { InfoTopic } from './field_info';
 import { fieldNote, fieldShell, laneField, tagChrome } from './lane_fields';
+import { speedUnitAt } from '../core/speed_unit';
+import { formatSpeed } from '../model/speed_limits';
 
 type Div = d3.Selection<HTMLDivElement>;
 
@@ -122,9 +124,11 @@ export function uiSectionSign(context: iD.Context) {
         }
 
         if (kind === 'camera') {
-            valueField(wrap, 'camera-limit', t('_lanes.signs.camera_limit'), speedNumber(tags.maxspeed) ?? '', 'camera', v => {
+            // in the unit used where the camera is: `40 mph`, or a bare number in km/h
+            const unit = speedUnitAt(n.loc as [number, number]);
+            valueField(wrap, 'camera-limit', t('_lanes.signs.camera_limit', { unit }), speedNumber(tags.maxspeed) ?? '', 'camera', v => {
                 const next = { ...tags };
-                if (v) next.maxspeed = `${v} mph`;
+                if (v) next.maxspeed = /^\d+$/.test(v.trim()) ? formatSpeed(Number(v), unit) : v.trim();
                 else delete next.maxspeed;
                 change(n, next);
             });

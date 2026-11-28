@@ -29,7 +29,7 @@ en:
       strip: "Lanes along the road shows the lanes left to right. Click one here or on the map to edit it; shift-click to pick more."
       tools: "The lane tools: Paint a value onto lanes, drag lane Widths, and place Markings and Signs. Esc returns to Select."
       fields: "Lane Studio's road fields sit among iD's in Fields: the Number of lanes each way, the centre line and more. Every field has an i button with a short overview and a wiki link."
-      speed: "Speed limit shows the limit chosen with its sign; its dropdown lists UK limits and limit types. Type a number or nsl, zone or motorway. A lane can have its own limit in the Lanes section."
+      speed: "Speed limit shows the limit chosen with its sign; its dropdown lists limits in the unit the country's signs use (mph or km/h) and its limit types. Type a number or nsl, zone or motorway. A lane can have its own limit in the Lanes section."
     roadside:
       title: Roadside
       plus: "The + at each kerb adds a lane, hard shoulder, pavement, cycleway, parking or no-waiting lines to that side, asking for their tags."
@@ -70,7 +70,7 @@ en:
         - **Edit them** in the Lanes section: direction, turn arrows, lane change, speed limit, lane type, destination, access, width and any other `*:lanes` tag.
         - **Lane tools**: Paint a value onto lanes, Width (drag lane lines), Markings (crossings, stop and give way, signals, calming), Signs.
         - **Lines between lanes**: click one to cycle it (dashed, solid, crossable one way); click a side of the centre line to ban or allow overtaking.
-        - **Road fields** in iD's Fields: Number of lanes, Centre line, Speed limit (UK roundels and limit types, or type a number or nsl), Minimum speed, Advisory speed, Structure, Active traffic management.
+        - **Road fields** in iD's Fields: Number of lanes, Centre line, Speed limit (roundels in mph or km/h, as the country's signs, and its limit types; or type a number or nsl), Minimum speed, Advisory and Practical speed, Structure, Active traffic management.
         - **Allowed Access**: All, HGVs, Cars, Bicycles and Pedestrians, biggest first, and a row per other mode tagged; **+ Add access type** adds any mode the wiki lists (HGVs, vans, buses…), one direction of it, or times and conditions.
         - `width` is kerb to kerb: parking and cycle lanes on the road are part of it.
     roadside:
@@ -197,6 +197,33 @@ en:
     none: No arrow
   speed:
     mph: "{n} mph"
+    kmh: "{n} km/h"
+    min_speed: "Minimum {speed}"
+    values:
+      none: No limit (none)
+      walk: Walking pace (walk)
+    country_type: "{name} ({country}, {limit})"
+    type_names:
+      urban: Built-up area
+      rural: Outside built-up areas
+      motorway: Motorway
+      trunk: Expressway
+      living_street: Living street
+      zone30: 30 zone
+      zone20: 20 zone
+      zone10: 10 zone
+      zone40: 40 zone
+      bicycle_road: Cycle street
+      cyclestreet: Cycle street
+      pedestrian_zone: Pedestrian zone
+      urban_motorway: Motorway in a built-up area
+      urban_trunk: Expressway in a built-up area
+      motorway_urban: Motorway in a built-up area
+      residential: Residential area
+      nsl: National limit
+    practical_label: Practical speed
+    practical_speed: "{speed} in practice"
+    practical_none: No practical speed
     none: No speed limit tagged
     lanes_none: Same as the road
     road_label: Speed limit
@@ -204,14 +231,13 @@ en:
     lane_label: Speed limit of the selected lanes
     lane_min_label: Minimum speed of the selected lanes
     tagged: "Tagged: {value}"
-    min_mph: "Minimum {n} mph"
     min_road_label: Minimum speed
     advisory_label: Advisory speed limit
     hgv_label: Speed limit for lorries
     hgv_none: Same as the road
     conditional_label: Speed limit at times
-    conditional_placeholder: "value @ (condition), e.g. 20 mph @ (Mo-Fr 08:00-09:30)"
-    advisory_mph: "{n} mph advised"
+    conditional_placeholder: "value @ (condition), e.g. 30 @ (Mo-Fr 08:00-09:30)"
+    advisory_speed: "{speed} advised"
     advisory_none: No advisory limit
     min_none: No minimum speed
     lane_title: Speed of this lane
@@ -534,7 +560,7 @@ en:
     placing: "Click a lane to place a {type} beside the road, facing that lane's traffic."
     value: Value on the sign
     limit: Speed limit (mph)
-    camera_limit: Enforced speed (mph)
+    camera_limit: "Enforced speed ({unit})"
     facing: "Faces: {direction}"
     unknown: not set
     turn: Turn round
@@ -923,6 +949,11 @@ en:
 
   settings:
     title: Lane Studio
+    speed_unit: Speed unit
+    speed_units:
+      auto: As the country's road signs (mph or km/h)
+      mph: Always mph
+      kmh: Always km/h
     description: Lane Studio settings
     key: P
     display: Display
@@ -1133,7 +1164,7 @@ en:
       tooltip: "See every route through a lane or footway. Editing is off while this is on; Esc leaves."
     speed:
       title: Speed Limit
-      tooltip: "Colour lanes by their speed limit and set limits by clicking roads. Keys 1 to 7 pick 10 to 70 mph; Esc leaves."
+      tooltip: "Colour lanes by their speed limit and set limits by clicking roads. Keys 1 to 9 pick the first nine limits; Esc leaves."
     connectivity:
       title: Connectivity
       tooltip: "See how lanes connect through junctions and connect them: click a lane, then the lanes it leads into. Esc leaves."
@@ -1156,12 +1187,15 @@ en:
     key: On the map
     patterns_hint: "Limits set by their type rather than a number alone have a pattern over their colour:"
     patterns:
-      national: National speed limit
+      national: National or default limit for the kind of road
       motorway: Motorway
-      zone: 20 mph zone
+      zone: Speed limit zone
       restricted: Restricted road
     other: Another limit
     missing: No speed limit
+    or_less: "{speed} or less"
+    or_more: "{speed} or more"
+    range: "{from}–{speed}"
     roads: "{n} in view"
     missing_title: "No speed limit ({n} in view)"
     more: "and {n} more"
@@ -1385,7 +1419,8 @@ en:
       single_red: "Single red: no stopping at the times signed"
   info_link: "{page} on the OpenStreetMap wiki"
   info:
-    advisory: "The speed advised on a plate below a warning sign (maxspeed:advisory), such as on a bend: not a limit. Type a number for any other speed."
+    advisory: "The speed advised on a plate below a warning sign (maxspeed:advisory), such as on a bend: not a limit. In mph where signs are in mph, else km/h (a bare number). Type a number for any other speed."
+    practical: "The speed the road can really be driven at (maxspeed:practical), where it is far below the limit, as on a narrow mountain road or a desert track: not a limit, and no higher than it. The wiki says its verifiability is disputed: map it only where it is clear."
     structure: "What the road is on or in: a bridge or viaduct (bridge=*), a tunnel or a passage through a building (tunnel=*), an embankment, a cutting, a ford or a covered way. A bridge or tunnel also gets a layer."
     access: "Who may use the lane (access:lanes): yes, no, designated, destination and so on, one value per lane."
     road_access: "Who may use it (access=*), and each mode on its own (foot, bicycle, motor_vehicle, hgv, bus…): a mode's own key wins over the one above it (hgv over motor_vehicle over vehicle over access), so an empty row shows what it inherits. Add access type adds any mode the wiki lists, or one direction (hgv:forward) or times and conditions (hgv:conditional = no @ (Mo-Fr 07:00-19:00))."
@@ -1396,7 +1431,7 @@ en:
     destination: "Where a lane goes, as the signs say (destination:lanes); several places are separated by semicolons. Lanes with none take the road's destination:forward or destination:backward (destination on a one-way road)."
     destination_ref: "The road numbers on the signs for a lane (destination:ref:lanes), such as M6 or A38."
     maxspeed_hgv: "The speed limit for lorries (maxspeed:hgv), where signs set one lower than the road's."
-    maxspeed_conditional: "Speed limits at times or in conditions (maxspeed:conditional), as value @ (condition): 20 mph @ (Mo-Fr 08:00-09:30), 50 mph @ (wet). Several are separated by semicolons."
+    maxspeed_conditional: "Speed limits at times or in conditions (maxspeed:conditional), as value @ (condition): 30 @ (Mo-Fr 07:00-17:00), 50 mph @ (wet). Several are separated by semicolons."
     priority: "On a stretch too narrow for traffic both ways, which way has priority (priority=forward or backward), as the signs at each end say: the other way gives way."
     motorroad: "A road for motor vehicles only (motorroad=yes), with no cycles, walkers or slow vehicles, such as a road signed with the car symbol. Cycle routes keep off it."
     destination_street: "The street a lane leads to, as the signs name it (destination:street:lanes)."
@@ -1420,7 +1455,7 @@ en:
     managed: "Smart motorways and other roads where signs change the limit or open a lane (active_traffic_management=yes). All lanes running has no hard shoulder (shoulder=no); a dynamic hard shoulder is a lane opened by signs (access:lanes=…|variable)."
     marking_tool: "Click a road to put a crossing, stop or give way line, traffic signals, traffic calming, a mini-roundabout, a passing place or an emergency bay on it, as a node with that feature's tags."
     maxheight: "The tallest vehicle the lane takes (maxheight:lanes), in metres or feet and inches."
-    maxspeed: "The road's speed limit (maxspeed). In the UK the national limit, motorway limit, restricted road and 20 zone are signs of their own, written with maxspeed:type."
+    maxspeed: "The road's speed limit (maxspeed): a number in km/h, or with mph where signs are in mph (the unit is the country's, or the Lane Studio pane's). none is no limit, walk walking pace. Limits set by the type of road (PL:urban, DE:motorway) go in source:maxspeed (maxspeed:type in the UK, where the national limit, motorway limit, restricted road and 20 zone are signs of their own)."
     maxweight: "The heaviest vehicle the lane takes (maxweight:lanes), in tonnes."
     maxwidth: "The widest vehicle the lane takes (maxwidth:lanes), in metres or feet and inches."
     minspeed: "The lowest speed allowed on the road (minspeed), signed with blue roundels."

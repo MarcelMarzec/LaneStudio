@@ -24,8 +24,9 @@ No. Lining up and tapers are drawing only; tags change only when you edit, one u
 **Which countries does it work for?**
 It has been built around UK roads and their limits; support for other countries will come later. It edits roads
 anywhere, with left- and right-hand traffic. Lane widths, sign pictures, shields, roundels, crossing zig-zags, level
-crossings and railway signals follow UK practice; elsewhere signs are a plate with their code. Speeds are in mph
-(km/h tags are read).
+crossings and railway signals follow UK practice; elsewhere signs are a plate with their code. Speeds are in the
+unit the country's road signs use (mph or km/h, or the one set in the Lane Studio pane), with the country's limit
+types (`PL:urban`, `DE:motorway`…) where the wiki lists them.
 
 **How many people use Lane Studio, and where?**
 The website's [statistics](https://lanestudio.marcelmarzec.com/statistics) map every changeset saved with it, with

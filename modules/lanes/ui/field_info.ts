@@ -64,6 +64,7 @@ export const fieldInfoPages = {
     parking_zone: `${SP}#Residential_parking_permits,_parking_zones`,
     payment: 'Key:payment:*',
     position: 'Lanes',
+    practical: 'Key:maxspeed:practical',
     priority: 'Key:priority',
     road_access: 'Key:access',
     road_marking: 'Key:road_marking',

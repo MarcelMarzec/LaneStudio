@@ -8,8 +8,8 @@ features) works as in iD.
 > tags leave something out, Lane Studio's drawing is a guess. If the tags are right and the drawing is wrong,
 > [report it](CONTRIBUTING.md#reporting-issues).
 
-> **Made for UK roads.** Lane Studio has been built around UK roads and their limits: lane widths, signs, markings
-> and speed limits (in mph) follow British practice. Support for other countries will come later
+> **Made for UK roads.** Lane Studio has been built around UK roads: lane widths, signs and markings follow British
+> practice; speed limits are in each country's unit (mph or km/h). Support for other countries will come later
 > ([FAQ](FAQ.md)).
 
 ## Using Lane Studio

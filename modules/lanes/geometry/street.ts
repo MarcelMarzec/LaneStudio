@@ -1496,11 +1496,14 @@ function paintedRoadLimit(tags: Tags): string | undefined {
     return roadMaxspeed(tags);
 }
 
-/** Whether a road's limit is the national limit or a motorway's, by its type (or `maxspeed=national`) */
+/**
+ * Whether a road's limit is the national limit or a motorway's, by its type (or `maxspeed=national`); no limit
+ * (`maxspeed=none`, as on German motorways) shows the same white disc with a black band, the end of limits
+ */
 function nationalKindOf(tags: Tags): 'national' | 'motorway' | undefined {
     const type = speedTypeOf(tags);
     if (type === 'GB:motorway') return 'motorway';
-    return type === 'GB:nsl_single' || type === 'GB:nsl_dual' || tags.maxspeed === 'national' ? 'national' : undefined;
+    return type === 'GB:nsl_single' || type === 'GB:nsl_dual' || tags.maxspeed === 'national' || roadMaxspeed(tags) === 'none' ? 'national' : undefined;
 }
 
 /** A posted limit as painted on the road (the number), or null when it is not a plain number */

@@ -85,9 +85,9 @@ require __DIR__ . '/includes/head.php';
           entirely — which is why so many junctions have no lane data at all.
         </p>
         <p class="alert" role="note">
-          <strong>Made for UK roads.</strong> Lane Studio has been built around UK roads and their limits: lane widths,
-          signs, markings and speed limits (in mph) follow British practice. Support for other countries will come
-          later.
+          <strong>Made for UK roads.</strong> Lane Studio has been built around UK roads: lane widths, signs and markings
+          follow British practice, while speed limits are in each country's unit (mph or km/h). Support for other
+          countries will come later.
         </p>
       </div>
 
@@ -189,7 +189,7 @@ require __DIR__ . '/includes/head.php';
         <ul>
           <li>Every lane coloured by its limit</li>
           <li>Roads missing a limit shown in red</li>
-          <li>Pick a UK roundel, national limit or 20 zone</li>
+          <li>Pick a limit in mph or km/h, as the country's signs, or its limit types</li>
           <li>Click roads or lanes to set it</li>
         </ul>
       </article>

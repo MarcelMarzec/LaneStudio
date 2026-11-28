@@ -7,7 +7,7 @@ import type { osmWay } from '../../osm/way';
 import { utilKeybinding } from '../../util';
 import { actionChangeLanes } from '../actions/change_lanes';
 import { parseLanes, setLaneValue } from '../model';
-import { mphLimits, withRoadMinspeed, withRoadSpeed } from '../ui/speed_roundels';
+import { pickValue, speedLimits, withRoadMinspeed, withRoadSpeed } from '../ui/speed_roundels';
 import { speedPanel } from '../ui/speed_panel';
 import { laneRouting } from './lane_routing';
 import { laneSpeed } from './lane_speed';
@@ -15,8 +15,8 @@ import { isDrag, roadOf } from './mode_routing';
 
 /**
  * The Speed Limit tool: lanes are coloured by their speed limit (roads with none stand out), or by their minimum
- * speed, and with a limit picked in the panel, clicking a road sets it (shift-click: that lane only). Keys 1 to 7
- * pick 10 to 70 mph; Esc lets go of the pick, then leaves.
+ * speed, and with a limit picked in the panel, clicking a road sets it (shift-click: that lane only). Keys 1 to 9
+ * pick the first nine limits (10 to 70 mph, or 20 to 100 km/h); Esc lets go of the pick, then leaves.
  */
 export function modeLaneSpeed(context: iD.Context) {
     const speed = laneSpeed(context);
@@ -41,7 +41,7 @@ export function modeLaneSpeed(context: iD.Context) {
             const tags = measure === 'maxspeed' ? withRoadSpeed(way.tags, pick) : withRoadMinspeed(way.tags, pick);
             context.perform(actionChangeTags(way.id, tags), t(`_lanes.annotation.${measure === 'maxspeed' ? 'speed' : 'minspeed'}`));
         } else if (pick.kind !== 'type' && !parseLanes(way.tags).keys[laneKey]?.readonly) {
-            const value = pick.kind === 'mph' ? `${pick.mph} mph` : '';
+            const value = pickValue(pick);
             context.perform(actionChangeLanes(way.id, m => setLaneValue(m, lane.ref, laneKey, value)),
                 t(`_lanes.annotation.${measure === 'maxspeed' ? 'speed' : 'minspeed'}`));
         }
@@ -58,7 +58,14 @@ export function modeLaneSpeed(context: iD.Context) {
                 if (speed.picked()) speed.setPicked(null);
                 else context.enter(modeBrowse(context) as any);
             }, true);
-            mphLimits.forEach((mph, i) => keybinding.on(String(i + 1), () => speed.setPicked({ kind: 'mph', mph }), true));
+            // keys 1 to 9 pick the first nine limits in the unit used where the map is
+            for (let i = 0; i < 9; i++) {
+                keybinding.on(String(i + 1), () => {
+                    const unit = speed.unit();
+                    const n = speedLimits[unit][i];
+                    if (n !== undefined) speed.setPicked({ kind: 'speed', n, unit });
+                }, true);
+            }
             d3_select(document).call(keybinding);
             let down: [number, number] | null = null;
             context.surface()
